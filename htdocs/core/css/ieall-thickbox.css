@@ -1,0 +1,8 @@
+@charset "UTF-8"; /* ieall.css
+ * IE stylesheet for all versions of IE:
+ *  Need to use filter:alpha to set opacity
+ */
+
+.TB_overlayBG { filter:alpha(opacity=75); }
+#TB_HideSelect{ filter:alpha(opacity=0); }
+

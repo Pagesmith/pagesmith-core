@@ -1,0 +1,60 @@
+@charset "UTF-8"; /* ie.css
+ * For IE6 and IE7 { uses special tags to cope with IE6 specific code; }
+ */
+
+
+/*----------------------------------------------------------------------
+  #wrap/.i3
+------------------------------------------------------------------------
+  to make sure that the containing div goes to the full extent of
+  it's contents we need to:
+ 
+  in IE7 - give it layout - by setting zoom to 1
+ 
+  in IE6 - give it a height of 1px - by setting "_height" to 1px
+  to make sure that the containing div goes to the full extent of
+  it's contents! the div needs a height of at least one pixel!
+----------------------------------------------------------------------*/
+dl.twocol, form dl, #searchresults dl, .clear-float, .cPic-c, #wrap, .panel, .i1, .i2, .i3, #footer { zoom:1; _height:1px; }
+ 
+/*----------------------------------------------------------------------
+  body/#outer
+------------------------------------------------------------------------
+  to center the page - but have content within it left aligned, in
+  IE6 which has no max-width/min-width then we have to specify the
+  width of the page absolutely!!
+----------------------------------------------------------------------*/
+body { text-align: center; }
+#wrap { text-align: left; }
+#outer { _width: 100%; text-align:left; }
+#homepage #outer { _width: 965px; }
+#search #q_db { _border: 1px solid white; zoom: 1; }
+
+/*
+#acc_2 ul li div {display:inline-block; }
+#acc_2 ul li div {display:block; }
+*/
+
+form dd input._checkbox { border: 0 !important; background-color: none !important; left: 0; width: auto; }
+form dd, .twocol dd { margin: 1px 0 1px 24%; padding:0 5px; width: 70%; float: none; }
+.evenwidth dd { margin: 1px 0 1px 49%; padding:0 5px; width: 48%; float: none; }
+form dd { padding: 0; }
+form dt { display: inline; }
+form dd textarea, form dd input { margin:0; padding: 0; margin-left: -24%; }
+dl.evenwidth > dt, dl.evenwidth > dd, form dl.evenwidth dt, form dl.evenwidth dd,   form dl dt.fifty50, form dl dd.fifty50  { width: 45% !important; }
+form dt.eighty20 { width: 68%; }
+form dd.eighty20 { width: 17%; }
+form dd.fifty50  input { margin-left: -23%; }
+form dd.eighty20 input { margin-left: 0; }
+
+dl.evenwidth dt { width:45% !important}
+
+/*form div.button-other, form  div.button-default { border:1px solid red; }*/
+form div.button-default { display: block; width: 40%; }
+form div.button-other { width: 55%; margin:0; }
+form div.button-other input { margin: 0 0.5em; padding: 2px 2em; margin-left: 0; }
+
+#faculty #rhs dt { margin: 5px 0 1px 0; }
+#faculty #rhs dd { width:55%; margin: 5px 0 1px 30%; }
+
+.scrollable { width: 100%; } 

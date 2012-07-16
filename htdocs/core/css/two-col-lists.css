@@ -1,0 +1,38 @@
+@charset "UTF-8"; .twocol dd p, .twocol dd pre { padding: 0; margin:0 0 0.5em 0; }
+.twocol dt {
+  clear:both; width:20%; float:left; color:#14559f; text-align:right; margin: 1px 0; font-weight: bold
+}
+
+.twocol dt a       { color: #663300; text-decoration: underline; font-weight: bold; }
+.twocol dt a:hover { color:#ff7c0d; }
+.twocol dd         { float:right; width:77%; color:#000; padding:0 5px; margin: 1px 0 0.5em 0; clear: right}
+
+dl.twocol { margin-top: 0.5em; }
+dl.twocol dl.twocol { margin: 0; }
+.twocol .twocol dt { text-align: left; }
+.twocol .bordered { border-top: 1px solid #e0e4e7; }
+.col1 .twocol dt, .col2 .twocol dt { width: 20%; }
+.col1 .twocol dd, .col2 .twocol dd { width: 72%; }
+
+.evenwidth dt, .evenwidth dd { width: 48%; }
+.col1 .evenwidth dt, .col2 .evenwidth dt, .col1 .evenwidth dd, .col2 .evenwidth dd { width: 45%; }
+
+.threequart dt { width: 24%; }
+.threequart dd { width: 73%; }
+.col1 .threequart dt, .col2 .threequart dt { width: 22%; }
+.col1 .threequart dd, .col2 .threequart dd { width: 71%; }
+
+.twothird dt { width: 32%; }
+.twothird dd { width: 65%; }
+.col1 .twothird dt, .col2 .twothird dt { width: 30%; }
+.col1 .twothird dd, .col2 .twothird dd { width: 60%; }
+
+.longleft dt { width: 78%; text-align: left; }
+.longleft dd { width: 18%; text-align: right; }
+.col1 .longleft dt, .col2 .longleft dt { width: 70%; }
+.col1 .longleft dd, .col2 .longleft dd { width: 22%; }
+
+.leftalign dt, .outer dt { text-align: left; }
+.outer dd { text-align: right; }
+dl.twocol:after {
+  content:"."; display:block; height:0; clear:both; visibility:hidden; }

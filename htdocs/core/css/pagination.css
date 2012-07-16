@@ -1,0 +1,11 @@
+@charset "UTF-8"; 
+/*----------------------------------------------------------------------
+  DataTable pagination links
+------------------------------------------------------------------------
+  CSS styles for the links that appear below pagination DataTable
+  entries
+----------------------------------------------------------------------*/
+
+.paginate { text-align: center; font-size: 0.875em; }
+.paginate a { background-color: #e0e4e7; padding: 1px 2px; text-decoration: none; font-weight: bold; }
+.paginate strong { background-color: #bcc5cc; padding: 1px 2px; font-weight: bold; }

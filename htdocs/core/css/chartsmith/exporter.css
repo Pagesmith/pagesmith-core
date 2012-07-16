@@ -1,0 +1,2 @@
+@charset "UTF-8"; .raphael-buttons { text-align:right; padding: 0 1em; }
+.raphael-buttons a { padding: 1px 0.25em; background-color: #ccc; cursor: pointer; font-weight: bold; color: #000; border: 1px solid #eee; border-color: #eee #666 #666 #eee; }

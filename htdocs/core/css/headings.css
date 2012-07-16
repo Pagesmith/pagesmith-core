@@ -1,0 +1,52 @@
+@charset "UTF-8";
+/*---------------------------------------------------------------------
+  Headings....
+-----------------------------------------------------------------------
+  h1           - large red [ ] text used on the tops of pages
+ 
+  h2 
+ 
+  h3           - blue text
+ 
+    h3.heading - red text with grey background!
+ 
+    #rhs h3   - blue text with grey background
+
+  h4           - blue text
+ 
+  h5...h6      - not to be used.!
+---------------------------------------------------------------------*/
+
+p { line-height: 1.4em; }
+h1, h2, h3, h4, h5, h6 {color:#14559f; padding:0; margin: 10px; font-weight:bold; }
+
+h1 { font-size: 1.75em; color: #8e0018; font-weight: normal; margin: 0.25em 0 0.5em 10px; line-height: 1.75em; }
+h2 { font-size: 1.4em; font-weight: bold; line-height: 1.4em; margin-top: 1em; }
+h2:first { margin-top: 0; }
+h3 { font-size: 1.2em; padding-bottom: 4px; font-weight: bold; line-height: 1.2em; }
+
+h3.emboldened, #landing #main h3 { position: relative; color: #8e0018; border-bottom: 1px solid #ccc; background: url(/core/gfx/bars-110202.png) 0 bottom; }
+
+#landing #main h3 a { color: #8e0018; text-decoration: none; }
+
+#landing #feature h3 a { color: #8e0018; text-decoration: none; }
+
+#rhs h3 {  background: url(/core/gfx/bars-110202.png) 0 bottom; border-bottom: 1px solid #ccc; }
+.callout h2 { color: #fff; }
+
+h4, h5 { margin: 8px 0; margin: 0 10px; font-size: 1em; }
+
+h6 { font-size: 2em; background-color: #f99; color: #900; padding: 1em; }
+
+@media print {
+  #landing #main h3 { background: none; border-bottom: 0; }
+}
+
+.i3 ul + h3, .i3 ol + h3, .i3 dl + h3, .i3 pre + h3, .i3 p + h3 { margin-top: 1.5em; }
+
+/*
+h1+h3, h2+h3{ padding-top: 0px; margin-top: -10px; }
+h3+h3 { padding-top: 0px; margin-top: -5px; }
+
+h1+ul, h2+ul, h3+ul { margin-top: -10px; }
+*/

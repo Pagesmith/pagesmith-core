@@ -1,0 +1,151 @@
+@charset "UTF-8"; .web-error { display: none; }
+body { margin: 0 auto; border:0; background:#fff; padding: 0 10px;   min-width:800px; max-width: 1400px; font-size:100%;   line-height:1.125em; position: relative
+}
+
+/*----------------------------------------------------------------------
+  standard page....
+------------------------------------------------------------------------
+  These have the following layout:
+ 
+  /---------------------------\ /--------\
+  |     #main (75%)           | | #rhs   |
+  |                           | | (24%)  |
+  |                           | |        |
+  |                           | \--------/
+  |                           | /--------\
+  |                           | |        |
+  |                           | |        |
+  |                           | |        |
+  \---------------------------/ |        |
+  /---------------------------\ \--------/
+  |                           | /--------\
+  |                           | |        |
+  \---------------------------/ |        |
+                                |        |
+                                \--------/
+     
+   main is used to float col1 and col2 to the left in three col
+   layouts
+ ----------------------------------------------------------------------*/
+
+ #outer { font-size: 0.75em; }
+
+ #main  { float: left; width: 75%; padding:0; margin:0; border: 0; }
+
+ #rhs  { width:24%; float: right; }
+
+ #main:after {
+   content:"."; display:block; height:0; clear:both; visibility:hidden; ; }
+
+.col1 { width:49%; float: left; }
+.col2 { width:49%; float: right; }
+
+.col12 { width:66%; float: left; }
+.col3 { width:32%; float: right; }
+
+#rhs .col1, #rhs .col2 { width: auto; float: none; }
+
+#fourcol .col1 h3, #fourcol .col2 h3
+{ position: relative; color: #8e0018; border-bottom: 1px solid #ccc; background: url(/core/gfx/bars-110202.png) 0 bottom; }
+
+
+#fourcol .col1 ul li, #fourcol .col2 ul li { background: none; padding-left: 10px; }
+
+#fourcol .col1 ul li a, #fourcol .col2 ul li a { font-weight: bold; }
+
+@media print {
+  #rhs .panel, #rhs .cb { display:none; }
+  #rhs .rhs_print { display:block; border-top: 1px solid #bcc5cc; padding-top: 10px; }
+  #fourcol .col1 h3, #fourcol .col2 h3 {
+    background: none; border-bottom: 0
+; }
+  #outer, body { width: 95%; min-width: 95%; max-width: 95%; margin: 0 auto; }
+  #rhs, #main, #outer { width: 100%; float: none; }
+
+}
+
+/*----------------------------------------------------------------------
+  Feature panel
+------------------------------------------------------------------------
+  Contains two parts the main text on the left hand size and an image
+  on the right hand side of the page
+----------------------------------------------------------------------*/
+#featureR {width:29%; float:right; text-align:right; font-size: 9px; color: #5c5150; }
+#featureR p { margin-right: 10px; }
+
+#featureL {width:70%; float:left; }
+
+#featureL p {
+  padding: 0 10px 10px 10px; margin:0; }
+#featureR div.seq { height: 220px; }
+#featureR div {
+  max-width: 450px;   height: 170px; background-position: top center; border: 4px solid #bcc5cc; margin: 0 10px 0 auto; }
+/*----------------------------------------------------------------------
+  faculty pages....
+------------------------------------------------------------------------
+  These have the following layout:
+ 
+  /---------------------\ /--------------\
+  | #main (62%)         | | #rhs (37%)   |
+  |                     | |              |
+  |                     | |              |
+  |                     | |              |
+  |                     | |              |
+  |                     | \--------------/
+  |                     | /--------------\
+  |                     | |              |
+  |                     | |              |
+  |                     | |              |
+  |                     | |              |
+  \---------------------/ |              |
+  /---------------------\ |              |
+  |                     | |              |
+  |                     | \--------------/
+  \---------------------/  
+     
+  the rhs is wider...
+ ----------------------------------------------------------------------*/
+
+/* #faculty #colWrap {float: left; width: 100%; padding:0; margin:0} /* use to float col1 and col2 to the left in three col layouts*/
+#faculty #main { width: 62%; }
+#faculty #rhs  { width: 37%; }
+.facultyImage  {
+  width: 95%; height: 250px;   margin: 0 auto;   background-repeat:no-repeat;   background-position:center; }
+.facultyImage p {display: none; }
+
+#faculty #rhs dt { width:30%; margin: 5px 0; }
+#faculty #rhs dd { width:65%; margin: 5px 0; }
+
+/* Other faculty related files.. */
+div.fac_thumb { clear: left; }
+.fac_thumb img { float:left; margin:10px; padding:5px; border:1px solid #bcc5cc; }
+
+p.portrait {color:#5c5150; font-size:0.7em; font-weight:normal; text-align:center}
+
+@media print {
+  #faculty #rhs, #faculty #main { width: 100%; float: none; }
+  #rhs #teamleader { display:block; border-top: 1px solid #bcc5cc; padding-top: 10px; }
+}/* Layout of entries! */
+
+#teamleader h3, #project #main h3
+{ position: relative; color: #8e0018; border-bottom: 1px solid #ccc; background: url(/core/gfx/bars-110202.png) 0 bottom; }
+
+#project #main .profiles h3 { background: none transparent; border-bottom: 0; }
+#project #main .sub_nav h3 { background: none #ccc; }
+.position span { float: right; display: block; color: #666; padding: 0 0.5em; }
+
+
+#teamleader p { clear:left; }
+#teamleader img, .thumb
+  { width: 55px; height: 55px; float: left; margin: 0px 10px 5px 0px; }
+#teamleader img { height: auto; }
+
+@media print {
+  #teamleader h3 { background: none; border-bottom: 0; }
+}
+.areas-landing { margin: 10px; }
+.areas-landing dt { clear: both; float: none; width: auto; margin: 0; }
+.areas-landing dd { margin-bottom: 1.5em; }
+.areas-landing dt img { float: left; margin: 5px 10px 10px 5px; height: 55px; width: 55px; }
+
+

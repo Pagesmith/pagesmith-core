@@ -1,0 +1,36 @@
+@charset "UTF-8"; /*----------------------------------------------------------------------
+  Web errors and messages
+------------------------------------------------------------------------
+  1) Format for failing components
+ 
+  2) Format for the display of messages from components to the browser
+----------------------------------------------------------------------*/
+.web-error { font-weight: bold; background-color:#fee; color: #900; display: inherit; }
+
+table.messages { font-size: 0.8em; border-collapse: collapse; width: 95%; margin: 0.5em auto; }
+
+.messages th { font-weight: bold; padding-top: 2px; }
+.message_first { width: 5%; }
+.message_number { width: 5%; text-align:right; }
+.messages tbody { margin:0; border:0; padding: 0; }
+.messages td, .messages th { margin:0; border:0; padding: 1px 2px; line-height: 1.1em}
+.messages p { margin: 0; }
+.message_pre  { white-space: pre; font-family: 'Andale mono', fixed; }
+/* Change the background-color of messages */
+.message_fatal { background-color: #fcc; }
+.message_error { background-color: #fdb; }
+.message_warn { background-color: #ffc; }
+.message_info { background-color: #cfc; }
+
+.svn_removed { background-color: #fcc; }
+.svn_added   { background-color: #cfc; }
+.svn_info .tabc    { font-size: 80%; }
+
+.spelling { background-color: #fcc; }
+.directive { font-weight: bold; color: #600; background-color: #ff9; }
+.html_entity { font-weight: bold; color: #c60; background-color: #fed; }
+.html_tag { font-weight: bold; color: #006; }
+.html_attr { font-weight: bold; color: #060; }
+.html_value { font-weight: bold; color: #600; background-color: #eee; }
+
+.dev-toggle { position: absolute; z-index: 1000; background-color: #900; font-size: small; color: #fff; display: block; padding: 2px; border: 1px solid #900; border-color: #f99 #300 #300 #f99; left: 50%; width: 6em; text-align: center; margin: 2px -2.5em; }

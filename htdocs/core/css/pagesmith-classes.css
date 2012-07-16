@@ -1,0 +1,46 @@
+@charset "UTF-8";
+/*jslint css: true */
+ /* classes to do simple css, float, align, "hide", etc, clear floats */
+.right { float: right; }
+.left  { float: left; }
+.c     { text-align: center; }
+.r     { text-align: right; }
+.l     { text-align: left; }
+.hide   { display:none; }
+.clear-float:after {  content:"."; display:block; height:0; clear:both; visibility:hidden; }
+.clear  { clear:both; }
+.clear-left { clear:left; }
+
+/* Opacity setting classes - used primarily on the home page at the moment... */
+.opac10 { opacity: 0.1; }
+.opac20 { opacity: 0.2; }
+.opac30 { opacity: 0.3; }
+.opac40 { opacity: 0.4; }
+.opac50 { opacity: 0.5; }
+.opac60 { opacity: 0.6; }
+.opac70 { opacity: 0.7; }
+.opac80 { opacity: 0.8; }
+.opac90 { opacity: 0.9; }
+
+/* Highlight text as draft during development */
+.draft  { color: #c00; background-color: #fcc; }
+
+.print-show { display: none; }
+
+@media print {
+  .print-hide { display: none; }
+  .print-show { display: block; }
+  span.print-show { display: inline; }
+}
+h3 span.date { color:#666; }
+
+.youtube-small { text-align: center; }
+.youtube-large { margin: 10px; }
+
+.spelling { background-color: #fcc; }
+span.tag { font-weight: bold; color: #006; }
+.attr { font-weight: bold; color: #060; }
+.value { font-weight: bold; color: #600; }
+
+.scrollable { overflow-x: auto; }
+.yscroll { overflow-y: auto; }

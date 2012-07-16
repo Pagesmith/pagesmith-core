@@ -1,0 +1,46 @@
+@charset "UTF-8"; /* ====================================================================== *
+ * Sample stylesheet for Syntax::Highlight::HTML                          *
+ *                                                                        *
+ * Copyright (C)2004 Sebastien Aperghis-Tramoni, All Rights Reserved.     *
+ *                                                                        *
+ * This file is free software; you can redistribute it and/or modify      *
+ * it under the same terms as Perl itself.                                *
+ * ====================================================================== */
+
+pre.code { font-family: "Andale Mono", fixed ; line-height: 1em; padding: 0; }
+.h-decl { color: #336699; font-style: italic; }   /* doctype declaration  */
+.h-pi   { color: #336699; }   /* process instruction  */
+.h-com  { color: #338833; font-style: italic; }   /* comment              */
+.h-ab   { color: #000000; font-weight: bold; }   /* angles as tag delim. */
+.h-tag  { color: #993399; font-weight: bold; }   /* tag name             */
+.h-attr { color: #000000; font-weight: bold; }   /* attribute name       */
+.h-attv { color: #333399; }   /* attribute value      */
+.h-ent  { color: #cc3333; }   /* entity               */
+
+.h-lno  { color: #aaaaaa; background: #f7f7f7; }   /* line numbers         */
+.h-dir  { color: #990000; background: #ffc; font-weight: bold; } /* directives */
+
+.linenumber { background-color: #fff; border-right: 1px solid #999; font-weight: normal; line-height: 1.2em; }
+
+/* Perl mark-up for Syntax::Highlighter::Perl::Improved */
+.p-sc {color:#080} /* Variable_Scalar */
+.p-ar {color:#f70} /* Variable_Array */
+.p-hs {color:#80f} /* Variable_Hash */
+.p-tg {color:#f03} /* Variable_Typeglob */
+.p-sb {color:#980} /* Subroutine */
+.p-qu {color:#00a; background-color:white} /* Quote */
+.p-st {color:#00a; background-color:white} /* String */
+.p-bw {color:#f00; font-weight:bold}       /* Bareword */
+.p-pa {color:#900} /* Package */
+.p-nu {color:#f0f} /* Number */
+.p-op {color:#900; font-weight:bold} /* Operator */
+.p-sy {color:#000} /* Symbol */
+.p-kw {color:#000} /* Keyword */
+.p-bo {color:#300} /* Builtin_Operator */
+.p-bf {color:#001} /* Builtin_Function */
+.p-ch {color:#800} /* Character */
+.p-di {color:#399} /* Directive */
+.p-la {color:#939} /* Label */
+.p-li {color:#000} /* Line */
+.p-cn {color:#069; background-color:#ffc} /* Comment_Normal */
+.p-cp {color:#069; background-color:#ffc} /* Comment_POD */

@@ -1,0 +1,22 @@
+/* Merged into merged-header.css */
+
+#search      { width: 500px; float: right; line-height: 1; padding: 5px 0; font-size: 12px; }
+#search form { padding: 0; margin: 0; float:right; font-weight: bold; }
+
+
+#search #q_db { border:0; padding: 0px; color: #000; margin: 0; background-color:transparent; width: 12em; font-weight: bold; font-size: 12px; }
+#search input#q { width: 200px; border:0; padding:0; color: #000; margin: 0; font-weight: bold; font-size: 12px; background-color: transparent; }
+#search #q.qdef { color: #bcc5cc; }
+#search #q_submit { height:20px; width:30px; }
+#search span { display: block; float:left; height: 29px; padding: 3px 0 3px 0; border: 0; margin: 0; background: #e0e4e7 url(/core/gfx/bars-110202.png) no-repeat 0 -360px; line-height:12px; }
+#search #s1 { padding: 7px 6px 2px 8px; }
+#search #s2, #search #s4 { padding-left: 4px; background-position: -399px -360px; padding-top: 3px; width: 200px}
+#search #s2 { width: 200px}
+#search #s4 { padding-top: 5px; }
+#search #s3 { padding: 7px 6px 2px 8px; background-position: -230px -360px; }
+#search #s5 { width:30px; background-position: -1410px -360px; }
+#search_a { clear: right; float:right; display: none; font-size: 0.8em; width: 10em; }
+
+@media print {
+#search { display: none; }
+}

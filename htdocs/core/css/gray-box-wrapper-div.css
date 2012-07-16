@@ -1,0 +1,25 @@
+@charset "UTF-8"; /*----------------------------------------------------------------------
+  wrapper div
+------------------------------------------------------------------------
+  Defines the main "grey" area of the page, along with the top and left
+  graphics.
+----------------------------------------------------------------------*/
+#wrap { padding: 0 8px 0 10px; margin:0; background-color: #bcc5cc; }
+/* wrapper ids to add rounded corner to main part of page */
+#wrapB, #wrapT{ width: 100%; height: 10px; background-color: #bcc5cc; overflow: hidden; }
+#wrapT { margin-top:5px; }
+#wrapB { margin-bottom:10px; }
+
+#wrapTL, #wrapTR, #wrapBL, #wrapBR {
+  float:left; width:10px; height:10px;   background: url(/core/gfx/icons-110621.png) 0 -500px no-repeat; }
+#wrapTR { float: right; background-position: 0 -480px; }
+#wrapBL { background-position: 0 -510px; }
+#wrapBR { float: right; background-position: 0 -490px; }
+
+#wrap:after{
+  content:"."; display:block; height:0; clear:both; visibility:hidden; }
+
+@media print {
+  #wrap { width: 100%; float: none; margin: 0; padding: 0; border: 0; background-color: white; }
+  #wrapB, #wrapT { display: none; }
+}

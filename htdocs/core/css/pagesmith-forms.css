@@ -1,0 +1,102 @@
+@charset "UTF-8"; /* Replacement for previous (invalid) form css! */
+
+.hidden { display: none; }
+form dd p, form dd pre { padding-left: 0; padding-right: 0; }
+form dt {
+  clear:both; width:20%; float:left; color:#8E0018; text-align:right; margin: 1px 0; font-weight: bold
+}
+.twocol dd.information, form dd.information, .twocol dt.information, form dt.information { width: 100%; text-align: left; color:#14559f; font-weight: normal; }
+form dt a       { color: #663300; text-decoration: underline; font-weight: bold; }
+form dt a:hover { color:#ff7c0d; }
+form dd         { float:right; width:77%; color:#14559f; padding:0 5px; margin: 1px 0 0.5em 0}
+
+/* Classes to tweak the size of the left and right hand column widths...
+  usually for checkboxes and drop downs */
+form dt.fifty50  { width: 49%; }
+form dd.fifty50  { width: 48%; }
+form dt.eighty20 { width: 67%; }
+form dd.eighty20 { width: 29%; }
+form dt.left     { text-align: left; }
+
+textarea._pubmed_list, input._pubmed { float: left; width: 10em }
+textarea._pubmed_list { height: 20em }
+form dd._pubmed ul { margin-left: 9em; }
+form .max_len { float: right; border: 1px solid #14559f; font-size: 80%; margin-right: 5em; padding: 1px 0.5em; }
+/*
+form dd ul { margin: 0; padding: 0; }
+form dd ul li { float: left; padding: 0 12px; background-position: -16px -1984px; }
+*/
+form dt.buttons { width: 100%; text-align: center; }
+
+form dd input, form dd textarea { width: 90%; }
+form dd textarea.narrow { width: 7em; }
+form dd input.vshort { width: 4em; }
+form dd input.short { width: 7em; }
+form dd input.medium { width: 15em; }
+form dd input.mediumlong { max-width: 25em; }
+
+form dd select, form dd input { border: 1px solid #666; padding: 2px; }
+form dd select { padding: 1px; }
+
+form h3 { clear: both; }
+
+div.bordered_short { width: 10em; float: left; border:1px #bcc5cc solid; padding: 0.2em 0.5em; margin-right:1em}
+div.bordered       { width: 90%; float: left; border:1px #bcc5cc solid; padding: 0.2em 0.5em; margin-right:1em}
+div.bordered_tall  { width: 90%; float: left; border:1px #bcc5cc solid; padding: 0.2em 0.5em; min-height: 10em; margin-right:1em}
+
+ul.boxes { float: left; min-width: 20%; max-width: 90%; }
+ul.boxes ul { margin-top: 0; margin-bottom: 0; }
+ul.boxes span         { border:1px #bcc5cc solid; padding: 0.2em 0.5em; margin-right: 1em; }
+
+.col-required { background-color: #fec; }
+.col-optional { background-color: #fff; }
+.col-error    { background-color: #fcc; }
+.col-valid    { background-color: #cfc; }
+.col-supervalid { background-color: #4a4; }
+
+form.button-only input { font-size: 1.66em; padding: 0.2em 2em; font-weight: bold; margin: 1em; }
+form.button-only input.pos { color: #090; }
+form.button-only input.neg { color: #900; }
+
+form div.button-row { clear: both; }
+form div.button-default { float: right; width: 35%; text-align: left; margin-left: 2em; padding-top: 0; }
+form div.button-other { width: 68%; text-align: right; padding-top: 0.66em; }
+form div.button-default input { width: auto; padding: 0.2em 1em; font-weight: bold; font-size: 1.66em; margin-right: 3em; }
+form div.button-other input { width: auto; padding: 0.2em 1em; font-weight: bold; }
+/*form dd.button-row input.cancel { color: #900; }
+form dd.button-row input.next   { color: #090; }*/
+form div.button-default input.valid    { color: #090; }
+form div.button-default input.invalid  { color: #999; }
+
+form dd input._checkbox, form dd input.checkbox { width: 1em; background-color: transparent; }
+form dd input._checkbox, form dd input.checkbox, form dd input._file { border: 0; }
+
+#rhs .form-progress ul li.valid { color: #090; }
+#rhs .form-progress ul li.invalid { color: #900; }
+#rhs .form-progress ul li.active { font-weight: bold; }
+
+/* Modified widths so RHS doesn't break..*/
+#rhs form div.button-default { width: 40%; } /* Has to be slighlty wider */
+#rhs form dd { width: 73%; } /* Has to be slightly 2% narrow */
+#rhs form dd.fifty50  { width: 46%; }
+#rhs form dd.eighty20 { width: 28%; }
+
+.all-deleted, .deleted, .deleted dl dt, .deleted dl dd { text-decoration: line-through; }
+
+.form_error { color: #8e0018}
+.form_warn  { color: #930; }
+.form_msg   { color: #960; }
+.form_info  { color: #060; }
+
+optgroup { font-style: normal; }
+
+form div.disabled { display: none; }
+form dt.disabled { display: none; }
+form dd.disabled { display: none; }
+
+.ul_james { z-index: 200; padding: 0 0 0 1px; }
+.li_james { background: white; border: 1px solid #999; border-width: 0 1px 1px 1px; padding: 2px; font-size: 80%; }
+.li_james_hovered { background: #bcc5cc; }
+
+.file-blob { float: left; width: 200px; }
+.file-image { float: left; width: 400px; }

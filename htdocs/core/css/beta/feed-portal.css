@@ -1,0 +1,10 @@
+@charset "UTF-8"; /*----------------------------------------------------------------------
+  Feed pages
+------------------------------------------------------------------------
+  CSS styles for the +/- expansion buttons on RSS/Atom feed entries
+----------------------------------------------------------------------*/
+
+img.feed_img { height: 15px; width: 15px; background: url(/core/gfx/icons-110621.png) no-repeat scroll -10px -40px; padding: 0; margin: 0 8px 0 0; }
+img.feed_exp { background-position: -10px -55px; }
+img.feed_col { background-position: -10px -85px; }
+.feed_tog { margin-bottom: 0.5em; }

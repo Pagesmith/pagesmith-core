@@ -1,0 +1,198 @@
+/*----------------------------------------------------------------------
+  Table sorter code
+
+  author: js5 (James Smith)
+  svn-id: $Id$
+------------------------------------------------------------------------
+  Dependency: jquery.tablesorter.200.js, jquery.livequery.js
+------------------------------------------------------------------------
+  Attach the table sorter code to all tables that are marked with
+  ".sorted-table" class
+----------------------------------------------------------------------*/
+
+var table_counter = 0;
+
+$('body').first().append('<form action="/action/ExportJsonTable" method="post" id="export_json_table"><input type="hidden" value="" name="json" id="table_json"/><input type="hidden" value="" name="summary" id="table_summary"/><input type="hidden" value="" name="filter" id="table_filter"/></form>');
+
+$('.sorted-table').livequery(function () { // Make "sorted-table"s sortable
+  // console.log( $(this).html().substr(0,200) ); // useful to debug errors!
+  $(this).tablesorter({ widgets: ['zebra']});
+  table_counter++;
+  var class_string = $(this).attr('class'),
+    table_key = 'table_' + table_counter,
+    form_el,
+    m = $(this).attr('class').match(/\bpaginate_(\w+)/),
+    sizes,
+    t_array,
+    sel,
+    si,
+    size_value,
+    size_text,
+    exports,
+    selected,
+    formats,
+    fo,
+    q,
+    cols,
+    x,
+    s;
+  if ($(this).hasClass('before')) {
+    $(this).before('<div id="' + table_key + '" class="pager"><form></form></div>');
+  } else {
+    $(this).after('<div id="' + table_key + '" class="pager"><form></form></div>');
+  }
+  form_el= $('#' + table_key + ' form');
+
+  // Include a filter ?
+  if ($(this).hasClass('filter')) {
+    form_el.append('<span>Filter: <input type="text" value="" class="filter" /> ');
+  }
+
+  // Include pagination dropdown ?
+  if (m) {
+    form_el.append('<span class="pagedisplay" />');
+    if (!m[1].match(/x/)) {
+      m[1] = 'x' + m[1];
+    }
+    sizes = m[1].split('_');
+    if (sizes.length === 1) {
+      form_el.append('<input type="hidden" class="pagesize" value="' + sizes[0].substr(1) + '" >');
+    } else {
+      sel = '<select class="pagesize">';
+      for (si = 0; si < sizes.length; si++) {
+        size_value = sizes[si];
+        selected = '';
+        if (size_value.substr(0, 1) === 'x') {
+          size_value = size_value.substr(1);
+          selected = ' selected="selected"';
+        }
+        size_text = size_value + ' per page';
+        if (size_value === 'all') {
+          size_value = 1000000;
+          size_text  = 'All';
+        }
+        sel += '<option' + selected + ' value="' + size_value + '">' + size_text + '</option>';
+      }
+      form_el.append(sel + '</select>');
+    }
+
+  }
+
+  // Include export links ?
+  m = class_string.match(/\bexport_(\w+)/);
+  if (m) {
+    exports = '<span>';
+    formats = m[1].split('_');
+    for (fo = 0; fo < formats.length; fo++) {
+      exports += '<span class="jsondump">' + formats[fo].toUpperCase() + '</span>';
+    }
+    form_el.append(exports + '</span>');
+  }
+
+  // Add Functionality to table
+  if ($(this).hasClass('colfilter')) {
+    q = $(this).find('.foot');
+    if (q.length < 1) {
+      $(this).append('<tbody class="foot"></tbody>');
+      q = $(this).find('.foot');
+    }
+    cols = 0;
+    $(this).find('tr').each(function () {
+      x = this.cells.length;
+      if (x > cols) {
+        cols = x;
+      }
+    });
+    t_array = [];
+    t_array[cols] = '';
+    q.append('<tr>' + t_array.join('<td class="c"><input style="width:95%; margin: 2px 0" class="colfilter" type="text" /></td>') + '</tr>');
+  }
+  $(this).tablesorterPager({container: $('#' + table_key) });
+});
+
+jQuery.fn.zebra = function () {
+  /* If there is no "thead" block then flip the colours grey/white rather
+    that white/grey so the first row is grey... */
+  if (!jQuery(this).find('thead').length) {
+    jQuery(this).addClass('flip');
+  }
+  /*jsl:ignore*/
+  jQuery(this).find('tbody').not('.foot').children('tr')
+    .filter(':even')
+      .removeClass('odd')
+      .addClass('even')
+    .end()
+    .filter(':odd')
+      .removeClass('even')
+      .addClass('odd');
+  /*jsl:end*/
+};
+$('.zebra').livequery(function () {
+  $(this).children('dt').first().siblings('dt').addClass('bordered').next().addClass('bordered');
+});
+$('.zebra-table').livequery(function () {
+  if (!$(this).hasClass('faked')) {
+    $(this).zebra();
+  }
+});
+
+// Export for a zebra-table
+function plain_table_json_export(tb, format) {
+  var t_data = { head: [], body: [] }, th = tb.tHead, i, r, row, j, tb1;
+  if (th) {
+    for (i = th.rows.length; i; i) {
+      i--;
+      row = th.rows[i].cells;
+      r = [];
+      for (j = row.length; j; j) {
+        j--;
+        r.unshift($.trim($(row[j]).text()));
+      }
+      t_data.head.unshift(r);
+    }
+  }
+  if (tb.tBodies.length > 0) {
+    tb1 = tb.tBodies[0];
+    for (i = tb1.rows.length; i; i) {
+      i--;
+      row = tb1.rows[i];
+      r = [];
+      for (j = row.cells.length; j; j) {
+        j--;
+        r.unshift($.trim($(row.cells[j]).text()));
+      }
+      t_data.body.unshift(r);
+    }
+  }
+  $('#table_json').val(JSON.stringify(t_data));
+  $('#table_summary').val($(tb).attr('summary'));
+  $('#table_filter').val('');
+  $('#export_json_table').attr({target: '_blank', action: '/action/ExportJsonTable/' + format}).submit();
+  return;
+}
+
+$('.exportable').livequery(function () {
+  var class_string = $(this).attr('class'), that = this, table = $(this), form_el, m = $(this).attr('class').match(/\bexport_(\w+)/), table_key, exports, formats, fo;
+  table_counter++;
+  table_key = 'table_' + table_counter;
+  if (table.hasClass('before')) {
+    table.before('<div id="' + table_key + '" class="pager"></div>');
+  } else {
+    table.after('<div id="' + table_key + '" class="pager"></div>');
+  }
+  form_el = $('#' + table_key);
+
+  if (m) {
+    exports = '<span>';
+    formats = m[1].split('_');
+    for (fo = 0; fo < formats.length; fo++) {
+      exports += '<span class="jsondump">' + formats[fo].toUpperCase() + '</span>';
+    }
+    form_el.append(exports + '</span>');
+  }
+  $('.jsondump', form_el).click(function () {
+    plain_table_json_export(that, $(this).html());
+    return false;
+  });
+});
+
