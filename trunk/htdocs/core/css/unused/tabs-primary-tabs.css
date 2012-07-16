@@ -1,0 +1,55 @@
+/* Merged into merged-tabs.css */
+/*----------------------------------------------------------------------
+  Primary navigation tabs.
+------------------------------------------------------------------------
+  CSS styles for the primary navigation tabs (grey gradient)
+ 
+  We use sliding doors technique, plus vertical shifting  to put the
+  background on and use a single image to minimise http requests!
+
+  Note this uses the same graphic as the secondary navigation barss, and
+  the internal page frames to further minimise requests!
+ 
+  #navLeft  is for the real tabs!
+
+  #navRight is for the "login/logout link" that sites above the blue
+            bars
+----------------------------------------------------------------------*/
+
+#navTabs {overflow: hidden; width: 100%; clear: both; padding:0; margin:0; border-bottom:solid 1px #0e518d}
+#navLeft { float: left; }
+#navRight { width: 256px; float: right; text-align:right; font-size: 0.8em; margin: 5px 0 0 0}
+
+
+#rhs ul.tabs, ul.tabs, #navLeft ul { margin: 0; padding: 0; list-style: none; float: left; }
+#rhs ul.tabs li, .tabs li, #navLeft li { list-style: none; float: left; padding: 0 8px 0 0; margin:0;   background: url(/core/gfx/bars-110202.png) no-repeat right -111px; }
+#rhs ul.tabs li a, .tabs li a, #navLeft li a { display:  block; padding: 0 0 0 8px; line-height: 2em;   background: url(/core/gfx/bars-110202.png) no-repeat 0 -111px; text-decoration: none;   font-weight: bolder; color: #333; float: left; }
+
+.tabs li a:hover, #navLeft li a:hover { text-decoration: underline; color: #8E0018; }
+.tabs li.disabled {display:none}
+ul.show-disabled li.disabled {display:block}
+.tabs li.disabled a, .tabs li.disabled a:hover { color: #808080; cursor: default; text-decoration: none; }
+.tabs .active, #navLeft .active { background-position: right -51px; }
+.tabs .active a, #navLeft .active a { background-position: 0 -51px; color:white; }
+.tabs .active a:hover, #navLeft .active a:hover {color: white; text-decoration:underline; }
+
+ul.tabs { padding-left: 5px; }
+
+@media print {
+  ul.tabs, #navTabs { display: none; }
+}
+
+.sub_nav { float:right; width:20%; padding: 10px; }
+.sub_nav h4, .sub_nav h3 { background-color: #bcc5cc; }
+.sub_nav ul { border: 1px solid #bcc5cc; }
+.sub_nav a { text-decoration: none; font-weight: bold; }
+.sub_data { float:left; width:75%; }
+
+.sub_left { float: left; }
+.sub_narrow_nav { width: 30%; }
+.sub_narrow_data { width: 65%; }
+
+@media print {
+  .sub_nav { display: none; }
+  .sub_data { float: none; width: auto; }
+}

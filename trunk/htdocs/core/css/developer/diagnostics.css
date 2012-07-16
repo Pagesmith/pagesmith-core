@@ -1,0 +1,138 @@
+@charset "UTF-8"; /*----------------------------------------------------------------------
+  Web errors and messages
+------------------------------------------------------------------------
+  1) Format for failing components
+ 
+  2) Format for the display of messages from components to the browser
+----------------------------------------------------------------------*/
+.web-error { font-weight: bold; background-color:#fee; color: #900; }
+
+table.messages { font-size: 0.8em; border-collapse: collapse; width: 95%; margin: 0.5em auto; }
+
+.messages th { font-weight: bold; padding-top: 2px; }
+.message_first { width: 5%; }
+.message_number { width: 5%; text-align:right; }
+.messages tbody { margin:0; border:0; padding: 0; }
+.messages td, .messages th { margin:0; border:0; padding: 1px 2px; line-height: 1.1em}
+.messages p { margin: 0; }
+.message_pre  { white-space: pre; font-family: 'Andale mono', fixed; }
+/* Change the background-color of messages */
+.message_fatal { background-color: #fcc; }
+.message_error { background-color: #fdb; }
+.message_warn { background-color: #ffc; }
+.message_info { background-color: #cfc; }
+
+.twocol dd p, .twocol dd pre { padding: 0; margin:0 0 0.5em 0; }
+.twocol dt {
+  clear:both; width:20%; float:left; color:#14559f; text-align:right; margin: 1px 0; font-weight: bold
+}
+.twocol dt a       { color: #663300; text-decoration: underline; font-weight: bold; }
+.twocol dt a:hover { color:#ff7c0d; }
+.twocol dd         { float:right; width:77%; color:#000; padding:0 5px; margin: 1px 0 0.5em 0}
+
+dl.twocol { margin-top: 0.5em; }
+.twocol .twocol dt { text-align: left; }
+
+.evenwidth dt, .evenwidth dd { width: 48%; }
+.evenwidth dt, .evenwidth dd { width: 48%; }
+
+dl.twocol:after {
+  content:"."; display:block; height:0; clear:both; visibility:hidden; }
+
+.collapsed ul, .collapsed div, .collapsed table { display: none; }
+
+.panel { border: 1px solid #edc; font-size: 70%; }
+.panel h3 { background-color: #edc; color: #000; }
+
+
+#rhs ul.tabs, ul.tabs, #navLeft ul { margin: 0; padding: 0; list-style: none; float: left; }
+#rhs ul.tabs li, .tabs li, #navLeft li { list-style: none; float: left; padding: 0 8px 0 0; margin:0; 
+}
+#rhs ul.tabs li a, .tabs li a, #navLeft li a { display:  block; padding: 0 0 0 8px; line-height: 2em;   text-decoration: none; font-weight: bolder; color: #333; float: left; }
+
+.tabs li a:hover, #navLeft li a:hover { text-decoration: underline; color: #8E0018; }
+.tabs li.disabled {display:none}
+.tabs li.disabled a, .tabs li.disabled a:hover { color: #808080; cursor: default; text-decoration: none; }
+.tabs .active, #navLeft .active { background-color: #963; }
+.tabs .active a, #navLeft .active a { background-position: 0 -51px; color:white; }
+.tabs .active a:hover, #navLeft .active a:hover {color: white; background-color: #963; text-decoration:underline; }
+
+ul.tabs { padding-left: 5px; }
+
+@media print {
+  ul.tabs, #navTabs { display: none; }
+}
+
+.tabc { border-top: 1px solid #963; clear: both; }
+.tabc_hid { display: none; }
+
+.tabc h3 {display:none; }
+.tabc div h3, .tabc h3.keep { display:block; }
+
+
+/* re-instate when checked that all the headings are the right size!
+  #project #main .tabc h3 {background:none; border-bottom:none}
+*/
+@media print {
+  /* Show all the tabs which have been hidden, and remove the
+     extra border at the top of the tabs */
+  .tabc { border-top: 0; }
+  .tabc_hid { display: block; }
+}
+
+/*----------------------------------------------------------------------
+  Table styles
+------------------------------------------------------------------------
+  CSS styles for "sortable tables" in the page
+
+  We may want to tweak this to be able to use the styles without making
+  the table sortable
+----------------------------------------------------------------------*/
+
+/**
+  table styles
+**/
+
+table {
+  width: 90%;   border-collapse: collapse;   margin: 0.5em auto;   text-align: left; border: 1px solid #fff; }
+/**
+  thead/tfoot styles
+**/
+table thead tr th {
+  font-weight: bold; background-color: #bcc5cc; color: #3d3d3d; border: 2px solid #fff; padding: 2px 0.5em;   text-align: center
+}
+
+table.sorted-table thead tr .header {
+  cursor: pointer; padding: 2px 18px; background: #bcc5cc url(/core/gfx/icons-110621.png) no-repeat right -1028px; }
+
+table.sorted-table thead tr .headerSortDown { background-position: right -748px; }
+table.sorted-table thead tr .headerSortUp   { background-position: right -998px; }
+
+/**
+  tbody and tfoot styles
+**/
+table td {
+   color: #3d3d3d; padding: 2px 0.5em; background-color: #FFF; vertical-align: top; border: 2px solid #fff; }
+table tbody td {
+   background-color: #FFF; }
+table tbody.foot td {
+   background-color: #bcc5cc; font-weight: bold
+}
+
+/** Hack to make sure the first row is grey if there is no header row! **/
+table.flip tbody tr.even td, table tbody tr.odd td { background-color:#e0e4e7; }
+table.flip tbody tr.odd td { background-color:#fff; }
+
+.c, .c > td { text-align: center; }
+.r, .r > td { text-align: right; }
+.l, .l > td { text-align: left; }
+.nowrap, .nowrap > td { white-space: nowrap; }
+
+
+/* pre-formatted text */
+pre {
+  white-space: pre; margin: 0.5em 10px; padding: 3px;   border: 1px solid #bcc5cc; background-color:#e0e4e7; overflow:auto
+}
+
+.collapsible h3 img { background: url(/core/icons.png) -20px 0 no-repeat; height:16px; width:16px; padding: 0px; margin-right: 0.5em; float: left; display: block; }
+.collapsed h3 img { background-position: 0 0; }

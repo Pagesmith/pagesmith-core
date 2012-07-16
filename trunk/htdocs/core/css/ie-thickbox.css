@@ -1,0 +1,17 @@
+@charset "UTF-8"; /*----------------------------------------------------------------------
+  thick box fixes!
+------------------------------------------------------------------------
+  to make sure that the containing div goes to the full extent of
+  it's contents! the div needs a height of at least one pixel!
+----------------------------------------------------------------------*/
+ 
+#TB_overlay, #TB_window, #TB_load, #TB_HideSelect {position: absolute; }
+
+#TB_overlay { height:expression(document.body.scrollHeight>document.body.offsetHeight?document.body.scrollHeight:document.body.offsetHeight+'px'); }
+#TB_window  { position: fixed;   _position: absolute;   margin-top:expression( 0-parseInt(this.offsetHeight/2)+(TBWindowMargin=document.documentElement && document.documentElement.scrollTop || document.body.scrollTop)+'px'); }
+
+#TB_load    {  margin-top:expression(0-parseInt(this.offsetHeight/2)+(TBWindowMargin=document.documentElement && document.documentElement.scrollTop || document.body.scrollTop)+'px'); }
+#TB_HideSelect { height:expression(document.body.scrollHeight>document.body.offsetHeight?document.body.scrollHeight:document.body.offsetHeight+'px'); }
+
+/* IE6 Hack... */
+#TB_iframeContent{ _margin-bottom:1px; }

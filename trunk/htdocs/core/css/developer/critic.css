@@ -1,0 +1,41 @@
+@charset "UTF-8"; /* Make the count code appear floated right */
+  .indexboxes h3 span ,   .indexboxes li span { width: 9.5em; }
+  .indexboxes h3 span span ,     .indexboxes li span span { width: 3em; float: left; clear: none; margin: 0; padding: 0 2px; border: 0; font-weight: normal; }
+  .indexboxes h3 span span.goto ,     .indexboxes li span span.goto { display: inline; font-size: 1em; width: auto; float: none; clear: none; padding: 0; } 
+/* Hidden entries */
+  .critic tbody { display: none; }
+  .critic tbody.show,   .critic tbody.forced-show,   .critic tbody.ignore-show { display: table-row-group; }
+
+  .hideentries li.show,   .hideentries li.forced-show,   .hideentries li.ignore-show { display: list-item; }
+  .hideentries li,   .hideentries ol ol { display: none; }
+  .hideentries ol ol.ind-show { display: block; }
+
+/* Main critic table */
+  .critic { border-collapse: collapse; }
+  .critic tbody { border-bottom: 2px solid #fff; }
+  .critic td { border: 0; }
+  .critic .description pre { font-size: 80%; display: none}
+  .critic .description pre.info-show { display: block; }
+
+/* Colours... */
+  .ig, .ignore, .ignore td { color: #090; }
+  .fo, .forced, .forced td { color: #900; }
+  #rhs li.severity-5, .severity-5, .severity-5 td { background-color: #fdd; }
+  #rhs li.severity-4, .severity-4, .severity-4 td { background-color: #fdb; }
+  #rhs li.severity-3, .severity-3, .severity-3 td { background-color: #ffd; }
+  #rhs li.severity-2, .severity-2, .severity-2 td { background-color: #dfd; }
+  #rhs li.severity-1, .severity-1, .severity-1 td { background-color: #dff; }
+
+  .nowrap { white-space: nowrap; }
+    .critic tbody tr th { padding: 2px; }
+    .critic tbody.severity-hide,     ul.hideentries li.severity-hide,     #rhs ul li.severity-hide { display: none; }
+  #hide-info, #hide-ind, #hide-ignore, #hide-forced { padding: 2px 1em; }
+
+#rhs ul.indexboxes { padding-right: 0; }
+#rhs ul.indexboxes li { padding-right: 10px; }
+.code { line-height: 1em; padding: 0; }
+.linenumber { background-color: #fff; border-right: 1px solid #999; }
+
+#rhs .good { display: none; }
+ 
+#rhs ul.indexboxes li.tidy-error { background-color: #fcc; }

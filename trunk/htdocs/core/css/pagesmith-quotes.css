@@ -1,0 +1,6 @@
+@charset "UTF-8"; /* quotes */
+blockquote { font-style: italic; }
+q, p.intro, span.intro, p.quote, span.quote {color:#5c5150; font-weight:bold; font-style: italic}
+@media print {
+  q, p.intro, span.intro, p.quote, span.quote { color: black; }
+}

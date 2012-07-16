@@ -1,0 +1,62 @@
+/* Merged into merged-layouts.css */
+
+body { margin: 0 auto; border:0; background:#fff; padding: 0 10px;   min-width:800px; max-width: 1400px; font-size:100%;   line-height:1.125em; position: relative
+}
+
+/*----------------------------------------------------------------------
+  standard page....
+------------------------------------------------------------------------
+  These have the following layout:
+ 
+  /---------------------------\ /--------\
+  |     #main (75%)           | | #rhs   |
+  |                           | | (24%)  |
+  |                           | |        |
+  |                           | \--------/
+  |                           | /--------\
+  |                           | |        |
+  |                           | |        |
+  |                           | |        |
+  \---------------------------/ |        |
+  /---------------------------\ \--------/
+  |                           | /--------\
+  |                           | |        |
+  \---------------------------/ |        |
+                                |        |
+                                \--------/
+     
+   main is used to float col1 and col2 to the left in three col
+   layouts
+ ----------------------------------------------------------------------*/
+
+ #outer { font-size: 0.75em; }
+
+ #main  { float: left; width: 75%; padding:0; margin:0; border: 0; }
+
+ #rhs  { width:24%; float: right; }
+
+ #main:after {
+   content:"."; display:block; height:0; clear:both; visibility:hidden; ; }
+
+.col1 { width:49%; float: left; }
+.col2 { width:49%; float: right; }
+
+#fourcol .col1 h3, #fourcol .col2 h3
+{ position: relative; color: #8e0018; border-bottom: 1px solid #ccc; background: url(/core/gfx/bars-110202.png) 0 bottom; }
+
+
+#fourcol .col1 ul li, #fourcol .col2 ul li { background: none; padding-left: 10px; }
+
+#fourcol .col1 ul li a, #fourcol .col2 ul li a { font-weight: bold; }
+
+@media print {
+  #rhs .panel, #rhs .cb { display:none; }
+  #rhs .rhs_print { display:block; border-top: 1px solid #bcc5cc; padding-top: 10px; }
+  #fourcol .col1 h3, #fourcol .col2 h3 {
+    background: none; border-bottom: 0
+; }
+  #outer, body { width: 95%; min-width: 95%; max-width: 95%; margin: 0 auto; }
+  #rhs, #main, #outer { width: 100%; float: none; }
+
+}
+

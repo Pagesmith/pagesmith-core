@@ -1,0 +1,35 @@
+@charset "UTF-8"; /*----------------------------------------------------------------------
+  Pagesmith style/summary colouring
+------------------------------------------------------------------------
+  Colours are:
+
+# NOT USED   #cbdcec - Background page blue:
+   #e0e4e7 - light grey
+   #bcc5cc - Background page blue-grey:
+   #8e0018 - Magenta:
+   #14559f - Mid blue
+
+----------------------------------------------------------------------*/
+
+
+/*======================================================================
+  General styles...
+======================================================================*/
+
+/* em and strong tags */
+em  { font-style: italic; }
+strong { font-weight: bold; }
+p { padding: 0.5em 0 0 0; margin: 0 10px 0.5em 10px; }
+
+/* pre-formatted text */
+pre {
+  white-space: pre; margin: 0.5em 10px; padding: 3px;   border: 1px solid #bcc5cc; background-color:#e0e4e7; overflow:auto
+}
+code { background-color: #e0e4e7; font-weight: bold; padding: 0 0.25em; }
+
+blockquote { margin-left: 2em; margin-right: 2em; }
+/* paragraphs */
+
+sup { font-size: 75%; vertical-align: top; }
+
+em i, i em, i i, em em, .intro em, .intro i { font-style: normal; }

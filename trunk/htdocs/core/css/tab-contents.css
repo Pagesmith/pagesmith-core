@@ -1,0 +1,27 @@
+@charset "UTF-8"; /*----------------------------------------------------------------------
+  Tab content...
+------------------------------------------------------------------------
+  Note the actual tabs share CSS with the main navigation tabs so
+  are defined in pagesmith-header.css...
+
+  Note we don't hide the display on the print version of the page!
+----------------------------------------------------------------------*/
+.tabc { border-top: 1px solid #14559f; clear: both; }
+
+.tabc_hid { display: none; }
+
+.tabc > h3 { display:none; }
+.tabc h4, .tabc > h3.keep { display:block; margin-top: 5px; }
+
+.no-top-border { border-top: 0; }
+.no-top-border > h3 { display: block; margin-top: 5px; }
+/* re-instate when checked that all the headings are the right size!
+  #project #main .tabc h3 {background:none; border-bottom:none}
+*/
+@media print {
+  /* Show all the tabs which have been hidden, and remove the
+     extra border at the top of the tabs */
+  .tabc h3 { display: block; }
+  .tabc { border-top: 0; }
+  .tabc_hid { display: block; }
+}

@@ -1,0 +1,48 @@
+/* Merged into merged-layouts.css */
+
+/*----------------------------------------------------------------------
+  faculty pages....
+------------------------------------------------------------------------
+  These have the following layout:
+ 
+  /---------------------\ /--------------\
+  | #main (62%)         | | #rhs (37%)   |
+  |                     | |              |
+  |                     | |              |
+  |                     | |              |
+  |                     | |              |
+  |                     | \--------------/
+  |                     | /--------------\
+  |                     | |              |
+  |                     | |              |
+  |                     | |              |
+  |                     | |              |
+  \---------------------/ |              |
+  /---------------------\ |              |
+  |                     | |              |
+  |                     | \--------------/
+  \---------------------/  
+     
+  the rhs is wider...
+ ----------------------------------------------------------------------*/
+
+/* #faculty #colWrap {float: left; width: 100%; padding:0; margin:0} /* use to float col1 and col2 to the left in three col layouts*/
+#faculty #main { width: 62%; }
+#faculty #rhs  { width: 37%; }
+.facultyImage  {
+  width: 95%; height: 250px;   margin: 0 auto;   background-repeat:no-repeat;   background-position:center; }
+.facultyImage p {display: none; }
+
+#faculty #rhs dt { width:30%; margin: 5px 0; }
+#faculty #rhs dd { width:65%; margin: 5px 0; }
+
+/* Other faculty related files.. */
+div.fac_thumb { clear: left; }
+.fac_thumb img { float:left; margin:10px; padding:5px; border:1px solid #bcc5cc; }
+
+p.portrait {color:#5c5150; font-size:0.7em; font-weight:normal; text-align:center}
+
+@media print {
+  #faculty #rhs, #faculty #main { width: 100%; float: none; }
+  #rhs #teamleader { display:block; border-top: 1px solid #bcc5cc; padding-top: 10px; }
+}

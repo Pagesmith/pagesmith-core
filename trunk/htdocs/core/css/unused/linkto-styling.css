@@ -1,0 +1,10 @@
+ul li.linkto { min-height: 18px; background:transparent url(/core/gfx/icons-110621.png) no-repeat scroll 0 0;   line-height: 1.1em; margin-bottom:1px} /* "Magenta" */
+ul li.linkto a { padding-left:20px; color:#8e0018; }
+ul li.l_email     { background-position: -10px -410px; }
+ul li.l_digg      { background-position: -10px -445px; }
+ul li.l_facebook  { background-position: -10px -490px; }
+ul li.l_delicious { background-position: -10px -535px; }
+ul li.l_slashdot  { background-position: -10px -580px; }
+ul li.l_reddit    { background-position: -10px -625px; }
+ul li.l_twitter   { background-position: -10px -670px; }
+ul li.l_stumble   { background-position: -10px -715px; }

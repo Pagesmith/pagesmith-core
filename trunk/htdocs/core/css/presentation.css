@@ -1,0 +1,9 @@
+@charset "UTF-8";   .presentation { text-align: center; }
+  .preshid { display: none; }
+  .presentation img { width:640px; height:480px; }
+  .presentation span { background-color: #fcc; cursor: hand; background-color: #e0e4e7; padding: 1px 2px; text-decoration: none; font-weight: bold; }
+  .presentation span.active { background-color: #bcc5cc; font-weight: bold; }
+  @media print {
+    .preshid { display: inline; }
+    .presentation div { display: none; }
+; }
