@@ -19,7 +19,7 @@
 
 p.link { margin-left: 4em; font-size: 90%; }
 #searchresults #rhs ul li {
-  list-style-type:none;   background: url(/core/gfx/icons-110621.png) -12px -1982px no-repeat;   padding-left: 20px
+  list-style-type:none;   background: url(/core/gfx/icons-120703.png) -12px -1982px no-repeat;   padding-left: 20px
 }
 
 
@@ -35,10 +35,10 @@ p.link { margin-left: 4em; font-size: 90%; }
   icon - so just shuffling the background image.!
 ----------------------------------------------------------------------*/
 #collapse-all, #expand-all {
-  font-size: 0.5em;   float: right; display: block; border: 1px solid #bcc5cc;   line-height:2em;   padding: 1px 0.5em 1px 20px; font-weight: bold; cursor: pointer; color: #14559f;    background: #e0e4e7 url(/core/gfx/icons-110621.png) 2px -2020px no-repeat; margin-left: 0.5em
+  font-size: 0.5em;   float: right; display: block; border: 1px solid #bcc5cc;   line-height:2em;   padding: 1px 0.5em 1px 20px; font-weight: bold; cursor: pointer; color: #14559f;    background: #e0e4e7 url(/core/gfx/icons-120703.png) -20px -2020px no-repeat; margin-left: 0.5em
 }
 
-#collapse-all { background-position: 2px -2253px; }
+#collapse-all { background-position: -20px -2040px; }
 
 /*----------------------------------------------------------------------
   Collapse + expand functionality
@@ -57,23 +57,23 @@ p.link { margin-left: 4em; font-size: 90%; }
     when the box is collapsed
 ----------------------------------------------------------------------*/
 
-.collapsible h3 img { background: url(/core/gfx/icons-110621.png) -2px -53px no-repeat; height:16px; width:16px; padding: 0px; margin-right: 0.5em; float: left; display: block; }
+.collapsible h3 img { background: url(/core/gfx/icons-120703.png) -20px -1220px no-repeat; height:16px; width:16px; padding: 0px; margin-right: 0.5em; float: left; display: block; }
 .collapsed h3 img { background-position: -2px -20px; }
 
-.collapsible h4.keep img { background: url(/core/gfx/icons-110621.png) -2px -53px no-repeat; height:16px; width:16px; padding: 0px; margin-right: 0.5em; float: left; display: block; }
+.collapsible h4.keep img { background: url(/core/gfx/icons-120703.png) -40px -1200px no-repeat; height:16px; width:16px; padding: 0px; margin-right: 0.5em; float: left; display: block; }
 .collapsed h4.keep img { background-position: -2px -20px; }
 
 .collapsed div.coll, .collapsed ul, .collapsed .searchhit, .collapsed table, .collapsed pre, .collapsed h4, .collapsed p, .collapsed dl, .collapsed ul, .collapsed ol { display: none; }
 
 .collapsed h4.keep { display: block; }
 
-.collapsible .bt     { background-position: 100% -330px; }
-.collapsible .bt div { background-position: 0 -330px; }
+.collapsible .bt     { background-position: 100% -360px; }
+.collapsible .bt div { background-position: 0 -360px; }
 
 #rhs .collapsible h3, .collapsible h3 { background: none #e0e4e7; border-bottom: 0; }
 
-.collapsed .bb     { background-position: 100% -338px; }
-.collapsed .bb div { background-position: 0 -338px; }
+.collapsed .bb     { background-position: 100% -368px; }
+.collapsed .bb div { background-position: 0 -368px; }
 
 #searchresults #relinfo { display: none; }
 #search-add, .search-remove { cursor: pointer; margin: 0 auto; padding: 0 2px; border: 1px solid #bcc5cc; background-color: #e0e4e7; display: block; width: 1.5em; }

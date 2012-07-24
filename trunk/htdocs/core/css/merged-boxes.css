@@ -26,12 +26,12 @@
 .cb {margin: 0; padding:5px; clear: both}
 
 /* Top corners and border */
-.bt, .bb, .bt div, .bb div { background-image: url(/core/gfx/bars-110202.png); background-repeat: no-repeat; height:8px; margin:0; }
+.bt, .bb, .bt div, .bb div { background-image: url(/core/gfx/bars-120723.png); background-repeat: no-repeat; height:8px; margin:0; }
 .bt div, .bb div { position:relative; left:0; width:8px; font-size:0; line-height:0; }
-.bt     { background-position: 100% -32px; }
-.bt div { background-position: 0 -32px; }
-.bb     { background-position: 100% -40px; height: 11px; }
-.bb div { background-position: 0 -40px; height: 11px; }
+.bt     { background-position: 100% -42px; }
+.bt div { background-position: 0 -42px; }
+.bb     { background-position: 100% -50px; height: 11px; }
+.bb div { background-position: 0 -50px; height: 11px; }
 .i1 { margin:0; display:block; padding:0 1px 0 0; background-color: #b2bbc2; }
 .i2 { margin:0; display:block; padding:0 1px 0 0; background-color: #a0a8ae; }
 .i3 { background-color: #ffffff; margin:0; display:block; padding:0; }
@@ -71,10 +71,10 @@
 
 .callout { width: 33%; float: left; margin: 10px; clear: left; }
 .callout .panel { background-color: #0e518d; border: 0; }
-.callout .bt       { background-position: 100% -16px}
-.callout .bt div   { background-position: 0 -16px}
-.callout .bb       { height:8px; background-position: 100% -24px}
-.callout .bb div   { height:8px; background-position: 0 -24px}
+.callout .bt       { background-position: 100% -22px}
+.callout .bt div   { background-position: 0 -22px}
+.callout .bb       { height:8px; background-position: 100% -30px}
+.callout .bb div   { height:8px; background-position: 0 -30px}
 
 .callout .i1, .callout .i2 { padding:0; }
 .callout .i3 { padding:0; background:#0e518d; }
@@ -97,42 +97,42 @@
 */
 
 .developer.panel    { background-color: #ffe8cc; border: 0; }
-.developer .bt       { background-position: 100% -420px}
-.developer .bt div   { background-position: 0 -420px}
-.developer .bb       { background-position: 100% -428px}
-.developer .bb div   { background-position: 0 -428px}
+.developer .bt       { background-position: 100% -436px}
+.developer .bt div   { background-position: 0 -436px}
+.developer .bb       { background-position: 100% -444px}
+.developer .bb div   { background-position: 0 -444px}
 .developer .i3 { background-color:#ffe8cc; }
 .developer h3 { color: #8e0018; border-bottom: 1px solid #8e0018; }
 
 .box-info.panel      { background-color: #cfc; border: 0; } /* green */
-.box-info .bt       { background-position: 100% -440px}
-.box-info .bt div   { background-position: 0 -440px}
-.box-info .bb       { background-position: 100% -448px}
-.box-info .bb div   { background-position: 0 -448px}
+.box-info .bt       { background-position: 100% -456px}
+.box-info .bt div   { background-position: 0 -456px}
+.box-info .bb       { background-position: 100% -464px}
+.box-info .bb div   { background-position: 0 -464px}
 .box-info .i3 { background-color:#cfc; }
 .box-info h3 { color: #060; border-bottom: 1px solid #060; }
 
 .box-msg.panel      { background-color: #ffc; border: 0; } /* yellow */
-.box-msg .bt       { background-position: 100% -460px}
-.box-msg .bt div   { background-position: 0 -460px}
-.box-msg .bb       { background-position: 100% -468px}
-.box-msg .bb div   { background-position: 0 -468px}
+.box-msg .bt       { background-position: 100% -476px}
+.box-msg .bt div   { background-position: 0 -476px}
+.box-msg .bb       { background-position: 100% -484px}
+.box-msg .bb div   { background-position: 0 -484px}
 .box-msg .i3 { background-color:#ffc; }
 .box-msg h3 { color: #960; border-bottom: 1px solid #960; }
 
 .box-error.panel      { background-color: #fcc; border: 0; } /* red */
-.box-error .bt       { background-position: 100% -480px}
-.box-error .bt div   { background-position: 0 -480px}
-.box-error .bb       { background-position: 100% -488px}
-.box-error .bb div   { background-position: 0 -488px}
+.box-error .bt       { background-position: 100% -496px}
+.box-error .bt div   { background-position: 0 -496px}
+.box-error .bb       { background-position: 100% -504px}
+.box-error .bb div   { background-position: 0 -504px}
 .box-error .i3 { background-color:#fcc; }
 .box-error h3 { color: #8e0018; border-bottom: 1px solid #8e0018; }
 
 .box-warn.panel      { background-color: #ffe8cc; border: 0; } /* orange */
-.box-warn .bt       { background-position: 100% -500px}
-.box-warn .bt div   { background-position: 0 -500px}
-.box-warn .bb       { background-position: 100% -508px}
-.box-warn .bb div   { background-position: 0 -508px}
+.box-warn .bt       { background-position: 100% -516px}
+.box-warn .bt div   { background-position: 0 -516px}
+.box-warn .bb       { background-position: 100% -524px}
+.box-warn .bb div   { background-position: 0 -524px}
 .box-warn .i3 { background-color:#ffe8cc; }
 .box-warn h3 { color: #8e0018; border-bottom: 1px solid #8e0018; }
 
@@ -141,34 +141,34 @@
 .cb .box-info .i1, .cb .box-msg .i1, .cb .box-error .i1, .cb .box-warn .i1 { background-color: #f5f5f5; }
 
 .panel .box-info.panel      { background-color: #cfc; border: 0; } /* green */
-.cb .box-info .bt       { background-position: 100% -520px}
-.cb .box-info .bt div   { background-position: 0 -520px}
-.cb .box-info .bb       { background-position: 100% -528px}
-.cb .box-info .bb div   { background-position: 0 -528px}
+.cb .box-info .bt       { background-position: 100% -537px}
+.cb .box-info .bt div   { background-position: 0 -537px}
+.cb .box-info .bb       { background-position: 100% -545px}
+.cb .box-info .bb div   { background-position: 0 -545px}
 .cb .box-info .i3 { background-color:#cfc; }
 .cb .box-info h3 { color: #060; border-bottom: 1px solid #060; }
 
 .panel .box-msg.panel      { background-color: #ffc; border: 0; } /* yellow */
-.cb .box-msg .bt       { background-position: 100% -540px}
-.cb .box-msg .bt div   { background-position: 0 -540px}
-.cb .box-msg .bb       { background-position: 100% -548px}
-.cb .box-msg .bb div   { background-position: 0 -548px}
+.cb .box-msg .bt       { background-position: 100% -557px}
+.cb .box-msg .bt div   { background-position: 0 -557px}
+.cb .box-msg .bb       { background-position: 100% -565px}
+.cb .box-msg .bb div   { background-position: 0 -565px}
 .cb .box-msg .i3 { background-color:#ffc; }
 .cb .box-msg h3 { color: #960; border-bottom: 1px solid #960; }
 
 .panel .box-error.panel      { background-color: #fcc; border: 0; } /* red */
-.cb .box-error .bt       { background-position: 100% -560px}
-.cb .box-error .bt div   { background-position: 0 -560px}
-.cb .box-error .bb       { background-position: 100% -568px}
-.cb .box-error .bb div   { background-position: 0 -568px}
+.cb .box-error .bt       { background-position: 100% -577px}
+.cb .box-error .bt div   { background-position: 0 -577px}
+.cb .box-error .bb       { background-position: 100% -585px}
+.cb .box-error .bb div   { background-position: 0 -585px}
 .cb .box-error .i3 { background-color:#fcc; }
 .cb .box-error h3 { color: #8e0018; border-bottom: 1px solid #8e0018; }
 
 .panel .box-warn.panel      { background-color: #ffe8cc; border: 0; } /* orange */
-.cb .box-warn .bt       { background-position: 100% -580px}
-.cb .box-warn .bt div   { background-position: 0 -580px}
-.cb .box-warn .bb       { background-position: 100% -588px}
-.cb .box-warn .bb div   { background-position: 0 -588px}
+.cb .box-warn .bt       { background-position: 100% -597px}
+.cb .box-warn .bt div   { background-position: 0 -605px}
+.cb .box-warn .bb       { background-position: 100% -597px}
+.cb .box-warn .bb div   { background-position: 0 -605px}
 .cb .box-warn .i3 { background-color:#ffe8cc; }
 .cb .box-warn h3 { color: #8e0018; border-bottom: 1px solid #8e0018; }
 
@@ -195,10 +195,10 @@
 ----------------------------------------------------------------------*/
 
 .project { width: 33%; float: left; margin: 10px; }
-.project .bt       { background-position: 100% 0}
-.project .bt div   { background-position: 0 0}
-.project .bb       { height:8px; background-position: 100% -8px}
-.project .bb div   { height:8px; background-position: 0 -8px}
+.project .bt       { background-position: 100% -2px}
+.project .bt div   { background-position: 0 -2px}
+.project .bb       { height:8px; background-position: 100% -10px}
+.project .bb div   { height:8px; background-position: 0 -10px}
 .project .i1 , #page .project .i1 { padding:0 1px 0 0; background-color: #bcc5cc; }
 .project .i2 , #page .project .i2 { padding:0 0 0 1px; background-color: #bcc5cc; }
 .project .i3 , #page .project .i3 { padding:0 10px; background:#ffffff; }

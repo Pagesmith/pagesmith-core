@@ -11,10 +11,10 @@
 #wrapB { margin-bottom:10px; }
 
 #wrapTL, #wrapTR, #wrapBL, #wrapBR {
-  float:left; width:10px; height:10px;   background: url(/core/gfx/icons-110621.png) 0 -500px no-repeat; }
-#wrapTR { float: right; background-position: 0 -480px; }
-#wrapBL { background-position: 0 -510px; }
-#wrapBR { float: right; background-position: 0 -490px; }
+  float:left; width:10px; height:10px;   background: url(/core/gfx/bars-120723.png) -1px -619px no-repeat; }
+#wrapTR { float: right; background-position: -12px -619px; }
+#wrapBL { background-position: -24px -620px; }
+#wrapBR { float: right; background-position: -35px -620px; }
 
 #wrap:after{
   content:"."; display:block; height:0; clear:both; visibility:hidden; }

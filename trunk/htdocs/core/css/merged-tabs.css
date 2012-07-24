@@ -6,7 +6,7 @@
   Note these are not real tabs just links!
 ----------------------------------------------------------------------*/
 #NavTabs2 {overflow: hidden; border-top: 1px solid #0e518d}
-ul#Tabs2, ul.second-tabs { margin: 0; padding: 4px 5px 0 5px; list-style: none; width: 100%; float: left; background: #0e518d url(/core/gfx/bars-110202.png) 0 -171px no-repeat; }
+ul#Tabs2, ul.second-tabs { margin: 0; padding: 4px 5px 0 5px; list-style: none; width: 100%; float: left; background: #0e518d url(/core/gfx/bars-120723.png) 0 -193px no-repeat; }
 ul.second-tabs { background-position: right -171px; background-color: transparent }
 ul#Tabs2 li, ul.second-tabs li { float: left; background: none; padding:0; }
 #Tabs2 li a, ul.second-tabs li a { display:  block; padding: .25em 1em 0 1em; line-height: 2em;     text-decoration: none; color: white; float: left;     font-weight: bold
@@ -42,16 +42,16 @@ ul#Tabs2 li, ul.second-tabs li { float: left; background: none; padding:0; }
 
 #rhs ul.tabs, ul.tabs, #navLeft ul { margin: 0; padding: 0; list-style: none; float: left; }
 #rhs ul.navr, ul.navr { float: right; }
-#rhs ul.tabs li, .tabs li, #navLeft li { list-style: none; float: left; padding: 0 8px 0 0; margin:0;   background: url(/core/gfx/bars-110202.png) no-repeat right -111px; }
-#rhs ul.tabs li a, .tabs li a, #navLeft li a { display:  block; padding: 0 0 0 8px; line-height: 2em;   background: url(/core/gfx/bars-110202.png) no-repeat 0 -111px; text-decoration: none;   font-weight: bolder; color: #333; float: left; }
+#rhs ul.tabs li, .tabs li, #navLeft li { list-style: none; float: left; padding: 0 8px 0 0; margin:0;   background: url(/core/gfx/bars-120723.png) no-repeat right -129px; }
+#rhs ul.tabs li a, .tabs li a, #navLeft li a { display:  block; padding: 0 0 0 8px; line-height: 2em;   background: url(/core/gfx/bars-120723.png) no-repeat 0 -129px; text-decoration: none;   font-weight: bolder; color: #333; float: left; }
 
 #rhs ul.tabs { font-size:80%; margin-top: 2px; }
 #rhs ul.tabs li a:hover, .tabs li a:hover, #navLeft li a:hover { text-decoration: underline; color: #8E0018; }
 #rhs ul.tabs .disabled, .tabs li.disabled {display:none}
 ul.show-disabled li.disabled {display:block}
 #rhs ul.tabs .disabled a, .tabs li.disabled a, .tabs li.disabled a:hover { color: #808080; cursor: default; text-decoration: none; }
-#rhs ul.tabs .active, .tabs .active, #navLeft .active { background-position: right -51px; }
-#rhs ul.tabs .active a, .tabs .active a, #navLeft .active a { background-position: 0 -51px; color:white; }
+#rhs ul.tabs .active, .tabs .active, #navLeft .active { background-position: right -65px; }
+#rhs ul.tabs .active a, .tabs .active a, #navLeft .active a { background-position: 0 -65px; color:white; }
 #rhs ul.tabs .active a:hover, .tabs .active a:hover, #navLeft .active a:hover {color: white; text-decoration:underline; }
 
 #rhs ul.tabs, ul.tabs { padding-left: 5px; }
