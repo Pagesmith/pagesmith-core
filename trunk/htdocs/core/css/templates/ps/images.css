@@ -1,0 +1,23 @@
+@charset "UTF-8"; /*----------------------------------------------------------------------
+  "Callout" piccies!
+------------------------------------------------------------------------
+  ....!
+----------------------------------------------------------------------*/
+
+.cPic, .cPic-c {
+  text-align: center;   padding: 10px 2px 5px 5px;   margin: 0 10px 5px;   display: block;   background: #fff; /* Captioned pictures need to be "solid" so that they hide the foobared > */
+}
+
+.cPic {
+  width:240px; border: 1px solid #bcc5cc; }
+
+.cPic-c img, .cPic img { margin: 0 auto; }
+.cPic-c p, .cPic p { font-size: 0.8em; text-align: center; padding: 0.5em 0;   margin: 0 auto; color: #505050; line-height: 1.25em; }
+
+.cPic p { margin-top: 10px; border-top: 1px solid #bcc5cc; margin: 10px auto 0 auto; }
+
+#featureR a img, .cPic-c p img, .cPic p img { float: right; margin: 5px 0 0 0; height: 18px; width:67px; background: url(/core/gfx/icons-120724.png) 0 -20px no-repeat; }
+
+.cPic-c:after {  content:"."; display:block; height:0; clear:both; visibility:hidden; }
+#featureR a img { margin-top: 10px; float: none; }
+

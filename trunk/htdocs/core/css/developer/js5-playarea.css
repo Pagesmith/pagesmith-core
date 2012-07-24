@@ -1,5 +1,1 @@
-@charset "UTF-8"; #search span.edit_link, 
-span.edit_link { margin: -1em 1em 0 0; display:block; float: right; color: #fec; background: #900 !important; border: 1px solid red; border-color: #300 #f00 #f00 #300 ; font-weight: bold; padding: 1px 0.5em; height: auto; }
-
-span.edit_block { margin: 0; display:block; float: right; color: #fec; background: #900 !important; border: 1px solid red; border-color: #300 #f00 #f00 #300 ; font-weight: bold; padding: 1px 0.5em; height: auto; }
-
+@charset "UTF-8";

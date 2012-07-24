@@ -1,0 +1,68 @@
+@charset "UTF-8";
+#searchindex h2, #searchresults h2 { padding-bottom: 0; }
+#searchresults #rhs p span, #searchresults #rhs li span, .indexboxes li span, .indexboxes h3 span { clear: right; display: block; text-decoration: none ; float: right; width: 5em; border:1px solid #bcc5cc; background-color:#fff; text-align: center; padding: 0px 0.5em; margin-left: 0.5em; font-size: 0.9em}
+.indexboxes li span { background-color:#e0e4e7; }
+
+.wide_indexboxes li span { width: 7em; }
+.indexboxes li span span { width: 2em; float: left; clear: none; margin: 0; padding: 0 2px; border: 0; font-weight: normal; }
+.wide_indexboxes li span span { width: 3em; }
+
+#rhs li ul li , li ul li { padding-right: 0; }
+/*#searchindex li a { display: block; border:1px solid red; zoom: 1; }*/
+#searchresults .more { width: 100%; text-align: right; margin-top: 0; padding-top: 10px; }
+#searchresults .more, #searchresults .paginate, .indexboxes ul { border-top: 1px solid #bcc5cc; }
+#searchresults .more img { float: right; }
+
+.referencedDomain, .initialDomain, .domain { font-style: italic; color: #8e0018; }
+
+.entryId, .queryString { font-weight: bold; color: #8e0018; }
+
+p.link { margin-left: 4em; font-size: 90%; }
+#searchresults #rhs ul li {
+  list-style-type:none;   background: url(/core/gfx/icons-120724.png) 10px -1420px no-repeat;   padding-left: 20px
+}
+
+
+#searchresults .paginate, .searchhit, .more-results { clear: both; border-top: 1px solid #bcc5cc; }
+.searchhit h4 { padding-top: 5px; }
+.more-results { padding-left: 4em; }
+
+/*----------------------------------------------------------------------
+  "Collapse all" "expand all" buttons
+------------------------------------------------------------------------
+  These are floated right inside the h2 element (hence the small
+  relative font-size) - everything is the same except for the
+  icon - so just shuffling the background image.!
+----------------------------------------------------------------------*/
+#collapse-all, #expand-all {
+  font-size: 0.5em;   float: right; display: block; border: 1px solid #bcc5cc;   line-height:2em;   padding: 1px 0.5em 1px 20px; font-weight: bold; cursor: pointer; color: #14559f;    background: #e0e4e7 url(/core/gfx/icons-120724.png) -20px -1380px no-repeat; margin-left: 0.5em
+}
+
+#collapse-all { background-position: -40px -1360px; }
+
+/*----------------------------------------------------------------------
+  Collapse + expand functionality
+------------------------------------------------------------------------
+  buttons
+    A blank gif is inserted into each of the ".collapsible h3" elements
+    on the page - which is then styled as below.. it uses the same
+    graphic as the expand/collapse all and is only changed by the
+    vertical position within the image.
+  hiding div
+    When collapsed we need to hide the div - this is simply a case of
+    setting display to none!
+  box styling
+    We over-ride the box styling by moving the image around, the two
+    of the collapsable boxes are always v-light grey, and the bottom is
+    when the box is collapsed
+----------------------------------------------------------------------*/
+
+.collapsible h3 img { background: url(/core/gfx/icons-120724.png) -20px -1380px no-repeat; height:16px; width:16px; padding: 0px; margin-right: 0.5em; float: left; display: block; }
+.collapsed h3 img { background-position: -2px -20px; }
+
+.collapsible h4.keep img { background: url(/core/gfx/icons-120724.png) -40px -1360px no-repeat; height:16px; width:16px; padding: 0px; margin-right: 0.5em; float: left; display: block; }
+.collapsed h4.keep img { background-position: -2px -20px; }
+
+.collapsed div.coll, .collapsed ul, .collapsed .searchhit, .collapsed table, .collapsed pre, .collapsed h4, .collapsed p, .collapsed dl, .collapsed ul, .collapsed ol { display: none; }
+
+.collapsed h4.keep { display: block; }

@@ -1,0 +1,78 @@
+@charset "UTF-8"; /*----------------------------------------------------------------------
+  Secondary navigation "tabs."
+------------------------------------------------------------------------
+  CSS styles for the secondary navigation (blue gradient) on the page
+ 
+  Note these are not real tabs just links!
+----------------------------------------------------------------------*/
+#NavTabs2 {overflow: hidden; border-top: 1px solid #0e518d}
+ul#Tabs2, ul.second-tabs { margin: 0; padding: 4px 5px 0 5px; list-style: none; width: 100%; float: left; background: #0e518d url(/core/gfx/templates/ps/bars-120724.png) 0 -193px no-repeat; }
+ul.second-tabs { background-position: right -171px; background-color: transparent }
+ul#Tabs2 li, ul.second-tabs li { float: left; background: none; padding:0; }
+#Tabs2 li a, ul.second-tabs li a { display:  block; padding: .25em 1em 0 1em; line-height: 2em;     text-decoration: none; color: white; float: left;     font-weight: bold
+}
+#Tabs2 li a:hover, ul.second-tabs li a:hover { color: #fff; text-decoration: underline; }
+#Tabs2 .active a, #Tabs2 .active a:hover, ul.second-tabs .active a, ul.second-tabs .active a:hover { color: #14559f; background-color: #fff; }
+
+@media print {
+  #NavTabs2 { display: none; }
+}
+
+/*----------------------------------------------------------------------
+  Primary navigation tabs.
+------------------------------------------------------------------------
+  CSS styles for the primary navigation tabs (grey gradient)
+ 
+  We use sliding doors technique, plus vertical shifting  to put the
+  background on and use a single image to minimise http requests!
+
+  Note this uses the same graphic as the secondary navigation barss, and
+  the internal page frames to further minimise requests!
+ 
+  #navLeft  is for the real tabs!
+
+  #navRight is for the "login/logout link" that sites above the blue
+            bars
+----------------------------------------------------------------------*/
+
+#navTabs {overflow: hidden; width: 100%; clear: both; padding:0; margin:0; border-bottom:solid 1px #0e518d}
+#navLeft { float: left; }
+#navRight { float: right; text-align:right; margin: 2px 0 0}
+
+
+#rhs ul.tabs, ul.tabs, #navLeft ul { margin: 0; padding: 0; list-style: none; float: left; }
+#rhs ul.navr, ul.navr { float: right; }
+#rhs ul.tabs li, .tabs li, #navLeft li { list-style: none; float: left; padding: 0 8px 0 0; margin:0;   background: url(/core/gfx/templates/ps/bars-120724.png) no-repeat right -129px; }
+#rhs ul.tabs li a, .tabs li a, #navLeft li a { display:  block; padding: 0 0 0 8px; line-height: 2em;   background: url(/core/gfx/templates/ps/bars-120724.png) no-repeat 0 -129px; text-decoration: none;   font-weight: bolder; color: #333; float: left; }
+
+#rhs ul.tabs { font-size:80%; margin-top: 2px; }
+#rhs ul.tabs li a:hover, .tabs li a:hover, #navLeft li a:hover { text-decoration: underline; color: #8E0018; }
+#rhs ul.tabs .disabled, .tabs li.disabled {display:none}
+ul.show-disabled li.disabled {display:block}
+#rhs ul.tabs .disabled a, .tabs li.disabled a, .tabs li.disabled a:hover { color: #808080; cursor: default; text-decoration: none; }
+#rhs ul.tabs .active, .tabs .active, #navLeft .active { background-position: right -65px; }
+#rhs ul.tabs .active a, .tabs .active a, #navLeft .active a { background-position: 0 -65px; color:white; }
+#rhs ul.tabs .active a:hover, .tabs .active a:hover, #navLeft .active a:hover {color: white; text-decoration:underline; }
+
+#rhs ul.tabs, ul.tabs { padding-left: 5px; }
+
+@media print {
+  ul.tabs, #navTabs { display: none; }
+}
+
+.sub_nav { float:right; width:20%; padding: 10px; }
+.sub_nav h4, .sub_nav h3 { background-color: #bcc5cc; padding: 5px 10px; margin: 0; }
+.sub_nav ul { border: 1px solid #bcc5cc; }
+.sub_nav a { text-decoration: none; font-weight: bold; }
+.sub_data { float:left; width:75%; }
+
+.sub_left { float: left; }
+.sub_narrow_nav { width: 30%; }
+.sub_narrow_data { width: 65%; }
+
+@media print {
+  .sub_nav { display: none; }
+  .sub_data { float: none; width: auto; }
+}
+
+ul.tabs + div { clear: both }
