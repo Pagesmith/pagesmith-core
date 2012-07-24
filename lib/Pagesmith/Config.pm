@@ -23,7 +23,7 @@ use Hash::Merge qw(merge);
 use Readonly qw(Readonly);
 use YAML::Loader;
 
-use base qw(Pagesmith::Support);
+use base qw(Pagesmith::Root);
 use Pagesmith::Cache;
 use Pagesmith::ConfigHash qw(site_key set_site_key get_config can_cache docroot server_root);
 
@@ -34,12 +34,14 @@ Readonly my $DEFAULT_FILE     => 'config';
 sub new {
   my( $class, $params ) = @_;
   my $self = {
-    'key'  => exists $params->{'key'}      ? $params->{'key'}      : get_config('ConfigKey'),
-    'file' => exists $params->{'file'}     ? $params->{'file'}     : $DEFAULT_FILE,
-    'loc'  => exists $params->{'location'} ? $params->{'location'} : $DEFAULT_LOCATION,
-    'data' => {},
+    'key'       => exists $params->{'key'}      ? $params->{'key'}      : get_config('ConfigKey'),
+    'file'      => exists $params->{'file'}     ? $params->{'file'}     : $DEFAULT_FILE,
+    'loc'       => exists $params->{'location'} ? $params->{'location'} : $DEFAULT_LOCATION,
+    'override'  => exists $params->{'override'} ? $params->{'override'} : 0,
+    'data'      => {},
     'use_cache' => exists $params->{'no_cache'} ? 1 : 0,
   };
+
   bless $self, $class;
   return $self;
 }
@@ -59,17 +61,18 @@ sub load {
   unless( $self->{'data'} ) {
     my @elements;
     if( $self->{'loc'} eq 'site' ) {
+      push @elements, $self->_get_contents( File::Spec->catfile( dirname(docroot), 'data',   'config-local', $self->{'file'}.'.yaml' )) if $self->{'override'};
       push @elements, $self->_get_contents( File::Spec->catfile( dirname(docroot), 'data',   'config', $self->{'file'}.'.yaml' ));
+      push @elements, $self->_get_contents( File::Spec->catfile( server_root,                'config-local', $self->{'file'}.'.yaml' )) if $self->{'override'};
       push @elements, $self->_get_contents( File::Spec->catfile( server_root,                'config', $self->{'file'}.'.yaml' ));
     } elsif( $self->{'loc'} eq 'core' ) {
+      push @elements, $self->_get_contents( File::Spec->catfile( server_root,                'config-local', $self->{'file'}.'.yaml' )) if $self->{'override'};
       push @elements, $self->_get_contents( File::Spec->catfile( server_root,                'config', $self->{'file'}.'.yaml' ));
     } else {
       push @elements, $self->_get_contents( $self->{'file'}.'.yaml' );
     }
-    $self->{'data'} = @elements == 0 ? {}
-                    : @elements == 1 ? $elements[0]
-                    :                  merge( @elements )
-                    ;
+    $self->{'data'} = $self->merge_multi( @elements );
+
     $self->merge_defaults( $self->{'data'} );
     $pch->set( $self->{'data'} ) if $pch;
   }
@@ -109,6 +112,26 @@ sub _get_contents {
     return @elements;
   }
   return;
+}
+
+sub merge_multi {
+  my ( $self, @array ) = @_;
+  return {} unless @array;
+  if( ref $array[0] eq 'ARRAY' ) {
+    my @res = @{shift @array};
+    while( my $ref = shift @array ) {
+      @res = @{merge( \@res, $ref )};
+    }
+    return \@res;
+  }
+  if( ref $array[0] eq 'HASH' ) {
+    my %res = %{shift @array};
+    while( my $ref = shift @array ) {
+      %res = %{merge( \%res, $ref )};
+    }
+    return \%res;
+  }
+  return $array[0];
 }
 
 sub merge_defaults {
