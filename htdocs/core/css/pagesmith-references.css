@@ -36,8 +36,8 @@
 
 li.periodical { margin-top: 0em; background: none; padding-left: 10px; }
 
-li.periodical h4 { background: transparent url(/core/gfx/icons-110621.png) -10px -3184px no-repeat; margin-bottom: 0px} 
-li.ref-coll   h4 { background-position: 2px -2255px; } 
-li.ref-closed h4 { background-position: 2px -2022px; }
+li.periodical h4 { background: transparent url(/core/gfx/icons-120723.png) 10px -2040px no-repeat; margin-bottom: 0px} 
+li.ref-coll   h4 { background-position: 30px -2020px; } 
+li.ref-closed h4 { background-position: 50px -2000px; }
 li.periodical h4, li.periodical p { padding: 0 0 0 20px; }
 li.periodical h4, li.periodical .authors, li.periodical .links, li.periodical .publication { font-size: 1em; }
