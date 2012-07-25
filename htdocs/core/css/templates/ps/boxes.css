@@ -5,20 +5,6 @@
   .panel, .cb, .i1, .i2, .i3, .bt, .bb
 */
 
-/*----------------------------------------------------------------------
-  Collapsible
-------------------------------------------------------------------------
-  Light grey border (#bcc5cc)
-----------------------------------------------------------------------*/
-
-.collapsible .bt     { background-position: 100% -340px; }
-.collapsible .bt div { background-position: 0 -340px; }
-
-#rhs .collapsible h3, .collapsible h3 { background: none #e0e4e7; border-bottom: 0; }
-
-.collapsed .bb     { background-position: 100% -348px; }
-.collapsed .bb div { background-position: 0 -348px; }
-
 /* Default CSS
 ================================================*/
 /* Basic styling, used when JavaScript is unsupported */
@@ -110,42 +96,42 @@
 */
 
 .developer.panel    { background-color: #ffe8cc; border: 0; }
-.developer .bt       { background-position: 100% -416px}
-.developer .bt div   { background-position: 0 -416px}
-.developer .bb       { background-position: 100% -424px}
-.developer .bb div   { background-position: 0 -424px}
+.developer .bt       { background-position: 100% -413px}
+.developer .bt div   { background-position: 0 -413px}
+.developer .bb       { background-position: 100% -421px}
+.developer .bb div   { background-position: 0 -421px}
 .developer .i3 { background-color:#ffe8cc; }
 .developer h3 { color: #8e0018; border-bottom: 1px solid #8e0018; }
 
 .box-info.panel      { background-color: #cfc; border: 0; } /* green */
-.box-info .bt       { background-position: 100% -436px}
-.box-info .bt div   { background-position: 0 -436px}
-.box-info .bb       { background-position: 100% -444px}
-.box-info .bb div   { background-position: 0 -444px}
+.box-info .bt       { background-position: 100% -433px}
+.box-info .bt div   { background-position: 0 -433px}
+.box-info .bb       { background-position: 100% -441px}
+.box-info .bb div   { background-position: 0 -441px}
 .box-info .i3 { background-color:#cfc; }
 .box-info h3 { color: #060; border-bottom: 1px solid #060; }
 
 .box-msg.panel      { background-color: #ffc; border: 0; } /* yellow */
-.box-msg .bt       { background-position: 100% -456px}
-.box-msg .bt div   { background-position: 0 -456px}
-.box-msg .bb       { background-position: 100% -464px}
-.box-msg .bb div   { background-position: 0 -464px}
+.box-msg .bt       { background-position: 100% -453px}
+.box-msg .bt div   { background-position: 0 -453px}
+.box-msg .bb       { background-position: 100% -461px}
+.box-msg .bb div   { background-position: 0 -461px}
 .box-msg .i3 { background-color:#ffc; }
 .box-msg h3 { color: #960; border-bottom: 1px solid #960; }
 
 .box-error.panel      { background-color: #fcc; border: 0; } /* red */
-.box-error .bt       { background-position: 100% -476px}
-.box-error .bt div   { background-position: 0 -476px}
-.box-error .bb       { background-position: 100% -484px}
-.box-error .bb div   { background-position: 0 -484px}
+.box-error .bt       { background-position: 100% -473px}
+.box-error .bt div   { background-position: 0 -473px}
+.box-error .bb       { background-position: 100% -481px}
+.box-error .bb div   { background-position: 0 -481px}
 .box-error .i3 { background-color:#fcc; }
 .box-error h3 { color: #8e0018; border-bottom: 1px solid #8e0018; }
 
 .box-warn.panel      { background-color: #ffe8cc; border: 0; } /* orange */
-.box-warn .bt       { background-position: 100% -496px}
-.box-warn .bt div   { background-position: 0 -496px}
-.box-warn .bb       { background-position: 100% -504px}
-.box-warn .bb div   { background-position: 0 -504px}
+.box-warn .bt       { background-position: 100% -493px}
+.box-warn .bt div   { background-position: 0 -493px}
+.box-warn .bb       { background-position: 100% -501px}
+.box-warn .bb div   { background-position: 0 -501px}
 .box-warn .i3 { background-color:#ffe8cc; }
 .box-warn h3 { color: #8e0018; border-bottom: 1px solid #8e0018; }
 
@@ -221,4 +207,18 @@
 .transcript div { height:120px; margin: 0 -2px 0 -10px; }
 
 .audio { clear:none; margin-top: 0; width: 340px; }
+
+/*----------------------------------------------------------------------
+  Collapsible
+------------------------------------------------------------------------
+  Light grey border (#bcc5cc)
+----------------------------------------------------------------------*/
+
+.collapsible .bt     { background-position: 100% -340px; }
+.collapsible .bt div { background-position: 0 -340px; }
+
+#rhs .collapsible h3, .collapsible h3 { background: none #e0e4e7; border-bottom: 0; }
+
+.collapsed .bb     { background-position: 100% -348px; }
+.collapsed .bb div { background-position: 0 -348px; }
 
