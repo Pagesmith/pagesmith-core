@@ -54,7 +54,7 @@ $('.tabs').livequery(function () { $(this).tabs(0); });
 $('.fake-tabs').livequery(function () { $(this).tabs(1); });
 
 var id_str = window.location.hash;
-if (id_str && id_str.match(/^#\w+$/)) {
+if (id_str && id_str.match(/^#[-\w]+$/)) {
   var id_sel = ' > li > a[href=' + id_str + ']';
   $('.tabs' + id_sel + ', .fake-tabs ' + id_sel).click().parents('.tabc_hid').each(function () {
     var id_sel = ' a[href=#' + $(this).attr('id') + ']';
