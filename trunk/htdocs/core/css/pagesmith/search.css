@@ -57,11 +57,11 @@ p.link { margin-left: 4em; font-size: 90%; }
     when the box is collapsed
 ----------------------------------------------------------------------*/
 
-.collapsible h3 img { background: url(/core/gfx/icons-120724.png) -20px -1380px no-repeat; height:16px; width:16px; padding: 0px; margin-right: 0.5em; float: left; display: block; }
-.collapsed h3 img { background-position: -2px -20px; }
+.collapsible h3 img { background: url(/core/gfx/icons-120724.png) -16px -1400px no-repeat; height:16px; width:16px; padding: 0px; margin-right: 0.5em; float: left; display: block; }
+.collapsed h3 img { background-position: -32px -1380px; }
 
-.collapsible h4.keep img { background: url(/core/gfx/icons-120724.png) -40px -1360px no-repeat; height:16px; width:16px; padding: 0px; margin-right: 0.5em; float: left; display: block; }
-.collapsed h4.keep img { background-position: -2px -20px; }
+.collapsible h4.keep img { background: url(/core/gfx/icons-120724.png) -16px -1400px no-repeat; height:16px; width:16px; padding: 0px; margin-right: 0.5em; float: left; display: block; }
+.collapsed h4.keep img { background-position: -32px -1380px; }
 
 .collapsed div.coll, .collapsed ul, .collapsed .searchhit, .collapsed table, .collapsed pre, .collapsed h4, .collapsed p, .collapsed dl, .collapsed ul, .collapsed ol { display: none; }
 
