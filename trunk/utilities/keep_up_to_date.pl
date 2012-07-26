@@ -31,6 +31,7 @@ use List::MoreUtils qw(uniq);
 Readonly my $TO_MERGE       => 10;
 Readonly my $UPDATE_NO      => 50;
 Readonly my $DEF_SLEEP_TIME => 5;
+Readonly my $MAX_BLOCK_MULT => 30;
 
 my $ROOT_PATH;
 BEGIN {
@@ -46,18 +47,26 @@ my $SLEEP_TIME     = $DEF_SLEEP_TIME;
 my $MAX_RUNS       = 0;
 my $DEBUG          = 0;
 my $QUIET          = 0;
-my $LOG_FILE       = "$ROOT_PATH/logs/svn-update.log";
-my $ERROR_LOG_FILE = "$ROOT_PATH/logs/svn-error.log";
+my $OUT_DIR        = "$ROOT_PATH/logs";
+my $LOG_FILE;
+my $ERR_FILE;
+my $BLK_FILE;
+my $FLUSH = 0;
 
 GetOptions(
   'verbose:+' => \$DEBUG,
   'quiet'     => \$QUIET,
   'sleep=f'   => \$SLEEP_TIME,
+  'dir:s'     => \$OUT_DIR,
+  'block:s'   => \$BLK_FILE,
   'logfile:s' => \$LOG_FILE,
-  'errorlog:s'=> \$ERROR_LOG_FILE,
+  'errorlog:s'=> \$ERR_FILE,
   'runs:i'    => \$MAX_RUNS,
+  'flush'     => \$FLUSH,
 );
 
+
+_config();
 my $start_time = time;
 
 set_site_key( 'no-site' ); ## This is so we get the dev pubqueue!
@@ -71,21 +80,16 @@ my $run_number = 1;
 
 $OUTPUT_AUTOFLUSH = 1;
 
-## no critic (BriefOpen RequireChecked)
 my $efh;
 my $lfh;
-unless( open $efh, '>>', $ERROR_LOG_FILE ) {
-  die "CANNOT CREATE Error log file: $ERROR_LOG_FILE\n";
-}
-unless( open $lfh, '>>', $LOG_FILE ) {
-  die "CANNOT CREATE Log file: $LOG_FILE\n";
-}
+_open_files();
 
-## use critic;
 my $time = gmtime;
 printf {$efh}  "\n====================================\n\n  RESTARTED AT %s\n\n====================================\n\n", $time unless $QUIET;
 
+my $blk_counter = 0;
 while( 1 ) {
+  next if _check_block();
   my $loop_start_time = time;
 
   my $repositories = _find_repositories();
@@ -295,6 +299,20 @@ sub _parse_svn_url {
   };
 }
 
+sub _check_block {
+  if( -e $BLK_FILE ) {
+    my $blk_time = time;
+    printf {$lfh}  "\nBLOCKED AT %s BY %s\n", $blk_time, $BLK_FILE;
+    $blk_counter++;
+    $blk_counter = $MAX_BLOCK_MULT if $blk_counter > $MAX_BLOCK_MULT;
+    sleep $SLEEP_TIME;
+    next;
+  } else {
+    $blk_counter = 0;
+  }
+  return;
+}
+
 sub _debug_dump {
   my $repositories = shift;
   foreach my $repos ( sort keys %{$repositories} ) {
@@ -302,6 +320,29 @@ sub _debug_dump {
       printf {$efh} "Repos: %-30s; Branch: %-10s.\n", $repos, $branch;
     }
   }
+  return;
+}
+
+sub _open_files {
+## no critic (BriefOpen RequireChecked)
+  my $open_type = $FLUSH ? q(>) : q(>>); ## Flush then we will start a new file!
+  unless( open $efh, $open_type, $ERR_FILE ) {
+    die "CANNOT CREATE Error log file: $ERR_FILE\n";
+  }
+  unless( open $lfh, $open_type, $LOG_FILE ) {
+    die "CANNOT CREATE Log file: $LOG_FILE\n";
+  }
+## use critic
+}
+
+sub _config {
+  $LOG_FILE ||= 'svn-update.log';
+  $ERR_FILE ||= 'svn-update.err';
+  $BLK_FILE ||= 'svn-update.block';
+
+  $LOG_FILE = $OUT_DIR.q(/).$LOG_FILE unless $LOG_FILE =~ m{/}mxs;
+  $ERR_FILE = $OUT_DIR.q(/).$ERR_FILE unless $ERR_FILE =~ m{/}mxs;
+  $BLK_FILE = $OUT_DIR.q(/).$BLK_FILE unless $BLK_FILE =~ m{/}mxs;
   return;
 }
 
