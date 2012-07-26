@@ -1,11 +1,12 @@
 /**
  * Simple image based presentation viewer. Takes a The images in a div,
  * and converts them into a simple presentation - with both mouse and
- * keyboard control
+ * keyboard control ..
  *
  * @author:   js5 (James Smith)
  * @version:  $Id$
  * @requires: jQuery
+ * @requires: css file to render presentation!
  */
 
 (function ($) {
