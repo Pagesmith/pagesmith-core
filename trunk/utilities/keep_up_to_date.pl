@@ -44,10 +44,13 @@ use Pagesmith::Utils::SVN::Support;
 use Pagesmith::ConfigHash qw(set_site_key);
 
 my $SLEEP_TIME     = $DEF_SLEEP_TIME;
-my $MAX_RUNS       = 0;
+my $MAX_RUNS       = 0;  ## Run forever...
 my $DEBUG          = 0;
 my $QUIET          = 0;
 my $OUT_DIR        = "$ROOT_PATH/logs";
+( my $tmp_dir = $OUT_DIR ) =~ s{\A/www/}{/www/tmp/}mxs;
+$OUT_DIR = $tmp_dir if -e $tmp_dir;
+
 my $LOG_FILE;
 my $ERR_FILE;
 my $BLK_FILE;
