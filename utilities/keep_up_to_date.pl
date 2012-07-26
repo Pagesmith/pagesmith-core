@@ -26,6 +26,7 @@ use Cwd qw(abs_path);
 use Data::Dumper qw(Dumper);
 use Readonly qw(Readonly);
 use Getopt::Long qw(GetOptions);
+use List::MoreUtils qw(uniq);
 
 Readonly my $TO_MERGE       => 10;
 Readonly my $UPDATE_NO      => 50;
@@ -61,12 +62,12 @@ my $start_time = time;
 
 set_site_key( 'no-site' ); ## This is so we get the dev pubqueue!
 
-my $adap = Pagesmith::Adaptor::PubQueue->new;
+my $adap    = Pagesmith::Adaptor::PubQueue->new;
 my $support = Pagesmith::Utils::SVN::Support->new;
 
 my $checkout_id = $adap->set_checkout( hostname_long, $ROOT_PATH );
 
-my $run_number = 0;
+my $run_number = 1;
 
 $OUTPUT_AUTOFLUSH = 1;
 
@@ -84,18 +85,8 @@ unless( open $lfh, '>>', $LOG_FILE ) {
 my $time = gmtime;
 printf {$efh}  "\n====================================\n\n  RESTARTED AT %s\n\n====================================\n\n", $time unless $QUIET;
 
-my %externals = (
-  'shared-content:/htdocs/core' => [],
-  'www-genes2cognition-org:/htdocs/g2c' => [
-    'www-genes2cognition-org:/htdocs-eurospin/g2c',
-    'www-genes2cognition-org:/htdocs-synsys/g2c',
-  ],
-);
-
 while( 1 ) {
-  last if $MAX_RUNS && $run_number > $MAX_RUNS;
   my $loop_start_time = time;
-  $run_number++;
 
   my $repositories = _find_repositories();
   my $l_time = gmtime;
@@ -116,54 +107,78 @@ while( 1 ) {
       $adap->touch_checkout_repository();
       my $outstanding = $adap->outstanding_updates();
       next unless @{$outstanding};
-      my $revisions = {};
-      my @paths = sort map { $_->{'path'} } @{$outstanding};
-      my $tree  = {};
-
-##  print join q(), map { sprintf "%6d : %s\n", $_->{'revision_no'}, $_->{'path'} } @{$outstanding};
-      foreach my $path (@paths) {
-        my @parts = split m{/}mxs, "-/$path";
-        my $t = $tree;
-        my $p;
-        foreach( @parts ) {
-          $t->{$_} ||= [ 0, {} ];
-          $p = $t->{$_};
-          $t = $t->{$_}[1];
-        }
-        $p->[0] = 1;
+      ## Get a list of paths!
+      my $success = 1;
+      my @paths = uniq sort map { "/$_->{'path'}" } @{$outstanding};
+      my $count_t = 0;
+      foreach my $sub_directory ( sort keys %{$repositories->{$repos}{$branch}} ) {
+        my $revisions = {};
+        my $tree = _get_tree_from_paths( $sub_directory, \@paths );
+        _prune( $tree );
+        my @minimal_paths = _get_minimal_paths( $sub_directory, $tree );
+        my $count = @minimal_paths * @{$repositories->{$repos}{$branch}{$sub_directory}};
+        printf {$efh} "%s\n", Dumper ( \@minimal_paths ) if $DEBUG > 2;
+        next unless $count;
+        $count_t += $count;
+        printf {$efh} "%s\n", Dumper( $repositories->{$repos}{$branch} ) if $DEBUG > 2;
+        ## Now we have to perform the svn updates....
+        $success *= _update_files( $support, $sub_directory, $repositories->{$repos}{$branch}{$sub_directory}, @minimal_paths);
       }
-      #print Dumper( $tree );
-      _prune( $tree );
-      my @minimal_paths = map { substr $_, 2 } _extract_paths( $tree, q() ); ## Extract the paths
-      my $count = @minimal_paths;
-      printf {$efh} "%s\n", Dumper( $repositories->{$repos}{$branch} ) if $DEBUG > 2;
-      ## Now we have to perform the svn updates....
-      my $success = _update_files( $support, $repositories->{$repos}{$branch}, @minimal_paths);
       $adap->touch_updates( [ map { $_->{'id'} } @{$outstanding} ]) if $success;
 
       my $r_time = gmtime;
       printf {$lfh} "success: %d time: %s; run: %7d;   updates: %5d;   time: %8.3f;   repos: %-30s;   branch: %-10s;\n",
-        $success, $r_time, $run_number, $count, time-$branch_start_time, $repos, $branch if $DEBUG;
+        $success, $r_time, $run_number, $count_t, time-$branch_start_time, $repos, $branch if $DEBUG;
       ## and flag them as done in the database for this checkout!
-      printf {$efh} "%s\n", Dumper ( \@minimal_paths ) if $DEBUG > 2;
     }
   }
   $adap->cleanup_checkout( );
   printf {$efh} "## RUN: %6d; time: %s; duration: %8.4f\n", $run_number, $time, time - $loop_start_time if $DEBUG;
+  $run_number++;
+  last if $MAX_RUNS && $run_number > $MAX_RUNS;
   sleep $SLEEP_TIME;
+}
+
+sub _get_minimal_paths {
+  my( $dir, $tree ) = @_;
+  return uniq sort
+    map { substr $_, 1 }
+    map { (length $_ < length $dir) ? "/$dir" : $_ }
+    map { substr $_, 1 }
+    _extract_paths( $tree, q() ); ## Extract the paths
+}
+sub _get_tree_from_paths {
+  my( $dir, $paths ) = @_;
+  my $tree = {};
+  foreach my $path ( grep {
+    ( $_   eq substr $dir, 0, length $_   ) ||
+    ( $dir eq substr $_,   0, length $dir )
+  } @{$paths} ) {
+    my @parts = split m{/}mxs, "-$path";
+    my $t = $tree;
+    my $p;
+    foreach( @parts ) {
+      $t->{$_} ||= [ 0, {} ];
+      $p = $t->{$_};
+      $t = $t->{$_}[1];
+    }
+    $p->[0] = 1;
+  }
+  return $tree;
 }
 
 sub _update_files {
 ## Perform the update commands
 #@return (boolean) 1 if all updates succeed
-  my( $l_support, $PATHS, @minimal_paths ) = @_;
+  my( $l_support, $sub_dir, $PATHS, @minimal_paths ) = @_;
   foreach my $dirh ( @{$PATHS} ) {
-    my $path = $dirh->{'path'};
+    my $path = $dirh->{'directory'};
+    my $root_path = substr $path, 0, 1 + (length $path) - (length $sub_dir);
     my $dir  = $dirh->{'directory'};
-    my @paths = map { ($path eq substr $_, 0, length $path) ? (substr $_,length $path): () } @minimal_paths;
+    my @paths = map { "$root_path$_" } @minimal_paths;
     while( my @block = splice @paths, 0, $UPDATE_NO ) {
       my $command = sprintf 'svn up %s',
-        join q( ), map { sprintf '%s/%s%s', $ROOT_PATH, $dir, $_  } @block;
+        join q( ), @block;
       my $rv = eval {
         $l_support->read_from_process( $command );
       };
@@ -172,7 +187,7 @@ sub _update_files {
         printf {$efh} "ERROR:   %s\n", $EVAL_ERROR;
         return 0;
       }
-      printf {$lfh} $command,"\n" unless $QUIET;
+      printf {$lfh} $command."\n" unless $QUIET;
     }
   }
   return 1;
@@ -217,30 +232,67 @@ sub _find_repositories {
 ## Search through the root directory (and sites subdirectory) to find
 ## any checkouts that we will be monitoring
 #@return hashref of hashes of arrays - the keys being repository name and branch and the checkout directory
-  my %repos;
-  my $dh;
-  my %paths = ( $ROOT_PATH => q(), "$ROOT_PATH/sites" => 'sites/' );
-  foreach my $path (keys %paths) {
-    next unless opendir $dh, $path;
-    while( defined( my $dir = readdir $dh ) ) {
-      next if $dir eq q(..) || $dir eq q(.);
-      ## no critic (Filetest_f)
-      if( -d "$path/$dir" && -d "$path/$dir/.svn" &&
-          -f "$path/$dir/.svn/entries" &&
-          open my $fh, q(<), "$path/$dir/.svn/entries" ) {
-        while( my $line = <$fh> ) {
-          chomp $line;
-          if( $line =~ m{\Asvn\+ssh://web-svn.internal.sanger.ac.uk/repos/svn/([^/]+)/(trunk|live|staging)(.*)\Z}mxs ) {
-            push @{ $repos{ $1 }{ $2 } }, { 'path' => $3, 'directory' => $paths{$path}.$dir };
-            last;
-          }
-        }
-        close $fh; ##no critic (RequireChecked)
+  my $repositories = {};
+  my $command = sprintf 'svn info %s %s/sites/*', $ROOT_PATH, $ROOT_PATH;
+  my @lines = grep { m{\A(URL|Path):}mxsg } eval { $support->read_from_process( $command ); };
+  my $dir;
+  foreach my $repos_line ( @lines ) {
+    my( $type, $val ) = split m{:\s+}mxs, $repos_line , 2;
+    if( $type eq 'Path' ) {
+      $dir = $val;
+    } else {
+      next unless defined $dir;
+      my $details = _parse_svn_url($val);
+      unless( $details ) {
+        $dir = undef;
+        next;
       }
-      ## use critic
+      push @{ $repositories->{ $details->{'repos'} }{ $details->{'branch'} }{ "$details->{'path'}/" } }, {
+        'directory' => $dir,
+        'url'       => $details->{'url'},
+        'root'      => $details->{'root'},
+      };
+
+      my $get_command = sprintf 'svn propget --recursive svn:externals %s', $dir;
+      my @ex_lines = eval { $support->read_from_process( $get_command ); };
+      my $path;
+      my $res = {};
+      foreach ( @ex_lines ) {
+        unless( $_ ) {
+          $path = undef;
+          next;
+        }
+        $path = $1 if s{\A(\S+)\s+-\s+}{}mxsg && !$path;
+        next unless $path;
+        if( m{(\S+)\s+(.*)}mxsg ) {
+          my $subdir     = $1;
+          my $ext_details = _parse_svn_url($2);
+          next unless $ext_details;
+          push @{ $repositories->{ $ext_details->{'repos'} }{ $ext_details->{'branch'} }{ "$ext_details->{'path'}/" } }, {
+            'directory' => "$path/$subdir",
+            'url'       => $ext_details->{'url'},
+            'root'      => $ext_details->{'root'},
+          };
+        }
+      }
+      $dir = undef;
     }
   }
-  return \%repos;
+  return $repositories;
+}
+
+sub _parse_svn_url {
+  my $url = shift;
+  my( $root, $repos, $branch, $path ) = split m{/([^/]+)/(trunk|staging|live)}mxs, $url;
+  $path ||= q();
+  return {} unless $branch;
+  return {
+    'url'    => $url,
+    'repos'  => $repos,
+    'root'   => $root,
+    'branch' => $branch,
+    'path'   => $path,
+  };
 }
 
 sub _debug_dump {
