@@ -6,7 +6,6 @@
  * @author:   js5 (James Smith)
  * @version:  $Id$
  * @requires: jQuery
- *
  */
 
 (function ($) {
