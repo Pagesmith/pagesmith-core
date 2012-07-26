@@ -6,7 +6,7 @@ body { margin: 0 auto; border:0; background:#fff; padding: 0 10px;   min-width:8
   standard page....
 ------------------------------------------------------------------------
   These have the following layout:
- 
+
   /---------------------------\ /--------\
   |     #main (75%)           | | #rhs   |
   |                           | | (24%)  |
@@ -23,7 +23,7 @@ body { margin: 0 auto; border:0; background:#fff; padding: 0 10px;   min-width:8
   \---------------------------/ |        |
                                 |        |
                                 \--------/
-     
+
    main is used to float col1 and col2 to the left in three col
    layouts
  ----------------------------------------------------------------------*/
@@ -84,7 +84,7 @@ body { margin: 0 auto; border:0; background:#fff; padding: 0 10px;   min-width:8
   faculty pages....
 ------------------------------------------------------------------------
   These have the following layout:
- 
+
   /---------------------\ /--------------\
   | #main (62%)         | | #rhs (37%)   |
   |                     | |              |
@@ -101,8 +101,8 @@ body { margin: 0 auto; border:0; background:#fff; padding: 0 10px;   min-width:8
   /---------------------\ |              |
   |                     | |              |
   |                     | \--------------/
-  \---------------------/  
-     
+  \---------------------/
+
   the rhs is wider...
  ----------------------------------------------------------------------*/
 
@@ -128,7 +128,7 @@ p.portrait {color:#5c5150; font-size:0.7em; font-weight:normal; text-align:cente
 }/* Layout of entries! */
 
 #teamleader h3, #project #main h3
-{ position: relative; color: #8e0018; border-bottom: 1px solid #ccc; background: url(/core/gfx/templates/ps/bars-120723.png) 0 bottom; }
+{ position: relative; color: #8e0018; border-bottom: 1px solid #ccc; background: url(/core/gfx/templates/ps/bars-120724.png) 0 bottom; }
 
 #project #main .profiles h3 { background: none transparent; border-bottom: 0; }
 #project #main .sub_nav h3 { background: none #ccc; }
