@@ -7,10 +7,84 @@
   <title>Pagesmith</title>
 </head>
 <body>
-  <h2>Pagesmith</h2>
-  <p>
-    Pagesmith is an open source software project developed at the
-    <a href="http://www.sanger.ac.uk/">Wellcome Trust Sanger Institute</a> - copyright &copy;2009-2012 Genome Research Limited
-  </p>
+  <div class="panel">
+    <h2>Pagesmith</h2>
+    <% Image -right -width=200 /core/gfx/ps-logo-mid.png  %>
+    <p class="intro">
+      This site is driven by Pagesmith, the Sanger Institute's internal web-management solution.
+    </p>
+    <h3>What is Pagesmith?</h3>
+    <p>
+      Pagesmith is the Institute's internal site management solution, written in a mixture of
+      perl, javascript and CSS, and is built around Apache 2 with mod_perl and subversion to
+      handle web-requests and site management respectively.
+    </p>
+    <p>
+      The solution is the culmination of over ten years of web-development by the core team,
+      bringing exprience of managing many complex and diverse web-sites.
+    </p>
+    <p>
+      Pagesmith is an open source software project developed at the
+      <a href="http://www.sanger.ac.uk/">Wellcome Trust Sanger Institute</a>
+      - copyright &copy;2009-2012 Genome Research Limited
+    </p>
+  </div>
+
+  <div class="panel">
+    <ul class="tabs">
+      <li><a href="#t_wrap">Page wrapping</a></li>
+      <li><a href="#t_jscss">Javascript/CSS</a></li>
+      <li><a href="#t_opt">Optimising</a></li>
+      <li><a href="#t_dir">Dynamic includes</a></li>
+      <li><a href="#t_actions">Dynamic pages/content</a></li>
+      <li><a href="#t_manage">Site management</a></li>
+      <li><a href="#t_extensible">Extensible</a></li>
+    </ul>
+    <div id="t_wrap">
+      <h3>Page wrapping</h3>
+      <p>Templates</p>
+      <p>Apache filters</p>
+      <p>Same wrapper for static and dynamic content</p>
+    </div>
+    <div id="t_jscss">
+      <h3>Javascript/CSS</h3>
+      <p>jQUery based</p>
+      <p>progressive enhancement</p>
+      <p>Tables, lists, ...</p>
+      <p>Raphael</p>
+    </div>
+    <div id="t_opt">
+      <h3>CSS/JS compression</h3>
+      <p>Utilities</p>
+      <p>Spriting</p>
+      <p>Cacheing</p>
+      <p>Apache headers</p>
+    </div>
+    <div id="t_dir">
+      <h3>Dynamic includes</h3>
+      <p>Directives</p>
+    </div>
+    <div id="t_actions">
+      <h3>Dynamic pages/content</h3>
+      <p>Actions</p>
+      <p>Forms</p>
+      <p>JSON</p>
+      <p>User restrictions</p>
+    </div>
+    <div id="t_manage">
+      <h3>Site management</h3>
+      <p>Standards based</p>
+      <p>SVN backed</p>
+      <p>Publication queue</p>
+      <p>Advanced access control</p>
+      <p>webedit</p>
+    </div>
+    <div id="t_extensible">
+      <h3>Extensible</h3>
+      <p>Name spacing</p>
+      <p>Name space restrictions</p>
+    </div>
+  </div>
 </body>
 </html>
+
