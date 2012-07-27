@@ -15,12 +15,12 @@ a img   { border:none; }
 
 /*#landing #main .external, */
 .more .external { padding-right:0px; background:transparent; }
- 
+
 p.more {float:right; padding-right: 10px; }
 p.more img { vertical-align: top; height: 18px; width:67px; background: url(/core/gfx/icons-120724.png) 0 0 no-repeat; }
 
-.launch img { vertical-align: top; height: 18px; width:67px; background: url(/core/gfx/icons-120724.png) 0 -20px no-repeat; }
- 
+.launch img { vertical-align: top; height: 18px; width:67px; background: url(/core/gfx/icons-120724.png) 0 -40px no-repeat; }
+
 @media print {
   a { text-decoration: none; }
   .pdf, .external { padding-right: 0; background: none; }
