@@ -41,6 +41,7 @@ sub handler {
     ## push the handler...
     $r->handler('modperl');
     $r->notes->set( 'filename' => "$1|$2" );
+    $r->filename( $tmp_url );
     $r->push_handlers( 'PerlResponseHandler' => \&send_content );
     return OK;
   } elsif ( $r->uri =~ m{(/\.svn/|/CVS/)}mxs ) {
