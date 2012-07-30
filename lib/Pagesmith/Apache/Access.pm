@@ -21,7 +21,7 @@ use base qw(Exporter);
 
 our @EXPORT_OK = qw(_handler);
 our %EXPORT_TAGS = ('ALL' => \@EXPORT_OK);
-use Pagesmith::Root;            ## To give access to user
+use Pagesmith::Support;         ## To give access to user
 
 ## The following are required to get around a mod_perl "feature".
 ## Attaching access handler prevents response handler being attached.
@@ -39,7 +39,7 @@ sub handler {
 
 sub _handler {
   my( $permission_callback, $r ) = @_;
-  my $root = Pagesmith::Root->new;
+  my $root = Pagesmith::Support->new;
   my $user = $root->user( $r );
 
   $r->headers_out->add( 'Cache-Control', 'max-age=0, no-cache' );
