@@ -1,7 +1,0 @@
-/* Thumbnail images */
-div.thumb { clear: left; }
-.thumb h3 { background: transparent; margin: 0 0 0.25em 115px; padding-left: 0}
-.thumb p { margin: 0 0.5em 1em 115px }
-p.affiliation { font-style: italic; font-weight: bold; font-size: 0.8em; margin-bottom: 0.5em }
-.thumb img { float:left;margin:5px 10px 10px 0; padding:5px;border:1px solid #ccc; height: 120px; width: 90px; background: #eee }
-
