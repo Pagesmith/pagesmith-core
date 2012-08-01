@@ -1,0 +1,26 @@
+/* Tabs CSS */
+
+.tabc { clear: both; border-top: 1px solid #999 }
+.tabc_hid { display: none; }
+.tabc > h3 { display:none; }
+.tabc h4, .tabc > h3.keep { display:block; margin-top: 5px; }
+
+ul.tabs { margin: 0; padding: 0; list-style: none; float: left; }
+.tabs li { list-style: none; float: left; padding: 0 8px 0 0; margin:0;  }
+.tabs li a { display:  block; padding: 0 0 0 8px; line-height: 2em; text-decoration: none;   font-weight: bolder; color: #333; float: left; }
+.tabs li a:hover { text-decoration: underline; color: #8E0018; }
+.tabs li.disabled {display:none}
+.tabs .active { background-color: #999 }
+.tabs .active a { color:white; }
+.tabs .active a:hover {color: white; text-decoration:underline; }
+
+.no-top-border { border-top: 0; }
+
+/* Undo some tabby stuff */
+
+@media print {
+  ul.tabs { display: none; }
+  .tabc h3 { display: block; }
+  .tabc { border-top: 0; }
+  .tabc_hid { display: block; }
+}
