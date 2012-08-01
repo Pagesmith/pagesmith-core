@@ -37,6 +37,9 @@ li { margin-right: 10px; line-height: 1.25em }
 li p { margin: 2px 10px 2px 0 }
 blockquote { font-style: italic; }
 
+strong { font-weight: bold }
+i, em { font-style: italic }
+
 /* Refererences */
 
 ul.references li { list-style-type: none; margin 0 }
