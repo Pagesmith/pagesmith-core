@@ -201,7 +201,7 @@ sub execute {
     }
     if( $show_authors && $reference->author_list ) {
       if( $show_first_author ) {
-   $self->dumper( $references );
+   $self->dumper( $reference );
         push @html, sprintf qq(\n<p class="authors">%s</p>),           $self->expemail( $reference->author_list_short );
       } else {
         push @html, sprintf qq(\n<p class="authors">%s</p>),           $self->expemail( $reference->author_list );
