@@ -1,2 +1,5 @@
 #wrap, #inst { width:760px }
 th, td {font-size:0.8em;}
+/* Refererences */
+
+#wrap ul.references li p { font-size: 80% }
