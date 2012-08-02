@@ -352,6 +352,17 @@ sub _grants {
   return $html;
 }
 
+sub author_list_short {
+  my $self = shift;
+  my @T = @{ $self->{'_raw'}{'authors'} || [] };
+  return unless @T;
+  my $et_al = @T > 2;
+  @T = splice @T, 1 if @T > 1;
+  @T = map { sprintf '<span class="author">%s</span>', encode_entities("$_->{'name'}") } @T;
+  return $T[0].' <em>et al.</em>' if $et_al;
+  return join ' and ', @T;
+}
+
 sub _author_list {
   my $self = shift;
   return 'No authors listed' unless @{ $self->{'_raw'}{'authors'} || [] };
