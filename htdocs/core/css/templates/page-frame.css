@@ -6,7 +6,7 @@ body { color:#404040; background-color: #f00; font-family:Arial,Helvetica,sans-s
 #inst { clear: both; padding: 0; margin: 0.5em auto; font-size: 0.8em }
 #inst span { float: right; display: block }
 
-#wrap:after, #content:after, #head:after { content:".";  display:block;  height:0;  clear:both; visibility:hidden }
+#wrap:after, #head:after { content:".";  display:block;  height:0;  clear:both; visibility:hidden }
 
 /* A blank image to make sure that nav/content doesn't break out of the page frame doesn't "break" */
 

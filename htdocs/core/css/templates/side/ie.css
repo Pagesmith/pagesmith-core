@@ -1,1 +1,2 @@
 #nav li { zoom: 1; }
+#nav, #content { zoom:1; _height:1px; }
