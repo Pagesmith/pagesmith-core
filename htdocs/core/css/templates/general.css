@@ -8,6 +8,7 @@ h1, h2, h3, h4 { padding: 4px 10px; margin: 0; margin-bottom: 0.5em }
 ul { margin-bottom: 1em }
 ul li { list-style-type: disc; margin-left: 3em }
 li p { margin-left: 0 }
+ol li { list-style: decimal; padding-left: 0; margin-left: 3em; }
 
 /* header font-sizes */
 h1 { font-size: 2em; }
