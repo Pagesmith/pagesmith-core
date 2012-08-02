@@ -171,6 +171,7 @@ sub execute {
   my $show_affiliations = $self->option('affiliation', 'off') ne 'off' || $self->option('full');
   my $show_abstracts    = $self->option('abstract',    'off') ne 'off' || $self->option('full');
   my $show_authors      = $self->option('authors',     'on')  ne 'off' || $self->option('full');
+  my $show_first_author = $self->option('authors',     'on')  eq 'first';
   my $show_grants       = $self->option('grants',      'off') ne 'off' || $self->option('full');
   # Remove duplicates if there are any...
   my $seen              = {};
@@ -198,7 +199,13 @@ sub execute {
       (my $doi = $reference->doi ) =~ s{/}{_}mxgs;
       push @html, sprintf '<a id="doi_%s"></a>', $doi;
     }
-    push @html, sprintf qq(\n<p class="authors">%s</p>),           $self->expemail( $reference->author_list )  if $reference->author_list  && $show_authors;
+    if( $show_authors && $reference->author_list ) {
+      if( $show_first_author ) {
+        push @html, sprintf qq(\n<p class="authors">%s</p>),           $self->expemail( $reference->author_list_short );
+      } else {
+        push @html, sprintf qq(\n<p class="authors">%s</p>),           $self->expemail( $reference->author_list );
+      }
+    }
     push @html, sprintf qq(\n<p class="affiliation">%s</p>),       $self->expemail( $reference->affiliation )  if $reference->affiliation  && $show_affiliations;
     if( $reference->precis && $show_abstracts ) {
       if( $reference->precis =~ m{\A<}mxs ) {
