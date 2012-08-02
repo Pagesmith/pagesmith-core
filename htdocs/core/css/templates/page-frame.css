@@ -16,7 +16,5 @@ body { color:#404040; background-color: #f00; font-family:Arial,Helvetica,sans-s
 @media print {
   body { background: #fff }
   #wrap { width: 100%; margin: 0; border: 0 }
-  #nav { display: none }
-  #content { width: 100%; padding:0; float: none }
   #inst { border-top: 1px solid #ccc }
 }
