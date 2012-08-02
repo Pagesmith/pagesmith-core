@@ -42,7 +42,7 @@ $('.fncite a').livequery(function () {
       if( ent.find('.authors em').length ) {
         n_auth+=10;
       }
-      switch (autl.length) {
+      switch (n_auth) {
       case 0:
         aut = '-';
         break;
