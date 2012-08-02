@@ -250,7 +250,7 @@ sub author_list {
 sub author_list_short {
   my $self = shift;
   my $flag = (my $al = $self->author_list) =~ s{</span>.*</span>}{</span>}mxs;
-  $al .= ' <em>et al.</em>' if $flag && $al =~m{<em>et al.</em>}mxs;
+  $al .= ' <em>et al.</em>' if $flag && $al !~ m{<em>et al.</em>}mxs;
   return $al;
 }
 
