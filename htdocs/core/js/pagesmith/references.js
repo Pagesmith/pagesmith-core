@@ -28,7 +28,7 @@ function get_surname(obj) {
   return obj.html().split(' ')[0];
 }
 $('.fncite a').livequery(function () {
-  var h = $(this).prop('hash'), t, yr, autl, aut, ent, ent_ref;
+  var h = $(this).prop('hash'), t, yr, autl, aut, ent, ent_ref, n_auth;
   if (h && $(h).closest('li.periodical').length) {
     ent = $(h).closest('li.periodical');
     ent_ref = h.substr(1).replace('_', ' ');
@@ -38,6 +38,10 @@ $('.fncite a').livequery(function () {
       t = ent.find('.year');
       yr = t.length > 0 ? t.first().html() : '-';
       autl = ent.find('.author');
+      n_auth = autl.length;
+      if( ent.find('.authors em').length ) {
+        n_auth+=10;
+      }
       switch (autl.length) {
       case 0:
         aut = '-';
