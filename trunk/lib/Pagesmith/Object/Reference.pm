@@ -247,6 +247,13 @@ sub author_list {
   return $self->{'author_list'};
 }
 
+sub author_list_short {
+  my $self = shift;
+  my $flag = (my $al =~ $self->author_list) =~ s{</span>.*</span>}{</span>}mxs;
+  $al .= ' <em>et al.</em>' if $flag && $al =~m{<em>et al.</em>}mxs;
+  return $al;
+}
+
 sub affiliation {
   my $self = shift;
   return $self->{'affiliation'};
@@ -350,17 +357,6 @@ sub _grants {
   my $html = join '; ', @agencies;
   $html .= '; ...' if exists $self->{'_raw'}{'grants_incomplete'};
   return $html;
-}
-
-sub author_list_short {
-  my $self = shift;
-  my @T = @{ $self->{'_raw'}{'authors'} || [] };
-  return unless @T;
-  my $et_al = @T > 2;
-  @T = splice @T, 1 if @T > 1;
-  @T = map { sprintf '<span class="author">%s</span>', encode_entities("$_->{'name'}") } @T;
-  return $T[0].' <em>et al.</em>' if $et_al;
-  return join ' and ', @T;
 }
 
 sub _author_list {
