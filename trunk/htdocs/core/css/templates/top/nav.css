@@ -3,7 +3,7 @@
 #hnav { margin: 0; padding: 0;background-color: #ccc; }
 
 #hnav li { list-style-type:none;white-space:nowrap;padding:0;margin:0;border:0;overflow:hidden }
-#hnav ul { margin: 0; padding: 0; list-style: none; float: left; background-color: #ccc }
+#hnav ul { margin: 0; padding: 0; list-style: none; float: left; }
 #hnav li { list-style: none; float: left; padding: 2px 1em ; margin:0; background: none; color: #999; text-align: center }
 #hnav li a { color: #000; font-weight: bold; text-decoration: none; }
 #hnav li a:hover { color: #333 }
