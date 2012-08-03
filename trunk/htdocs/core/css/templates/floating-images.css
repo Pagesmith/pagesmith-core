@@ -1,0 +1,3 @@
+img.l, img.r { margin: 5px }
+img.l { float: left; margin-left: 0  }
+img.r { float: right; margin-right; 0 }
