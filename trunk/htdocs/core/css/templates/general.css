@@ -36,3 +36,8 @@ a { color:#105A94; text-decoration: none; font-weight: bold }
   div.print-show  { display: block  }
   span.print-show { display: inline }
 }
+
+.image { margin: 5px; float: left }
+.right { float: right }
+.left  { float: left }
+
