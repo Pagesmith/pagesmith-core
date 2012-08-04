@@ -43,3 +43,5 @@ a:hover { text-decoration: underline }
 .right { float: right }
 .left  { float: left }
 
+#skip { display: none;}
+
