@@ -189,11 +189,12 @@ sub execute {
     ## Now render content - each line is rendered as a <p> tag with approriate classes for styling
     $count++;
     push @html, sprintf $start_row, $extra, $class;
-    push @html, sprintf '<a id="pubmed_%s"></a>',                  $reference->pubmed if $reference->pubmed && ( $self->{'cited_references'}{$reference->pubmed} || $link_list{'pubmed'} || $link_list{'all'} );
-    push @html, sprintf '<a id="%s"></a>',                         $reference->sid    if $reference->sid && ( $self->{'cited_references'}{$reference->sid} || $link_list{'sid'} || $link_list{'all'} );
-    push @html, sprintf '<a id="tmp_%s"></a>',                     $reference->key    if $reference->key && ( $self->{'cited_references'}{$reference->key} || $link_list{'key'} || $link_list{'all'} );
-    push @html, sprintf '<a id="pmc_%s"></a>',                     $reference->pmc    if $reference->pmc && ( $self->{'cited_references'}{$reference->pmc} || $link_list{'pmc'} || $link_list{'all'} );
-    push @html, sprintf qq(\n<h4 class="article">%s</h4>),         $reference->title;
+    my $anchors = q();
+    $anchors .= sprintf '<a id="pubmed_%s"></a>', $reference->pubmed if $reference->pubmed && ( $self->{'cited_references'}{$reference->pubmed} || $link_list{'pubmed'} || $link_list{'all'} );
+    $anchors .= sprintf '<a id="%s"></a>',        $reference->sid    if $reference->sid && ( $self->{'cited_references'}{$reference->sid} || $link_list{'sid'} || $link_list{'all'} );
+    $anchors .= sprintf '<a id="tmp_%s"></a>',    $reference->key    if $reference->key && ( $self->{'cited_references'}{$reference->key} || $link_list{'key'} || $link_list{'all'} );
+    $anchors .= sprintf '<a id="pmc_%s"></a>',    $reference->pmc    if $reference->pmc && ( $self->{'cited_references'}{$reference->pmc} || $link_list{'pmc'} || $link_list{'all'} );
+    push @html, sprintf qq(\n<h4 class="article">%s%s</h4>), $anchors, $reference->title;
 
     if( $reference->doi && ( $self->{'cited_references'}{$reference->doi} || $link_list{'doi'} || $link_list{'all'} ) ) {
       (my $doi = $reference->doi ) =~ s{/}{_}mxgs;
