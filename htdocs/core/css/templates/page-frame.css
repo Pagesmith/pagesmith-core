@@ -1,13 +1,14 @@
 /* Page frame - "box" and institute/footer */
-body { color:#404040; background-color: #f00; font-family:Arial,Helvetica,sans-serif; }
+body { color:#404040; background-color: #f00; font-family:Arial,Helvetica,sans-serif; text-align: center }
 
-#wrap { border:1px solid #f00; padding: 5px; background-color:#fff; margin:1em auto 0 }
+#wrap { border:1px solid #f00; padding: 5px; background-color:#fff; margin:1em auto 0; text-align: left }
 
-#inst { clear: both; padding: 0; margin: 0.5em auto; font-size: 0.8em }
+#inst { clear: both; padding: 0; margin: 0.5em auto; font-size: 0.8em; text-align: left }
 #inst span { float: right; display: block }
 
 #wrap:after, #head:after { content:".";  display:block;  height:0;  clear:both; visibility:hidden }
 
+#foot { clear: both }
 /* A blank image to make sure that nav/content doesn't break out of the page frame doesn't "break" */
 
 .x { clear: both; height:1px; overflow: hidden }
