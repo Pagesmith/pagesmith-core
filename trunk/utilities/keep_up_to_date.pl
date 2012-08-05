@@ -144,7 +144,7 @@ while( 1 ) {
     }
   }
   $adap->cleanup_checkout( );
-  printf {$efh} "## RUN: %6d; time: %s; duration: %8.4f\n", $run_number, $time, time - $loop_start_time if $DEBUG;
+  printf {$efh} "## RUN: %6d; time: %s; duration: %8.4f\n", $run_number, $loop_start_time, time - $loop_start_time if $DEBUG;
   $run_number++;
   last if $MAX_RUNS && $run_number > $MAX_RUNS;
   sleep $SLEEP_TIME;
@@ -360,7 +360,7 @@ sub _force_block {
 
 sub _check_block {
   if( -e $BLK_FILE ) {
-    my $blk_time = time;
+    my $blk_time = scalar gmtime;
     printf {$lfh}  "\nBLOCKED AT %s BY %s\n", $blk_time, $BLK_FILE;
     $blk_counter++;
     $blk_counter = $MAX_BLOCK_MULT if $blk_counter > $MAX_BLOCK_MULT;
