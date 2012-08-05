@@ -29,6 +29,7 @@ use Readonly qw(Readonly);
 use Getopt::Long qw(GetOptions);
 use Sys::Hostname qw(hostname);
 use List::MoreUtils qw(uniq);
+use IO::Handle;
 
 Readonly my $TO_MERGE       => 10;
 Readonly my $UPDATE_NO      => 50;
@@ -394,9 +395,11 @@ sub _open_files {
 ## no critic (BriefOpen RequireChecked)
   my $open_type = $FLUSH ? q(>) : q(>>); ## Flush then we will start a new file!
   unless( open $efh, $open_type, $ERR_FILE ) {
+    $efh->autoflush(1);
     die "CANNOT CREATE Error log file: $ERR_FILE\n";
   }
   unless( open $lfh, $open_type, $LOG_FILE ) {
+    $lfh->autoflush(1);
     die "CANNOT CREATE Log file: $LOG_FILE\n";
   }
 ## use critic
