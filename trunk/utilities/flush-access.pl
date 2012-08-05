@@ -42,10 +42,6 @@ my $rv = eval {
   my $conf = Pagesmith::Utils::SVN::Config->new( $ROOT_PATH, 'IPC', 1 );
   print Data::Dumper->new( [ $conf ], [ 'conf' ] )->Sortkeys(1)->Indent(1)->Terse(1)->Dump() if $ARGV[0]; ## no critic (CheckedSyscalls)
 };
-if( $EVAL_ERROR ) {
-  print "$EVAL_ERROR\n"; ## no critic (CheckedSyscalls)
-} else {
-  print "Successfully written\n"; ## no critic (CheckedSyscalls)
-}
+printf "%s\n" , $EVAL_ERROR || 'Successfully written';
 ## We need to flush the memcached versions on the "editing servers"...
 
