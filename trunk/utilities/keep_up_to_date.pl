@@ -17,8 +17,9 @@ use version qw(qv); our $VERSION = qv('0.1.0');
 
 use HTML::Entities qw(encode_entities);
 
+use Mail::Mailer;
 use Time::HiRes qw(time);
-use English qw(-no_match_vars $PROGRAM_NAME $EVAL_ERROR $OUTPUT_AUTOFLUSH);
+use English qw(-no_match_vars $UID $PROGRAM_NAME $EVAL_ERROR $OUTPUT_AUTOFLUSH);
 use Date::Format qw(time2str);
 use File::Basename qw(dirname);
 use Sys::Hostname::Long qw(hostname_long);
@@ -26,6 +27,7 @@ use Cwd qw(abs_path);
 use Data::Dumper qw(Dumper);
 use Readonly qw(Readonly);
 use Getopt::Long qw(GetOptions);
+use Sys::Hostname qw(hostname);
 use List::MoreUtils qw(uniq);
 
 Readonly my $TO_MERGE       => 10;
@@ -47,6 +49,7 @@ my $SLEEP_TIME     = $DEF_SLEEP_TIME;
 my $MAX_RUNS       = 0;  ## Run forever...
 my $DEBUG          = 0;
 my $QUIET          = 0;
+my $OWNER          = q();
 my $OUT_DIR        = "$ROOT_PATH/logs";
 ( my $tmp_dir = $OUT_DIR ) =~ s{\A/www/}{/www/tmp/}mxs;
 $OUT_DIR = $tmp_dir if -e $tmp_dir;
@@ -57,6 +60,7 @@ my $BLK_FILE;
 my $FLUSH = 0;
 
 GetOptions(
+  'owner'     => \$EMAIL,
   'verbose:+' => \$DEBUG,
   'quiet'     => \$QUIET,
   'sleep=f'   => \$SLEEP_TIME,
@@ -192,6 +196,9 @@ sub _update_files {
       if( $EVAL_ERROR ) {
         printf {$efh} "COMMAND: %s\n", $command;
         printf {$efh} "ERROR:   %s\n", $EVAL_ERROR;
+        if( $EVAL_ERROR =~ m{Conflict\s+discovered}mxs ) {
+          _force_block( 'Conflict discovered', $EVAL_ERROR );
+        }
         return 0;
       }
       printf {$lfh} $command."\n" unless $QUIET;
@@ -302,13 +309,62 @@ sub _parse_svn_url {
   };
 }
 
+sub _force_block {
+  my( $subject, $body ) = @_;
+  return if -e $BLK_FILE;
+  if( open my $fh, q(>), $BLK_FILE ) {
+    ## This is where we need to perform a send mail...
+    my $flag = close $fh;
+    my $mailfh = Mail::Mailer->new;
+    $mailfh->open({
+      'Importance' => 'High',
+      'To'         => $OWNER,
+      'From'       => $OWNER,
+      'Subject'    => sprintf 'KEEP UP TO DATE: %s (%s)', $subject, hostname,
+    });
+    ## no critic (ImplicitNewlines)
+    printf {$mailfh} '
+========================================================================
+
+  keep_up_to_date on %s has placed a block file because of an error
+
+========================================================================
+
+  Subject:    %s
+  Host:       %s
+  Time:       %s
+  User:       %s
+  Binary:     %s
+
+  Log file:   %s
+  Error log:  %s
+  Block file: %s
+
+========================================================================
+
+%s
+
+========================================================================
+',
+    hostname, $subject,
+    hostname, scalar gmtime, scalar getpwuid $UID,
+    abs_path($PROGRAM_NAME),
+    $LOG_FILE, $ERR_FILE, $BLK_FILE,
+    $body;
+    ## use critic
+    $mailfh->close;
+    return $flag;
+  }
+  return;
+}
+
 sub _check_block {
   if( -e $BLK_FILE ) {
     my $blk_time = time;
     printf {$lfh}  "\nBLOCKED AT %s BY %s\n", $blk_time, $BLK_FILE;
     $blk_counter++;
     $blk_counter = $MAX_BLOCK_MULT if $blk_counter > $MAX_BLOCK_MULT;
-    sleep $SLEEP_TIME;
+    sleep $SLEEP_TIME * $blk_counter;
     next;
   } else {
     $blk_counter = 0;
@@ -342,6 +398,8 @@ sub _config {
   $LOG_FILE ||= 'svn-update.log';
   $ERR_FILE ||= 'svn-update.err';
   $BLK_FILE ||= 'svn-update.block';
+
+  $OWNER    ||= scalar getpwuid $UID;
 
   $LOG_FILE = $OUT_DIR.q(/).$LOG_FILE unless $LOG_FILE =~ m{/}mxs;
   $ERR_FILE = $OUT_DIR.q(/).$ERR_FILE unless $ERR_FILE =~ m{/}mxs;
