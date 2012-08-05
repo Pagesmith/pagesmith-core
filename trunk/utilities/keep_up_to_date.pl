@@ -60,7 +60,7 @@ my $BLK_FILE;
 my $FLUSH = 0;
 
 GetOptions(
-  'owner'     => \$EMAIL,
+  'owner'     => \$OWNER,
   'verbose:+' => \$DEBUG,
   'quiet'     => \$QUIET,
   'sleep=f'   => \$SLEEP_TIME,
