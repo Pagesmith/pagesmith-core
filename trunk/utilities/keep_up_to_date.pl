@@ -95,6 +95,8 @@ my $time = gmtime;
 printf {$efh}  "\n====================================\n\n  RESTARTED AT %s\n\n====================================\n\n", $time unless $QUIET;
 
 my $blk_counter = 0;
+_debug_dump( $repositories )  if $DEBUG > 1;
+
 while( 1 ) {
   next if _check_block();
   my $loop_start_time = time;
@@ -105,7 +107,6 @@ while( 1 ) {
 
   $adap->touch_checkout( );
 
-  _debug_dump( $repositories )  if $DEBUG > 1;
 
   ## We need to do some additional code in here which will pick up changes that are in
   ## externals directives....
