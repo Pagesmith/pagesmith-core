@@ -151,7 +151,7 @@ while( 1 ) {
     }
   }
   $adap->cleanup_checkout( );
-  printf {$efh} "## RUN: %6d; time: %s; duration: %8.4f\n", $run_number, $loop_start_time, time - $loop_start_time if $DEBUG;
+  printf {$efh} "## RUN: %6d; time: %s; duration: %8.4f\n", $run_number, $l_time, time - $loop_start_time if $DEBUG;
   $run_number++;
   last if $MAX_RUNS && $run_number > $MAX_RUNS;
   sleep $SLEEP_TIME;
