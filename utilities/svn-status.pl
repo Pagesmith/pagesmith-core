@@ -1,6 +1,7 @@
 #!/usr/bin/perl
 
-## Keep server up to date
+## Keeps a serve up to date - BUT not using keep uptodate - basically runs svn up on each repository
+
 ## Author         : js5
 ## Maintainer     : js5
 ## Created        : 2009-08-12
