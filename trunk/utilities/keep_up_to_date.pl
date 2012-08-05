@@ -33,6 +33,7 @@ use List::MoreUtils qw(uniq);
 Readonly my $TO_MERGE       => 10;
 Readonly my $UPDATE_NO      => 50;
 Readonly my $DEF_SLEEP_TIME => 5;
+Readonly my $DEF_CHECK_RUNS => 100;
 Readonly my $MAX_BLOCK_MULT => 30;
 
 my $ROOT_PATH;
@@ -47,6 +48,7 @@ use Pagesmith::ConfigHash qw(set_site_key);
 
 my $SLEEP_TIME     = $DEF_SLEEP_TIME;
 my $MAX_RUNS       = 0;  ## Run forever...
+my $CHECK_RUNS     = $DEF_CHECK_RUNS;  ## Run forever...
 my $DEBUG          = 0;
 my $QUIET          = 0;
 my $OWNER          = q();
@@ -69,6 +71,7 @@ GetOptions(
   'logfile:s' => \$LOG_FILE,
   'errorlog:s'=> \$ERR_FILE,
   'runs:i'    => \$MAX_RUNS,
+  'check:i'   => \$CHECK_RUNS,
   'flush'     => \$FLUSH,
 );
 
@@ -95,13 +98,16 @@ my $time = gmtime;
 printf {$efh}  "\n====================================\n\n  RESTARTED AT %s\n\n====================================\n\n", $time unless $QUIET;
 
 my $blk_counter = 0;
-_debug_dump( $repositories )  if $DEBUG > 1;
+
+my $repositories = _find_repositories();
 
 while( 1 ) {
   next if _check_block();
   my $loop_start_time = time;
 
-  my $repositories = _find_repositories();
+  unless( $run_number % $CHECK_RUNS ) {
+    $repositories = _find_repositories();
+  }
   my $l_time = gmtime;
   printf {$efh} "## RUN: %6d; time: %s\n", $run_number, $l_time if $DEBUG > 1;
 
@@ -247,7 +253,7 @@ sub _find_repositories {
 ## Search through the root directory (and sites subdirectory) to find
 ## any checkouts that we will be monitoring
 #@return hashref of hashes of arrays - the keys being repository name and branch and the checkout directory
-  my $repositories = {};
+  my $repos = {};
   my $command = sprintf 'svn info %s %s/sites/*', $ROOT_PATH, $ROOT_PATH;
   my @lines = grep { m{\A(URL|Path):}mxsg } eval { $support->read_from_process( $command ); };
   my $dir;
@@ -262,7 +268,7 @@ sub _find_repositories {
         $dir = undef;
         next;
       }
-      push @{ $repositories->{ $details->{'repos'} }{ $details->{'branch'} }{ "$details->{'path'}/" } }, {
+      push @{ $repos->{ $details->{'repos'} }{ $details->{'branch'} }{ "$details->{'path'}/" } }, {
         'directory' => $dir,
         'url'       => $details->{'url'},
         'root'      => $details->{'root'},
@@ -283,7 +289,7 @@ sub _find_repositories {
           my $subdir     = $1;
           my $ext_details = _parse_svn_url($2);
           next unless $ext_details;
-          push @{ $repositories->{ $ext_details->{'repos'} }{ $ext_details->{'branch'} }{ "$ext_details->{'path'}/" } }, {
+          push @{ $repos->{ $ext_details->{'repos'} }{ $ext_details->{'branch'} }{ "$ext_details->{'path'}/" } }, {
             'directory' => "$path/$subdir",
             'url'       => $ext_details->{'url'},
             'root'      => $ext_details->{'root'},
@@ -293,7 +299,8 @@ sub _find_repositories {
       $dir = undef;
     }
   }
-  return $repositories;
+  _debug_dump( $repos )  if $DEBUG > 1;
+  return $repos;
 }
 
 sub _parse_svn_url {
@@ -374,10 +381,10 @@ sub _check_block {
 }
 
 sub _debug_dump {
-  my $repositories = shift;
-  foreach my $repos ( sort keys %{$repositories} ) {
-    foreach my $branch ( sort keys %{$repositories->{$repos}} ) {
-      printf {$efh} "Repos: %-30s; Branch: %-10s.\n", $repos, $branch;
+  my $repos = shift;
+  foreach my $repo ( sort keys %{$repos} ) {
+    foreach my $branch ( sort keys %{$repos->{$repo}} ) {
+      printf {$efh} "Repos: %-30s; Branch: %-10s.\n", $repo, $branch;
     }
   }
   return;
