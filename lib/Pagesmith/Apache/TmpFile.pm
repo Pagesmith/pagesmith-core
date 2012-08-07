@@ -77,8 +77,8 @@ sub send_content {
     if ($content) {
       my ($extn) = $filename =~ m{\.(\w+)\Z}mxs;
       $r->content_type(
-          $extn eq 'css'  ? 'text/css'
-        : $extn eq 'js'   ? 'text/javascript'
+          $extn eq 'css'  ? 'text/css;charset=utf-8'
+        : $extn eq 'js'   ? 'text/javascript;charset=utf-8'
         : $extn eq 'png'  ? 'image/png'
         : $extn eq 'jpg'  ? 'image/jpeg'
         : $extn eq 'jpeg' ? 'image/jpeg'
