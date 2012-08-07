@@ -84,7 +84,7 @@ $repos = $repos_name if $repos_name;
 my $support = Pagesmith::Utils::Core->new();
 
 unless( $repos_root ) {
-  my @out = $support->read_from_process( 'svn', 'info', '.' );
+  my @out = $support->read_from_process( 'svn', 'info', q(.) );
   foreach( @out ) {
     my ($k,$v) = split m{:\s+}mxs, $_, 2;
     next unless $k;
@@ -103,16 +103,11 @@ my $rv = eval {
       sprintf '%s/%s/%s/htdocs', $repos_root, $repos, $branch);
   foreach my $ext (@externals) {
     next unless $ext;
-warn "HEE...";
     my ($d, $r) = split m{\s+}mxs, $ext;
-warn ">>> $d -- $r <<<";
-    my @out = $support->read_from_process( 'svn', 'list', '-R', $r );
-    push @pages, map { "$d/$_" } grep { m{\.html\Z}mxs } @out;
-warn "XXX...";
+    my @ext_out = $support->read_from_process( 'svn', 'list', '-R', $r );
+    push @pages, map { "$d/$_" } grep { m{\.html\Z}mxs } @ext_out;
   }
-warn ">>> @pages <<<";
   foreach( @pages ) {
-warn ">>> $_ <<<";
 ## We have a web page to get...
     s{\A(|.*/)index\.html\Z}{$1}mxs;
     push @urls, sprintf 'http://%s/%s', $host, $_;
