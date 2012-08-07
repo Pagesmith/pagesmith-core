@@ -193,8 +193,12 @@ sub set_current_block_class {
   return $self;
 }
 sub set_current_row_class {
-  my( $self, $id ) = @_;
+  my( $self, $class ) = @_;
   $self->{'blocks'}[ $self->{'current_block'} ]{'row_class'} = $class;
+  return $self;
+}
+sub set_current_row_id {
+  my( $self, $id ) = @_;
   $self->{'blocks'}[ $self->{'current_block'} ]{'row_id'}    = $id;
   return $self;
 }
