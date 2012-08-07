@@ -42,6 +42,7 @@ sub new {
     'blocks'        => [ {
       'class'     => $options->{'block_class'},
       'row_class' => $options->{'row_class'},
+      'row_id'    => $options->{'row_id'},
       'data'      => $row_data ? $row_data: [],
     } ],
   };
@@ -192,8 +193,9 @@ sub set_current_block_class {
   return $self;
 }
 sub set_current_row_class {
-  my( $self, $class ) = @_;
+  my( $self, $id ) = @_;
   $self->{'blocks'}[ $self->{'current_block'} ]{'row_class'} = $class;
+  $self->{'blocks'}[ $self->{'current_block'} ]{'row_id'}    = $id;
   return $self;
 }
 
@@ -480,8 +482,12 @@ sub render_block {
   my @html;
   push @html, $block->{'class'} ? qq(    <tbody class="$block->{'class'}">) : q(    <tbody>);
   foreach my $row ( @{ $block->{'data'} } ) {
+    my $row_extra = q();
     my $row_class = $block->{'row_class'} ? $self->expand_template( $block->{'row_class'}, undef, $row ) : q();
-    push @html, $row_class ? qq(      <tr class="$row_class">) : q(      <tr>);
+    $row_extra .= sprintf ' class="%s"', $row_class if $row_class;
+    my $row_id    = $block->{'row_id'}    ? $self->expand_template( $block->{'row_id'},    undef, $row ) : q();
+    $row_extra .= sprintf ' id="%s"',    $row_id    if $row_id;
+    push @html, qq(      <tr$row_extra>);
     my $c_id = 0;
     foreach my $col ( $self->columns ) {
       my $property = $col->{'key'};
