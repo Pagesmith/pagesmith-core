@@ -234,6 +234,7 @@ sub merge_cssjs {
       my $fh;
       if ( open $fh, '<', $fn ) {
         my $x = <$fh>;
+        $x =~ s{^\@charset\s+"UTF-8";}{}mxsg; ## Strip off char set headings
         close $fh; ##no critic (CheckedSyscalls CheckedClose)
         ## Add a header in the HTML to be minified and merged!
         ##no critic (ImplicitNewlines)
@@ -247,7 +248,7 @@ sub merge_cssjs {
           $x,
           $fn,
         ];
-        ##use critic (ImplicitNewlines)
+        ##use critic
       } else {
         $self->push_message( "Unable to open $type file $_", 'fatal' );
       }
@@ -267,7 +268,7 @@ sub merge_cssjs {
     my $fn = '/tmp/' . time() . q(.) . $PID . q(.) . $type;
     my $fh;
     if ( open $fh, '>', $fn ) {
-      my $t = join q(),map { $_->[1] } @html;
+      my $t = join q(), map { $_->[1] } @html;
       print {$fh} $t; ##no critic (CheckedSyscalls)
       close $fh; ##no critic (CheckedSyscalls CheckedClose)
 
