@@ -31,17 +31,8 @@ sub execute {
         . $self->url_encode("I found this and thought it might be of interest to you:\r\r   ")
         . '<%= u:full_uri %>'
         . $self->url_encode("\r\r") ],
-    ['digg'     => 'Digg this',         'http://digg.com/submit?phase=2&amp;url=<%= u:full_uri %>&amp;title=<%= u:title %>'],
-    ['facebook' => 'Share on Facebook', 'http://www.facebook.com/sharer.php?u=<%= u:full_uri %>&amp;t=<%= u:title %>'],
-    [
-      'delicious' => 'Add to Del.icio.us',
-      'http://del.icio.us/post?v=4&amp;noui=yes&amp;jump=close&amp;url=<%= u:full_uri %>&amp;title=<%= u:title %>' ],
-    [
-      'slashdot' => 'Slashdot it',
-      'http://slashdot.org/submit.pl?url=<%= u:full_uri %>;mediatype=text;subj=<%= u:title %>;primaryskid=14;tid=350;' ],
-    ['reddit'  => 'Add to reddit', 'http://www.reddit.com/submit?url=<%= u:full_uri %>;title=<%= u:title %>'],
     ['twitter' => 'Tweet',         'http://twitter.com/home?status=<%= u:title %>%20(%20<%= u:full_uri %>%20)'],
-    ['stumble' => 'Stumble upon',  'http://www.stumbleupon.com/submit?url=<%= u:full_uri %>;title=<%= u:title %>'],
+    ['facebook' => 'Share on Facebook', 'http://www.facebook.com/sharer.php?u=<%= u:full_uri %>&amp;t=<%= u:title %>'],
   );
   foreach my $link_ref (@links) {
     $output .= sprintf '<li class="linkto l_%s"><a href="%s" %s>%s</a></li>',
