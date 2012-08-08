@@ -39,7 +39,7 @@ sub new {
     'loc'       => exists $params->{'location'} ? $params->{'location'} : $DEFAULT_LOCATION,
     'override'  => exists $params->{'override'} ? $params->{'override'} : 0,
     'data'      => {},
-    'use_cache' => exists $params->{'no_cache'} ? 1 : 0,
+    'use_cache' => exists $params->{'use_cache'} ? 1 : 0,
   };
 
   bless $self, $class;

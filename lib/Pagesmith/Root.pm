@@ -34,8 +34,17 @@ use Text::CSV::Encoded;
 use POSIX qw(mktime ceil floor);
 use Time::HiRes qw(time);
 use MIME::Base64 qw(decode_base64 encode_base64);
-
+use Pagesmith::Config;
 use Pagesmith::Adaptor;
+
+sub config {
+  my( $self, $file, $config, $override ) = @_;
+  return Pagesmith::Config->new( $file ) if ref $file eq 'HASH';
+
+  $config   ||= 'site';
+  $override ||= 0;
+  return Pagesmith::Config->new( { 'file' => $file, 'config' => $config, 'override' => $override } );
+}
 
 my $failed_modules;
 
