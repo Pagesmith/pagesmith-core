@@ -16,7 +16,7 @@ use utf8;
 
 use version qw(qv); our $VERSION = qv('0.1.0');
 
-use English qw(-no_match_vars $INPUT_RECORD_SEPARATOR);
+use English qw(-no_match_vars $INPUT_RECORD_SEPARATOR $EVAL_ERROR);
 use File::Spec;
 use File::Basename qw(dirname);
 use Hash::Merge qw(merge);
@@ -101,7 +101,11 @@ sub _get_contents {
 
     close $fh; ## no critic (RequireChecked)
     my $yl   = YAML::Loader->new;
-    my $hash = $yl->load( $contents );
+    my $hash = eval { $yl->load( $contents ); };
+    if( $EVAL_ERROR ) {
+      warn "YAML: $filename - $EVAL_ERROR\n";
+      return;
+    }
     undef $contents;
     my @elements;
     push @elements, $hash->{ $self->{'key'} } if exists $hash->{ $self->{'key'} };
