@@ -18,9 +18,10 @@ use version qw(qv); our $VERSION = qv('0.1.0');
 use Readonly qw(Readonly);
 Readonly my $VERY_LARGE_TIME => 1_000_000;
 Readonly my $CENT            => 100;
-Readonly my $LEVEL           => 'quiet'; # (quiet,normal,noisy)
+Readonly my $LEVEL           => 'normal'; # (quiet,normal,noisy)
 
 use Apache2::Const qw(OK DECLINED);
+use Apache2::SizeLimit;
 use English qw(-no_match_vars $PID);
 use Time::HiRes qw(time);
 
@@ -31,6 +32,9 @@ my $total_time;
 my $min_time;
 my $max_time;
 my $total_time_squared;
+my $size;
+my $shared;
+my $unshared;
 
 sub post_config_handler {
   return DECLINED if $LEVEL eq 'quiet';
@@ -41,14 +45,13 @@ sub post_config_handler {
 
 sub child_init_handler {
   return DECLINED if $LEVEL eq 'quiet';
-
   $child_started = time;
   $requests      = 0;
   $total_time    = 0;
   $min_time      = $VERY_LARGE_TIME;
   $max_time      = 0;
   $total_time_squared  = 0;
-
+  ($size,$shared,$unshared) = Apache2::SizeLimit->_check_size(); ##no critic(PrivateSubs)
   printf {*STDERR} "TI:   Start child   %9d\n", $PID;
   return DECLINED;
 }
@@ -74,7 +77,6 @@ sub log_handler {
   my $r             = shift;
 
   return DECLINED if $LEVEL eq 'quiet';
-
   my $request_ended = time;
   my $t             = $request_ended - $request_started;
 
@@ -82,10 +84,23 @@ sub log_handler {
   $min_time = $t if $t < $min_time;
   $max_time = $t if $t > $max_time;
   $total_time_squared += $t * $t;
-  $r->subprocess_env->{'CHILD_COUNT'}  = $requests;
-  $r->subprocess_env->{'SCRIPT_START'} = sprintf '%0.6f', $request_started;
-  $r->subprocess_env->{'SCRIPT_END'}   = sprintf '%0.6f', $request_ended;
-  $r->subprocess_env->{'SCRIPT_TIME'}  = sprintf '%0.6f', $t;
+  my ($new_size, $new_shared, $new_unshared) = Apache2::SizeLimit->_check_size(); ##no critic(PrivateSubs)
+
+  $r->subprocess_env->{'CHILD_COUNT'}    = $requests;
+  $r->subprocess_env->{'SCRIPT_START'}   = sprintf '%0.6f', $request_started;
+  $r->subprocess_env->{'SCRIPT_END'}     = sprintf '%0.6f', $request_ended;
+  $r->subprocess_env->{'SCRIPT_TIME'}    = sprintf '%0.6f', $t;
+
+  $r->subprocess_env->{'SIZE'}           = $new_size;
+  $r->subprocess_env->{'SHARED'}         = $new_shared;
+  $r->subprocess_env->{'UNSHARED'}       = $new_unshared;
+  $r->subprocess_env->{'DELTA_SIZE'}     = $new_size - $size;
+  $r->subprocess_env->{'DELTA_SHARED'}   = $new_shared - $shared;
+  $r->subprocess_env->{'DELTA_UNSHARED'} = $new_unshared - $unshared;
+
+  $size     = $new_size;
+  $shared   = $new_shared;
+  $unshared = $new_unshared;
 
   return DECLINED unless $LEVEL eq 'noisy';
 
@@ -97,7 +112,7 @@ sub child_exit_handler {
   return DECLINED if $LEVEL eq 'quiet';
 
   my $time_alive = time - $child_started;
-  printf {*STDERR} "TI:   End child     %9d - %4d %10.6f %10.6f %7.3f%% %10.6f [%10.6f,%10.6f]\n",
+  printf {*STDERR} "TI:   End child     %9d - %4d %10.6f %10.6f %7.3f%% %10.6f [%10.6f,%10.6f] %10d %10d %10d\n",
     $PID,
     $requests,
     $total_time,
@@ -105,7 +120,11 @@ sub child_exit_handler {
     $time_alive  ? $CENT * $total_time / $time_alive : 0,
     $requests    ? $total_time / $requests           : 0,
     $min_time,
-    $max_time;
+    $max_time,
+    $size,
+    $shared,
+    $unshared,
+    ;
   return DECLINED;
 }
 
