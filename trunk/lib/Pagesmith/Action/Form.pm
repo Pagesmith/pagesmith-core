@@ -65,6 +65,10 @@ sub run {
     $form_object->set_stage_by_name( $msg ) if $msg;    ## CAN'T
   }
 
+  if( $form_object->secure && $self->r->headers_in->{'X-is-ssl'} ne '1' ) {
+    return $self->redirect( $form_object->action_url_get );
+  }
+
   $form_object->config->set_option( 'is_action', 1 ); ## Required so page can get wrapped later!
   $self->{'form_object'} = $form_object;
 
