@@ -85,7 +85,7 @@ sub get_data {
   my $command_string = $self->{'user_home'}.'/bin/'.$self->{'script'}; ## This script has to occur on all machines that are being connected to!
   my $user          = join q(@), $self->{'user'}, $self->{'host'};
 
-  my $commend_ref = exists $ENV{'SSH_AUTH_SOCK'}
+  my $command_ref = exists $ENV{'SSH_AUTH_SOCK'}
     ? ['/bin/bash', '-c', sprintf q('SSH_AUTH_SOCK="" /usr/bin/ssh -i %s %s %s'), $self->{'id_file'}, $user, $command_string ]
     : ['/usr/bin/ssh', '-i', $self->{'id_file'}, $user, $command_string ]
     ;
