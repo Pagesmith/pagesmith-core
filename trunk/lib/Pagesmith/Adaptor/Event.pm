@@ -208,7 +208,7 @@ sub store {
       lastname=?, affiliation=?, host=?, precis=?, _search_=? where event_id = ?',
       $now, $event->updated_by, 'active',
       $event->start_date, $event->end_date, $event->regclose_date, $event->start_time, $event->end_time,
-      $event->title, $event->url, $event->type_id, $event->category_id, $event->location_id, $event->title_id,
+      $event->title, $event->url, $event->type_id, $event->category_id, $event->location_id, $event->title_id||0,
       $event->firstname, $event->lastname, $event->affiliation, $event->host, $event->precis,
       $search_string, $event->event_id );
   } else { ## Performing store
@@ -224,7 +224,7 @@ sub store {
     'event', 'event_id',
     $now, $event->created_by,  $now, $event->created_by, 'active',
     $event->start_date, $event->end_date, $event->regclose_date, $event->start_time, $event->end_time,
-    $event->title, $event->url, $event->type_id, $event->category_id, $event->location_id, $event->title_id,
+    $event->title, $event->url, $event->type_id, $event->category_id, $event->location_id, $event->title_id||0,
     $event->firstname, $event->lastname, $event->affiliation, $event->host, $event->precis,
     $search_string );
     $event->set_event_id( $id );
