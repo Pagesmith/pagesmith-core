@@ -326,7 +326,7 @@ sub expand_format {
        : $f =~ m{\Af(\d+)\Z}mxs       ? sprintf( qq(%0.$1f),                           $val )       # Fixed decimal
        : $f =~ m{\Ap(\d+)\Z}mxs       ? sprintf( qq(%0.$1f%%),                         $val*$CENT ) # Percentage
        : $f =~ m{\Ah(\d+)\Z}mxs       ? $self->truncate_string(                        $val, $1   ) # Percentage
-       : $f =~ m{\Ad(\d+)\Z}mxs       ?  sprintf( qq(%0$1d),                           $val )       # zero padded
+       : $f =~ m{\Ad(\d+)\Z}mxs       ? sprintf( qq(%0$1d),                            $val )       # zero padded
        : $f eq 'd'                    ? sprintf( q(%0d),                               $val )       # Integer
        :                                encode_entities(                               $val )       # HTML safe!
        ;
