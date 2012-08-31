@@ -20,6 +20,8 @@ use Readonly qw(Readonly);
 use Sys::Hostname qw(hostname);
 
 Readonly my $K => 1024;
+Readonly my $DAY           => 24;
+Readonly my $MIN           => 60;
 
 my %mem_keys = qw(
   MemTotal  mem
@@ -54,7 +56,7 @@ sub new {
       error
       uptime idle load_1 load_5 load_15 jobs kernel description release codename distributor
       perl php mysqld apache
-      user_dirs software 
+      user_dirs software
       updates sec_updates
       packages
       upgrade
@@ -72,11 +74,37 @@ sub new {
 
 sub process {
   my $self = shift;
-  my $failure = $self->get_data;
+  return if $self->get_data;
   foreach my $method ( map { "process_$_" } keys %{$self->{'raw'}} ) {
     $self->$method if $self->can( $method );
   }
+  $self->munge_info;
   return;
+}
+
+sub munge_info {
+  my $self = shift;
+  $self->{'uptime_hr'} = $self->format_duration( $self->{'uptime'} );
+  $self->{'used'}      = $self->{'mem'}  - $self->{'free'};
+  $self->{'swpu'}      = $self->{'swap'} - $self->{'swpf'};
+  $self->{'idle_p'}    = $self->{'idle'}/$self->{'uptime'}/$self->{'cpus'} if $self->{'uptime'} && $self->{'cpus'};
+  $self->{'used_p'}    = 1-$self->{'idle_p'};
+  if( $self->{'description'} =~ m{(\d+\.\d+\.\d+)}mxs ) {
+    $self->{'release'} = $1;
+  }
+  return $self;
+}
+
+sub format_duration {
+  my( $self, $dur ) = @_;
+  my $days  = floor $dur / $DAY / $MIN / $MIN;
+  $dur -= $DAY * $MIN * $MIN * $days;
+  my $hours = floor $dur / $MIN / $MIN;
+  $dur -= $hours * $MIN * $MIN;
+  my $mins  = floor $dur / $MIN;
+  $dur -= $mins * $MIN;
+
+  return sprintf '%d d %d h %02d:%05.2f', $days, $hours, $mins, $dur;
 }
 
 sub get_data {
@@ -94,8 +122,8 @@ sub get_data {
   $self->{'success'} = $output->{'success'};
 
   unless( $output->{'success'} ) {
-    $self->{'error'} = join qq(\n), $output->{'stderr'};
-    return;
+    $self->{'error'} = join qq(\n), @{$output->{'stderr'}};
+    return 1;
   }
 
   my $current;
@@ -156,6 +184,7 @@ sub process_info {
       $self->{(lc $1)} = $2;
     }
   }
+  unshift @{$self->{'raw'}{'info'}}, $uptime_line, $load_line, $version_line;
   return;
 }
 sub process_perl {
@@ -190,7 +219,7 @@ sub process_disk {
   my $self = shift;
 ## Finally the disk block
   foreach( @{$self->{'raw'}{'disk'}} ) {
-    next if m{\A(?:Filesystem|none)\s}mxs;
+    next if m{\A(?:Filesystem|none|tmpfs|udev)\s}mxs;
     next if m{/boot\Z}mxs;
     ## no critic (CaptureWithoutTest)
     given( $_ ) {
@@ -219,6 +248,7 @@ sub process_apt {
     $self->{'updates'}     = $n_updates;
     $self->{'sec_updates'} = $n_security;
     $self->{'packages'}    = join q(, ), sort @{$self->{'raw'}{'apt'}};
+    unshift @{$self->{'raw'}{'apt'}}, $first;
   } else {
     $self->{'updates'}     = 0;
     $self->{'sec_updates'} = 0;
@@ -239,7 +269,7 @@ sub process_reboot {
     if( $self->{'raw'}{'reboot'}[0] eq '--- No reboot required ---' ) {
       $self->{'reboot'} = 'No';
     } elsif( $self->{'raw'}{'reboot'}[0] eq q(-) ) {
-      $self->{'reboot'} = 'No';
+      $self->{'reboot'} = q(?);
     } else {
       $self->{'reboot'} = 'Yes';
     }
@@ -251,6 +281,9 @@ sub process_ipconfig {
   my $self = shift;
   foreach ( @{$self->{'raw'}{'ipconfig'}||[]} ) {
     ## no critic (CaptureWithoutTest)
+    if( m{\A(\w+)}mxs ) {
+      $self->{'interface'} = $1;
+    }
     given( $_ ) {
       when( m{HWaddr\s+(\w\w:\w\w:\w\w:\w\w:\w\w:\w\w)}mxs ) {
         $self->{'mac_addr'}  = $1;
@@ -270,30 +303,3 @@ sub process_ipconfig {
 }
 
 1;
-
-__END__
-
-h3. Shell script
-
-{{
-  #!/usr/local/bin/bash
-
-  ## Script name: ~www-core/bin/server_info
-
-  cat /proc/meminfo            ## Information about the memory on the box
-  echo ===
-  cat /proc/cpuinfo            ## Information about the CPUs on the box
-  echo ===
-  df -k                        ## Information about the mounted filesystems (size, free etc...)
-  echo ===
-  perl -v                      ## Version number of default perl
-  echo ===
-  php -v                       ## Version number of default PHP
-  echo ===
-  `locate */mysqld || ls -1 /mysql/db/*/mysql/bin/mysqld` -V   ## Version number of the mysql daemon
-  echo ===
-  cat /proc/uptime             ## General server info - uptime
-  cat /proc/loadavg            ##  - Load averages
-  cat /proc/version            ##  - kernel information
-  lsb_release -a               ##  - distribution, release no and code name of Linux release
-}}
