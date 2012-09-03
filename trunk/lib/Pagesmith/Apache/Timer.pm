@@ -86,17 +86,18 @@ sub log_handler {
   $total_time_squared += $t * $t;
   my ($new_size, $new_shared, $new_unshared) = Apache2::SizeLimit->_check_size(); ##no critic(PrivateSubs)
 
-  $r->subprocess_env->{'CHILD_COUNT'}    = $requests;
-  $r->subprocess_env->{'SCRIPT_START'}   = sprintf '%0.6f', $request_started;
-  $r->subprocess_env->{'SCRIPT_END'}     = sprintf '%0.6f', $request_ended;
-  $r->subprocess_env->{'SCRIPT_TIME'}    = sprintf '%0.6f', $t;
+  my $z = $r->next || $r;
+  $z->subprocess_env->{'CHILD_COUNT'}    = $requests;
+  $z->subprocess_env->{'SCRIPT_START'}   = sprintf '%0.6f', $request_started;
+  $z->subprocess_env->{'SCRIPT_END'}     = sprintf '%0.6f', $request_ended;
+  $z->subprocess_env->{'SCRIPT_TIME'}    = sprintf '%0.6f', $t;
 
-  $r->subprocess_env->{'SIZE'}           = $new_size;
-  $r->subprocess_env->{'SHARED'}         = $new_shared;
-  $r->subprocess_env->{'UNSHARED'}       = $new_unshared;
-  $r->subprocess_env->{'DELTA_SIZE'}     = $new_size - $size;
-  $r->subprocess_env->{'DELTA_SHARED'}   = $new_shared - $shared;
-  $r->subprocess_env->{'DELTA_UNSHARED'} = $new_unshared - $unshared;
+  $z->subprocess_env->{'SIZE'}           = $new_size;
+  $z->subprocess_env->{'SHARED'}         = $new_shared;
+  $z->subprocess_env->{'UNSHARED'}       = $new_unshared;
+  $z->subprocess_env->{'DELTA_SIZE'}     = $new_size - $size;
+  $z->subprocess_env->{'DELTA_SHARED'}   = $new_shared - $shared;
+  $z->subprocess_env->{'DELTA_UNSHARED'} = $new_unshared - $unshared;
 
   $size     = $new_size;
   $shared   = $new_shared;
