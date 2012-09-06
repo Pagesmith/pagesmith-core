@@ -47,6 +47,10 @@ sub set_user {
   return $self;
 }
 
+sub schema_version {
+  my $self = shift;
+  return $self->{'_version'};
+}
 sub user {
   my $self = shift;
   unless( defined $self->{'_user'} ) {
@@ -59,7 +63,7 @@ sub user {
 sub get_connection {
   my( $self, $db_details ) = @_;
 
-  if( ! ref $db_details ) {
+  if( $db_details && ! ref $db_details ) {
     my $pch = Pagesmith::Config->new( { 'file' => 'databases', 'location' => 'site' } );
     $pch->load( 1 );
     $db_details = $pch->get( $db_details );
@@ -75,6 +79,7 @@ sub get_connection {
 
   $self->{'_dsn'}    = $db_details->{'dsn'};
   $self->{'_dbuser'} = $db_details->{'user'};
+  $self->{'_version'} = $db_details->{'version'};
   $self->{'_dbpass'} = $db_details->{'pass'};
   $self->{'_dbopts'} = $db_details->{'opts'} || { 'RaiseError' => 0 };
   return $self;
@@ -119,8 +124,10 @@ sub new {
 #@return (self)
   my( $class, $db_info, $r ) = @_;
 
+  ($r,$db_info) = ($db_info,undef) if 'Apache2::RequestRec' eq ref $db_info;
+
   if( blessed $db_info ) { ## DB info is an adaptor!
-    my $self = { map { ( $_ => $db_info->{$_} ) } qw(_conn _dsn _dbuser _dbpass _r _user) };
+    my $self = { map { ( $_ => $db_info->{$_} ) } qw(_conn _dsn _dbuser _dbpass _r _user _version) };
     $self->{'_dbopts'} ||= {%{$db_info->{'_dbopts'}}};
     bless $self, $class;
     return $self;
