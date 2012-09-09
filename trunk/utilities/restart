@@ -22,6 +22,8 @@ Readonly my $DEFAULT_PORT => 8000;
 
 use English qw(-no_match_vars $PROGRAM_NAME $UID);
 
+use BSD::Resource qw(getrlimit);
+
 use File::Basename qw(dirname basename);
 use Cwd qw(abs_path);
 use Getopt::Long qw(GetOptions);
@@ -69,10 +71,11 @@ $port ||= $DEFAULT_PORT;
 ## Get user info
 my($name,$passwd,$uid,$gid,$quota,$comment,$gcos,$dir,$shell,$expire) = getpwuid $UID;
 my $group;
-
+my $user_is_root = 0;
 if( $name eq 'root' ) {
   $name  = 'www-data';
   $group = 'www-data';
+  $user_is_root = 1;
 } else {
   $group = getgrgid $gid;
 }
@@ -95,7 +98,9 @@ if( $access || $error ) {
   local $ENV{'PAGESMITH_SERVER_LOGS'} = $log_path;
   local $ENV{'PAGESMITH_SERVER_USER'}  = $name;
   local $ENV{'PAGESMITH_SERVER_GROUP'} = $group;
-  my $return = system '/usr/sbin/apache2ctl', '-DPAGESMITH_'.uc $flag, '-d', "$path/apache2", '-f', "core.d/httpd.conf", '-k', $command;
+  my($now_soft,$now_hard) = getrlimit( 'RLIMIT_NOFILE' );
+  local $ENV{'APACHE_ULIMIT_MAX_FILES'} = $now_hard == $now_soft ? q(:) : qq(ulimit -S -n $now_hard) unless $user_is_root;
+  my $return = system '/usr/sbin/apache2ctl', '-DPAGESMITH_'.uc $flag, '-d', "$path/apache2", '-f', 'core.d/httpd.conf', '-k', $command;
   if( $return ) {
     printf {*STDERR} "  Returned result: %s\n", $return;
   } else {
