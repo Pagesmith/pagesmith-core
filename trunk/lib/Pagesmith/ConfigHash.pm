@@ -147,7 +147,7 @@ sub can_name_space {
   unless ( exists $config_data->{$site_key}{'-name_spaces'} ) {
     if($r) {
       my @T = $r->dir_config->get( $key_root . '_NameSpace' );
-      $config_data->{$site_key}{'-name_spaces'} = { map { ( $_ => 1 ) } @T, 'Developer' }; ## Developer is now in all sites name spaces, but blocked elsewhere
+      $config_data->{$site_key}{'-name_spaces'} = { map { ( $_ => 1 ) } @T, 'Developer' => 1 }; ## Developer is now in all sites name spaces, but blocked elsewhere
     }
   }
   return $config_data->{$site_key}{'-name_spaces'}{$key};
