@@ -18,16 +18,28 @@ use version qw(qv); our $VERSION = qv('0.1.0');
 
 use base qw(Pagesmith::Root);
 
+use List::MoreUtils qw(any);
 use HTML::Entities qw(encode_entities);
 use Apache2::Request;
-use Pagesmith::Session::User;
-use List::MoreUtils qw(any);
 
-my $failed_modules;
+use Pagesmith::Adaptor;
+use Pagesmith::Session::User;
 
 ## empty constructor!
 
 ## Code that requires r!
+
+sub get_adaptor {
+  my( $self, $type, @params ) = @_;
+  my $module = 'Pagesmith::Adaptor::'.$type;
+  return $self->dynamic_use( $module ) ? $module->new( @params, $self->r ) : undef;
+}
+
+sub get_adaptor_conn {
+  my( $self, $conn, @params ) = @_;
+  return Pagesmith::Adaptor->new( $conn, $self->r );
+}
+
 
 sub user {
   my( $self, $r ) = @_;
