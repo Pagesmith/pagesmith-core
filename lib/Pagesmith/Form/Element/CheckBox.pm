@@ -38,6 +38,11 @@ sub update_from_apr {
   $self->{'user_data'} = $v eq $self->{'on_value'} ? $self->{'on_value'} : $self->{'off_value'};
   return;
 }
+
+sub is_empty {
+  my $self = shift;
+  return $self->value ne $self->on_value;
+}
 sub on_value {
   my $self = shift;
   return $self->{'on_value'};
