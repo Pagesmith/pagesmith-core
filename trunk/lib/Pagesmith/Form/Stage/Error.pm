@@ -26,4 +26,13 @@ sub is_invalid {
 #@return (boolean) false - Final stage always classes as valid
   return 0;
 }
+
+sub render_email {
+  return q();
+}
+
+sub render_readonly {
+  return q();
+}
+
 1;
