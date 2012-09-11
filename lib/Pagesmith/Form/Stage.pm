@@ -31,6 +31,7 @@ sub r {
   my $self = shift;
   return $self->{'r'};
 }
+
 sub new {
   my ( $class, $form, $page_data ) = @_;
   my $self = {
