@@ -32,7 +32,14 @@ sub init_error {
   my $messages = [];
   $r->pnotes( 'errors', $messages );
   ## no critic (LocalizedPunctuationVars)
-  $SIG{'__WARN__'} = sub { my $msg = $_[0]; my $flag = ($msg =~ s{\A!raw!}{}mxs); push @{$messages}, Pagesmith::Message->new( $msg, 'warn', $flag ); };
+  $SIG{'__WARN__'} = sub {
+    my $msg = $_[0];
+    my $flag = 0;
+    if( $msg =~ s{\A!(pre|raw)!}{}mxs ) {
+      $flag = $1 eq 'pre' ? 1 : $1 eq 'raw' ? 2 : 0;
+    }
+    push @{$messages}, Pagesmith::Message->new( $msg, 'warn', $flag );
+  };
   ## use critic
   return DECLINED;
 }
