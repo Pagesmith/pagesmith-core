@@ -269,7 +269,7 @@ sub pre_dumper {
 sub dumper {
   my( $self, $data_to_dump, $name_of_data ) = @_;
   $name_of_data ||= 'data';
-  carp '!raw!', $self->_dumper( $data_to_dump, $name_of_data );
+  carp '!pre!', $self->_dumper( $data_to_dump, $name_of_data );
   return;
 }
 
