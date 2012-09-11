@@ -431,8 +431,7 @@ sub execute {
   # Remove need to "::" in URLs... by splitting on "_" to separate the action out!
   # Note cannot have a component with an underscore in the name!
   $action = $self->safe_module_name( $action );
-
-  if( $action =~ m{\A([a-z]+)::}mxis && ! can_name_space( $1 ) ) {
+  if( $action =~ m{\A([a-z0-9]+)::}mxis && ! can_name_space( $1 ) ) {
     warn "ACTION: cannot perform $action - not in valid name space\n";
     return q();
   }
