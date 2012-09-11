@@ -77,7 +77,7 @@ sub handler : FilterRequestHandler {
   if ( $r->content_type !~ m{\A(text/html|application/xhtml\+xml)\b}mxs
     || $r->headers_out->get('X-Pagesmith-Template')||q() eq 'No' ) {
     $filter->remove;    ## Remove the filter so not called multiple times for files we won't handle!
-    # $r->headers_out->set(   'X-Pagesmith-Debug', sprintf '!%s:%d', hostname, $PID );
+    $r->headers_out->set( 'X-Pagesmith-Debug', sprintf '!%s:%d', hostname, $PID );
     return DECLINED;
   }
 
