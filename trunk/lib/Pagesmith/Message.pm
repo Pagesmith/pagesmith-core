@@ -92,7 +92,7 @@ sub new {
   my( $class, $message, $severity, $pre ) = @_;
   $severity = 'error'           unless defined $severity && exists $levels{$severity};
   $message  = q(- no message -) unless defined $message;
-  $pre      = 0                 unless defined $pre && $pre == 1;
+  $pre      = 0                 unless defined $pre && ($pre == 1 || $pre == 2);
 
   my @caller_info;
   my $c           = 1;
@@ -141,11 +141,11 @@ sub render {
   my( $self, $include_stacktrace, $stacktrace_level ) = @_;
   $stacktrace_level = 'warn' unless defined $stacktrace_level && exists $levels{$stacktrace_level};
 
-  my $msg = encode_entities( $self->{'_message'} );
+  my $msg = $self->{'_pre'} == 2 ? $self->{'_message'} : encode_entities( $self->{'_message'} );
   $msg =~ s{\s+\Z}{}mxgs;
   $msg =~ s{\n}{<br />}mxgs;
   my $html = sprintf qq(\n<tr class="message_%s">\n  <th class="message_first">[%s]</th>\n  <th colspan="4" class="%s">%s</th>\n</tr>\n),
-    $self->{'_severity'}, $self->{'_severity'}, $self->{'_pre'} ? 'message_pre' : 'message_normal', $msg;
+    $self->{'_severity'}, $self->{'_severity'}, $self->{'_pre'} == 1 ? 'message_pre' : 'message_normal', $msg;
 
   return $html unless $include_stacktrace; ## Don't include stack trace-at all!
   return $html if $self->severity_less_than($stacktrace_level); ## Don't stack trace "info" messages
