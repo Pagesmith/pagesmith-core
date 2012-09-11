@@ -389,6 +389,11 @@ var FormValidator = {
       ) {
         value = 1; // 'we have an attached file!'
       }
+      if( input.hasClass('_checkbox') &&
+          input.attr('checked') !== 'checked'
+      ) {
+        value = '';
+      }
 /*jsl:end*/
       if (input.is('select')) {
         if (value === '') {
