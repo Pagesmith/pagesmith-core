@@ -18,6 +18,7 @@ use version qw(qv); our $VERSION = qv('0.1.0');
 use Readonly qw(Readonly);
 Readonly my $DEFAULT_ROWS => 10;
 Readonly my $DEFAULT_COLS => 60;
+Readonly my $DEFAULT_UNIT => 60;
 
 my $units = { map { $_ => 1 } qw(ids characters words) };
 use base qw( Pagesmith::Form::Element );
@@ -28,8 +29,11 @@ use HTML::Entities qw(encode_entities);
 
 sub _init {
   my( $self, $element_data ) = @_;
-  $self->{'max_length'} = ( $element_data->{'max_length'} || 0 );
-  $self->{'max_units'}  = ( exists $element_data->{'max_units'} && exists $units->{$element_data->{'max_units'}} ? $element_data->{'max_units'} : 'characters' );
+  if( exists $element_data->{'max_length'} ) {
+    $self->set_max_length( $element_data->{'max_length'}||0,
+      exists $element_data->{'max_units'} && exists $units->{$element_data->{'max_units'}} ?
+        $element_data->{'max_units'} : $DEFAULT_UNIT );
+  }
   $self->{'rows'}       = ( $element_data->{'rows'}       || $DEFAULT_ROWS );
   $self->{'cols'}       = ( $element_data->{'cols'}       || $DEFAULT_COLS );
   return;
@@ -39,6 +43,11 @@ sub set_max_length {
   my( $self, $value, $unit ) = @_;
   $self->{'max_length'} = $value;
   $self->{'max_units' } = exists $units->{ $unit } ? $unit : 'characters';
+  if( $value > 0 ) {
+    $self->add_class( '_max_len' );
+  } else {
+    $self->remove_class( '_max_len' );
+  }
   return $self;
 }
 
@@ -135,7 +144,6 @@ sub _render_widget_paper {
 
 sub element_class {
   my $self = shift;
-  $self->add_class( '_max_len' ) if exists $self->{'max_length'} && $self->{'max_length'} > 0;
   $self->add_class( '_text' );
   return;
 }
