@@ -35,9 +35,10 @@ sub execute {
     ['facebook' => 'Share on Facebook', 'http://www.facebook.com/sharer.php?u=<%= u:full_uri %>&amp;t=<%= u:title %>'],
   );
   foreach my $link_ref (@links) {
-    $output .= sprintf '<li class="linkto l_%s"><a href="%s" %s>%s</a></li>',
+    $output .= sprintf '<li class="linkto l_%s"><a href="%s" title="%s" %s><img src="/core/gfx/blank.gif" alt="%s" /></a></li>',
       $link_ref->[0],
       $link_ref->[2],
+      $self->encode( $link_ref->[1] ),
       $link_ref->[2] =~ m{\Ahttp}mxs ? 'class="no-img" ' : q(),
       $self->encode( $link_ref->[1] );
   }
