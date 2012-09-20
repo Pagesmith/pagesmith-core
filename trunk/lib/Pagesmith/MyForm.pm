@@ -114,7 +114,7 @@ sub fetch_generic_object {
 }
 
 sub default_store_and_send_email {
-  my( $self, $object_data ) = @_;
+  my( $self, $object_data, $flag ) = @_;
 
   $object_data ||= {};
 
@@ -140,7 +140,7 @@ sub default_store_and_send_email {
 ## Now send email...
   $self->default_send_email;
 ## Mark object as dead and return id!
-  $self->completed;
+  $self->completed unless $flag eq 'do_not_complete';
   return $self->object->id;
 }
 sub default_send_email {
