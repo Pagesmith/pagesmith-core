@@ -60,6 +60,12 @@ sub user {
   return $self->{'_user'};
 }
 
+sub is_type {
+  my ( $self, $type ) = @_;
+  my $dsn_type = $self->{'_dsn'} =~ m{\Adbi:(\w+)}mxs ? $1 : 'unknown';
+  return $type eq lc $dsn_type;
+}
+
 sub get_connection {
   my( $self, $db_details ) = @_;
 
