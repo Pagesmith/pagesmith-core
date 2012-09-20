@@ -163,4 +163,29 @@ sub apr {
   return $self->{'_apr'};
 }
 
+## Functions which generate a table from an SQL query - useful for testing!
+
+sub table_from_query {
+  my( $self, $dba, $sql, @params ) = @_;
+  return $self->_table_from_query( $self->table, $dba, $sql, @params );
+}
+
+sub my_table_from_query {
+  my( $self, $dba, $sql, @params ) = @_;
+  return $self->_table_from_query( $self->my_table, $dba, $sql, @params );
+}
+
+sub _table_from_query {
+  my( $self, $table, $dba, $sql, @params ) = @_;
+  my $sth = $dba->prepare( $sql );
+  $sth->execute( @params );
+
+  my $html = $table
+    ->add_columns(  map { {'key'=>$_} } @{ $sth->{'NAME'} } )
+    ->add_data( @{$sth->fetchall_arrayref( {} )} )
+    ->render;
+  $sth->finish;
+  return $html;
+}
+
 1;
