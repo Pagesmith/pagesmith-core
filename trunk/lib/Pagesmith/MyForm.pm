@@ -114,9 +114,9 @@ sub fetch_generic_object {
 }
 
 sub default_store_and_send_email {
-  my( $self, $object_data, $flag ) = @_;
+  my( $self, $flag ) = @_;
 
-  $object_data ||= {};
+  my $object_data = {};
 
   ## Send out emails to the user and to the applications people!
   my $code = $self->code;
