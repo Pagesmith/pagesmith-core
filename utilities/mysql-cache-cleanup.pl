@@ -1,5 +1,6 @@
 #!/usr/bin/perl
 
+## Remove expired entries from the MySQL write through cache....
 ##
 ## Author         : js5
 ## Maintainer     : js5
@@ -34,21 +35,44 @@ use lib "$ROOT_PATH/lib";
 use Pagesmith::ConfigHash qw(set_site_key override_config docroot);
 use Pagesmith::Adaptor;
 
-my $key  = 'dev';
-my $port = '80';
-my $site = 'no-site';
+my $key     = 'dev';
+my $port    = '80';
+my $site    = 'no-site';
+my $help    = 0;
 my $verbose = 0;
 my $quiet   = 0;
 
 GetOptions(
+  'help'    => \$help,
   'key:s'   => \$key,
   'site:s'  => \$site,
   'verbose' => \$verbose,
   'quiet'   => \$quiet,
 );
 
+if( $help ) {
+## no critic (ImplicitNewlines)
+  printf q(
+Usage:
+
+  %s [-q] [-v] [-s domain] [-k dev/live]
+
+Removes expired entries from the MySQL cache - should usually be
+run under cron...
+
+Options:
+  -q                : Quiet - don't display any diagnostices
+  -v                : Verbose - display table of entries deleted
+  -k {key}          : Key - live/dev (default dev) - use live/dev database
+  -s {domain}       : Site - use configuration for cache if different for this site
+  -h                : Help - display this message
+
+), abs_path($PROGRAM_NAME);
+  exit;
+}
+
 set_site_key( $site );
-override_config( 'ConfigKey', $key ); ## Makes use live databases rather than dev!
+override_config( 'ConfigKey', $key );
 
 my $dbh = Pagesmith::Adaptor->new( 'webcache' );
 
