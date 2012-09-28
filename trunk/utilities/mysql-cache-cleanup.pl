@@ -41,6 +41,7 @@ my $site    = 'no-site';
 my $help    = 0;
 my $verbose = 0;
 my $quiet   = 0;
+my $audit   = 1;
 
 GetOptions(
   'help'    => \$help,
@@ -48,6 +49,7 @@ GetOptions(
   'site:s'  => \$site,
   'verbose' => \$verbose,
   'quiet'   => \$quiet,
+  'audit!'  => \$audit,
 );
 
 if( $help ) {
@@ -84,11 +86,11 @@ my $M = 0;
 my $N = 0;
 my $D = 0;
 
-my $audit = 0;
+my $audit_table_exists = 0;
 foreach my $table ( @{$tables} ) {
   next if $table eq 'site';
   if( $table eq 'audit' ) {
-    $audit = 1;
+    $audit_table_exists = 1;
     next;
   }
   $stats->{$table} = $dbh->row_hash( 'select count(*) as N, sum( expires_at < ? ) as M from '.$table, $now );
@@ -98,7 +100,7 @@ foreach my $table ( @{$tables} ) {
   $D += $stats->{$table}{'D'}||0;
 }
 
-if( $audit ) {
+if( $audit && $audit_table_exists ) {
   foreach (keys %{$stats}) {
     $dbh->query( 'insert ignore into audit (created_at,tablename,entries,deleted) values(?,?,?,?)',
       $now, $_, @{$stats->{$_}}{qw(N D)} );
