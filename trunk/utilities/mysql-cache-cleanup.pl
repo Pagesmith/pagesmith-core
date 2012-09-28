@@ -84,8 +84,13 @@ my $M = 0;
 my $N = 0;
 my $D = 0;
 
+my $audit = 0;
 foreach my $table ( @{$tables} ) {
   next if $table eq 'site';
+  if( $table eq 'audit' ) {
+    $audit = 1;
+    next;
+  }
   $stats->{$table} = $dbh->row_hash( 'select count(*) as N, sum( expires_at < ? ) as M from '.$table, $now );
   $stats->{$table}{'D'} = $dbh->query( 'delete from '.$table.' where expires_at < ?', $now );
   $N += $stats->{$table}{'N'}||0;
@@ -93,6 +98,12 @@ foreach my $table ( @{$tables} ) {
   $D += $stats->{$table}{'D'}||0;
 }
 
+if( $audit ) {
+  foreach (keys %{$stats}) {
+    $dbh->query( 'insert ignore into audit (created_at,tablename,entries,deleted) values(?,?,?,?)',
+      $now, $_, @{$stats->{$_}}{qw(N D)} );
+  }
+}
 exit if $quiet;
 
 unless( $verbose ) {
