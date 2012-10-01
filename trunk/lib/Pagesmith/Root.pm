@@ -43,7 +43,7 @@ sub config {
 
   $config   ||= 'site';
   $override ||= 0;
-  return Pagesmith::Config->new( { 'file' => $file, 'config' => $config, 'override' => $override } );
+  return Pagesmith::Config->new( { 'file' => $file, 'location' => $config, 'override' => $override } );
 }
 
 my $failed_modules;
