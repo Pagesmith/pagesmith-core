@@ -2,7 +2,7 @@
   Secondary navigation "tabs."
 ------------------------------------------------------------------------
   CSS styles for the secondary navigation (blue gradient) on the page
- 
+
   Note these are not real tabs just links!
 ----------------------------------------------------------------------*/
 #NavTabs2 {overflow: hidden; border-top: 1px solid #0e518d}
@@ -22,13 +22,13 @@ ul#Tabs2 li, ul.second-tabs li { float: left; background: none; padding:0; }
   Primary navigation tabs.
 ------------------------------------------------------------------------
   CSS styles for the primary navigation tabs (grey gradient)
- 
+
   We use sliding doors technique, plus vertical shifting  to put the
   background on and use a single image to minimise http requests!
 
   Note this uses the same graphic as the secondary navigation barss, and
   the internal page frames to further minimise requests!
- 
+
   #navLeft  is for the real tabs!
 
   #navRight is for the "login/logout link" that sites above the blue
@@ -64,6 +64,7 @@ ul.show-disabled li.disabled {display:block}
 .sub_nav h4, .sub_nav h3 { background-color: #bcc5cc; padding: 5px 10px; margin: 0; }
 .sub_nav ul { border: 1px solid #bcc5cc; }
 .sub_nav a { text-decoration: none; font-weight: bold; }
+.sub_nav .active a { text-decoration: none; font-weight: bold; color: #999 }
 .sub_data { float:left; width:75%; }
 
 .sub_left { float: left; }
