@@ -119,6 +119,22 @@ sub get_all {
   ##no critic (ImplicitNewlines)
   my $extra = q();
   my @params = ($self->type);
+  my $extra_filters = {};
+
+  if( @filter && ref $filter->[0] eq 'ARRAY' ) {
+    my $restrictions = shift @filter;
+    foreach my $filter ( @{$restrictions} ) {
+      my ( $column, $type, $value ) = split m{\s+}mxs, $filter;
+      if( $type eq 'after' ) {
+        $extra .= sprintf ' and %s >= ?', $column;
+        push @params, $value;
+      }
+      if( $type eq 'before' ) {
+        $extra .= sprintf ' and %s <= ?', $column;
+        push @params, $value;
+      }
+    }
+  }
   if( @filter ) {
     my $flag = 0;
     if( $filter[0] eq q(!) ) {
@@ -128,7 +144,7 @@ sub get_all {
     my $filter_string = join "\t", @filter;
     my @Q = $self->sort_order;
     if( @filter == @Q ) {
-      $extra = $flag ? ' and sort_order !=?' : ' and sort_order = ?';
+      $extra = $flag ? ' and sort_order !=?'        : ' and sort_order = ?';
       push @params, $filter_string;
     } else {
       $extra = $flag ? ' and sort_order not like ?' : ' and sort_order like ?';
