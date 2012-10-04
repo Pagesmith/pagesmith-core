@@ -27,6 +27,7 @@ sub non_admin_base_url {
   return $self->base_url;
 }
 
+## no critic (ExcessComplexity)
 sub run {
   my $self = shift;
   my $conf = $self->configuration;
@@ -46,15 +47,19 @@ sub run {
 
   my @els = $form->all_input_elements;
   my $extra_html = q();
+
   if( exists $conf->{'column_sets'} ) {
     ( my $base = ref $self ) =~ s{\APagesmith::Action::}{}mxs;
     my $column_set = $self->next_path_info || 'default';
     $column_set = 'default' unless exists $conf->{'column_sets'}{$column_set};
-    my %cols_to_show = map { ($_ => 1) } @{$conf->{'column_sets'}{$column_set}};
-    @els = grep { exists $cols_to_show{$_->code} } @els;
-    $extra_html = sprintf '<ul>%s</ul>',
-      join q(), map {(sprintf '<li><a href="/action/%s/%s">%s</a>',$base,$_,$_)} sort keys %{$conf->{'column_sets'}};
+    if( defined $conf->{'column_sets'}{$column_set} ) {
+      my %cols_to_show = map { ($_ => 1) } @{$conf->{'column_sets'}{$column_set}};
+      @els = grep { exists $cols_to_show{$_->code} } @els;
+      $extra_html = sprintf '<ul>%s</ul>',
+        join q(), map {(sprintf '<li><a href="/action/%s/%s">%s</a>',$base,$_,$_)} sort keys %{$conf->{'column_sets'}};
+    }
   }
+
   my @columns;
   foreach( @els ) {
     my $method = 'get_'.$_->code;
@@ -91,5 +96,6 @@ sub run {
     ->render. $extra_html )->ok;
 ## use critic
 }
+## use critic
 
 1;
