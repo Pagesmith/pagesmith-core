@@ -66,6 +66,13 @@ my %extn_to_type = qw(
   ODP    application/vnd.openxmlformats-officedocument.presentationml.template
 );
 
+my $extn_groups = {
+  'document'     => [qw(TXT DOC DOT RTF DOCX DOCM DOTM DOTX ODT PDF)],
+  'spreadsheet'  => [qw(TXT CSV XLS XLT XLSB XLSM XLTM XLSX XLTX ODS)],
+  'presentation' => [qw(PPT POT POTM PPTM PPTX POTX ODP PDF)],
+  'images'       => [qw(PNG GIF BMP JPG SVG PS)],
+};
+
 my %type_to_extn = reverse %extn_to_type;
 
 use Pagesmith::HTML::Table;
@@ -85,7 +92,8 @@ sub new {
 
 sub is_empty {
   my $self = shift;
-  return 0 if keys %{$self->value->{'files'}};
+  return 0 unless $self->value ;
+  return 0 if keys %{ $self->value->{'files'} || {} };
   return 1;
 }
 
@@ -123,6 +131,13 @@ sub accepted_types {
   my $self = shift;
   my @keys = sort keys %{$self->{'accepted_types'}||{}};
   return @keys;
+}
+
+sub add_accepted_group {
+  my( $self, @groups ) = @_;
+  $self->{'accepted_types'}{$extn_to_type{( uc $_ )}} = 1
+    foreach map { @{$extn_groups->{$_}||[]} } @groups;
+  return $self;
 }
 
 sub add_accepted_extns {
@@ -289,16 +304,20 @@ sub render_single {
   my ($entry) = values %{$self->{'user_data'}{'files'}||{}};
   return '<p>No files currently attached</p>' unless $entry;
   ## no critic (ImplicitNewlines)
+  my $prefix = $self->config->option('code').q(/).$self->code;
+
   return sprintf '
   <div class="file-details">
   <dl class="twocol">
-    <dt>Name</dt><dd>%s</dd>
+    <dt>Name</dt><dd><a rel="external" href="/action/FormFile/%s/%d/%s-%d.%s">%s</a></dd>
     <dt>Size</dt><dd>%0.1fk</dd>
     <dt>Type</dt><dd>%s</dd>
     %s
   </dl>
   </div>',
-    encode_entities( $entry->{'name'} ), $entry->{'size'}/$K, $entry->{'type'},
+    $prefix, $entry->{'ndx'},$prefix,$entry->{'ndx'},$entry->{'xtn'},
+    encode_entities( $entry->{'name'} ),
+    $entry->{'size'}/$K, $entry->{'type'},
     !$flag ? q() : sprintf '<dt>Delete?</dt><dd><input type="checkbox" class="checkbox _cb_%s" id="%s_del_%d" name="%s_del_%d" value="delete" /></dd>',
       $self->code, $self->generate_id_string,  $entry->{'ndx'}, $self->code, $entry->{'ndx'};
   ## use critic
