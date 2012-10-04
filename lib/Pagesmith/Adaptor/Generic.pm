@@ -121,7 +121,7 @@ sub get_all {
   my @params = ($self->type);
   my $extra_filters = {};
 
-  if( @filter && ref ($filter->[0]) eq 'ARRAY' ) {
+  if( @filter && ref $filter[0] eq 'ARRAY' ) {
     my $restrictions = shift @filter;
     foreach my $filter ( @{$restrictions} ) {
       my ( $column, $type, $value ) = split m{\s+}mxs, $filter;
