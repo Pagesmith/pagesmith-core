@@ -26,6 +26,7 @@ sub non_admin_base_url {
   my $self = shift;
   return $self->base_url;
 }
+
 sub run {
   my $self = shift;
   my $conf = $self->configuration;
@@ -42,14 +43,36 @@ sub run {
 
   my $form = $self->form( $conf->{'form_type'} );
   ## Really nasty - get the form object - and grab all it's input elements!
-  my @columns = map { {
-    'key'    => $_->code,
-    'label'  => $_->hidden_caption || $_->caption,
-    'format' => $_->isa( 'Pagesmith::Form::Element::Email' ) ? 'email' : undef,
-    'align'  => $_->isa( 'Pagesmith::Form::Element::YesNo' ) ? 'c'     : 'l',
-  } } $form->all_input_elements;
+
+  my @els = $form->all_input_elements;
+  my $extra_html = q();
+  if( exists $conf->{'column_sets'} ) {
+    ( my $base = ref $self ) =~ s{\APagesmith::Action::}{}mxs;
+    my $column_set = $self->next_path_info || 'default';
+    $column_set = 'default' unless exists $conf->{'column_sets'}{$column_set};
+    my %cols_to_show = map { ($_ => 1) } @{$conf->{'column_sets'}{$column_set}};
+    @els = grep { exists $cols_to_show{$_->code} } @els;
+    $extra_html = sprintf '<ul>%s</ul>',
+      join q(), map {(sprintf '<li><a href="/action/%s/%s">%s</a>',$base,$_,$_)} sort keys %{$conf->{'column_sets'}};
+  }
+  my @columns;
+  foreach( @els ) {
+    my $method = 'get_'.$_->code;
+       $method = 'date_'.$_->code if $_->isa('Pagesmith::Form::Element::DateTime');
+    my $format = $_->isa('Pagesmith::Form::Element::Date')     ? 'date'
+               : $_->isa('Pagesmith::Form::Element::Email')    ? 'email'
+               :                                                 undef
+               ;
+    my $align  = $_->isa('Pagesmith::Form::Element::YesNo')    ? 'c'
+               : $_->isa('Pagesmith::Form::Element::DateTime') ? 'c'
+               :                                                 'l'
+               ;
+    push @columns, { 'key' => $method, 'label' => $_->hidden_caption || $_->caption || q(-),
+      'format' => $format, 'align' => $align };
+  }
 
   ## no critic (LongChainsOfMethodCalls)
+
   return $self->wrap( $form->title, $self->table
     ->make_sortable
     ->make_scrollable
@@ -60,12 +83,12 @@ sub run {
     ->set_pagination( [qw(10 25 50 100 all)], $DEFAULT_PAGE )
     ->add_columns(
       { 'key' => q(#) },
-      { 'key' => 'code', 'label' => 'Booking ref', 'align' => 'c', 'link' => $self->non_admin_base_url.'/form/-[[u:code]]' },
+      { 'key' => 'code', 'label' => 'Ref', 'align' => 'c', 'link' => $self->non_admin_base_url.'/form/-[[u:code]]' },
       @columns,
       { 'key' => 'created_at', 'label' => 'Registered at', 'format' => 'datetime' },
     )
     ->add_data( @{$form->adaptor->get_all( @{$conf->{'filter'}||[]} )} )
-    ->render )->ok;
+    ->render. $extra_html )->ok;
 ## use critic
 }
 

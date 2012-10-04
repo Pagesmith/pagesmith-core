@@ -69,10 +69,17 @@ sub AUTOLOAD {
   my $method = our $AUTOLOAD;
   return $self->set( $1, $value ) if $method =~ m{::set_(\w+)\Z}mxs;
   return $self->get( $1 )         if $method =~ m{::get_(\w+)\Z}mxs;
+  return $self->get_date( $1 )    if $method =~ m{::date_(\w+)\Z}mxs;
   return $self->unset( $1 )       if $method =~ m{::unset_(\w+)\Z}mxs;
   return $self->get( $1 )         if $method =~ m{::(\w+)\Z}mxs;
   return $self;
 }
+
+sub get_date {
+  my( $self, $key ) = @_;
+  return sprintf '%04d-%02d-%02d %02d:%02d:%02d', map { $self->{'objdata'}{$key}{$_}||0 } qw(year month day hour minute second);
+}
+
 ## use critic
 sub type {
 
