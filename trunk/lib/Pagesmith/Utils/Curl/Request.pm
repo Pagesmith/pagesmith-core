@@ -18,6 +18,7 @@ use feature qw(switch);
 
 use Readonly qw(Readonly);
 Readonly my $TIMEOUT      => 30;
+Readonly my $SSL_VERISON  => 3;
 Readonly my $CONN_TIMEOUT => 5;
 
 use Time::HiRes qw(time);
@@ -49,6 +50,9 @@ sub new {
   $self->setopt( CURLOPT_USERAGENT,      'PageSmith::Utils::Curl/'.$VERSION );
   $self->setopt( CURLOPT_TIMEOUT,        ( defined $fetcher ? $fetcher->timeout : 0      ) || $TIMEOUT );
   $self->setopt( CURLOPT_CONNECTTIMEOUT, ( defined $fetcher ? $fetcher->conn_timeout : 0 ) || $CONN_TIMEOUT );
+  $self->setopt( CURLOPT_SSL_VERIFYHOST, 0 );
+  $self->setopt( CURLOPT_SSL_VERIFYPEER, 0 );
+  $self->setopt( CURLOPT_SSLVERSION,     $SSL_VERSION );
   $self->set_proxy( $fetcher->proxy ) if defined $fetcher && $fetcher->proxy;
 
   return $self;
