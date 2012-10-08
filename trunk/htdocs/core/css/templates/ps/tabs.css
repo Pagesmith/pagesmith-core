@@ -7,7 +7,7 @@
 ----------------------------------------------------------------------*/
 #NavTabs2 {overflow: hidden; border-top: 1px solid #0e518d}
 ul#Tabs2, ul.second-tabs { margin: 0; padding: 4px 5px 0 5px; list-style: none; width: 100%; float: left; background: #0e518d url(/core/gfx/templates/ps/bars-120724.png) 0 -193px no-repeat; }
-ul.second-tabs { background-position: right -171px; background-color: transparent }
+ul.second-tabs { background-position: right -193px; background-color: transparent }
 ul#Tabs2 li, ul.second-tabs li { float: left; background: none; padding:0; }
 #Tabs2 li a, ul.second-tabs li a { display:  block; padding: .25em 1em 0 1em; line-height: 2em;     text-decoration: none; color: white; float: left;     font-weight: bold
 }
