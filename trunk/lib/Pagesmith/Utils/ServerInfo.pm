@@ -260,6 +260,9 @@ sub process_apt {
 sub process_upgrade {
   my $self = shift;
   $self->{'upgrade'} = @{$self->{'raw'}{'upgrade'}} ? $self->{'raw'}{'upgrade'}[0] : q();
+  if($self->{'upgrade'} =~ m{New\srelease\s'(.*?)'\savailable\.}mxsi) {
+    $self->{'upgrade'} = $1;
+  }
   return $self;
 }
 
