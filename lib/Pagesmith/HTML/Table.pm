@@ -192,6 +192,7 @@ sub set_current_block_class {
   $self->{'blocks'}[ $self->{'current_block'} ]{'class'} = $class;
   return $self;
 }
+
 sub set_current_row_class {
   my( $self, $class ) = @_;
   $self->{'blocks'}[ $self->{'current_block'} ]{'row_class'} = $class;
@@ -261,7 +262,7 @@ sub _time_str {
 sub expand_link {
   my( $self, $href_template, $val, $row, $text ) = @_;
   return q() if $text eq q();
-  my $url = $self->expand_template( $href_template, $val, $row );
+  my $url = $self->expand_template( $href_template, $row );
   return $text unless $url;
   my $extra = q();
   if( $url =~ s{\A(.*)\s+}{}mxs ) {
@@ -285,7 +286,9 @@ sub expand_format {
   my $f;
   my $val_defined = defined $val;
   $val = q() unless $val_defined;
-  if( ref $format eq 'ARRAY' ) { ## Format can now be an array ref!
+  if( ref $format eq 'CODE' ) { ## Format can now be an array ref!
+    $f = eval { &{$format}($val, $self); };
+  } elsif( ref $format eq 'ARRAY' ) { ## Format can now be an array ref!
     foreach my $format_ref ( @{$format} ) {
       my( $tmp_f, $condition, @condition_pars ) = @{$format_ref};
       next if $condition eq 'defined'   && !$val_defined;
@@ -315,19 +318,19 @@ sub expand_format {
        : $f eq 'datetime'             ? $self->_time_str( "$DATE_FORMAT $TIME_FORMAT", $self->munge_date_time( $val ) )
        : $f eq 'time'                 ? $self->_time_str( $TIME_FORMAT,                $self->munge_date_time( $val ) )
        : $f =~ m{\Adatetime(.+)\Z}mxs ? $self->_time_str( $1,                          $self->munge_date_time( $val ) )
-       : $f eq 'currency'             ? sprintf( q(&pound;%0.2f),                      $val )       # &pound;0.00
+       : $f eq 'currency'             ? sprintf( q(&pound;%0.2f),                      $val||0 )       # &pound;0.00
        : $f eq 't'                    ? $self->commify(                                $val )       # n,nnn,nnn,nnn
        : $f eq 'z'                    ? $self->format_size(                            $val, 0  )   # nnnn K/M/G/...
        : $f =~ m{\Az(\d+)\Z}mxs       ? $self->format_size(                            $val, $1 )   # nnnn.mm K/M/G/...
        : $f eq 'k'                    ? $self->format_fixed(                           $val, 'k', 0 ) # nnnn K
        : $f eq 'm'                    ? $self->format_fixed(                           $val, 'm', 0 ) # nnnn M
        : $f =~ m{\A([k|m])(\d+)\Z}mxs       ? $self->format_fixed(                     $val, $1, $2 ) # nnnn.mm K/M
-       : $f =~ m{\At(\d+)\Z}mxs       ? $self->commify( sprintf qq(%0.$1f),            $val )      # n,nnn,nnn,nnn.mm
-       : $f =~ m{\Af(\d+)\Z}mxs       ? sprintf( qq(%0.$1f),                           $val )       # Fixed decimal
-       : $f =~ m{\Ap(\d+)\Z}mxs       ? sprintf( qq(%0.$1f%%),                         $val*$CENT ) # Percentage
+       : $f =~ m{\At(\d+)\Z}mxs       ? $self->commify( sprintf qq(%0.$1f),            $val||0 )      # n,nnn,nnn,nnn.mm
+       : $f =~ m{\Af(\d+)\Z}mxs       ? sprintf( qq(%0.$1f),                           $val||0 )       # Fixed decimal
+       : $f =~ m{\Ap(\d+)\Z}mxs       ? sprintf( qq(%0.$1f%%),                         ($val||0)*$CENT ) # Percentage
        : $f =~ m{\Ah(\d+)\Z}mxs       ? $self->truncate_string(                        $val, $1   ) # Percentage
-       : $f =~ m{\Ad(\d+)\Z}mxs       ? sprintf( qq(%0$1d),                            $val )       # zero padded
-       : $f eq 'd'                    ? sprintf( q(%0d),                               $val )       # Integer
+       : $f =~ m{\Ad(\d+)\Z}mxs       ? sprintf( qq(%0$1d),                            $val||0 )       # zero padded
+       : $f eq 'd'                    ? sprintf( q(%0d),                               $val||0 )       # Integer
        :                                encode_entities(                               $val )       # HTML safe!
        ;
 }
@@ -374,29 +377,51 @@ sub _get_val {
   return $v;
 }
 
+sub cond_eval {
+  my( $self, $str, $row ) = @_;
+  return $str unless q([) eq substr $_, 0, 1;
+  return $self->expand_template( $str, $row );
+}
+
 sub expand_template {
-  my( $self, $template, $val, $row ) = @_;
-  my $t;
-  if( ref $template eq 'ARRAY' ) {
-    foreach my $template_ref ( @{$template} ) {
-      my( $tmp_t, $condition, @condition_pars ) = @{$template_ref};
-      next if $condition eq 'exact'     && $self->_get_val( $condition_pars[0], $row ) ne $condition_pars[1];
-      next if $condition eq 'true'      && ! $self->_get_val( $condition_pars[0], $row );
-      next if $condition eq 'contains'  && (index $self->_get_val( $condition_pars[0], $row ), $condition_pars[1] ) < 0;
-      $t = $tmp_t;
-      last;
-    }
-  } else {
-    $t = $template;
-  }
+  my( $self, $template, $row ) = @_;
+  my $t = $self->_expand_template( $template, $row );
   return unless defined $t;
   $t =~ s{\[\[(.*?):(\w+)\]\]}{$self->expand_format( $1, $self->_get_val( $2, $row ) ) }mxesg;
   return $t;
 }
 
+## no critic (ExcessComplexity)
+sub _expand_template {
+  my( $self, $template, $row ) = @_;
+  return eval { &{$template}( $row, $self ); } if     'CODE'  eq ref $template; ## no critic (CheckingReturnValueOfEval)
+  return $template                             unless 'ARRAY' eq ref $template;
+
+  foreach my $template_ref ( @{$template} ) {
+    my( $tmp_t, $condition, @condition_pars ) = @{$template_ref};
+    return $tmp_t unless $condition;
+    my $val = $self->_get_val( $condition_pars[0], $row );
+    my $val_defined = defined $val;
+    $val = q() unless $val_defined;
+    my $C = @condition_pars > 1 ? $self->cond_eval($condition_pars[1], $row ) : undef;
+    next if $condition eq 'exact'     && $val ne $C;
+    next if $condition eq 'defined'   && ! $val_defined;
+    next if $condition eq 'true'      && ! $val;
+    next if $condition eq 'contains'  && (index $val, $C ) < 0;
+    next if $condition eq 'lt'        && $val >= $C;
+    next if $condition eq 'gt'        && $val <= $C;
+    next if $condition eq 'le'        && $val >  $C;
+    next if $condition eq 'ge'        && $val <  $C;
+    return $tmp_t;
+  }
+  return;
+}
+## use critic
+
 sub format_value {
   my( $self, $val, $col, $row ) = @_;
-  my $result = $col->{'template'} ? $self->expand_template( $col->{'template'},    $val, $row )
+
+  my $result = $col->{'template'} ? $self->expand_template( $col->{'template'},    $row )
                                   : $self->expand_format(   $col->{'format'}||'h', $val )
                                   ;
   $result = $self->expand_link( $col->{'link'}, $val, $row, $result ) if $col->{'link'} && $result ne q();
@@ -406,17 +431,7 @@ sub format_value {
 
 sub format_sort {
   my( $self, $val, $col, $row ) = @_;
-  my $t;
-  if( ref $col->{'sort_index'} eq 'ARRAY' ) {
-    my( $tmp_t, $condition, @condition_pars ) = @{$col->{'sort_index'}};
-    next if $condition eq 'exact'     && $self->_get_val( $condition_pars[0], $row ) ne $condition_pars[1];
-    next if $condition eq 'true'      && ! $self->_get_val( $condition_pars[0], $row );
-    next if $condition eq 'contains'  && (index $self->_get_val( $condition_pars[0], $row ), $condition_pars[1] ) < 0;
-    $t = $tmp_t;
-    last;
-  } else {
-    $t = $col->{'sort_index'};
-  }
+  my $t = $self->_expand_template( $col->{'sort_index'}, $row );
   $val = defined $t ? $self->_get_val( $t, $row ) : $val;
   return $col->{'format'} =~ m{\A(date)?(time)?}mxs ? $self->munge_date_time( $val ) : $val;
 }
@@ -429,7 +444,7 @@ sub extra_value {
   push @class, 'l' if $al eq 'left'   || $al eq 'l';
   push @class, 'r' if $al eq 'right'  || $al eq 'r';
   push @class, 'c' if $al eq 'centre' || $al eq 'center' || $al eq 'c';
-  push @class, $col->{'class'} if exists $col->{'class'};
+  push @class, $self->expand_template( $col->{'class'}, $row ) if exists $col->{'class'};
   if( $col->{'sort_index'} ) {
     my $sv = $self->format_sort( $val, $col, $row );
     push @class, sprintf '{sortValue:%f}', $sv||0;# if defined $sv && $sv ne q();
@@ -460,8 +475,17 @@ sub render {
       if( $_->{'key'} eq q(#) ) {
         push @html, sprintf q(        <th>%s</th>), encode_entities( $_->{'label'}||q(#) );
       } else {
-        my $extra_attributes = $_->{'sort_index'} ? q( class="{sorter:'metadata'}") : q();
-        $extra_attributes .= sprintf q( style="min-width: %s"), $_->{'min-width'} if exists $_->{'min-width'};
+        my $meta_data = {};
+        $meta_data->{'sorter'} = 'metadata' if exists $_->{'sort_index'};
+        if( exists $_->{'filter_values'} ) {
+          $meta_data->{'filter'} = $_->{'filter_values'};
+        }
+        my $extra_attributes = keys %{$meta_data}
+                             ? sprintf q( class="%s"), $self->encode($self->json_encode($meta_data))
+                             : q()
+                             ;
+
+                             $extra_attributes .= sprintf q( style="min-width: %s"), $_->{'min-width'} if exists $_->{'min-width'};
         $extra_attributes .= sprintf q( title="%s"), encode_entities( $_->{'long_label'} ) if exists $_->{'long_label'};
         my $value = encode_entities( exists $_->{'label'} ? $_->{'label'} : $_->{'key'} );
         push @html, sprintf q(        <th%s>%s</th>), $extra_attributes, defined $value ? $value : q();
@@ -470,13 +494,33 @@ sub render {
     push @html, q(      </tr>),q(    </thead>);
   }
   $self->{'row_count'}  = 1;
-  push @html, @{ $self->render_block( $_ ) } foreach $self->blocks;
+  foreach( $self->blocks ) {
+    push @html, @{ $self->render_block( $_ ) };
+  }
+  #push @html, @{ $self->render_totals } if $self->option( 'summary' );
+
   push @html, q(  </table>);
   if( $self->option('scrollable') ) {
     unshift @html, '<div class="scrollable">';
     push @html, '</div>';
   }
   return join qq(\n), @html;
+}
+
+sub reset_totals {
+  my( $self, $type ) = @_; ## Type is level - 1 is block, 0 is total; - this allows for easy working with sub-blocks if required later...
+  $self->{'totals'}[$type] = undef;
+  return $self;
+}
+
+sub update_totals {
+  my( $self, $type, $total_defn, $row ) = @_;
+  return $self;
+}
+
+sub render_totals {
+  my( $self, $type, $total_defn ) = @_;
+  return $self;
 }
 
 sub render_block {
@@ -487,9 +531,9 @@ sub render_block {
   push @html, $block->{'class'} ? qq(    <tbody class="$block->{'class'}">) : q(    <tbody>);
   foreach my $row ( @{ $block->{'data'} } ) {
     my $row_extra = q();
-    my $row_class = $block->{'row_class'} ? $self->expand_template( $block->{'row_class'}, undef, $row ) : q();
+    my $row_class = $block->{'row_class'} ? $self->expand_template( $block->{'row_class'}, $row ) : q();
     $row_extra .= sprintf ' class="%s"', $row_class if $row_class;
-    my $row_id    = $block->{'row_id'}    ? $self->expand_template( $block->{'row_id'},    undef, $row ) : q();
+    my $row_id    = $block->{'row_id'}    ? $self->expand_template( $block->{'row_id'},    $row ) : q();
     $row_extra .= sprintf ' id="%s"',    $row_id    if $row_id;
     push @html, qq(      <tr$row_extra>);
     my $c_id = 0;
@@ -500,9 +544,11 @@ sub render_block {
         $value = $self->{'row_count'}++;
         $extra = ' class="r"';
       } else {
-        my $v = ref $row eq 'ARRAY' ? $row->[$c_id++]
-              : ref $row eq 'HASH'  ? $row->{ $col->{'key'} }
-              :                       $row->$property;
+        my $v = exists $col->{'code_ref'}   ? eval { $col->{'code_ref'}($row); }
+              : ref $row eq 'ARRAY'         ? $row->[$c_id++]
+              : ref $row eq 'HASH'          ? $row->{ $col->{'key'} }
+              : $row->$property
+              ;
         $value = $self->format_value( $v, $col, $row );
         $extra = $self->extra_value(  $v, $col, $row );
       }
