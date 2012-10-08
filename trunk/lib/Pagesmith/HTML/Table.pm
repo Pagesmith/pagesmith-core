@@ -116,6 +116,30 @@ sub clear_pagination {
   return $self;
 }
 
+sub set_title {
+  my( $self, $title ) = @_;
+  $self->set_option( 'title', $title );
+  return $self;
+}
+
+sub clear_title {
+  my $self = shift;
+  $self->clear_option( 'title' );
+  return $self;
+}
+
+sub set_id {
+  my( $self, $id ) = @_;
+  $self->set_option( 'id', $id );
+  return $self;
+}
+
+sub clear_id {
+  my $self = shift;
+  $self->clear_option( 'id' );
+  return $self;
+}
+
 sub set_filter {
   my $self = shift;
   $self->set_option( 'filter', q() );
@@ -416,6 +440,7 @@ sub _expand_template {
   }
   return;
 }
+
 ## use critic
 
 sub format_value {
@@ -538,7 +563,7 @@ sub render_block {
     push @html, qq(      <tr$row_extra>);
     my $c_id = 0;
     foreach my $col ( $self->columns ) {
-      my $property = $col->{'key'};
+      my $property = $col->{'key'}||q();
       my( $value, $extra );
       if( $property eq q(#) ) {
         $value = $self->{'row_count'}++;
