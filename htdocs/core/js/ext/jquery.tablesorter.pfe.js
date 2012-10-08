@@ -150,16 +150,29 @@
         $.tablesorterPager.renderTable(table, c.rowsCopy);
       },
       changeColFilter: function (table) {
-        var c = table.config, filter_values = $(table).find(table.config.cssColFilter), q = [];
+        var c = table.config, filter_values = $(table).find(table.config.cssColFilter), q = [], j = 0;
         filter_values.each(function () {
-          q.push($.trim($(this).val().toLowerCase()));
+          var t = c.parsers[j].type, v = $.trim($(this).val().toLowerCase()),f=[],t_matches,k,t_match;
+          if( t === 'numeric' && v.match(/[<=>]/) ) {
+            t_matches = v.match(/([<=>]+\s*-?[\.\d]+)/g);
+            if( t_matches ) {
+              f = [];
+              for (k = t_matches.length; k; k) {
+                k--;
+                t_match = t_matches[k].match(/([<=>]+)\s*(-?[\.\d]+)/);
+                f.push( { cond: t_match[1], val: parseFloat(t_match[2]) } );
+              }
+            }
+          }
+          q.push({ type:t, val: v, filters: f });
+          j++;
         });
         c.col_filters = q;
         $.tablesorterPager.filterRows(c);
         $.tablesorterPager.renderTable(table, c.rowsCopy);
       },
       filterRows: function (c) {
-        var values = c.col_filters, value = c.filter_value, val_filtering = value !== '', col_filtering = values.join('') !== '', i, x, row, flag, j;
+        var values = c.col_filters, value = c.filter_value, val_filtering = value !== '', col_filtering = values.join('') !== '', i, x, row, flag, j, col_val, filter, k;
         if (!val_filtering && !col_filtering) {
           c.rowsCopy = c.rowsCopyRaw;
         } else {
@@ -182,9 +195,33 @@
             if (col_filtering) { // We need any column with a filter value to match
               for (j = row.length; j; j) {
                 j--;
-                if (values[j] !== '' && $(row[j]).text().toLowerCase().indexOf(values[j]) < 0) {
-                  flag = 0;
-                  break;
+                if (values[j].val !== '') {
+                  col_val = parseFloat($(row[j]).text(), 10);
+                  if (values[j].type === 'numeric' && values[j].filters.length) {
+                    // Numeric sort and request is a range!
+                    for (k = values[j].filters.length; k; k) {
+                      k--;
+                      filter = values[j].filters[k];
+                      if(
+                        filter.cond === '<'  && filter.val <= col_val  ||
+                        filter.cond === '<=' && filter.val <  col_val  ||
+                        filter.cond === '>'  && filter.val >= col_val  ||
+                        filter.cond === '>=' && filter.val >  col_val  ||
+                        filter.cond === '='  && filter.val !== col_val ||
+                        filter.cond === '==' && filter.val !== col_val ) {
+                        flag = 0;
+                        break;
+                      }
+                    }
+                    if( flag === 0 ) {
+                      break;
+                    }
+                  } else {
+                    if ( $(row[j]).text().toLowerCase().indexOf(values[j].val) < 0) {
+                      flag = 0;
+                      break;
+                    }
+                  }
                 }
               }
             }
@@ -254,6 +291,10 @@
             return false;
           });
           $(config.cssColFilter, table).keyup(function () {
+            $.tablesorterPager.changeColFilter(table);
+            return false;
+          });
+          $(config.cssColFilter, table).change(function () {
             $.tablesorterPager.changeColFilter(table);
             return false;
           });

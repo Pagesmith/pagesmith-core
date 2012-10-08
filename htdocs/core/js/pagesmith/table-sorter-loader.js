@@ -35,7 +35,9 @@ $('.sorted-table').livequery(function () { // Make "sorted-table"s sortable
     q,
     cols,
     x,
-    s;
+    s,
+    j,
+    my_cells;
   if ($(this).hasClass('before')) {
     $(this).before('<div id="' + table_key + '" class="pager"><form></form></div>');
   } else {
@@ -91,10 +93,16 @@ $('.sorted-table').livequery(function () { // Make "sorted-table"s sortable
 
   // Add Functionality to table
   if ($(this).hasClass('colfilter')) {
-    q = $(this).find('.foot');
-    if (q.length < 1) {
-      $(this).append('<tbody class="foot"></tbody>');
+    my_cells = $(this).find('thead th');
+    if ($(this).hasClass('before')) {
+      $(this).find('thead').first().after('<thead></thead>');
+      q = $(this).find('thead').eq(1);
+    } else {
       q = $(this).find('.foot');
+      if (q.length < 1) {
+        $(this).append('<tbody class="foot"></tbody>');
+        q = $(this).find('.foot');
+      }
     }
     cols = 0;
     $(this).find('tr').each(function () {
@@ -104,8 +112,16 @@ $('.sorted-table').livequery(function () { // Make "sorted-table"s sortable
       }
     });
     t_array = [];
-    t_array[cols] = '';
-    q.append('<tr>' + t_array.join('<td class="c"><input style="width:95%; margin: 2px 0" class="colfilter" type="text" /></td>') + '</tr>');
+    for (j=cols; j; j) {
+      j--;
+      if( $.metadata && my_cells.eq(j).metadata() && my_cells.eq(j).metadata().filter ) {
+        t_array.unshift( '<td class="c"><select class="colfilter"><option value="">==</option><option>'+
+          my_cells.eq(j).metadata().filter.join('</option><option>')+'</option></select></td>' );
+      } else {
+        t_array.unshift( '<td class="c"><input style="width:95%; margin: 2px 0" class="colfilter" type="text" /></td>' );
+      }
+    }
+    q.first().append('<tr>' + t_array.join('') + '</tr>');
   }
   $(this).tablesorterPager({container: $('#' + table_key) });
 });
