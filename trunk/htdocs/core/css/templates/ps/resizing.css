@@ -111,6 +111,11 @@ Smaller than 480px
   #rhs .col1 { width:49%; float: left; }
   #rhs .col2 { width:49%; float: right; }
 }
+
+@media all and (max-width: 1200px) {
+  form .col1, form .col2 { float: none; width: 100% }
+}
+
 @media all and (max-width: 780px) {
   #search { width: 455px; }
   #search #s4, #search input#q { width: 140px; }
