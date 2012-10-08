@@ -18,7 +18,7 @@ use feature qw(switch);
 
 use Readonly qw(Readonly);
 Readonly my $TIMEOUT      => 30;
-Readonly my $SSL_VERISON  => 3;
+Readonly my $SSL_VERSION  => 3;
 Readonly my $CONN_TIMEOUT => 5;
 
 use Time::HiRes qw(time);
