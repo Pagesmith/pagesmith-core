@@ -302,7 +302,7 @@ sub render_single {
   my($self,$flag) = @_;
   ## Get first value....
   my ($entry) = values %{$self->{'user_data'}{'files'}||{}};
-  return '<p>No files currently attached</p>' unless $entry;
+  return q() unless $entry; # '<p>No files currently attached</p>' unless $entry;
   ## no critic (ImplicitNewlines)
   my $prefix = $self->config->option('code').q(/).$self->code;
 
@@ -332,7 +332,7 @@ sub render_table {
   my($self,$flag) = @_;
 
   my @rows = values %{$self->{'user_data'}{'files'}||{}};
-  return '<p>No files currently attached</p>' unless @rows;
+  return q() unless @rows;## '<p>No files currently attached</p>' unless @rows;
 
   my @columns = (
     ##{ 'key' => 'ndx',  'label' => 'Index', 'align' => 'right' },
