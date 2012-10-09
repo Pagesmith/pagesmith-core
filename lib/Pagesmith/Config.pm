@@ -46,6 +46,54 @@ sub new {
   return $self;
 }
 
+sub set_override {
+  my $self = shift;
+  $self->{'override'} = 1;
+  return $self;
+}
+
+sub clear_override {
+  my $self = shift;
+  $self->{'override'} = 0;
+  return $self;
+}
+
+sub set_use_cache {
+  my $self = shift;
+  $self->{'use_cache'} = 1;
+  return $self;
+}
+
+sub clear_use_cache {
+  my $self = shift;
+  $self->{'use_cache'} = 0;
+  return $self;
+}
+
+sub set_location {
+  my( $self,$location ) = @_;
+  $self->{'loc'} = $location;
+  return $self;
+}
+
+sub clear_location {
+  my $self = shift;
+  $self->{'loc'} = $DEFAULT_LOCATION;
+  return $self;
+}
+
+sub set_key {
+  my( $self,$key ) = @_;
+  $self->{'key'} = $key;
+  return $self;
+}
+
+sub clear_key {
+  my $self = shift;
+  $self->{'key'} = get_config('ConfigKey');
+  return $self;
+}
+
 sub set_site { ## Required by scripts
   my( $self, $site ) = @_;
   set_site_key( $site ) unless site_key;
