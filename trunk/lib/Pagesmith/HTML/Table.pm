@@ -351,6 +351,7 @@ sub expand_format {
        : $f =~ m{\A([k|m])(\d+)\Z}mxs       ? $self->format_fixed(                     $val, $1, $2 ) # nnnn.mm K/M
        : $f =~ m{\At(\d+)\Z}mxs       ? $self->commify( sprintf qq(%0.$1f),            $val||0 )      # n,nnn,nnn,nnn.mm
        : $f =~ m{\Af(\d+)\Z}mxs       ? sprintf( qq(%0.$1f),                           $val||0 )       # Fixed decimal
+       : $f =~ m{\Apm(\d+)\Z}mxs      ? sprintf( qq(%s%0.$1f),                         $val||0>0?q(+):q(), $val||0 )       # Fixed decimal (with +/-)
        : $f =~ m{\Ap(\d+)\Z}mxs       ? sprintf( qq(%0.$1f%%),                         ($val||0)*$CENT ) # Percentage
        : $f =~ m{\Ah(\d+)\Z}mxs       ? $self->truncate_string(                        $val, $1   ) # Percentage
        : $f =~ m{\Ad(\d+)\Z}mxs       ? sprintf( qq(%0$1d),                            $val||0 )       # zero padded
