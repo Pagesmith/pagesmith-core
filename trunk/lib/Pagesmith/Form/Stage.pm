@@ -53,6 +53,17 @@ sub new {
   return $self;
 }
 
+sub progress_caption {
+  my $self = shift;
+  return $self->{'progress_caption'} if exists $self->{'progress_caption'};
+  return $self->caption || ($self->sections)[0]->caption || 'Untitled';
+}
+
+sub set_progress_caption {
+  my( $self, $caption ) = @_;
+  $self->{'progress_caption'} = $caption;
+  return $self;
+}
 
 sub validate {
   my( $self, $form ) = @_;
