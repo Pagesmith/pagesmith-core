@@ -617,7 +617,11 @@ sub render_formprogress {
   $link_temp = q() if $self->state eq 'completed';
   foreach my $stage ( $self->stages ) {
     next if $stage->isa( 'Pagesmith::Form::Stage::Error' );
-    my $text  = $stage->caption || ($stage->sections)[0]->caption || 'Untitled';
+    my $text  = $stage->progress_caption;
+    unless( $text ) {
+      $stage_no++;
+      next;
+    }
     my @stage_class;
     ( my $link  = $link_temp ) =~ s{\#S\#}{$stage_no}mxs;
     if(
