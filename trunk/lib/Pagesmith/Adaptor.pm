@@ -32,6 +32,7 @@ Readonly my $DEFAULT_PORT => 3306;
 Readonly my $DEFAULT_HOST => 'localhost';
 Readonly my $DEFAULT_NAME => 'test';
 Readonly my $DEFAULT_TYPE => 'mysql';
+Readonly my $ONE_MEG      => 1<<20;
 
 use Pagesmith::Config;
 use Pagesmith::Core qw(user_info);
@@ -87,7 +88,7 @@ sub get_connection {
   $self->{'_dbuser'} = $db_details->{'user'};
   $self->{'_version'} = $db_details->{'version'};
   $self->{'_dbpass'} = $db_details->{'pass'};
-  $self->{'_dbopts'} = $db_details->{'opts'} || { 'RaiseError' => 0 };
+  $self->{'_dbopts'} = $db_details->{'opts'} || {( 'RaiseError' => 0, 'LongReadLen' => $ONE_MEG )};
   return $self;
 }
 
