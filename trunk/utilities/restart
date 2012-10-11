@@ -29,16 +29,17 @@ use Cwd qw(abs_path);
 use Getopt::Long qw(GetOptions);
 use POSIX qw(strftime);
 
-my $path    = dirname(dirname(abs_path($PROGRAM_NAME)));
+my $path     = dirname(dirname(abs_path($PROGRAM_NAME)));
 
-my $command = basename($PROGRAM_NAME);
-my $system  = basename($path);
-my $flag    = $system =~ m{www-(\w+)\Z}mxs ? $1 : $system; ## Uses system name as flag....
+my $command  = basename($PROGRAM_NAME);
+my $system   = basename($path);
+my $flag     = $system =~ m{www-(\w+)\Z}mxs ? $1 : $system; ## Uses system name as flag....
 
-my $help   = 0;
-my $access = 0;
-my $error  = 0;
-my $both   = 0;
+my $help     = 0;
+my $access   = 0;
+my $error    = 0;
+my $both     = 0;
+my $profile   = 0;
 
 GetOptions(
   'help'    => \$help,
@@ -47,6 +48,7 @@ GetOptions(
   'logs'    => \$both,
   'rotate'  => \$both,
   'error'   => \$error,
+  'profile' => \$profile,
 );
 
 _docs() if $help;
@@ -83,12 +85,8 @@ if( $name eq 'root' ) {
 my $tmp_path = "$path/tmp";
    $tmp_path = "/www/tmp/$1" if $path =~ m{^\/www\/(([-\w]+\/)?www-\w+)}mxs; ## We are in a sub-directory!
 my $log_path = $tmp_path.'/logs';
-if( $access || $error ) {
-  ## use GetOpt Long to look at doing an error log rotation!
-  my $time = strftime( '%Y-%m-%d--%H-%M-%S', gmtime );
-  system "mv $log_path/diagnostic.log $log_path/diagnostic--$time.log" if $access;
-  system "mv $log_path/error.log $log_path/error--$time.log" if $error;
-}
+
+_rotate_logs if $access || $error;
 
 {
   local $ENV{'PAGESMITH_SERVER_FLAG'} = $flag;
@@ -100,7 +98,10 @@ if( $access || $error ) {
   local $ENV{'PAGESMITH_SERVER_GROUP'} = $group;
   my($now_soft,$now_hard) = getrlimit( 'RLIMIT_NOFILE' );
   local $ENV{'APACHE_ULIMIT_MAX_FILES'} = $now_hard == $now_soft ? q(:) : qq(ulimit -S -n $now_hard) unless $user_is_root;
-  my $return = system '/usr/sbin/apache2ctl', '-DPAGESMITH_'.uc $flag, '-d', "$path/apache2", '-f', 'core.d/httpd.conf', '-k', $command;
+  my @parts = ( '-DPAGESMITH_'.uc $flag, '-d', "$path/apache2", '-f', 'core.d/httpd.conf', '-k' );
+  unshift @parts, '-DPAGESMITH_PROFILE' if $profile;
+  my $return = system '/usr/sbin/apache2ctl', @parts, $command;
+  system 'sleep 2' if $error;
   if( $return ) {
     printf {*STDERR} "  Returned result: %s\n", $return;
   } else {
@@ -110,6 +111,14 @@ if( $access || $error ) {
 
 printf {*STDERR} "%s\n\n",
   q(-) x $LINE_LENGTH;
+
+sub _rotate_logs {
+  ## use GetOpt Long to look at doing an error log rotation!
+  my $time = strftime( '%Y-%m-%d--%H-%M-%S', gmtime );
+  system "mv $log_path/diagnostic.log $log_path/diagnostic--$time.log" if $access;
+  system "mv $log_path/error.log $log_path/error--$time.log" if $error;
+  return;
+}
 
 ## no critic (ImplicitNewlines RequireCarping)
 sub _docs {
