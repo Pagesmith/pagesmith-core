@@ -172,7 +172,7 @@ sub devel_realm {
 }
 
 sub template_name {
-  return $config_data->{$site_key}{'-template_name'} ||= get_config( 'Domain' ) || $r->hostname;
+  return $config_data->{$site_key}{'-template_name'} ||= get_config( 'Domain' ) || $r->server->server_hostname;
 }
 sub server_root {
   return $config_data->{'-server_root'} ||= dirname(dirname(dirname(File::Spec->rel2abs(__FILE__))));
