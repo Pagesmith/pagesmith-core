@@ -31,7 +31,7 @@ sub page_path {
 
 sub _nav {
   my $self = shift;
-  my $filename = get_config( 'Domain' ) || $self->r->hostname;
+  my $filename = get_config( 'Domain' ) || $self->r->server->server_hostname;
   my $pch = Pagesmith::Config->new( { 'file' => $filename, 'location' => 'site' } );
      $pch->load( );
   my $navigation = $pch->get( );
