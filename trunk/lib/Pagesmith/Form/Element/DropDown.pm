@@ -169,6 +169,7 @@ sub _render_widget {
     $options .= sprintf qq(\n         <option value="%s">%s</option>), encode_entities( $self->firstline_value ), encode_entities( $self->firstline );
   }
   my $optcount = 0;
+
   foreach my $V ( $self->values ) {
     $V = {'value'=>$V,'name'=>$V} unless ref $V;
     if( exists $V->{'group'} && $V->{'group'} ne $current_group ) {
