@@ -58,11 +58,13 @@ sub firstline {
   my $self = shift;
   return $self->{'_firstline'};
 }
+
 sub set_firstline_value {
   my( $self, $value ) = @_;
   $self->{'_firstline_value'} = $value||undef;
   return $self;
 }
+
 sub firstline_value {
   my $self = shift;
   return q() unless defined $self->{'_firstline_value'};
