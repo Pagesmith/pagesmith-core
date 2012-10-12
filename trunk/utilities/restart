@@ -86,7 +86,7 @@ my $tmp_path = "$path/tmp";
    $tmp_path = "/www/tmp/$1" if $path =~ m{^\/www\/(([-\w]+\/)?www-\w+)}mxs; ## We are in a sub-directory!
 my $log_path = $tmp_path.'/logs';
 
-_rotate_logs if $access || $error;
+_rotate_logs() if $access || $error;
 
 {
   local $ENV{'PAGESMITH_SERVER_FLAG'} = $flag;
