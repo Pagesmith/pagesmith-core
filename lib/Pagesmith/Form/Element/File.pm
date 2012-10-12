@@ -298,6 +298,17 @@ sub expand {
   return $string;
 }
 
+sub render_email {
+  my( $self, $form ) = @_;
+  my ($entry) = values %{$self->{'user_data'}{'files'}||{}};
+  my $prefix = $self->config->option('code').q(/).$self->code;
+  return $self->_render_email( sprintf qq(%s (%0.1fk %s)\n%s/action/FormFile/%s/%d/%s-%d.%s),
+    $entry->{'name'}, $entry->{'size'}/$K, $entry->{'type'},
+    $self->base_url($self->{'r'}),
+    $prefix, $entry->{'ndx'}, $prefix, $entry->{'ndx'},$entry->{'xtn'},
+  );
+}
+
 sub render_single {
   my($self,$flag) = @_;
   ## Get first value....
