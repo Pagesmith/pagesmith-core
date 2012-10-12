@@ -36,8 +36,7 @@ sub _init {
 
   $element_data ||= {};
 
-  if( exists $element_data->{'print_as'} &&
-      $element_data->{'print_as'} eq 'box' ) {
+  if( exists $element_data->{'print_as'} && $element_data->{'print_as'} eq 'box' ) {
     $self->set_print_as_box;
   } else {
     $self->set_print_as_list;
