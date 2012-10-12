@@ -22,7 +22,7 @@ use HTML::Entities qw(encode_entities decode_entities);
 use List::MoreUtils qw(any);
 use English qw(-no_match_vars $PID);
 use Pagesmith::ConfigHash qw(get_config);
-use Text::Wrap qw(wrap $columns);
+use Text::Wrap qw(wrap $columns $huge);
 use Encode qw(encode_utf8);
 use Data::Dumper;
 use Readonly qw(Readonly);
@@ -186,7 +186,7 @@ sub is_input {
   return ! $self->is_readonly;
 }
 
-##-- Get/Set/clear invalid status 
+##-- Get/Set/clear invalid status
 
 sub set_valid_state {
   my( $self, $value ) = @_;
@@ -615,11 +615,12 @@ sub _render_readonly {
 }
 
 sub twrap {
-## Wrapper around Text::Wrap::wrap to put an appropriate wrapped entry for sending in a plain 
+## Wrapper around Text::Wrap::wrap to put an appropriate wrapped entry for sending in a plain
 ## text email...
   my($self,$string,$pad, $sep, $cols ) = @_;
   my $sub_tab = q( ) x $pad .$sep;
-  $columns = $cols;
+  $columns  = $cols;
+  $huge     = 'overflow';
   return join "\n$sub_tab", split m{\n}mxs, wrap( q(), q(), $string||q(-) );
 }
 
@@ -629,9 +630,13 @@ sub render_email {
   $value = q(--) if $value eq '&nbsp;';
   $value =~ s{<[^>]+>}{}mxgs;
   $value = decode_entities( $value );
+  return $self->_render_email( $value );
+}
+
+sub _render_email {
+  my( $self, $value ) = @_;
   (my $caption = $self->caption) =~ s{<[^>]+>}{}mxgs;
   $caption = decode_entities( $caption );
-
   return sprintf "\n%s\n-------------------------------------\n%s\n\n",
     $self->twrap( $caption, 0, q(), $LONG_LINE_LENGTH ), $self->twrap( $value, 0, q(), $LONG_LINE_LENGTH )
     if $self->value =~ m{[\r\n]}mxs || length $value >= 2 * $SHORT_LINE_LENGTH;
