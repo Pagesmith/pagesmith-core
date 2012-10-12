@@ -53,6 +53,7 @@ sub set_firstline {
   $self->{'_firstline'} = $value;
   return $self;
 }
+
 sub firstline {
   my $self = shift;
   return $self->{'_firstline'};
