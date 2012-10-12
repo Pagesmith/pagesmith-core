@@ -185,7 +185,7 @@ sub _render_widget {
     my $extra = $self->value eq $V->{'value'} ? ' selected="selected"' : q();
     my $value = $V->{'name'} || $V->{'value'};
     $options .= sprintf qq(\n        <option value="%s"%s>%s</option>),
-      encode_entities( $V->{'value'} ), $extra, encode_entities( $self->strip_html( $value ) );
+      encode_entities( $V->{'value'} ), $extra, $self->raw ? $self->strip_html( $value ) : encode_entities( $self->strip_html( $value ) );
     $optcount++;
   }
   if( $current_group ) { $options.="\n       </optgroup>"; }
