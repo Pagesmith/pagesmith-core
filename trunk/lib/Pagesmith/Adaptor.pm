@@ -24,7 +24,7 @@ use DBIx::Connector;
 use Socket qw(inet_ntoa);
 use Sys::Hostname::Long qw(hostname_long);
 use English qw(-no_match_vars $PROGRAM_NAME);
-use Scalar::Util qw(blessed);
+use Scalar::Util qw(blessed weaken isweak);
 
 use Readonly qw(Readonly);
 
@@ -134,7 +134,7 @@ sub new {
   ($r,$db_info) = ($db_info,undef) if 'Apache2::RequestRec' eq ref $db_info;
 
   if( blessed $db_info ) { ## DB info is an adaptor!
-    my $self = { map { ( $_ => $db_info->{$_} ) } qw(_conn _dsn _dbuser _dbpass _r _user _version) };
+    my $self = { map { ( $_ => $db_info->{$_} ) } qw(_conn _dsn _dbuser _dbpass _r _user _version pool) };
     $self->{'_dbopts'} ||= {%{$db_info->{'_dbopts'}}};
     bless $self, $class;
     return $self;
@@ -147,11 +147,24 @@ sub new {
     '_dbopts' => undef,
     '_r'      => $r,
     '_user'   => undef,
+    'pool'    => {},
   };
   bless $self, $class;
   $db_info = $self->_connection_pars unless defined $db_info;
   $self->get_connection( $db_info )->connect_to_db;
   return $self;
+}
+
+sub add_self_to_pool {
+  my( $self, $key );
+  $self->{'pool'}{$key} = $self;
+  weaken $self->{'pool'}{$key};
+  return $self;
+}
+
+sub get_adaptor_from_pool {
+  my( $self, $key );
+  return $self->{'pool'}{$key};
 }
 
 sub conn {
