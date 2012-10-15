@@ -73,6 +73,7 @@ sub _content_type {
 sub handler : FilterRequestHandler {
   my $filter = shift;
   my $r      = $filter->r;
+
   ## Wrap only HTML files
   if ( $r->content_type !~ m{\A(text/html|application/xhtml\+xml)\b}mxs
     || $r->headers_out->get('X-Pagesmith-Template')||q() eq 'No' ) {
@@ -80,6 +81,7 @@ sub handler : FilterRequestHandler {
     $r->headers_out->set( 'X-Pagesmith-Debug', sprintf '!%s:%d', hostname, $PID );
     return DECLINED;
   }
+
 
   my $ctx = context($filter);
   ## Initialize if first request
@@ -100,13 +102,18 @@ sub handler : FilterRequestHandler {
   my $X = $r->err_headers_out;
 
   ## If last request output HTML...
-  my $header;
+  my $header = q();
   if ( $filter->seen_eos ) {
     my $html = $ctx->{'html'};
     ## If the X-Pagesmith-Decor header is set to no do not decorate the page and
     ## just return the raw
+    my $x_x = $r->headers_out->get('X-Pagesmith-Debug');
 
-    if ( ($r->headers_out->get('X-Pagesmith-Decor')||q()) eq 'no' ) {
+    if( defined $x_x ) {
+      ## Do nothing - this page has already been templated and is getting
+      ## templated again because of the double filtering bug on re-direction
+      ## introduced in later versions of Apache 2.2
+    } elsif ( ($r->headers_out->get('X-Pagesmith-Decor')||q()) eq 'no' ) {
       ## Do not decorate this page at all!!!
       ## Even if we don't decorate - we do get the option to cache the
       ## entry here - note don't need to worry about runtime decorate
@@ -214,7 +221,6 @@ sub handler : FilterRequestHandler {
     $r->content_type( _content_type($r) );
     ## Finally set a Pagesmith-Debug header so that we can see which machine and indeed
     ## Which pid served the file.....
-
 
     $r->headers_out->set(   'X-Pagesmith-Debug', sprintf '%s:%d', hostname, $PID );
     ## Last but not least send the html to the next filter (so it can be
