@@ -17,7 +17,7 @@ form dd.fifty50  { width: 48%; }
 form dt.eighty20 { width: 67%; }
 form dd.eighty20 { width: 29%; }
 form dt.left     { text-align: left; }
-
+form dt.full_width_caption { float: none; width: auto; text-align: left; }
 textarea._pubmed_list, input._pubmed { float: left; width: 10em }
 textarea._pubmed_list { height: 20em }
 form dd._pubmed ul { margin-left: 9em; }
