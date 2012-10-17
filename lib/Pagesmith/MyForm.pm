@@ -115,6 +115,7 @@ sub fetch_generic_object {
 
 sub default_store_and_send_email {
   my( $self, $flag ) = @_;
+  $flag ||= q();
 
   my $object_data = {};
 
