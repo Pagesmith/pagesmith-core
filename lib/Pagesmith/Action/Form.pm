@@ -135,9 +135,10 @@ sub run_previous {
 
 sub run_next {
   my $self = shift;
-  $self->form_object->update_from_apr( $self->apr );    ## Update object from APR
-  $self->form_object->validate;                         ## Get valid status of next pages...
-
+  if( $self->r->method eq 'POST' ) {
+    $self->form_object->update_from_apr( $self->apr );    ## Update object from APR
+    $self->form_object->validate;                         ## Get valid status of next pages...
+  }
   if( $self->form_object->stage_object->is_type( 'Confirmation' ) ) {
     ## Current stage is a confirmation stage.... so we
     my $confirmation_succeeded =  $self->form_object->on_confirmation( $self->form_object->stage_object );
