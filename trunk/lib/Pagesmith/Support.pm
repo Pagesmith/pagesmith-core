@@ -29,6 +29,12 @@ use Pagesmith::Session::User;
 
 ## Code that requires r!
 
+sub dump_events {
+  my $self = shift;
+  $self->push_message( $self->SUPER::dump_events, 'info', 1 );
+  return $self;
+}
+
 sub get_adaptor {
   my( $self, $type, @params ) = @_;
   my $module = 'Pagesmith::Adaptor::'.$type;
