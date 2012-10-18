@@ -360,32 +360,6 @@ sub get_output {
 }
 
 ## Diagnostic event timer code!
-sub init_events {
-  my $self = shift;
-  $self->{'_events'} = [];
-  $self->{'_start'}  = time;
-  return $self;
-}
-
-sub push_event {
-  my ( $self, $caption, $level ) = @_;
-  $level ||= 0;
-  push @{$self->{'_events'}}, {( 'caption' => $caption, 'level' => $level, 'time' => time - $self->{'_start'} )};
-  return $self;
-}
-
-sub dump_events {
-  my $self = shift;
-  $self->push_event( 'DUMP' );
-  my $merged_txt = q();
-  my $prev = 0;
-  foreach ( @{$self->{'_events'}} ) {
-    $merged_txt .= sprintf "%8.4f : %8.4f : %s\n", $_->{'time'}, $_->{'time'}-$prev, $_->{'caption'};
-    $prev = $_->{'time'};
-  }
-  $self->push_message( $merged_txt, 'info', 1 );
-  return $self;
-}
 
 sub table {
   my( $self, @pars ) = @_;
@@ -422,6 +396,12 @@ sub is_xhr {
   my $xhr_header = $self->r->headers_in->get('X-Requested-With') || q();
   return 1 if $xhr_header eq 'XMLHttpRequest' || $self->param('_xhr_');
   return;
+}
+
+sub my_name {
+  my $self = shift;
+  my($pagesmith,$component,@name_parts) = split m{::}mxs, ref $self;
+  return join q(_), @name_parts;
 }
 
 1;
