@@ -56,7 +56,7 @@ sub validate {
 sub _render_widget_paper {
   my $self = shift;
 
-  my $class = $self->_class =~ m{short}mxs ? 'bordered_short' : 'bordered';
+  my $class = $self->generate_class_string =~ m{short}mxs ? 'bordered_short' : 'bordered';
   return sprintf '<div class="%s">%s</div>%s',
     $class,
     ( $self->raw ? $self->_render_value : encode_entities( $self->_render_value ) ) ||'&nbsp;',
