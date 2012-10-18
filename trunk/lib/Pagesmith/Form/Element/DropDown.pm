@@ -122,7 +122,7 @@ sub _validate {
 sub _render_widget_paper {
   my $self = shift;
   if( $self->print_as eq 'box' ) {
-    my $class = $self->_class =~ m{short}mxs ? 'bordered_short' : 'bordered';
+    my $class = $self->generate_class_string =~ m{short}mxs ? 'bordered_short' : 'bordered';
     return sprintf '<div class="%s">%s</div>',
       $class,
       encode_entities( $self->value )||'&nbsp;'
