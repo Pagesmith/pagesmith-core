@@ -387,15 +387,17 @@ sub _author_list {
 
 sub _publication {
   my $self = shift;
-  my $return = sprintf '<span class="title">%s</span>&nbsp;', encode_entities( $self->{'_raw'}{'journal'} );
+  my $return = exists $self->{'_raw'}{'journal'} && defined $self->{'_raw'}{'journal'}
+             ? sprintf '<span class="title">%s</span>&nbsp;', encode_entities( $self->{'_raw'}{'journal'} )
+             : q();
   return $return unless exists $self->{'_raw'}{'year'} && defined $self->{'_raw'}{'year'};
   if( $self->{'_raw'}{'year'} eq 'In print' ) {
     $return .= '<em>(In print)</em>';
   } else {
-    $return .= sprintf '<span class="year">%d</span>',       $self->{'_raw'}{'year'}   if exists $self->{'_raw'}{'year'}   && defined $self->{'_raw'}{'year'}   && $self->{'_raw'}{'year'} ne q();
+    $return .= sprintf '<span class="year">%d</span>',       $self->{'_raw'}{'year'}   if exists $self->{'_raw'}{'year'}   && defined $self->{'_raw'}{'year'}   && $self->{'_raw'}{'year'}   ne q();
     $return .= sprintf ';<span class="volume">%s</span>',    $self->{'_raw'}{'volume'} if exists $self->{'_raw'}{'volume'} && defined $self->{'_raw'}{'volume'} && $self->{'_raw'}{'volume'} ne q();
-    $return .= sprintf ';<span class="number">%s</span>',    $self->{'_raw'}{'issue'}  if exists $self->{'_raw'}{'issue'}  && defined $self->{'_raw'}{'issue'}  && $self->{'_raw'}{'issue'} ne q();
-    $return .= sprintf ';<span class="pagerange">%s</span>', $self->{'_raw'}{'pages'}  if exists $self->{'_raw'}{'pages'}  && defined $self->{'_raw'}{'pages'}  && $self->{'_raw'}{'pages'} ne q();
+    $return .= sprintf ';<span class="number">%s</span>',    $self->{'_raw'}{'issue'}  if exists $self->{'_raw'}{'issue'}  && defined $self->{'_raw'}{'issue'}  && $self->{'_raw'}{'issue'}  ne q();
+    $return .= sprintf ';<span class="pagerange">%s</span>', $self->{'_raw'}{'pages'}  if exists $self->{'_raw'}{'pages'}  && defined $self->{'_raw'}{'pages'}  && $self->{'_raw'}{'pages'}  ne q();
   }
   return $return;
 }
