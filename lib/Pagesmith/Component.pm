@@ -34,6 +34,11 @@ use Pagesmith::Utils::FormObjectCreator;
 #@property (arrayref{}) _options Hashref of arrayrefs containing options passed in <% %>
 #@property (string[]) _pars Array of parameters passed inside the <% %> tags
 
+sub default_ajax {
+  my $self = shift;
+  return $self->option('ajax') ? 1 : 0;
+}
+
 sub user {
   my $self = shift;
   return $self->page->user;
