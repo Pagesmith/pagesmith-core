@@ -37,7 +37,7 @@ sub h {
   my $self = shift;
   $self->{'_h'} = HTML::Tidy->new( {
     'wrap'                => $LINE_LENGTH,
-    'hide-comments'       => 1,
+#    'hide-comments'       => 1,
     'output_xhtml'        => 1,
     'indent'              => 1,
     'doctype'             => 'omit',

@@ -519,32 +519,35 @@ sub _parse_head {
   ## Additionally we push through any Components that are in the head...
 
   while(
-    $head =~ s{(<link)([^>]+>)}{}smx ||
-    $head =~ s{(<style)([^>]+)>\s*(/\*\s*<!\[CDATA\[\s*\*/.*?/\*\s*\]\]>\s*\*/)\s*</style>}{}smx ||
-    $head =~ s{(<script)([^>]+)>\s*(//\s*<!\[CDATA\[.*?//\s*\]\]>)?\s*</script>}{}smx ||
-    $head =~ s{(<%)(\s[^>]*\s%>)}{}smx
+    $head =~ s{(?:
+      (<!\[endif\]-->|<!--\[if.*?\]>|<%\s[^>]*\s%>)|
+      <link([^>]+>)|
+      <style([^>]+)>\s*(/\*\s*<!\[CDATA\[\s*\*/.*?/\*\s*\]\]>\s*\*/)\s*</style>|
+      <script([^>]+)>\s*(//\s*<!\[CDATA\[.*?//\s*\]\]>)?\s*</script>
+    )}{}smx
   ) {
-    my( $type, $tag, $txt ) = ($1,$2,$3);
-    ## no critic (CascadingIfElse)
-    if( $type eq '<link' ) {
-      if ( $tag =~ m{rel\s*=\s*(['"])stylesheet\1}mxs
-        || $tag =~ m{type\s*=\s*(['"])text/css\1}mxs ) {
-        if ( $tag =~ m{href\s*=\s*(['"])(.*?)\1}mxs ) {
+    my( $other, $link_tag, $style_tag, $style_txt, $script_tag, $script_txt ) =
+      ( $1, $2, $3, $4, $5, $6 );
+## warn sprintf "!pre!\nO:  %s\nL:  %s\nS:  %s\nST: %s\nJ:  %s\nJT: %s", $1||q(-), $2||q(-), $3||q(-), $4||q(-),$5||q(-),$6||q(-);
+
+    if( defined $link_tag ) {
+      if ( $link_tag =~ m{rel\s*=\s*(['"])stylesheet\1}mxs
+        || $link_tag =~ m{type\s*=\s*(['"])text/css\1}mxs ) {
+        if ( $link_tag =~ m{href\s*=\s*(['"])(.*?)\1}mxs ) {
           $extra_head .= sprintf qq(  <link rel="stylesheet" type="text/css" href="%s" />\n), $2;
         }
       }
-    } elsif( $type eq '<style' ) {
-      $extra_head .= sprintf qq(  <style type="text/css">\n%s\n  </style>\n), $txt;
-    } elsif( $type eq '<%' ) {
-      $extra_head .= "$type$tag";
-    } elsif( $type eq '<script' ) {
-      if ( $tag =~ m{src\s*=\s*(['"])(.*?)\1}mxs ) {
+    } elsif( defined $style_tag ) {
+      $extra_head .= sprintf qq(  <style type="text/css">\n%s\n  </style>\n), $style_txt;
+    } elsif( defined $script_tag ) {
+      if ( $script_tag =~ m{src\s*=\s*(['"])(.*?)\1}mxs ) {
         $extra_head .= sprintf qq(  <script type="text/javascript" src="%s"></script>\n), $2;
       } else {
-        $extra_head .= sprintf qq(  <script type="text/javascript">\n%s  </script>\n), $txt if defined $txt;
+        $extra_head .= sprintf qq(  <script type="text/javascript">\n%s  </script>\n), $script_txt if defined $script_txt;
       }
+    } else {
+      $extra_head .= $other;
     }
-    ## use critic
   }
 
   my $head_info   = $head_parser->parse($head);
