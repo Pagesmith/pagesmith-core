@@ -965,9 +965,25 @@ sub add_message {
   return $self;
 }
 
+sub messages {
+  my $self = shift;
+  return @{$self->{'messages'}};
+}
+
+sub has_message {
+  my( $self, $flag ) = @_;
+  return any { $_->level eq $flag } @{$self->{'messges'}} if $flag;
+  return @{$self->{'messages'}} ? 1 : 0;
+}
+
 sub add_info {
   my( $self, $info_msg, $raw ) = @_;
   return $self->add_message( $info_msg, 'info', $raw||q() );
+}
+
+sub has_info {
+  my $self = shift;
+  return $self->has_message( 'info' );
 }
 
 sub add_msg {
@@ -975,14 +991,29 @@ sub add_msg {
   return $self->add_message( $msg, 'msg', ($raw||q()) );
 }
 
+sub has_msg {
+  my $self = shift;
+  return $self->has_message( 'msg' );
+}
+
 sub add_warn {
   my( $self, $warn, $raw ) = @_;
   return $self->add_message( $warn, 'warn', $raw||q() );
 }
 
+sub has_warn {
+  my $self = shift;
+  return $self->has_message( 'warn' );
+}
+
 sub add_error {
   my( $self, $error, $raw ) = @_;
   return $self->add_message( $error, 'error', $raw||q() );
+}
+
+sub has_error {
+  my $self = shift;
+  return $self->has_message( 'error' );
 }
 
 sub page {
