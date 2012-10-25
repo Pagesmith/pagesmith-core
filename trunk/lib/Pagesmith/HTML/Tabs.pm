@@ -74,6 +74,7 @@ sub set_option {
 sub add_tab {
   my( $self, $key, $title, $html, $options ) = @_;
   $options ||= {};
+  $options->{'no_heading'} ||= $self->option('no_heading');
 
   push @{$self->{'tabs'}}, {
     'key'   => $key,
@@ -123,11 +124,11 @@ sub render {
     }
     $html .= $entry->{'html'};
     my @classes = @{ $self->{'div_classes'} || [] };
-    if( exists $entry->{'div_class'} ) {
-      if( ref $entry->{'div_class'} eq 'ARRAY' ) {
-        push @classes, @{ $entry->{'div_class'} };
+    if( exists $entry->{'options'}{'div_class'} ) {
+      if( ref $entry->{'options'}{'div_class'} eq 'ARRAY' ) {
+        push @classes, @{ $entry->{'options'}{'div_class'} };
       } else {
-        push @classes, $entry->{'div_class'};
+        push @classes, $entry->{'options'}{'div_class'};
       }
     }
     @classes = sort uniq @classes;
