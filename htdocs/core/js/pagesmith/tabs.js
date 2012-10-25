@@ -53,14 +53,15 @@ jQuery.fn.tabs = function (no_top_border) {
 $('.tabs').livequery(function () { $(this).tabs(0); });
 $('.fake-tabs').livequery(function () { $(this).tabs(1); });
 
-var id_str = window.location.hash;
-if (id_str && id_str.match(/^#[-\w]+$/)) {
-  var id_sel = ' > li > a[href=' + id_str + ']';
-  $('.tabs' + id_sel + ', .fake-tabs ' + id_sel).click().parents('.tabc_hid').each(function () {
-    var id_sel = ' a[href=#' + $(this).attr('id') + ']';
-    $('.tabs' + id_sel + ', .fake-tabs' + id_sel).click();
-  });
+$('.enable-tab').livequery(function () {
+  $('.tabs li a[href=' + $(this).prop('hash') + ']').closest('li').removeClass('disabled');
+});
 
+function fire_tabs( id_sel ) {
+  $('.tabs' + id_sel + ', .fake-tabs ' + id_sel).click().parents('.tabc_hid').each(function () {
+    var parent_id_sel = ' a[href=#' + $(this).attr('id') + ']';
+    $('.tabs' + parent_id_sel + ', .fake-tabs' + parent_id_sel).click();
+  });
 }
 
 /**
@@ -68,15 +69,22 @@ if (id_str && id_str.match(/^#[-\w]+$/)) {
  * the tab indicated by the href of the link.
  */
 
-$('.change-tab').live('click', function () {
-  var x = ' li a[href=' + $(this).prop('hash') + ']';
-  $('.tabs' + x + ', .fake-tabs' + x).click().parents('.tabc_hid').each(function () {
-    var id_sel = ' a[href=#' + $(this).attr('id') + ']';
-    $('.tabs' + id_sel + ', .fake-tabs' + id_sel).click();
-  });
-  return false;
+var id_str = window.location.hash;
+if (id_str && id_str.match(/^#[-\w]+$/)) {
+  fire_tabs( ' > li > a[href=' + id_str + ']' );
+}
+
+$(document).on('click', '.change-tab', function () {
+  fire_tabs( ' li a[href=' + $(this).prop('hash') + ']' );
 });
 
-$('.enable-tab').livequery(function () {
-  $('.tabs li a[href=' + $(this).prop('hash') + ']').closest('li').removeClass('disabled');
+$('.tabc:visible').livequery(function(){
+  var list = $(this).attr('class').split(/\s+/),j,m;
+  for(j=list.length;j;j) {
+    j--;
+    m = list[j].match(/onshow_(\w+)/);
+    if(m) {
+      fire_tabs( ' li a[href=#' + m[1] + ']' );
+    }
+  }
 });
