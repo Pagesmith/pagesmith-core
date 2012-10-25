@@ -15,3 +15,5 @@
 .opac10 { filter:alpha(opacity=10); zoom:1; }
 
 .scrollable, .yscroll { overflow: auto }
+
+table div.rotated { writing-mode:tb-rl; filter: flipv fliph;  }
