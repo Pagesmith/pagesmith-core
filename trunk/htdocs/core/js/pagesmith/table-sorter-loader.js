@@ -226,10 +226,13 @@ $('.exportable').livequery(function () {
           height      = cell.innerHeight(),
           width       = cell.innerWidth(),
           newDiv      = $('<div>').height( (width+10)*SF ).width( height*SF ).css('margin','0 auto'),
-          newInnerDiv = $('<div>', { text: newText, 'class': 'rotated' });
-      newInnerDiv.css('-webkit-transform-origin', (width / 2 + 4           ) + 'px ' + ( 4    + width      / 2) + 'px');
-      newInnerDiv.css('-moz-transform-origin',    (width / 2 + 4           ) + 'px ' + ( 4    + width      / 2) + 'px');
-      newInnerDiv.css('-o-transform-origin',      (width * SF / 2 + SF * 4 ) + 'px ' + ( 4*SF + width * SF / 2) + 'px');
+          newInnerDiv = $('<div>', { text: newText, 'class': 'rotated' }),
+          t_string    = (width / 2 + 4 ) + 'px ' + ( 4 + width / 2) + 'px';
+
+      newInnerDiv.css('-webkit-transform-origin', t_string );
+      newInnerDiv.css('-moz-transform-origin',    t_string );
+      newInnerDiv.css('-ms-transform-origin',     t_string );
+      newInnerDiv.css('-o-transform-origin',      t_string );
       newDiv.append(newInnerDiv);
       newInnerDiv.css( 'background-color', $(this).css('background-color') );
       betterCells.push(newDiv);
