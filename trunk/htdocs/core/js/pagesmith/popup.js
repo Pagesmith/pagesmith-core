@@ -9,7 +9,11 @@ $.fn.pagesmith_popup = function(e, callback, options) {
       arrow,
       t     = $('<div>', { 'class': 'info_popup' });
 
-  t.append( '<h3><span class="close">X</span>' + details.title + '</h3>' + details.body );
+  if( details.title ) {
+    t.append( '<h3><span class="close">X</span>' + details.title + '</h3>' + details.body );
+  } else {
+    t.append( details.body );
+  }
 
   if( options.className ) {
     t.addClass( options.className );
