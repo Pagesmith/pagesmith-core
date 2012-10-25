@@ -57,3 +57,10 @@ table.flip tbody tr.odd td { background-color:#fff; }
 tr.errors  td { font-weight: bold; color: #900 }
 tr.warning td { font-weight: bold; color: #c60 }
 tr.info    td { font-weight: bold; color: #090 }
+
+.rotated_cell { white-space: nowrap; }
+table div.rotated { -webkit-transform: rotate(270deg); -moz-transform:    rotate(270deg); -o-transform:      rotate(270deg); padding: 0 2px; white-space: nowrap; }
+thead th { vertical-align: bottom; text-align: center; line-height: 1em; }
+
+table .vertical { white-space: nowrap; }
+
