@@ -212,3 +212,39 @@ $('.exportable').livequery(function () {
   });
 });
 
+(function ($) {
+  $.fn.rotateTableCellContent = function (options) {
+    if($(this).hasClass('headers_rotated')) {
+      return;
+    }
+    var cellsToRotate = $('.rotated_cell', this), betterCells = [];
+    cellsToRotate.each(function () {
+      var cell        = $(this),
+          newText     = $.trim(cell.text()),
+          isOpera     = window.opera,
+          SF          = 1,//isOpera ? (4/3) : 1,
+          height      = cell.innerHeight(),
+          width       = cell.innerWidth(),
+          newDiv      = $('<div>').height( (width+10)*SF ).width( height*SF ).css('margin','0 auto'),
+          newInnerDiv = $('<div>', { text: newText, 'class': 'rotated' });
+      newInnerDiv.css('-webkit-transform-origin', (width / 2 + 4           ) + 'px ' + ( 4    + width      / 2) + 'px');
+      newInnerDiv.css('-moz-transform-origin',    (width / 2 + 4           ) + 'px ' + ( 4    + width      / 2) + 'px');
+      newInnerDiv.css('-o-transform-origin',      (width * SF / 2 + SF * 4 ) + 'px ' + ( 4*SF + width * SF / 2) + 'px');
+      newDiv.append(newInnerDiv);
+      newInnerDiv.css( 'background-color', $(this).css('background-color') );
+      betterCells.push(newDiv);
+    });
+    cellsToRotate.each(function (i) {
+      $(this).html(betterCells[i]);
+    });
+    cellsToRotate.each(function () {
+//      $(this).css( 'padding-left', '2px' );
+      $(this).css( 'padding-right', '4px' );
+    });
+    $(this).addClass('headers_rotated');
+  };
+})(jQuery);
+
+$('table:visible').livequery(function(){
+  $(this).rotateTableCellContent();
+});
