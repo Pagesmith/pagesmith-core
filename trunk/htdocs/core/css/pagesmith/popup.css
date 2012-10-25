@@ -1,0 +1,7 @@
+.info_popup { z-index: 100; background-color: #fff ; border: 1px solid #bcc5cc; width: 20em; position: absolute }
+.info_popup .close { height: 14px; width: 14px; text-align: center; background-color: #fff; color: #bcc5cc; float: right; display: block; margin-top: 2px; font-size: 10px; line-height: 10px }
+.info_popup h3 { margin: 0; padding: 2px 0.5em; background-color: #bcc5cc }
+.info_popup dl.twocol dt { width: 30%; font-size: 0.8em }
+.info_popup dl.twocol dd { width: 65%; font-size: 0.8em }
+.info_popup_arrow { position: absolute; border: solid 1px #bcc5cc; width:1px;height: 1px; overflow: hidden; z-index: 99;}
+
