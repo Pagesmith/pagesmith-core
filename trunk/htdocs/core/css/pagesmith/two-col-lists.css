@@ -36,3 +36,6 @@ dl.twocol dl.twocol { margin: 0; }
 .outer dd { text-align: right; }
 dl.twocol:after {
   content:"."; display:block; height:0; clear:both; visibility:hidden; }
+
+#rhs .twocol dt { width: 19% }
+#rhs .twocol dd { width: 73% }
