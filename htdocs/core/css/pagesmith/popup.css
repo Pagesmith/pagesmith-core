@@ -1,7 +1,10 @@
-.info_popup { z-index: 100; background-color: #fff ; border: 1px solid #bcc5cc; width: 20em; position: absolute }
-.info_popup .close { height: 14px; width: 14px; text-align: center; background-color: #fff; color: #bcc5cc; float: right; display: block; margin-top: 2px; font-size: 10px; line-height: 10px }
-.info_popup h3 { margin: 0; padding: 2px 0.5em; background-color: #bcc5cc }
-.info_popup dl.twocol dt { width: 30%; font-size: 0.8em }
-.info_popup dl.twocol dd { width: 65%; font-size: 0.8em }
-.info_popup_arrow { position: absolute; border: solid 1px #bcc5cc; width:1px;height: 1px; overflow: hidden; z-index: 99;}
+.info_popup { font-size: 80%; z-index: 100; background-color: #fff ; border: 1px solid #666; width: 30em; position: absolute }
+.info_popup .close { height: 14px; width: 14px; text-align: center; background-color: #fff; color: #666; float: right; display: block; margin-top: 2px; font-size: 10px; line-height: 10px; border: 1px solid #666; margin-right: 2px }
+.info_popup th, .info_popup h3 { margin: 0; padding: 2px 0.5em; background-color: #666; color: #fff }
+.info_popup dl.twocol dt { width: 30%; font-size: 0.8em; color: #666 }
+.info_popup dl.twocol dd { width: 65%; font-size: 0.8em; margin: 1px 0 }
+.info_popup_arrow { position: absolute; border: solid 1px #666; width:1px;height: 1px; overflow: hidden; z-index: 99;}
+
+.info_popup table { font-size: 90%; width: 100%;  }
+.info_popup table, .info_popup td, .info_popup th { border:0}
 
