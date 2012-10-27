@@ -95,8 +95,20 @@ form dt.disabled { display: none; }
 form dd.disabled { display: none; }
 
 .ul_james { z-index: 200; padding: 0 0 0 1px; }
-.li_james { background: white; border: 1px solid #999; border-width: 0 1px 1px 1px; padding: 2px; font-size: 80%; }
-.li_james_hovered { background: #bcc5cc; }
+#rhs .li_james, .li_james { background: white; border: 1px solid #999; border-width: 0 1px 1px 1px; padding: 2px; font-size: 80%; }
+#rhs .li_james .li_james_hovered, .li_james .li_james_hovered { background: #bcc5cc; }
 
 .file-blob { float: left; width: 200px; }
 .file-image { float: left; width: 400px; }
+
+.col1-rhs { width:49%; float: left; }
+.col2-rhs { width:49%; float: right; }
+
+#rhs form dl { margin: 5px 5px 5px 10px; font-size: 80%; }
+#rhs form .col1-rhs dt, #rhs form .col2-rhs dt { width:80%; text-align: left; font-weight: normal; color: #000 }
+#rhs form .col1-rhs dd, #rhs form .col2-rhs dd { width:10% }
+
+
+.chbarray { display: block; float: right; text-align: right; font-size: 80% }
+.chbarray span { background-color: #e0e4e7; font-weight: bold; padding: 2px 0.5em; margin: 0.5em; cursor: pointer }
+
