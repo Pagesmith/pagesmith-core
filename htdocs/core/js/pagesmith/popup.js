@@ -12,7 +12,7 @@ $.fn.pagesmith_popup = function(e, callback, options) {
   if( details.title ) {
     t.append( '<h3><span class="close">X</span>' + details.title + '</h3>' + details.body );
   } else {
-    t.append( details.body );
+    t.append( '<span class="close">X</span>'+details.body );
   }
 
   if( options.className ) {
