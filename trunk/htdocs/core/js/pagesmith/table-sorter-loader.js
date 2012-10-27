@@ -228,7 +228,6 @@ $('.exportable').livequery(function () {
           newDiv      = $('<div>').height( (width+10)*SF ).width( height*SF ).css('margin','0 auto'),
           newInnerDiv = $('<div>', { text: newText, 'class': 'rotated' }),
           t_string    = (width / 2 + 4 ) + 'px ' + ( 4 + width / 2) + 'px';
-
       newInnerDiv.css('-webkit-transform-origin', t_string );
       newInnerDiv.css('-moz-transform-origin',    t_string );
       newInnerDiv.css('-ms-transform-origin',     t_string );
@@ -239,6 +238,11 @@ $('.exportable').livequery(function () {
     });
     cellsToRotate.each(function (i) {
       $(this).html(betterCells[i]);
+/*
+      console.log( ">" + $(this).height() );
+      console.log( ">>" + $(this).children().first().height() );
+      console.log( ">>>" + $(this).children().first().children().first().height() );
+*/
     });
     cellsToRotate.each(function () {
 //      $(this).css( 'padding-left', '2px' );
