@@ -352,6 +352,7 @@ sub expand_format {
        : $f =~ m{\At(\d+)\Z}mxs       ? $self->commify( sprintf qq(%0.$1f),            $val||0 )      # n,nnn,nnn,nnn.mm
        : $f =~ m{\Af(\d+)\Z}mxs       ? sprintf( qq(%0.$1f),                           $val||0 )       # Fixed decimal
        : $f =~ m{\Apm(\d+)\Z}mxs      ? sprintf( qq(%s%0.$1f),                         $val||0>0?q(+):q(), $val||0 )       # Fixed decimal (with +/-)
+       : $f =~ m{\Ab(\d+)\Z}mxs       ? $self->wbr(                                    $val, $1 )
        : $f =~ m{\Ap(\d+)\Z}mxs       ? sprintf( qq(%0.$1f%%),                         ($val||0)*$CENT ) # Percentage
        : $f =~ m{\Ah(\d+)\Z}mxs       ? $self->truncate_string(                        $val, $1   ) # Percentage
        : $f =~ m{\Ad(\d+)\Z}mxs       ? sprintf( qq(%0$1d),                            $val||0 )       # zero padded
@@ -360,6 +361,10 @@ sub expand_format {
        ;
 }
 
+sub wbr {
+  my( $self, $str, $size ) = @_;
+  return join '<wbr />', map { encode_entities( $_ ) } $str =~ m{(.{1,$size})}mxsg;
+}
 sub truncate_string {
   my( $self, $val, $length ) = @_;
   return length $val > $length
@@ -419,7 +424,7 @@ sub expand_template {
 ## no critic (ExcessComplexity)
 sub _expand_template {
   my( $self, $template, $row ) = @_;
-  return eval { &{$template}( $row, $self ); } if     'CODE'  eq ref $template; ## no critic (CheckingReturnValueOfEval)
+  return $self->_expand_template( eval { &{$template}( $row, $self ); }, $row ) if     'CODE'  eq ref $template; ## no critic (CheckingReturnValueOfEval)
   return $template                             unless 'ARRAY' eq ref $template;
 
   foreach my $template_ref ( @{$template} ) {
@@ -437,7 +442,7 @@ sub _expand_template {
     next if $condition eq 'gt'        && $val <= $C;
     next if $condition eq 'le'        && $val >  $C;
     next if $condition eq 'ge'        && $val <  $C;
-    return $tmp_t;
+    return $self->_expand_template( $tmp_t, $row );
   }
   return;
 }
@@ -470,12 +475,19 @@ sub extra_value {
   push @class, 'l' if $al eq 'left'   || $al eq 'l';
   push @class, 'r' if $al eq 'right'  || $al eq 'r';
   push @class, 'c' if $al eq 'centre' || $al eq 'center' || $al eq 'c';
-  push @class, $self->expand_template( $col->{'class'}, $row ) if exists $col->{'class'};
+  if( exists $col->{'class'} ) {
+    my $class_string = $self->expand_template( $col->{'class'}, $row );
+    push @class, $class_string if $class_string;
+  }
   if( $col->{'sort_index'} ) {
     my $sv = $self->format_sort( $val, $col, $row );
     push @class, sprintf '{sortValue:%f}', $sv||0;# if defined $sv && $sv ne q();
   }
   $extra .= sprintf q( class="%s"), join q( ), @class if @class;
+  if( exists $col->{'title'} ) {
+    my $title_string = $self->expand_template( $col->{'title'}, $row );
+    $extra .= sprintf q( title="%s"), $title_string if $title_string;
+  }
   return $extra;
 }
 
@@ -506,13 +518,13 @@ sub render {
         if( exists $_->{'filter_values'} ) {
           $meta_data->{'filter'} = $_->{'filter_values'};
         }
-        my $extra_attributes = keys %{$meta_data}
-                             ? sprintf q( class="%s"), $self->encode($self->json_encode($meta_data))
-                             : q()
-                             ;
-
-                             $extra_attributes .= sprintf q( style="min-width: %s"), $_->{'min-width'} if exists $_->{'min-width'};
-        $extra_attributes .= sprintf q( title="%s"), encode_entities( $_->{'long_label'} ) if exists $_->{'long_label'};
+        my @class;
+        push @class, $self->encode($self->json_encode($meta_data)) if keys %{$meta_data};
+        push @class, 'rotated_cell' if $_->{'rotate'};
+        my $extra_attributes = q();
+           $extra_attributes .= sprintf q( class="%s"), join q( ), @class if @class;
+           $extra_attributes .= sprintf q( style="min-width: %s"), $_->{'min-width'} if exists $_->{'min-width'};
+           $extra_attributes .= sprintf q( title="%s"), encode_entities( $_->{'long_label'} ) if exists $_->{'long_label'};
         my $value = encode_entities( exists $_->{'label'} ? $_->{'label'} : $_->{'key'} );
         push @html, sprintf q(        <th%s>%s</th>), $extra_attributes, defined $value ? $value : q();
       }
