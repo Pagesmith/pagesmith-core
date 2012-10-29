@@ -190,6 +190,23 @@ sub get {
   return $self->create( { 'type' => $self->type, 'code' => $code, %{$hashref} } );
 }
 
+sub json_safer_encode {
+  my( $self, $struct ) = @_;
+  my $encoded = eval { $self->json_encode( $struct ); };
+  return $encoded if $encoded;
+  if( 'HASH' eq ref $struct ) {
+    return sprintf '{%s}', join q(,),
+      map { sprintf '"%s":%s', $_, $self->json_safer_encode( $struct->{$_} ) } keys %{$struct};
+  } elsif( 'ARRAY' eq ref $struct ) {
+    return sprintf '[%s]', join q(,),
+      map { $self->json_safer_encode( $struct->{$_} ) } @{$struct};
+  } else {
+    my $value = eval { $self->json_encode( $struct ); };
+    return $value if $value;
+    $struct =~ s{[^ -~]}{ }mxsg;
+    return $self->json_encode( $struct );
+  }
+}
 sub store {
 
 #@param (self)
@@ -197,7 +214,14 @@ sub store {
 #@return (boolean) true if insert OK
 ## Store the generic object in the database
   my ( $self, $generic_obj ) = @_;
-  my $obj_data = encode_base64( $self->json_encode( $generic_obj->objdata ) );
+  my $json_string = eval { $self->json_encode( $generic_obj->objdata ); };
+  unless( $json_string ) {
+    ## We can not encode the string... AROOGA AROOGA....
+    ## What do we do now!!!
+    $json_string = $self->json_safer_encode( $generic_obj->objdata );
+    return 0 unless $json_string;
+  }
+  my $obj_data = encode_base64( $json_string );
   my $type = $generic_obj->type || $self->{'type'};
 
   $generic_obj->set_ip_and_useragent unless $generic_obj->ip;
