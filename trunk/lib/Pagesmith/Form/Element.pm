@@ -609,7 +609,7 @@ sub _render_widget_paper {
 
 sub _render_readonly {
   my $self = shift;
-  my $val = $self->raw ? $self->value : encode_entities( $self->value ) ;
+  my $val = $self->raw ? $self->value : eval { encode_entities( $self->value ); } || $self->value;
   $val = '&nbsp;' if $val =~ m{\A\s*\Z}mxs;
   return $val;
 }
