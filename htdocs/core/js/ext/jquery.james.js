@@ -149,7 +149,7 @@ jQuery.fn.james = function (url_to_call, options) {
       $.ajax({
         type:     o.method,
         // @TODO: Would be great if params could be an object
-        data:     o.varname + "=" + value_to_send + "&" + o.params,
+        data:     o.varname + "=" + value_to_send + "&" + ($.isFunction(o.params)?o.params():o.params),
         url:    url_to_call,
         dataType:   "json",
         success:  function (data) {
