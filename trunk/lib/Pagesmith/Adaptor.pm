@@ -42,10 +42,20 @@ sub _connection_pars {
   return ();
 }
 
+sub init {
+  my $self;
+  return $self;
+}
+
 sub set_user {
   my ($self,$user) = @_;
   $self->{'_user'} = $user;
   return $self;
+}
+
+sub sub_class {
+  my $self = shift;
+  return $self->{'_sub_class'};
 }
 
 sub schema_version {
@@ -84,11 +94,12 @@ sub get_connection {
   ( $db_details->{'name'} ||= $DEFAULT_NAME ) =~ s{[^-\.\w]}{}mxgs;
     $db_details->{'dsn'}  ||= $self->generate_dsn( $db_details );
 
-  $self->{'_dsn'}    = $db_details->{'dsn'};
-  $self->{'_dbuser'} = $db_details->{'user'};
-  $self->{'_version'} = $db_details->{'version'};
-  $self->{'_dbpass'} = $db_details->{'pass'};
-  $self->{'_dbopts'} = $db_details->{'opts'} || {( 'RaiseError' => 0, 'LongReadLen' => $ONE_MEG )};
+  $self->{'_dsn'}       = $db_details->{'dsn'};
+  $self->{'_dbuser'}    = $db_details->{'user'};
+  $self->{'_version'}   = $db_details->{'version'};
+  $self->{'_dbpass'}    = $db_details->{'pass'};
+  $self->{'_sub_class'} = $db_details->{'subclass'} || q();
+  $self->{'_dbopts'}    = $db_details->{'opts'}     || {( 'RaiseError' => 0, 'LongReadLen' => $ONE_MEG )};
   return $self;
 }
 
@@ -133,37 +144,55 @@ sub new {
 
   ($r,$db_info) = ($db_info,undef) if 'Apache2::RequestRec' eq ref $db_info;
 
+  my $self;
   if( blessed $db_info ) { ## DB info is an adaptor!
-    my $self = { map { ( $_ => $db_info->{$_} ) } qw(_conn _dsn _dbuser _dbpass _r _user _version pool) };
+    $self = { map { ( $_ => $db_info->{$_} ) } qw(_conn _dsn _dbuser _dbpass _r _user _version _sub_class pool) };
     $self->{'_dbopts'} ||= {%{$db_info->{'_dbopts'}}};
     bless $self, $class;
-    return $self;
+  } else {
+    $self = {
+      '_conn'      => undef,
+      '_dsn'       => undef,
+      '_dbuser'    => undef,
+      '_dbpass'    => undef,
+      '_dbopts'    => undef,
+      '_r'         => $r,
+      '_user'      => undef,
+      '_sub_class' => undef,
+      'pool'       => {},
+    };
+    bless $self, $class;                                       ## Original bless to put this in
+                                                               ## the main adaptors name space...
+    $db_info = $self->_connection_pars unless defined $db_info; ## Now we get the database information
+    $self->get_connection( $db_info )->connect_to_db;          ## and connect to the database
   }
-  my $self = {
-    '_conn'   => undef,
-    '_dsn'    => undef,
-    '_dbuser' => undef,
-    '_dbpass' => undef,
-    '_dbopts' => undef,
-    '_r'      => $r,
-    '_user'   => undef,
-    'pool'    => {},
-  };
-  bless $self, $class;
-  $db_info = $self->_connection_pars unless defined $db_info;
-  $self->get_connection( $db_info )->connect_to_db;
-  return $self;
+  my $sub_class = $self->sub_class;
+  if( $sub_class ) {                                    ## If we have a sub class defined;
+    my $my_name   = ref $self;
+    if( $my_name !~ m{::$sub_class\Z}mxs ) {
+      my $module_name = $my_name.q(::).$sub_class;
+      if( $self->dynamic_use( $module_name ) ) {              ## Use the sub-class code...
+        bless $self, $module_name;                            ## If valid - re-bless the object
+      } else {
+        my $msg = $self->dynamic_use_failure( $module_name );
+        ( my $mod = $module_name ) =~ s{::}{/}mxsg;
+        warn "UNABLE TO CREATE SUBCLASS $module_name - $msg" unless $msg =~ m{\ACan't\slocate\s$mod.pm\s}mxsg; ## no critic (RequireCarping)
+      }
+    }
+  }
+  $self->init;
+  return $self;                                               ## Return appropriately blessed object
 }
 
 sub add_self_to_pool {
-  my( $self, $key );
+  my( $self, $key ) = @_;
   $self->{'pool'}{$key} = $self;
   weaken $self->{'pool'}{$key};
   return $self;
 }
 
 sub get_adaptor_from_pool {
-  my( $self, $key );
+  my( $self, $key ) = @_;
   return $self->{'pool'}{$key};
 }
 
@@ -326,4 +355,5 @@ sub set_ip_and_useragent {
   }
   return $self;
 }
+
 1;
