@@ -52,7 +52,7 @@ sub run {
     ( my $base = ref $self ) =~ s{\APagesmith::Action::}{}mxs;
     my $column_set = $self->next_path_info || 'default';
     $column_set = 'default' unless exists $conf->{'column_sets'}{$column_set};
-    if( defined $conf->{'column_sets'}{$column_set} ) {
+    if( @{$conf->{'column_sets'}{$column_set}} ) {
       my %cols_to_show = map { ($_ => 1) } @{$conf->{'column_sets'}{$column_set}};
       @els = grep { exists $cols_to_show{$_->code} } @els;
       $extra_html = sprintf '<ul>%s</ul>',
@@ -64,6 +64,7 @@ sub run {
   foreach( @els ) {
     my $method = 'get_'.$_->code;
        $method = 'date_'.$_->code if $_->isa('Pagesmith::Form::Element::DateTime');
+
     my $format = $_->isa('Pagesmith::Form::Element::Date')     ? 'date'
                : $_->isa('Pagesmith::Form::Element::Email')    ? 'email'
                :                                                 undef
