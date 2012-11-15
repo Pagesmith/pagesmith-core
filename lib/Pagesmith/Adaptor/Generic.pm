@@ -14,6 +14,7 @@ use warnings;
 use utf8;
 
 use version qw(qv); our $VERSION = qv('0.1.0');
+use feature qw(switch);
 
 use base qw(Pagesmith::Adaptor);
 
@@ -124,14 +125,32 @@ sub get_all {
   if( @filter && ref $filter[0] eq 'ARRAY' ) {
     my $restrictions = shift @filter;
     foreach my $filter ( @{$restrictions} ) {
-      my ( $column, $type, $value ) = split m{\s+}mxs, $filter;
-      if( $type eq 'after' ) {
-        $extra .= sprintf ' and %s >= ?', $column;
-        push @params, $value;
-      }
-      if( $type eq 'before' ) {
-        $extra .= sprintf ' and %s <= ?', $column;
-        push @params, $value;
+      my ( $column, $type, @values ) = split m{\s+}mxs, $filter;
+      given( $type ) {
+        when(  'after' ) {
+          $extra .= sprintf ' and %s >= ?', $column;
+          push @params, $values[0];
+        }
+        when( 'before' ) {
+          $extra .= sprintf ' and %s <= ?', $column;
+          push @params, $values[0];
+        }
+        when( 'in' ) {
+          $extra .= sprintf ' and %s in (%s)', $column, join q(,), map { q(?) } @values;
+          push @params, @values;
+        }
+        when( 'notin' ) {
+          $extra .= sprintf ' and %s not in (%s)', $column, join q(,), map { q(?) } @values;
+          push @params, @values;
+        }
+        when( 'not' ) {
+          $extra .= sprintf ' and %s != ?', $column;
+          push @params, $values[0];
+        }
+        default {
+          $extra .= sprintf ' and %s = ?', $column;
+          push @params, $values[0];
+        }
       }
     }
   }
