@@ -21,6 +21,7 @@ use HTML::Entities qw(encode_entities);
 use Date::Format qw(time2str);
 use Readonly qw(Readonly);
 use POSIX qw(floor);
+use Scalar::Util qw(blessed);
 use URI::Escape qw(uri_escape_utf8);
 
 Readonly my $TIME_FORMAT => '%H:%M';
@@ -402,7 +403,8 @@ sub _get_val {
   my( $self, $property, $row ) = @_;
   my $v = ref $row eq 'ARRAY' ? $row->[ $property ]  ## Array ref
         : ref $row eq 'HASH'  ? $row->{ $property }  ## Hash ref
-        :                       $row->$property      ## Object ref
+        : blessed($row)       ? $row->$property      ## Object ref
+        :                       undef
         ;
   return $v;
 }
@@ -582,10 +584,11 @@ sub render_block {
         $value = $self->{'row_count'}++;
         $extra = ' class="r"';
       } else {
-        my $v = exists $col->{'code_ref'}   ? eval { $col->{'code_ref'}($row); }
-              : ref $row eq 'ARRAY'         ? $row->[$c_id++]
-              : ref $row eq 'HASH'          ? $row->{ $col->{'key'} }
-              : $row->$property
+        my $v = exists $col->{'code_ref'}             ? eval { $col->{'code_ref'}($row); }
+              : ref $row eq 'ARRAY'                   ? $row->[$c_id++]
+              : ref $row eq 'HASH'                    ? $row->{ $col->{'key'} }
+              : blessed($row) && $row->can($property) ? $row->$property
+              :                                         undef
               ;
         $value = $self->format_value( $v, $col, $row );
         $extra = $self->extra_value(  $v, $col, $row );
