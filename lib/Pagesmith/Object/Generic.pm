@@ -67,12 +67,20 @@ sub AUTOLOAD {
   my( $self, $value ) = @_;
 
   my $method = our $AUTOLOAD;
+
   return $self->set( $1, $value ) if $method =~ m{::set_(\w+)\Z}mxs;
   return $self->get( $1 )         if $method =~ m{::get_(\w+)\Z}mxs;
   return $self->get_date( $1 )    if $method =~ m{::date_(\w+)\Z}mxs;
   return $self->unset( $1 )       if $method =~ m{::unset_(\w+)\Z}mxs;
   return $self->get( $1 )         if $method =~ m{::(\w+)\Z}mxs;
   return $self;
+}
+
+sub can {
+  my( $self, $method ) = @_;
+  return 1 if $method =~ m{\Aset_(\w+)\Z}mxsg;
+  return 1 if $method =~ m{\A(?:get_|date_|unset_|)(\w+)\Z}mxsg && exists $self->{'objdata'}{$1};
+  return $self->SUPER::can( $method );
 }
 
 sub get_date {
