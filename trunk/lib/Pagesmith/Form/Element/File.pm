@@ -34,14 +34,16 @@ my %extn_to_type = qw(
 
   DOC    application/msword
   DOT    application/msword
-  RTF    application/msword
+  RTF    application/rtf
+  RTF-X  application/x-rtf
 
-  DOCX   application/vnd.ms-word.document.12
   DOCM   application/vnd.ms-word.document.macroEnabled.12
   DOTM   application/vnd.ms-word.template.macroEnabled.12
+  DOCX   application/vnd.openxmlformats-officedocument.wordprocessingml.document
   DOTX   application/vnd.openxmlformats-officedocument.wordprocessingml.template
 
   ODT    application/vnd.oasis.opendocument.text
+  ODT-X  application/x-vnd.oasis.opendocument.text
 
   CSV    application/vnd.ms-excel
   XLS    application/vnd.ms-excel
@@ -54,6 +56,7 @@ my %extn_to_type = qw(
   XLTX   application/vnd.openxmlformats-officedocument.spreadsheetml.template
 
   ODS    application/vnd.oasis.opendocument.spreadsheet
+  ODS-X  application/x-vnd.oasis.opendocument.spreadsheet
 
   PPT    application/vnd.ms-powerpoint
   POT    application/vnd.ms-powerpoint
@@ -63,13 +66,14 @@ my %extn_to_type = qw(
   PPTX   application/vnd.openxmlformats-officedocument.presentationml.presentation
   POTX   application/vnd.openxmlformats-officedocument.presentationml.template
 
-  ODP    application/vnd.openxmlformats-officedocument.presentationml.template
+  ODP    application/vnd.oasis.opendocument.presentation
+  ODP-X  application/x-vnd.oasis.opendocument.presentation
 );
 
 my $extn_groups = {
-  'document'     => [qw(TXT DOC DOT RTF DOCX DOCM DOTM DOTX ODT PDF)],
-  'spreadsheet'  => [qw(TXT CSV XLS XLT XLSB XLSM XLTM XLSX XLTX ODS)],
-  'presentation' => [qw(PPT POT POTM PPTM PPTX POTX ODP PDF)],
+  'document'     => [qw(TXT DOC DOT RTF DOCX DOCM DOTM DOTX ODT PDF ODT-X)],
+  'spreadsheet'  => [qw(TXT CSV XLS XLT XLSB XLSM XLTM XLSX XLTX ODS ODS-X)],
+  'presentation' => [qw(PPT POT POTM PPTM PPTX POTX ODP PDF ODP-X)],
   'images'       => [qw(PNG GIF BMP JPG SVG PS)],
 };
 
