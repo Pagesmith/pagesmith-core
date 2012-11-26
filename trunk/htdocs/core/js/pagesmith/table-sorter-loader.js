@@ -246,7 +246,7 @@ $('.exportable').livequery(function () {
     });
     cellsToRotate.each(function () {
 //      $(this).css( 'padding-left', '2px' );
-      $(this).css( 'padding-right', '4px' );
+      $(this).css({'padding-right':'4px','padding-left':'4px'});
     });
     $(this).addClass('headers_rotated');
   };
