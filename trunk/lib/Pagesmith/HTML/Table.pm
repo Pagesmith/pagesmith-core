@@ -444,7 +444,7 @@ sub _expand_template {
     next if $condition eq 'gt'        && $val <= $C;
     next if $condition eq 'le'        && $val >  $C;
     next if $condition eq 'ge'        && $val <  $C;
-    return $self->_expand_template( $tmp_t, $row );
+    return ref $tmp_t ? $self->_expand_template( $tmp_t, $row ) : $tmp_t;
   }
   return;
 }
@@ -466,6 +466,7 @@ sub format_sort {
   my( $self, $val, $col, $row ) = @_;
   my $t = $self->_expand_template( $col->{'sort_index'}, $row );
   $val = defined $t ? $self->_get_val( $t, $row ) : $val;
+  return $val unless exists $col->{'format'};
   return $col->{'format'} =~ m{\A(date)?(time)?}mxs ? $self->munge_date_time( $val ) : $val;
 }
 
