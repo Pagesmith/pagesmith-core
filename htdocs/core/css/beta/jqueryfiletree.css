@@ -7,12 +7,12 @@
 #jqfTop th { font-weight: bold; width: 8%; padding: 1px}
 
 ul.jft{font-family:Verdana, sans-serif; font-size:11px; line-height:18px; padding:0; margin:0}
-#rhs .jft li, .jft li{list-style:none; padding:0; padding-left:20px; margin:0; white-space:nowrap; background-position:top left; background-repeat:no-repeat; background-image:url(/core/gfx/jft.png)} 
-.jft a{color:#333; text-decoration:none; display:block; padding:0 2px} 
+#rhs .jft li, .jft li{list-style:none; padding:0; padding-left:20px; margin:0; white-space:nowrap; background-position:top left; background-repeat:no-repeat; background-image:url(/core/gfx/jft.png)}
+.jft a{color:#333; text-decoration:none; display:block; padding:0 2px}
 .jft a:hover{background:#bdf}
 /* Core Styles */
-.jft .dir{background-position: 0 -136px}
-.jft .exp{background-position:-16px -296px}
+#rhs .jft .dir, .jft .dir{background-position: 0 -136px}
+#rhs .jft .exp, .jft .exp{background-position:-16px -296px}
 .jft .file{background-position: 0 -200px}
 .jft .wait{background-image: url(/core/gfx/anim/spinner.gif)}
 /* File Extensions*/
@@ -23,7 +23,7 @@ ul.jft{font-family:Verdana, sans-serif; font-size:11px; line-height:18px; paddin
 .jft .ext_doc{background-position:0 -168px}
 .jft .ext_film{background-position:0 -232px}
 .jft .ext_fla{background-position:0 -264px}
-.jft .ext_html{background-position:0 -328px}
+#rhs .jft .ext_html, .jft .ext_html{background-position:0 -328px}
 .jft .ext_img{background-position:0 -520px}
 .jft .ext_java{background-position:0 -360px}
 .jft .ext_linux{background-position:0 -392px}
@@ -34,7 +34,7 @@ ul.jft{font-family:Verdana, sans-serif; font-size:11px; line-height:18px; paddin
 .jft .ext_psd{background-position:0 -584px}
 .jft .ext_ruby{background-position:0 -616px}
 .jft .ext_script{background-position:0 -648px}
-.jft .ext_txt{background-position:0 -680px}
+#rhs .jft .ext_txt, .jft .ext_txt{background-position:0 -680px}
 .jft .ext_xls{background-position:0 -712px}
 .jft .ext_zip{background-position:0 -744px}
 .jft .ext_unknown{background-position:0 -680px}

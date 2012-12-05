@@ -35,6 +35,7 @@ $('.sorted-table').livequery(function () { // Make "sorted-table"s sortable
     q,
     cols,
     x,
+    filter_values,
     s,
     j,
     my_cells;
@@ -115,8 +116,20 @@ $('.sorted-table').livequery(function () { // Make "sorted-table"s sortable
     for (j=cols; j; j) {
       j--;
       if( $.metadata && my_cells.eq(j).metadata() && my_cells.eq(j).metadata().filter ) {
-        t_array.unshift( '<td class="c"><select class="colfilter"><option value="">==</option><option>'+
-          my_cells.eq(j).metadata().filter.join('</option><option>')+'</option></select></td>' );
+        filter_values = my_cells.eq(j).metadata().filter;
+        if( filter_values instanceof Array ) {
+          t_array.unshift( '<td class="c"><select class="colfilter"><option value="">==</option><option>'+
+            filter_values.join('</option><option>')+'</option></select></td>' );
+        } else {
+          s = '<td class="c"><select class="colfilter"><option value="">==';
+/*jsl:ignore*/
+          $.each(sort_obj(filter_values),function(ky,vl){
+            s+= '</option><option value="'+escapeHTML(ky)+'">'+escapeHTML(ky)+' ('+escapeHTML(vl)+')';
+          });
+/*jsl:end*/
+          s+'</option></select></td>';
+          t_array.unshift( s );
+        }
       } else {
         t_array.unshift( '<td class="c"><input style="width:95%; margin: 2px 0" class="colfilter" type="text" /></td>' );
       }
@@ -255,3 +268,11 @@ $('.exportable').livequery(function () {
 $('table:visible').livequery(function(){
   $(this).rotateTableCellContent();
 });
+
+function sort_obj(obj){
+  var s_keys = [], s_obj = {};
+  $.each(obj,function(k,v) { s_keys.push(k); });
+  s_keys.sort();
+  $.each(s_keys,function(i,k){s_obj[k] = obj[k];});
+  return s_obj;
+}

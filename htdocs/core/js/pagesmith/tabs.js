@@ -76,6 +76,7 @@ if (id_str && id_str.match(/^#[-\w]+$/)) {
 
 $(document).on('click', '.change-tab', function () {
   fire_tabs( ' li a[href=' + $(this).prop('hash') + ']' );
+  return false;
 });
 
 $('.tabc:visible').livequery(function(){

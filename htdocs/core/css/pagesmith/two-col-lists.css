@@ -11,11 +11,12 @@ dl.twocol { margin-top: 0.5em; }
 dl.twocol dl.twocol { margin: 0; }
 .twocol .twocol dt { text-align: left; }
 .twocol .bordered { border-top: 1px solid #e0e4e7; }
-.col1 .twocol dt, .col2 .twocol dt { width: 20%; }
-.col1 .twocol dd, .col2 .twocol dd { width: 72%; }
+.col1_of_3 .twocol dt, .col1 .twocol dt, .col2 .twocol dt { width: 20%; }
+.col1_of_3 .twocol dd, .col1 .twocol dd, .col2 .twocol dd { width: 72%; }
 
-.evenwidth dt, .evenwidth dd { width: 48%; }
-.col1 .evenwidth dt, .col2 .evenwidth dt, .col1 .evenwidth dd, .col2 .evenwidth dd { width: 45%; }
+
+.evenwidth dt, .evenwidth dd { width: 47% }
+.col1_of_3 .evenwidth dt, .col1_of_3 .evenwidth dd, .col1 .evenwidth dt, .col2 .evenwidth dt, .col1 .evenwidth dd, .col2 .evenwidth dd { width: 45%; }
 
 .threequart dt { width: 24%; }
 .threequart dd { width: 73%; }
@@ -28,7 +29,7 @@ dl.twocol dl.twocol { margin: 0; }
 .col1 .twothird dd, .col2 .twothird dd { width: 60%; }
 
 .longleft dt { width: 78%; text-align: left; }
-.longleft dd { width: 18%; text-align: right; }
+.longleft dd { width: 18%; }
 .col1 .longleft dt, .col2 .longleft dt { width: 70%; }
 .col1 .longleft dd, .col2 .longleft dd { width: 22%; }
 
@@ -39,3 +40,4 @@ dl.twocol:after {
 
 #rhs .twocol dt { width: 19% }
 #rhs .twocol dd { width: 73% }
+

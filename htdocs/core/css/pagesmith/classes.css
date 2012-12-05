@@ -1,8 +1,8 @@
 @charset "UTF-8";
 /*jslint css: true */
  /* classes to do simple css, float, align, "hide", etc, clear floats */
-.right { float: right; }
-.left  { float: left; }
+div.right, .right { float: right; }
+div.left,  .left  { float: left; }
 .c     { text-align: center; }
 .r     { text-align: right; }
 .l     { text-align: left; }
@@ -44,3 +44,8 @@ span.tag { font-weight: bold; color: #006; }
 
 .scrollable { overflow-x: auto; }
 .yscroll { overflow-y: auto; }
+
+.countdown span.play,
+.countdown span.pause,
+.countdown span.refresh
+  { color: black; cursor: pointer; padding: 1px 0.5em; font-weight: bold; background-color: #ccc }
