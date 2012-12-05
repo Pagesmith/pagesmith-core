@@ -48,7 +48,7 @@ ul#Tabs2 li, ul.second-tabs li { float: left; background: none; padding:0; }
 #rhs ul.tabs { font-size:80%; margin-top: 2px; }
 #rhs ul.tabs li a:hover, .tabs li a:hover, #navLeft li a:hover { text-decoration: underline; color: #8E0018; }
 #rhs ul.tabs .disabled, .tabs li.disabled {display:none}
-ul.show-disabled li.disabled {display:block}
+#rhs ul.show-disabled li.disabled, ul.show-disabled li.disabled {display:block}
 #rhs ul.tabs .disabled a, .tabs li.disabled a, .tabs li.disabled a:hover { color: #808080; cursor: default; text-decoration: none; }
 #rhs ul.tabs .active, .tabs .active, #navLeft .active { background-position: right -65px; }
 #rhs ul.tabs .active a, .tabs .active a, #navLeft .active a { background-position: 0 -65px; color:white; }

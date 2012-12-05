@@ -43,6 +43,9 @@ body { margin: 0 auto; border:0; background:#fff; padding: 0 10px;   min-width:8
 .col12 { width:66%; float: left; }
 .col3 { width:32%; float: right; }
 
+.col1_of_3 { width:32%; float: left; }
+.col23_of_3 { width:66%; float: right; }
+
 #rhs .col1, #rhs .col2 { width: auto; float: none; }
 
 #fourcol .col1 h3, #fourcol .col2 h3

@@ -5,7 +5,7 @@
             - but not in the "more" section!
 ---------------------------------------------------------------------*/
 
-.twocol dd.link, .link, a       { color: #14559f; text-decoration: underline; cursor: pointer; }
+.onclick, .twocol dd.link, .link, a       { color: #14559f; text-decoration: underline; cursor: pointer; }
 .link:hover, a:hover { text-decoration: none; }
 a img   { border:none; }
 
@@ -25,3 +25,4 @@ p.more img { vertical-align: top; height: 18px; width:67px; background: url(/cor
   a { text-decoration: none; }
   .pdf, .external { padding-right: 0; background: none; }
 }
+

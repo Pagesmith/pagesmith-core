@@ -58,25 +58,68 @@ PageSmith.ajax = {
         }
       });
       $('.refreshable:visible').livequery(function () {
-        var delay = 2000, match = $(this).attr('class').match(/delay_(\d+)/), p = this, to = 0;
+        var delay = 2000, match = $(this).attr('class').match(/delay_(\d+)/), p = this, to = 0, pause_html, reloadto;
         if (match) {
           delay = match[1];
         }
-        $(this).append('<p class="r countdown" >Reloading in <span>' + Math.floor(delay / 1000) + '</span> seconds</p>');
-        if ($(this).hasClass('countdown_timer')) {
-          to = window.setInterval(function () {
-            var n = $(p).find('.countdown').last(), s = parseInt(n.find('span').html(), 10) - 1;
-            $(n).replaceWith('<p class="r countdown" >Reloading in <span>' + s + '</span> seconds</p>');
-          }, 1000);
+        pause_html = '';
+        if( delay && $(this).hasClass('pauseable') ) {
+          pause_html += ' <span class="pause" title="running">||</span><span class="play hidden" title="paused">&#x25b6;</span>';
         }
-        window.setTimeout(function () {
-          var n = $(p).find('.countdown').last();
-          $(n).replaceWith('<p class="r countdown" >Reloading now</p>');
-          if (to) {
-            window.clearInterval(to);
+        if( delay <= 0 || $(this).hasClass('forceable') ) {
+          pause_html += ' <span class="refresh">Reload</span>';
+        }
+        if( delay > 0 ) {
+          $(this).append('<p class="r countdown" >Reloading in <span class="timer">' + Math.floor(delay / 1000) + '</span> seconds'+ pause_html+'</p>');
+          if ($(this).hasClass('countdown_timer')) {
+            to = window.setInterval(function () {
+              var n = $(p).find('.countdown').last(), s = parseInt(n.find('.timer').html(), 10) - 1;
+              $(n).replaceWith('<p class="r countdown" >Reloading in <span class="timer">' + s + '</span> seconds'+pause_html+'</p>');
+            }, 1000);
           }
-          $(p).addClass('ajax');
-        }, delay);
+          
+          reloadto = window.setTimeout(function () {
+            var n = $(p).find('.countdown').last();
+            $(n).replaceWith('<p class="r countdown" >Reloading now</p>');
+            if (to) {
+              window.clearInterval(to);
+            }
+            $(  p).addClass('ajax');
+          }, delay);
+        } else {
+          $(this).append('<p class="r countdown">'+pause_html+'</p>');
+        }
+        $(this).delegate('.pause','click', function(){
+          $(this).addClass('hidden');
+          $(p).find('.play').removeClass('hidden');
+          if( to ) {
+            window.clearInterval( to );
+          }
+          if( reloadto ) {
+            window.clearTimeout( reloadto );
+          }
+        });
+        $(this).delegate('.play','click',function(){
+          var n = $(p).find('.countdown').last(), timer = $(p).find('.timer'), s = parseInt(n.find('.timer').html(), 10) - 1;
+          $(this).addClass('hidden');
+          $(p).find('.pause').removeClass('hidden');
+          if( timer ) {
+            if( $(p).hasClass('countdown_timer')) {
+              to = window.setInterval(function () {
+                var n = $(p).find('.countdown').last(), timer = $(p).find('.timer'), s = parseInt(n.find('.timer').html(), 10) - 1;
+                $(n).replaceWith('<p class="r countdown" >Reloading in <span class="timer">' + s + '</span> seconds'+pause_html+'</p>');
+              }, 1000);
+            }
+            reloadto = window.setTimeout(function () {
+              $(n).replaceWith('<p class="r countdown" >Reloading now</p>');
+              if (to) {
+                window.clearInterval(to);
+              }
+              $(  p).addClass('ajax');
+            }, (s+1)*1000);
+          }
+        });
+        $(this).delegate('.refresh', 'click', function(){ $(p).addClass('ajax'); } );
       });
     }
   }
