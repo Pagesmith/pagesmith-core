@@ -224,7 +224,9 @@ sub dynamic_use {
     ##no critic (NoStrict)
     no strict 'refs';
     return 1
-      if $parent_namespace->{ $module . q(::) } && %{ $parent_namespace->{ $module . q(::) } || {} };    # return if already used
+      if $parent_namespace->{ $module . q(::) } &&
+         %{ $parent_namespace->{ $module . q(::) } || {} } &&
+         exists $parent_namespace->{ $module. q(::) }{'new'};  # return if already used
     ##use critic
   }
   my $return;
