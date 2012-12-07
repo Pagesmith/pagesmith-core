@@ -11,7 +11,7 @@ ol, ul { margin-bottom: 1em }
 ul > li { list-style-type: disc; margin-left: 3em }
 ol > li { list-style: decimal; padding-left: 0; margin-left: 3em; }
 li p { margin-left: 0 }
-pre, tt, code { font-family:'Andale mono','Courier new',Courier,fixed }
+pre, tt, code { font-family:'Andale mono','Courier new',Courier,monospace }
 
 sub, sup { font-size: 60%; vertical-align: 0; position: relative }
 sup { bottom: 1ex }
