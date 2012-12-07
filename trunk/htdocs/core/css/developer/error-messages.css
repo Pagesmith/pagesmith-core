@@ -2,7 +2,7 @@
   Web errors and messages
 ------------------------------------------------------------------------
   1) Format for failing components
- 
+
   2) Format for the display of messages from components to the browser
 ----------------------------------------------------------------------*/
 .web-error { font-weight: bold; background-color:#fee; color: #900; display: inherit; }
@@ -15,7 +15,7 @@ table.messages { font-size: 0.8em; border-collapse: collapse; width: 95%; margin
 .messages tbody { margin:0; border:0; padding: 0; }
 .messages td, .messages th { margin:0; border:0; padding: 1px 2px; line-height: 1.1em}
 .messages p { margin: 0; }
-.message_pre  { white-space: pre; font-family: 'Andale mono', fixed; }
+.message_pre  { white-space: pre; font-family: 'Andale mono', monospace; }
 /* Change the background-color of messages */
 .message_fatal { background-color: #fcc; }
 .message_error { background-color: #fdb; }
