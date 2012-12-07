@@ -7,7 +7,7 @@
  * it under the same terms as Perl itself.                                *
  * ====================================================================== */
 
-pre.code { font-family: "Andale Mono", fixed ; line-height: 1em; padding: 0; }
+pre.code { font-family: "Andale Mono", monospace ; line-height: 1em; padding: 0; }
 .h-decl { color: #336699; font-style: italic; }   /* doctype declaration  */
 .h-pi   { color: #336699; }   /* process instruction  */
 .h-com  { color: #338833; font-style: italic; }   /* comment              */

@@ -1,2 +1,2 @@
-@charset "UTF-8"; body { font-family: 'Verdana', Arial, helvetica, serif; }
-code, tt, pre { font-family: 'Andale mono', 'Courier new', Courier, fixed; }
+@charset "UTF-8"; body { font-family: 'Verdana', Arial, helvetica, sans-serif; }
+code, tt, pre { font-family: 'Andale mono', 'Courier new', Courier, monospace; }
