@@ -97,6 +97,21 @@ sub tabs {
   return Pagesmith::HTML::Tabs->new( @pars );
 }
 
+sub hidden_tabs {
+  my( $self, @pars ) = @_;
+  @pars = {} unless @pars;
+  $pars[0]{'fake'}=1;
+  return Pagesmith::HTML::Tabs->new( @pars )->add_classes('hidden');
+}
+
+sub second_tabs {
+  my( $self, @pars ) = @_;
+  @pars = {} unless @pars;
+  $pars[0]{'fake'}=1;
+  $pars[0]{'no_heading'}=1;
+  return Pagesmith::HTML::Tabs->new( @pars )->add_classes('second-tabs');
+}
+
 sub push_message {
 ## Push a message onto the message stack!
   my ( $self, @msgs ) = @_;
@@ -256,12 +271,18 @@ sub disable_caching {
   return $self;
 }
 
+sub extra_url_info {
+  my $self = shift;
+  return $self->{'_extra'};
+}
+
 sub new {
   my $class = shift;
   my $pars  = shift;
   my $self  = {
     '_path_info' => $pars->{'path_info'} || [],
     '_r'         => $pars->{'r'},
+    '_extra'     => $pars->{'extra'}     || {},
     '_apr'       => undef,
     '_cache'     => 0,
     '_content'   => [],
@@ -588,6 +609,69 @@ sub is_xhr {
   my $self = shift;
   my $xhr_header = $self->r->headers_in->get('X-Requested-With') || q();
   return 1 if $xhr_header eq 'XMLHttpRequest' || $self->param('_xhr_');
+  return;
+}
+
+sub init_store {
+
+#@param (self)
+#@param (string) $key
+#@param (*) $default
+#@return (*) contents of "storage" element
+## Creates a named "storage" element on the Page object (to allow information
+## to be parsed between multiple Components in the page (e.g. Cite and References)
+
+  my ( $self, $key, $default ) = @_;
+  my $store = $self->r->pnotes('_store');
+  unless( $store ) {
+    $store = {};
+    $self->r->pnotes('_store',$store);
+  }
+  return $store->{$key} ||= $default;
+}
+
+sub store_exists {
+  my ( $self, $key ) = @_;
+  my $store = $self->r->pnotes('_store');
+  return $store && exists $store->{$key};
+}
+
+sub set_store {
+
+#@param (self)
+#@param (string) $key
+#@param (*) $value
+#@return (*) contents of named "storage" element
+## Sets the named "storage" element on the Page object
+  my ( $self, $key, $value ) = @_;
+  my $store = $self->r->pnotes('_store');
+  unless( $store ) {
+    $store = {};
+    $self->r->pnotes('_store',$store);
+  }
+  return $store->{$key} = $value;
+}
+
+sub remove_store {
+
+#@param (self)
+#@param (string) $key
+## Removes the named "storage" element on the Page object
+  my ( $self, $key ) = @_;
+  my $store = $self->r->pnotes('_store');
+  delete $store->{$key} if $store;
+  return;
+}
+
+sub get_store {
+
+#@param (self)
+#@param (string) $key
+#@return (*) contents of "storage" element
+## Retrieves the named "storage" element on the Page object
+  my ( $self, $key ) = @_;
+  my $store = $self->r->pnotes('_store');
+  return $store->{$key} if $store;
   return;
 }
 
