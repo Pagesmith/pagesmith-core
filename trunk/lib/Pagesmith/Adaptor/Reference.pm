@@ -39,7 +39,6 @@ sub new {
   my $class             = shift;
   my $self              = $class->SUPER::new( );
   $self->{'_proxy_url'} = get_config( 'ProxyURL' );
-  bless $self, $class;
   return $self;
 }
 
