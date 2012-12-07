@@ -69,7 +69,7 @@ sub _handler {
 
   my $parsed = APR::URI->parse($r->pool, $r->uri);
 
-  &{$path_munger}( $r, $parsed->rpath, \@path_info );
+  my $extra = &{$path_munger}( $r, $parsed->rpath, \@path_info );
 
   my $module_name = $t->safe_module_name( shift @path_info );
   ## Check namespace ...
@@ -89,7 +89,7 @@ sub _handler {
     return SERVER_ERROR;
   }
   my $obj_action;
-  my $status = eval { $obj_action = $class->new( { 'path_info' => \@path_info, 'r' => $r } ); };
+  my $status = eval { $obj_action = $class->new( { 'path_info' => \@path_info, 'r' => $r, 'extra' => $extra } ); };
   if( $EVAL_ERROR ) {
     warn "ACTION: $class failed to instantiate: $EVAL_ERROR\n";
     return SERVER_ERROR;
