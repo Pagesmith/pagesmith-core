@@ -75,7 +75,8 @@ sub new {
     '_developer'     => is_developer( $r->headers_in->get('ClientRealm') ),
   };
   bless $self, $class;
-
+  my $st = $r->pnotes( '_store' );
+  $self->{'_store'} = $st if $st;
   return $self;
 }
 
@@ -462,12 +463,12 @@ sub execute {
   ## If $component is type "ajax" return the ajax place holder!
   $component->parse_parameters($parameters);
   if ( $component->ajax && $self->can_ajax ) {
-    my $caption = $component->ajax_message;
+    my $caption = $component->ajax_message( $component->ajax );
     return sprintf '<div class="ajax%s%s" title="/component/%s?pars=%s">%s</div>',
       $component->ajax =~ m{no-cache}mxs ? ' nocache' : q(),
       $component->ajax =~ m{click}mxs    ? ' onclick' : q(),
       encode_entities($action), uri_escape_utf8($parameters),
-      $component->ajax_message;
+      $caption;
   }
   ## finally we need to execute the component... first we
   my $cache_key = $component->cache_key;
