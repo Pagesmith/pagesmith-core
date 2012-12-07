@@ -81,6 +81,7 @@ exit $exit_status;
 ## END OF SCRIPT....
 ##
 
+## no critic (ExcessComplexity)
 sub push_changes {
   my ( $l_forcing, $l_config, $l_support, @l_changed ) = @_;
   my $l_exit_status = 0;
@@ -89,7 +90,9 @@ sub push_changes {
       my( $flags, $filename ) = ($1,$2);
 
     # The file is a directory - Check to see if the user can adddir in this directory!
-      if( $line =~ m{/\Z}mxs ) {
+      if( $line =~ m{/\Z}mxs && !
+        ( $filename =~ m{\Abranches/([-\w]+/)?\Z}mxs && $l_config->can_perform( q(/), 'create_branch' ) )
+      ) {
         if( ($flags eq 'D ' || $flags eq 'A ') && ! $l_config->can_perform( "/$filename", 'adddir' ) ) {
           $l_exit_status++;
           $l_support->send_message(
@@ -126,9 +129,11 @@ sub push_changes {
 
       my $sub_info = $l_config->get_method_for( $filename );
       my $force_flag = 1;
-      $force_flag = 0 if $l_forcing && $l_config->can_perform( "/$filename", 'force' );
-      $force_flag = 0 if $filename =~ m{\A(live|staging)/}mxs;
-      no strict 'refs'; ## no critic (NoStrict);
+         $force_flag = 0 if $l_forcing && $l_config->can_perform( "/$filename", 'force' );
+         $force_flag = 0 if $filename =~ m{\A(live|staging)/}mxs;
+         $force_flag = 0 if $filename =~ m{\Abranches/([-\w]+/)?\Z}mxs && $l_config->can_perform( q(/), 'create_branch' );
+         $force_flag = 0 if $filename =~ m{\Abranches/[-\w]+/.*}mxs    && $l_config->can_perform( q(/), 'branch' );
+      no strict 'refs'; ## no critic (NoStrict)
       $l_exit_status += $force_flag && &{$sub_info->{'method'}} ( {
         'repository'  => $repos,
         'filename'    => $filename,
@@ -141,6 +146,7 @@ sub push_changes {
   }
   return $l_exit_status;
 }
+## use critic;
 
 sub process_perl_files {
 ## Handle the collected perl files... this will need to be tweaked once we
@@ -299,7 +305,7 @@ sub check_noextension {
 
 sub check_aspell {
   my $params = shift;
-  return 0 if $params->{'filename'} =~ m{\A[^/]+/config/}mxs; ## Either in top level config 
+  return 0 if $params->{'filename'} =~ m{\A[^/]+/config/}mxs; ## Either in top level config
   printf {*STDERR} "aspell's prepl & pws directories files should be in the config directory\n", $params->{'filename'};
   return 1;
 }
