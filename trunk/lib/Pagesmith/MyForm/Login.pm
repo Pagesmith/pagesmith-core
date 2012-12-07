@@ -119,7 +119,11 @@ sub extra_validation {
 
   ## If the msg was system failure - go to the system failure page
   return $self->set_stage_by_name( 'system_error' ) if $msg eq 'System failure' ;
+  return $self->fail_user( $user_element, $pass_element );
+}
 
+sub fail_user {
+  my( $self, $user_element, $pass_element ) = @_;
   ## We had a message so invalidate username and password fields
   $user_element->set_invalid; ## Set these both as invalid
   $pass_element->set_invalid; ## Set these both as invalid
