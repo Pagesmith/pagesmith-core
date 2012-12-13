@@ -75,7 +75,7 @@ sub _render_widget {
   return sprintf '<input type="%s" name="%s" value="%s" id="%s" class="%s" size="%s" %s/>%s',
     $self->widget_type,
     encode_entities( $self->code ),
-    ( $self->raw ? encode_entities( $self->_render_value ) : $self->_render_value ),
+    ( $self->raw ? $self->_render_value : encode_entities( $self->_render_value ) ),
     $self->generate_id_string,
     $self->generate_class_string,
     $self->size || $DEFAULT_SIZE,
