@@ -37,12 +37,11 @@ sub new {
   my( $class, $params ) = @_;
 
   my $user_info     = user_info;
-  my $identity_file = $user_info->{'home'}.'/.ssh/server-load';
 
   my $self = {
     'host'      => $params->{'host'} || hostname,
     'me'        => $user_info->{'username'},
-    'id_file'   => $user_info->{'home'}.'/.ssh/server-load',
+    'id_file'   => $user_info->{'home'}.'/.ssh/pagesmith/server-info',
     'user'      => $params->{'user'} || $user_info->{'username'},
     'user_home' => $params->{'user_home'}||q(),
     'script'    => $params->{'script'}||'server_info',
