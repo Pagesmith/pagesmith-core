@@ -44,7 +44,10 @@ my $support = Pagesmith::Utils::SVN::Support->new;
    $support->write_log( "Starting to update server - repository $repos" );
 my $config  = Pagesmith::Utils::SVN::Config->new( $ROOT_PATH );
    $support->write_log( 'Read in config' );
-my $user    = Pagesmith::Utils::SVN::Support->get_user_info; ## Default to UID
+
+my( $author, $datastamp, $len, @msg )  = $support->svnlook( 'info', $repos, '-r', $rev );
+
+my $user    = Pagesmith::Utils::SVN::Support->get_user_info( $author );
 
 exit 0 unless $config;                                    ## Could not parse file so returned UNDEF!
 exit 0 unless $config->set_repos( $repos );               ## We have not configured this repository - so we don't need to send anything
@@ -56,7 +59,6 @@ $support->write_log( 'About to do svnlook' );
 my @changed = $support->svnlook( 'changed', $repos, '-r', $rev );
 
 
-my( $author, $datastamp, $len, @msg )  = $support->svnlook( 'info', $repos, '-r', $rev );
 
 my $branch     = q();
 my $other_user = q();

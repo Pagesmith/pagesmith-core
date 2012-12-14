@@ -22,7 +22,7 @@ Readonly my $DEFAULT_EMAIL => 'microsite-commits@sanger.ac.uk';
 
 use Carp qw(croak);
 use Cwd qw(abs_path);
-use English qw(-no_match_vars $PROGRAM_NAME $UID);
+use English qw(-no_match_vars $PROGRAM_NAME);
 use File::Basename qw(dirname);
 use Mail::Mailer;
 use Text::Wrap qw(fill $columns);
@@ -48,27 +48,26 @@ exit 0 unless $config->set_repos( $repos );
 
 my $support = Pagesmith::Utils::SVN::Support->new;
 
-my($name,$passwd,$uid,$gid,$quota,$comment,$gcos,$dir,$shell,$expire) = getpwuid $UID;
+my( $author, $datestamp, $len, @msg )  = $support->svnlook( 'info', $repos, '-r', $rev );
 
-my $user = $support->get_user_info( $name );
+my($name,$passwd,$uid,$gid,$quota,$comment,$gcos,$dir,$shell,$expire) = getpwnam $author;
+
+my $user = $support->get_user_info( $author );
 
 exit 1 unless $user;
-
-my( $author, $datestamp, $len, @msg )  = $support->svnlook( 'info', $repos, '-r', $rev );
 
 my @changed = $support->svnlook( 'changed', $repos, '-r', $rev );
 
 my $to_email = $config->info( 'commit_emails' ) || [ $DEFAULT_EMAIL ];
 
-
 my $mailer = Mail::Mailer->new;
 
 my $subject = q();
 if( $config->is_site ) {
-  $subject = sprintf 'Commit to repository %s [Site: %s, rev: %d] by %s <%s%s%s>',
+  $subject = sprintf 'Commit to repository %s [Site: %s, rev: %d] by %s <%s>',
     $config->repos, $config->key, $rev, $user->{'name'}, "$user->{'username'}\@sanger.ac.uk";
 } else {
-  $subject = sprintf 'Commit to repository %s [Libraries: %s, rev: %d] by %s <%s%s%s>',
+  $subject = sprintf 'Commit to repository %s [Libraries: %s, rev: %d] by %s <%s>',
     $config->repos, $config->key, $rev, $user->{'name'}, "$user->{'username'}\@sanger.ac.uk";
 }
 
