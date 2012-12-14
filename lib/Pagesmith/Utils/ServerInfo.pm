@@ -51,16 +51,9 @@ sub new {
     'cpus'      => 0,
     'command'   => [],
     map { ($_ => q(-)) } qw(
-      success
-      error
-      uptime idle load_1 load_5 load_15 jobs kernel description release codename distributor
-      perl php mysqld apache
-      user_dirs software
-      updates sec_updates
-      packages
-      upgrade
-      reboot
-      mac_addr ip_addr bcast_addr gway_addr ip6_addr
+      success error uptime idle load_1 load_5 load_15 jobs kernel description release codename distributor
+      perl php mysqld apache user_dirs software updates sec_updates packages upgrade reboot mac_addr ip_addr
+      bcast_addr gway_addr ip6_addr
     ),
   };
   unless( $self->{'user_home'} ) {
