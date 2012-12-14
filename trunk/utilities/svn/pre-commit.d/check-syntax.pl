@@ -345,6 +345,17 @@ sub check_data {
   return 1;
 }
 
+sub check_php {
+#@param $params (hashref) of parameters
+#@return (boolean) false as can't check syntax of php files...
+## Check syntax of PHP files
+
+  my $params = shift;
+  return 0 if $params->{'filename'} =~ m{/php/}mxs;
+  printf {*STDERR} "PHP file '%s' should be in a /php/ directory\n", $params->{'filename'};
+  return 1;
+}
+
 sub check_binaries {
 #@param $params (hashref) of parameters
 #@return (boolean) 0 if the file is in a an assets directory 1 otherwise
@@ -600,15 +611,6 @@ sub check_perl {
   my $params = shift;
   my @contents = get_contents( $params );
   $perl_files{ $params->{'filename'} } = join "\n", @contents;
-  return 0;
-}
-
-sub check_php {
-#@param $params (hashref) of parameters
-#@return (boolean) false as can't check syntax of php files...
-## Check syntax of PHP files
-
-  my $params = shift;
   return 0;
 }
 
