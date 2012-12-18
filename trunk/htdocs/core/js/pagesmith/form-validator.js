@@ -675,7 +675,7 @@ $('.logic').livequery(function () {
     $(this).closest('form').addClass('logic');
   }
 });
-$('form ._password').livequery( function () { $(this).attr('autocomplete','off'); return; } );
+//$('form ._password').livequery( function () { $(this).attr('autocomplete','off'); return; } );
 $('form.logic').livequery(function () { return FormValidator.check_logic($(this)); });
 $('form.check :input').livequery(function () { return FormValidator.check($(this)); });
 $('label').livequery(function () { return FormValidator.push_label($(this)); });
