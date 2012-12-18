@@ -196,8 +196,10 @@ sub _update_files {
     my $dir  = $dirh->{'directory'};
     my @paths = map { "$root_path$_" } @minimal_paths;
     while( my @block = splice @paths, 0, $UPDATE_NO ) {
-      my $command = sprintf 'svn up %s',
+## no critic (InterpolationOfMetachars)
+      my $command = sprintf 'SVN_AUTH_SOCK="" /usr/bin/svn --config-option config:tunnels:ssh=ssh\ -i\ ${HOME}/.ssh/pagesmith/svn-ssh up %s',
         join q( ), @block;
+## use critic
       my $rv = eval {
         $l_support->read_from_process( $command );
       };
@@ -284,11 +286,11 @@ sub _find_repositories {
           $path = undef;
           next;
         }
-        $path = $1 if s{\A(\S+)\s+-\s+}{}mxsg && !$path;
+        $path = $1 if s{\A(?:\S+)\s+-\s+}{}mxsg && !$path;
         next unless $path;
-        if( m{(\S+)\s+(.*)}mxsg ) {
-          my $subdir     = $1;
-          my $ext_details = _parse_svn_url($2);
+        if( m{(\S+)\s+(.*)}mxs ) {
+          my( $subdir, $url ) = ($1,$2);
+          my $ext_details = _parse_svn_url($url);
           next unless $ext_details;
           push @{ $repos->{ $ext_details->{'repos'} }{ $ext_details->{'branch'} }{ "$ext_details->{'path'}/" } }, {
             'directory' => "$path/$subdir",
