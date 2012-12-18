@@ -1,2 +1,2 @@
-#LoadModule jk_module /usr/lib/apache2/modules/mod_jk.so
-LoadModule jk_module /www/shared/mod_jk-1.2.31-httpd-2.2.x.so
+LoadModule jk_module /usr/lib/apache2/modules/mod_jk.so
+#LoadModule jk_module /www/shared/mod_jk-1.2.31-httpd-2.2.x.so
