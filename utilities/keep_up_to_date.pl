@@ -197,7 +197,7 @@ sub _update_files {
     my $dir  = $dirh->{'directory'};
     my @paths = map { "$root_path$_" } @minimal_paths;
     while( my @block = splice @paths, 0, $UPDATE_NO ) {
-      my $command = sprintf q(SVN_AUTH_SOCK="" /usr/bin/svn --config-option config:tunnels:ssh=ssh\ -i\ %s/.ssh/pagesmith/svn-ssh" up %s),
+      my $command = sprintf q(SVN_AUTH_SOCK="" /usr/bin/svn --config-option config:tunnels:ssh=ssh\ -i\ %s/.ssh/pagesmith/svn-ssh up %s),
         $ui->{'home'},  join q( ), @block;
 ## use critic
       my $rv = eval {
