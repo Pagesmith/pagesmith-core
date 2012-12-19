@@ -190,15 +190,15 @@ sub _update_files {
 ## Perform the update commands
 #@return (boolean) 1 if all updates succeed
   my( $l_support, $sub_dir, $PATHS, @minimal_paths ) = @_;
+  my $ui = $l_support->get_user_info;
   foreach my $dirh ( @{$PATHS} ) {
     my $path = $dirh->{'directory'};
     my $root_path = substr $path, 0, 1 + (length $path) - (length $sub_dir);
     my $dir  = $dirh->{'directory'};
     my @paths = map { "$root_path$_" } @minimal_paths;
     while( my @block = splice @paths, 0, $UPDATE_NO ) {
-## no critic (InterpolationOfMetachars)
-      my $command = sprintf 'SVN_AUTH_SOCK="" /usr/bin/svn --config-option config:tunnels:ssh=ssh\ -i\ ${HOME}/.ssh/pagesmith/svn-ssh up %s',
-        join q( ), @block;
+      my $command = sprintf q(SVN_AUTH_SOCK="" /usr/bin/svn --config-option config:tunnels:ssh=ssh\ -i\ %s/.ssh/pagesmith/svn-ssh" up %s),
+        $ui->{'home'},  join q( ), @block;
 ## use critic
       my $rv = eval {
         $l_support->read_from_process( $command );
@@ -257,7 +257,9 @@ sub _find_repositories {
 ## any checkouts that we will be monitoring
 #@return hashref of hashes of arrays - the keys being repository name and branch and the checkout directory
   my $repos = {};
-  my $command = sprintf 'svn info %s %s/sites/*', $ROOT_PATH, $ROOT_PATH;
+  my $ui = $support->get_user_info;
+  my $command = sprintf sprintf q(/usr/bin/svn --config-option config:tunnels:ssh=ssh\ -i\ %s/.ssh/pagesmith/svn-ssh info %s %s/sites/*),
+    $ui->{'home'}, $ROOT_PATH, $ROOT_PATH;
   my @lines = grep { m{\A(URL|Path):}mxsg } eval { $support->read_from_process( $command ); };
   my $dir;
   foreach my $repos_line ( @lines ) {
@@ -277,7 +279,8 @@ sub _find_repositories {
         'root'      => $details->{'root'},
       };
 
-      my $get_command = sprintf 'svn propget --recursive svn:externals %s', $dir;
+      my $get_command = sprintf q(/usr/bin/svn --config-option config:tunnels:ssh=ssh\ -i\ %s/.ssh/pagesmith/svn-ssh propget --recursive svn:externals %s),
+        $ui->{'home'}, $dir;
       my @ex_lines = eval { $support->read_from_process( $get_command ); };
       my $path;
       my $res = {};
