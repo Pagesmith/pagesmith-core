@@ -114,7 +114,6 @@ while( 1 ) {
 
   $adap->touch_checkout( );
 
-
   ## We need to do some additional code in here which will pick up changes that are in
   ## externals directives....
 
@@ -258,9 +257,10 @@ sub _find_repositories {
 #@return hashref of hashes of arrays - the keys being repository name and branch and the checkout directory
   my $repos = {};
   my $ui = $support->get_user_info;
-  my $command = sprintf sprintf q(/usr/bin/svn --config-option config:tunnels:ssh=ssh\ -i\ %s/.ssh/pagesmith/svn-ssh info %s %s/sites/*),
+  my $command = sprintf q(/usr/bin/svn --config-option config:tunnels:ssh=ssh\ -i\ %s/.ssh/pagesmith/svn-ssh info %s %s/sites/*),
     $ui->{'home'}, $ROOT_PATH, $ROOT_PATH;
-  my @lines = grep { m{\A(URL|Path):}mxsg } eval { $support->read_from_process( $command ); };
+  my @out = eval {  $support->read_from_process( $command ); };
+  my @lines = grep { m{(URL|Path):}mxsg } @out;
   my $dir;
   foreach my $repos_line ( @lines ) {
     my( $type, $val ) = split m{:\s+}mxs, $repos_line , 2;
@@ -289,7 +289,9 @@ sub _find_repositories {
           $path = undef;
           next;
         }
-        $path = $1 if s{\A(?:\S+)\s+-\s+}{}mxsg && !$path;
+        unless( $path ) {
+          $path = $1 if s{\A(\S+)\s+-\s+}{}mxs;
+        }
         next unless $path;
         if( m{(\S+)\s+(.*)}mxs ) {
           my( $subdir, $url ) = ($1,$2);
@@ -338,11 +340,11 @@ sub _force_block {
     });
     ## no critic (ImplicitNewlines)
     printf {$mailfh} '
-========================================================================
+------------------------------------------------------------------------
 
   keep_up_to_date on %s has placed a block file because of an error
 
-========================================================================
+------------------------------------------------------------------------
 
   Subject:    %s
   Host:       %s
@@ -354,11 +356,11 @@ sub _force_block {
   Error log:  %s
   Block file: %s
 
-========================================================================
+------------------------------------------------------------------------
 
 %s
 
-========================================================================
+------------------------------------------------------------------------
 ',
     hostname, $subject,
     hostname, scalar gmtime, scalar getpwuid $UID,
