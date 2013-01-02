@@ -331,7 +331,7 @@ sub _links {
     doi    http://dx.doi.org/%s
     url    %s
   );
-  foreach (qw(pubmed pmc doi url)) {
+  foreach (qw(pubmed pmc doi)) {
 
     if ( $self->{$_} ) {
       push @t, sprintf '%s: <a href="%s" rel="external">%s</a>',
@@ -339,6 +339,7 @@ sub _links {
         encode_entities( $self->{$_} );
     }
   }
+  push @t, sprintf 'URL: <%% Link -length=40 %s %%>', encode_entities( $self->{'url'} ) if $self-<{'url'};
   return join '; ', @t;
 }
 
