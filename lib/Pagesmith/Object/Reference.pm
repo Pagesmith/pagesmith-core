@@ -332,14 +332,13 @@ sub _links {
     url    %s
   );
   foreach (qw(pubmed pmc doi)) {
-
     if ( $self->{$_} ) {
       push @t, sprintf '%s: <a href="%s" rel="external">%s</a>',
         uc($_), encode_entities( sprintf $links{$_}, uri_escape_utf8( $self->{$_} ) ),
         encode_entities( $self->{$_} );
     }
   }
-  push @t, sprintf 'URL: <%% Link -length=40 %s %%>', encode_entities( $self->{'url'} ) if $self-<{'url'};
+  push @t, sprintf 'URL: <%% Link -length=40 %s %%>', encode_entities( $self->{'url'} ) if $self->{'url'};
   return join '; ', @t;
 }
 
