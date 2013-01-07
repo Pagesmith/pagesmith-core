@@ -48,17 +48,16 @@ exit 0 unless $config->set_repos( $repos );
 
 my $support = Pagesmith::Utils::SVN::Support->new;
 
-my( $author, $datestamp, $len, @msg )  = $support->svnlook( 'info', $repos, '-r', $rev );
+my( $name, $datestamp, $len, @msg )  = $support->svnlook( 'info', $repos, '-r', $rev );
 
-my($name,$passwd,$uid,$gid,$quota,$comment,$gcos,$dir,$shell,$expire) = getpwnam $author;
-
-my $user = $support->get_user_info( $author );
+my $user = $support->get_user_info( $name );
 
 exit 1 unless $user;
 
 my @changed = $support->svnlook( 'changed', $repos, '-r', $rev );
 
 my $to_email = $config->info( 'commit_emails' ) || [ $DEFAULT_EMAIL ];
+
 
 my $mailer = Mail::Mailer->new;
 
@@ -89,3 +88,5 @@ printf {$mailer} "The following files in %s have been changed:\n  %s\n\nThe comm
   fill( q(    ),q(    ),$message );
 
 $mailer->close;
+
+exit 0;
