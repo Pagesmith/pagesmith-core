@@ -316,14 +316,18 @@ sub expand_format {
   } elsif( ref $format eq 'ARRAY' ) { ## Format can now be an array ref!
     foreach my $format_ref ( @{$format} ) {
       my( $tmp_f, $condition, @condition_pars ) = @{$format_ref};
-      next if $condition eq 'defined'   && !$val_defined;
-      next if $condition eq 'exact'     && $val ne $condition_pars[0];
-      next if $condition eq 'true'      && ! $val;
-      next if $condition eq 'contains'  && index $val, $condition_pars[0] < 0;
-      next if $condition eq 'lt'        && $val >= $condition_pars[0];
-      next if $condition eq 'gt'        && $val <= $condition_pars[0];
-      next if $condition eq 'le'        && $val > $condition_pars[0];
-      next if $condition eq 'ge'        && $val < $condition_pars[0];
+      if( $condition ) {
+        next if $condition eq 'defined'   && !$val_defined;
+        next if $condition eq 'true'      && !$val;
+        if( @condition_pars ) {
+          next if $condition eq 'exact'     && $val ne $condition_pars[0];
+          next if $condition eq 'contains'  && index $val, $condition_pars[0] < 0;
+          next if $condition eq 'lt'        && $val >= $condition_pars[0];
+          next if $condition eq 'gt'        && $val <= $condition_pars[0];
+          next if $condition eq 'le'        && $val > $condition_pars[0];
+          next if $condition eq 'ge'        && $val < $condition_pars[0];
+        }
+      }
       $f = $tmp_f;
       last;
     }
@@ -335,10 +339,10 @@ sub expand_format {
        : $f eq 'y'                    ?                                  $val ? 'yes' : 'no'        # render as yes no!
        : $f eq 'h'                    ? encode_entities(                               $val )       # html encode
        : $f eq 'u'                    ? uri_escape_utf8(                               $val )       # url escape
-       : $f eq 'hf'                   ? $self->_full_encode(                           $val )       # full html encode
-       : $f eq 'uf'                   ? $self->_full_escape(                           $val )       # full url escape
-       : $f eq 'email'                ? $self->_safe_email(                            $val )       # <a>email</a>
-       : $f =~ m{\Aurl(\d*)\Z}mxs     ? $self->_safe_link(                             $val, $1 )   # <a>url</a>
+       : $f eq 'hf'                   ? $self->full_encode(                            $val )       # full html encode
+       : $f eq 'uf'                   ? $self->full_escape(                            $val )       # full url escape
+       : $f eq 'email'                ? $self->safe_email(                            $val )       # <a>email</a>
+       : $f =~ m{\Aurl(\d*)\Z}mxs     ? $self->safe_link(                             $val, $1 )   # <a>url</a>
        : $f eq 'date'                 ? $self->_time_str( $DATE_FORMAT,                $self->munge_date_time( $val ) )
        : $f eq 'datetime'             ? $self->_time_str( "$DATE_FORMAT $TIME_FORMAT", $self->munge_date_time( $val ) )
        : $f eq 'time'                 ? $self->_time_str( $TIME_FORMAT,                $self->munge_date_time( $val ) )
@@ -355,6 +359,7 @@ sub expand_format {
        : $f =~ m{\Apm(\d+)\Z}mxs      ? sprintf( qq(%s%0.$1f),                         $val||0>0?q(+):q(), $val||0 )       # Fixed decimal (with +/-)
        : $f =~ m{\Ab(\d+)\Z}mxs       ? $self->wbr(                                    $val, $1 )
        : $f =~ m{\Ap(\d+)\Z}mxs       ? sprintf( qq(%0.$1f%%),                         ($val||0)*$CENT ) # Percentage
+       : $f eq 'p'                    ? sprintf( q(%0.2f%%),                           ($val||0)*$CENT ) # Percentage
        : $f =~ m{\Ah(\d+)\Z}mxs       ? $self->truncate_string(                        $val, $1   ) # Percentage
        : $f =~ m{\Ad(\d+)\Z}mxs       ? sprintf( qq(%0$1d),                            $val||0 )       # zero padded
        : $f eq 'd'                    ? sprintf( q(%0d),                               $val||0 )       # Integer
@@ -453,7 +458,6 @@ sub _expand_template {
 
 sub format_value {
   my( $self, $val, $col, $row ) = @_;
-
   my $result = $col->{'template'} ? $self->expand_template( $col->{'template'},    $row )
                                   : $self->expand_format(   $col->{'format'}||'h', $val )
                                   ;
@@ -516,7 +520,7 @@ sub render {
       if( $_->{'key'} eq q(#) ) {
         push @html, sprintf q(        <th>%s</th>), encode_entities( $_->{'label'}||q(#) );
       } else {
-        my $meta_data = {};
+        my $meta_data = exists $_->{'meta_data'} ? $_->{'meta_data'} : {};
         $meta_data->{'sorter'} = 'metadata' if exists $_->{'sort_index'};
         if( exists $_->{'filter_values'} ) {
           $meta_data->{'filter'} = $_->{'filter_values'};
@@ -524,6 +528,7 @@ sub render {
         my @class;
         push @class, $self->encode($self->json_encode($meta_data)) if keys %{$meta_data};
         push @class, 'rotated_cell' if $_->{'rotate'};
+        push @class, $_->{'header_class'} if $_->{'header_class'};
         my $extra_attributes = q();
            $extra_attributes .= sprintf q( class="%s"), join q( ), @class if @class;
            $extra_attributes .= sprintf q( style="min-width: %s"), $_->{'min-width'} if exists $_->{'min-width'};
