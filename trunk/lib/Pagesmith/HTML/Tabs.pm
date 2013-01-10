@@ -115,7 +115,7 @@ sub render {
   push @html, q(  </ul>);
   foreach my $entry ( @{$self->{'tabs'}} ) {
     my $html = q();
-    unless( exists $entry->{'options'}{'no_heading'} && $entry->{'options'}{'no_heading'}) {
+    unless( $entry->{'title'} eq q() || exists $entry->{'options'}{'no_heading'} && $entry->{'options'}{'no_heading'}) {
       if( exists $entry->{'options'}{'class'} && $entry->{'options'}{'class'}) {
         $html .= sprintf '<h3 class="%s">%s</h3>', $entry->{'options'}{'class'}, encode_entities( $entry->{'title'} );
       } else{
