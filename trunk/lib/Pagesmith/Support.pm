@@ -108,22 +108,37 @@ sub set_body_id {
 
 sub push_css_files {
   my( $self, @files ) = @_;
-  my $css_ref = $self->r->pnotes->{'css_files'}{'all'}||=[];
-  $self->push_unless_exists( $css_ref, $_ ) foreach @files;
+  my $css_ref = $self->r->pnotes('css_files');
+  unless( $css_ref ) {
+    $css_ref = {};
+    $self->r->pnotes('css_files',$css_ref);
+  }
+  $css_ref->{'all'}||=[];
+  $self->push_unless_exists( $css_ref->{'all'}, $_ ) foreach @files;
   return $self;
 }
 
 sub push_ie67_css_files {
   my( $self, @files ) = @_;
-  my $css_ref = $self->r->pnotes->{'css_files'}{'if lt IE 8'}||=[];
-  $self->push_unless_exists( $css_ref, $_ ) foreach @files;
+  my $css_ref = $self->r->pnotes('css_files');
+  unless( $css_ref ) {
+    $css_ref = {};
+    $self->r->pnotes('css_files',$css_ref);
+  }
+  $css_ref->{'if lt IE 8'}||=[];
+  $self->push_unless_exists( $css_ref->{'if lt IE 8'}, $_ ) foreach @files;
   return $self;
 }
 
 sub push_ie678_css_files {
   my( $self, @files ) = @_;
-  my $css_ref = $self->r->pnotes->{'css_files'}{'if lt IE 9'}||=[];
-  $self->push_unless_exists( $css_ref, $_ ) foreach @files;
+  my $css_ref = $self->r->pnotes('css_files');
+  unless( $css_ref ) {
+    $css_ref = {};
+    $self->r->pnotes('css_files',$css_ref);
+  }
+  $css_ref->{'if lt IE 9'}||=[];
+  $self->push_unless_exists( $css_ref->{'if lt IE 9'}, $_ ) foreach @files;
   return $self;
 }
 
@@ -135,7 +150,11 @@ sub push_unless_exists {
 
 sub push_javascript_files {
   my( $self, @files ) = @_;
-  my $js_ref = $self->r->pnotes->{'js_files'}||=[];
+  my $js_ref = $self->r->pnotes('js_files');
+  unless( $js_ref ) {
+    $js_ref = [];
+    $self->r->pnotes('js_files',$js_ref);
+  }
   $self->push_unless_exists( $js_ref, $_ ) foreach @files;
   return $self;
 }
