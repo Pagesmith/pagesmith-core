@@ -45,6 +45,7 @@ use Pagesmith::Core qw(safe_md5);
 sub define_options {
   my $self = shift;
   return (
+    $self->ajax_option,
     { 'code' => 'raw',            'defn' => q(),  'description' => q(If set do not escape html) },
     { 'code' => 'height',         'defn' => '=i', 'default' => $DEFAULT_HEIGHT  ,  'description' => 'Max height of image to use' },
     { 'code' => 'width',          'defn' => '=i', 'default' => $DEFAULT_WIDTH   ,  'description' => 'Max width of image to use' },
@@ -59,6 +60,7 @@ sub define_options {
     { 'code' => 'columns',        'defn' => '=i', 'description' => 'Number of columns to show' },
     { 'code' => 'align',          'defn' => '=s', 'default' => 'c','description' => 'Alignment of block' },
     { 'code' => 'credit',         'defn' => '=s', 'description' => 'Credit' , 'interleave' => 1 },
+    { 'code' => 'nocredit',       'defn' => q(!),   'description' => q(Don't display credit), 'interleave' => 1 },
     { 'code' => 'link',           'defn' => '=s', 'description' => 'Link', 'interleave' => 1  },
     { 'code' => 'links',          'defn' => q(),  'description' => 'If set show links' },
     { 'code' => 'dir',            'defn' => '=s', 'description' => 'Show all files in given directory' },
@@ -73,16 +75,10 @@ sub usage {
   };
 }
 
-sub interleave_options {
-  my $self = shift;
-  return qw(credit link);
-}
-
 sub execute {
   my $self = shift;
   ## Check file exists....
   my @Q           = $self->pars_hash;
-$self->dumper( \@Q );
   my $err         = q();
   my $raw         = $self->option('raw') || 0;
   my $height      = $self->option('height') || $DEFAULT_HEIGHT;
@@ -136,6 +132,8 @@ $self->dumper( \@Q );
       $link_text = q(*);
       $link_text = $caption;
     }
+    my $credit = $self->credit( $img_ref->{'credit'} );
+    $credit = q() if $img_ref->{'nocredit'};
     push @images,
       {
       'link'     => $link,
@@ -143,7 +141,7 @@ $self->dumper( \@Q );
       'img'      => $img,
       'tn'       => $tn,
       'caption'  => $caption,
-      'credit'   => $self->credit( $img_ref->{'credit'} ),
+      'credit'   => $credit,
     };
   }
   my $key = safe_md5( join q(::), $self->page->full_uri, map( { $_->{'tn'} } @images ), "$height-$width" );

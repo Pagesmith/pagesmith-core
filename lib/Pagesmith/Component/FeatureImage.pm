@@ -23,6 +23,7 @@ sub define_options {
   my $self = shift;
   return (
     { 'code' => 'credit', 'defn' => '=s', 'default' => q(), 'description' => 'Caption for image' },
+    { 'code' => 'nocredit', 'description' => 'No caption for image' },
     { 'code' => 'class',  'defn' => '=s', 'default' => q(), 'description' => 'Additional classes for feature div' },
     { 'code' => 'popup',                  'description' => 'Wheter image is clickable to bring up a thick box panel' },
   );
@@ -41,22 +42,23 @@ sub execute {
   my $self = shift;
   my ( $img, @cap ) = $self->pars;
   my $cap = "@cap";
-  my $credit = $self->credit( $self->option('credit') );
-
+  my $credit = sprintf '[%s]', $self->credit( $self->option('credit') );
+  $credit = q() if $self->option( 'nocredit' );
   my $extra_class = q();
   my $class_flag = $self->option('class');
   $extra_class .= sprintf ' class="%s"', encode_entities( $class_flag ) if $class_flag;
   if ( $self->option('popup') ) {
     return
       sprintf
-'<div id="featureR"><div%s style="background-image:url(%s)"></div><p><a href="%s" class="thickbox" title="%s"><img alt="Enlarge this image" src="/core/gfx/blank.gif" /></a>[%s]</p></div>',
+'<div id="featureR"><div%s style="background-image:url(%s)"></div><p><a href="%s" class="thickbox" title="%s"><img alt="Enlarge this image" src="/core/gfx/blank.gif" /></a>%s</p></div>',
       $extra_class,
       encode_entities($img),
       encode_entities($img),
       encode_entities( $cap || $img ),
       $credit;
   } else {
-    return sprintf '<div id="featureR"><div%s style="background-image:url(%s)"></div><p>[%s]</p></div>',
+    $credit = sprintf '<p>%s</p>', $credit if $credit;
+    return sprintf '<div id="featureR"><div%s style="background-image:url(%s)"></div>%s</div>',
       $extra_class,
       encode_entities($img),
       $credit;

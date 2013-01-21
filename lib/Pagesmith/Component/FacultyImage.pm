@@ -23,6 +23,7 @@ sub define_options {
   my $self = shift;
   return (
     { 'code' => 'credit', 'defn' => '=s', 'default' => q(), 'description' => 'Credit for image' },
+    { 'code' => 'nocredit',       'defn' => q(),   'description' => q(Don't display credit) },
   );
 }
 
@@ -43,7 +44,7 @@ sub execute {
   my $html = sprintf '<div class="facultyImage" style="background-image:url(%s)">', encode_entities($img);
   $html .= sprintf '<p>%s</p>', encode_entities($name) if $name;
   $html .= '</div>';
-  $html .= sprintf '<p class="portrait">[%s]</p>', $self->credit( $self->option('credit') );
+  $html .= sprintf '<p class="portrait">[%s]</p>', $self->credit( $self->option('credit') ) unless $self->option('nocredit');
   return $html;
 }
 1;
