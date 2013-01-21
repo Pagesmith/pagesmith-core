@@ -28,7 +28,7 @@ sub define_options {
   my $self = shift;
   return (
     $self->ajax_option,
-    { 'code' => 'length',    'defn' => '=i', 'Restrict the length of the URL if the link is longer than this length' },
+    { 'code' => 'length',    'defn' => '=i', 'description' => 'Restrict the length of the URL if the link is longer than this length' },
     { 'code' => 'get_title', 'description' => 'If set retrieve page and parse title from response' },
   );
 }
