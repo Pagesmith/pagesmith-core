@@ -46,6 +46,7 @@ sub define_options {
     { 'code' => 'url',                'defn' => '=s',  'description' => 'URL - see pubmed XML format' },
     { 'code' => 'pages',              'defn' => '=s',  'description' => 'Page numbers - see pubmed XML format' },
     { 'code' => 'issue',              'defn' => '=s',  'description' => 'Issue - see pubmed XML format' },
+    { 'code' => 'isbn',               'defn' => '=s',  'description' => 'ISBN number' },
     { 'code' => 'volume',             'defn' => '=s',  'description' => 'Volume - see pubmed XML format' },
     { 'code' => 'authors_incomplete', 'defn' => '=s',  'description' => 'True if authors incomplete - see pubmed XML format' },
     { 'code' => 'doi',                'defn' => '=s',  'description' => 'DOI id - see pubmed XML format' },
@@ -68,7 +69,7 @@ sub execute {
     $reference_data->{'ids'}{$_} = $self->option($_);
   }
 
-  foreach (qw(pub_date year journal month day title key url pages issue volume authors_incomplete)) {
+  foreach (qw(pub_date isbn year journal month day title key url pages issue volume authors_incomplete)) {
     $reference_data->{$_} = $self->option($_) if defined $self->option($_);
   }
 

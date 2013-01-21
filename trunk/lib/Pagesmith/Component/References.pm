@@ -45,6 +45,7 @@ sub define_options {
     { 'code' => 'group',          'defn' => '=s', 'description' => q(Group of footnotes to display) },
     { 'code' => 'collapse',       'defn' => '=s', 'description' => q(Whether to collapse the box or not - and if set either open/closed to include default status) },
     { 'code' => 'tag',            'defn' => '=s', 'description' => q(Display all references for a given tag in the database) },
+    { 'code' => 'yr',             'defn' => '=i', 'description' => q(Year to display references from) },
     { 'code' => 'authors',        'defn' => '=s', 'description' => q(Either full/first to display either the first author or all authors) },
     { 'code' => 'link',           'defn' => '=s', 'description' => q(list of ID classes to add anchor links to) },
     { 'code' => 'sort_by',        'defn' => '=s', 'description' => q(Order to sort by) },
@@ -229,7 +230,6 @@ sub execute {
     }
     if( $show_authors && $reference->author_list ) {
       if( $show_first_author ) {
-   $self->dumper( $reference );
         push @html, sprintf qq(\n<p class="authors">%s</p>),           $self->expemail( $reference->author_list_short );
       } else {
         push @html, sprintf qq(\n<p class="authors">%s</p>),           $self->expemail( $reference->author_list );

@@ -48,4 +48,8 @@ sub  render_value {
   return q();
 }
 
+sub extra_markup {
+  my $self = shift;
+  return q( autocomplete="off").$self->SUPER::extra_markup;
+}
 1;

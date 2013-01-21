@@ -50,7 +50,7 @@ sub define_options {
   my $self = shift;
   return (
     { 'code' => 'start', 'defn' => q(!), 'default' => 1,
-      'description' => 'Indicate whether to add ;start - i.e. force data to be cut from start of lorem ipsum', },
+      'description' => 'Indicate whether to add ;start - i.e. force data to be cut from start of lorem ipsum' },
   );
 }
 
