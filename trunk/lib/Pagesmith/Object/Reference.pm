@@ -68,7 +68,6 @@ sub touch_values {
   $self->{'links'}       = $self->_links;
   $self->{'grants'}      = $self->_grants;
   $self->{'publication'} = $self->_publication;
-  $self->{'reparse_at'}  = $self->touch_reparse_at;
   return $self;
 }
 
@@ -279,11 +278,6 @@ sub updated_at {
   return $self->{'updated_at'};
 }
 
-sub reparse_at {
-  my $self = shift;
-  return $self->{'reparse_at'};
-}
-
 sub _pub_date {
   my $self = shift;
   my $day = ($self->{'_raw'}{'day'}||0) =~ m{\A(\d+)}mxs ? $1 : 1;
@@ -304,7 +298,7 @@ sub sort_title {
   return $self->{'_title'};
 }
 
-sub touch_reparse_at {
+sub reparse_at {
   my $self = shift;
   my $t = ( $self->pmc && $self->doi ) ? $ONE_MONTH : $ONE_WEEK;
   my ( $s, $m, $h, $dy, $mn, $yr ) = gmtime $t * $ONE_DAY + time;
