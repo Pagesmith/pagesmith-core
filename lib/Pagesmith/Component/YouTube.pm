@@ -35,7 +35,7 @@ sub define_options {
   my $self = shift;
   return (
     { 'code' => 'template', 'defn' => q(=s), 'default' => 'small',
-      'description' => 'Template to use to render elements', 'values'=>qw(small small-right centered large) },
+      'description' => 'Template to use to render elements', 'values'=> [qw(small small-right centered large)] },
     { 'code' => 'channel',  'defn' => q(=s), 'default' => q(),
       'description' => 'If set the video(s) is/are wrapped in an HTML panel with a link to the channel as defined', },
   );
