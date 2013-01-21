@@ -150,7 +150,7 @@ sub write_to_db {
       $entry->pubmed,   $entry->doi,         $entry->pmc,         $entry->title, $entry->sid,
       $entry->xml,      $entry->sort_title,  $entry->affiliation, $entry->author_list, $entry->url,
       $entry->issn,     $entry->publication, $entry->links,       $entry->pub_date,
-      $entry->precis,   $entry->reparse_at,  $now,                $entry->grants,
+      $entry->precis,   $entry->touch_reparse_at,  $now,                $entry->grants,
       $entry->class_id,
       $entry->id,
     );
@@ -175,7 +175,7 @@ sub write_to_db {
     $entry->pubmed, $entry->doi,         $entry->pmc,         $entry->title,  $entry->sid,
     $entry->xml,    $entry->sort_title,  $entry->affiliation, $entry->author_list, $entry->url,
     $entry->issn,   $entry->publication, $entry->links,       $entry->pub_date,
-    $entry->precis, $entry->reparse_at,  $now,                $now,
+    $entry->precis, $entry->touch_reparse_at,  $now,                $now,
     $entry->grants, $entry->class_id );
   if( $id ) {
     $entry->set_id( $id );

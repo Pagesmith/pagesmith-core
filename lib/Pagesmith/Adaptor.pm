@@ -129,6 +129,7 @@ sub db_type { ## Return whether 'mysql', 'oracle' etc
 
 sub is_type {
   my ( $self, $type ) = @_;
+  return 'unknown' unless $self->{'_dsn'};
   my $dsn_type = $self->{'_dsn'} =~ m{\Adbi:(\w+)}mxs ? $1 : 'unknown';
   return $type eq lc $dsn_type;
 }
