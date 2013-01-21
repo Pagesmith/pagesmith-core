@@ -69,7 +69,7 @@ if( @lines ) {
     next unless $line =~ m{:}mxs;
     my( $key,$value ) = split m{:\s*}mxs, $line;
 
-    if( $key =~ m{\AComment\s\((\d+)\slines?\)\Z}mxs ) {
+    if( $key =~ m{\AComment\s[(](\d+)\slines?[)]\Z}mxs ) {
       my $comment_lines = $1;
       if( $comment_lines ) {
         $unlock_info->{'comment'} = join qq(\n  ), splice @lines, 0, $comment_lines;
