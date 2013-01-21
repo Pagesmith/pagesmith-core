@@ -23,6 +23,23 @@ use File::Basename qw(dirname);
 use File::Spec;
 use HTML::Entities qw(encode_entities);
 
+sub define_options {
+  my $self = shift;
+  return (
+    $self->click_ajax_option,
+    { 'code' => 'parse', 'defn' => q(!), 'description' => 'If set run the file the component parser' },
+  );
+}
+
+sub usage {
+  my $self = shift;
+  return {
+    'parameters'  => '{image}',
+    'description' => 'Insert the contents of the file into the page',
+    'notes'       => [],
+  };
+}
+
 sub set_filename {
   my( $self, $value ) = @_;
   $self->{'_filename'} = $value;
@@ -35,10 +52,10 @@ sub filename {
 
 sub ajax {
   my $self = shift;
-  return $self->option('ajax') ? 1 : 0;
+  return $self->click_ajax;
 }
 
-sub _get_filename {
+sub get_filename {
   my ( $self, $fn ) = @_;
   unless ( $self->filename ) {
     my $filename = realpath( $fn =~ m{\A/(.*)\Z}mxs ? File::Spec->rel2abs( $1,  $self->page->docroot )
@@ -51,24 +68,24 @@ sub _get_filename {
 sub check_file {
   my ( $self, $fn, $clear ) = @_;
   $self->set_filename( undef ) if $clear;
-  my $filename = $self->_get_filename($fn);
-  return $self->_error( 'Unknown filename: ' . encode_entities($fn) ) unless $filename;
-  return $self->_error( 'Forbidden invalid path: ' . encode_entities($fn) )
+  my $filename = $self->get_filename($fn);
+  return $self->error( 'Unknown filename: ' . encode_entities($fn) ) unless $filename;
+  return $self->error( 'Forbidden invalid path: ' . encode_entities($fn) )
     unless substr( $filename, 0, length $self->page->docroot ) eq $self->page->docroot;
-  return $self->_error( 'Unable to read file: ' . encode_entities($fn) )       unless -e $filename;
-  return $self->_error( 'Forbidden - no permission: ' . encode_entities($fn) ) unless -r $filename;
+  return $self->error( 'Unable to read file: ' . encode_entities($fn) )       unless -e $filename;
+  return $self->error( 'Forbidden - no permission: ' . encode_entities($fn) ) unless -r $filename;
 
   return;
 }
 
-sub _cache_key {
+sub my_cache_key {
   my $self = shift;
   my ($fn) = $self->pars;
 
   my $key = $fn =~ m{\A/(.*)\Z}mxs
           ? File::Spec->rel2abs( $1,  $self->page->docroot )
           : File::Spec->rel2abs( $fn, dirname( $self->page->filename ) );
-  while ( $key =~ s{/[^\/]+/\.\.}{}mxgs ) {
+  while ( $key =~ s{/[^/]+/[.]{2}}{}mxgs ) {
     1;
   }
   return
@@ -84,14 +101,13 @@ sub execute {
   my $err = $self->check_file($fn);
   return $err if $err;
 
-  return $self->_error( 'Forbidden - could not open file: ' . encode_entities($fn) ) unless open my $fh, '<', $self->filename;
+  return $self->error( 'Forbidden - could not open file: ' . encode_entities($fn) ) unless open my $fh, '<', $self->filename;
   local $INPUT_RECORD_SEPARATOR = undef;
   my $html = <$fh>;
   close $fh; ## no critic (CheckedSyscalls CheckedClose)
 
   $html =~ s{\A\xEF\xBB\xBF}{}mxs; ## Nasty code - we need to remove the BOM if there is one!
-  $self->_parse( \$html ) if $self->option('parse');
-
+  $self->parse( \$html ) if $self->option('parse');
   return $html =~ m{<body>(.*)</body>}mxs ? $1 : $html;
 }
 

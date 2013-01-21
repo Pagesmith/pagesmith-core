@@ -19,6 +19,13 @@ use base qw(Pagesmith::Component);
 
 use HTML::Entities qw(encode_entities);
 
+sub usage {
+  return {
+    'parameters'  => '{key}',
+    'description' => 'Display the progress panel for a form...',
+    'notes'       => [ 'Must appear after <% Form %> in page flow - usually in the RHS' ],
+  };
+}
 sub execute {
   my $self = shift;
 

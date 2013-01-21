@@ -17,6 +17,21 @@ use version qw(qv); our $VERSION = qv('0.1.0');
 
 use base qw(Pagesmith::Component);
 
+sub usage {
+  my $self = shift;
+  ## no critic (InterpolationOfMetachars)
+  return {
+    'parameters'  => q({variable} {condition} {values+}),
+    'description' => 'Sets show/hide option for a block of HTML based on condition',
+    'notes'       => [ 'Usually use with <%~ ~%> delayed directive style as usually want to cache content before if applied....',
+      '{condition} values are =/==/eq/equals !/!=/ne/not_equals =~/~/contains_word !~/not_contains_word contains not_contains =^/starts !^/not_starts =$/ends !$/not_ends',
+      '{variable}  is one of H:header_name or E:environment_variable',
+      ] ,
+    'see_also'    => { 'Pagesmith::Component::End' => 'End of block' },
+  };
+  ## use critic
+}
+
 sub execute {
   my $self = shift;
   my ( $variable, $condition, @T ) = $self->pars;
@@ -37,8 +52,8 @@ sub execute {
     : $condition =~ m{\A(!|!=|ne|not_equals)\Z}mxs   ? ( lc $lhs ne lc $rhs )
     : $condition =~ m{\A(=~|~|contains_word)\Z}mxs   ? ( $lhs =~ m{\b$rhs\b}mxis )
     : $condition =~ m{\A(!~|not_contains_word)\Z}mxs ? ( $lhs !~ m{\b$rhs\b}mxis )
-    : $condition =~ m{\A(=~|~|contains)\Z}mxs        ? ( $lhs =~ m{$rhs}mxis )
-    : $condition =~ m{\A(!~|not_contains)\Z}mxs      ? ( $lhs !~ m{$rhs}mxis )
+    : $condition =~ m{\A(contains)\Z}mxs        ? ( $lhs =~ m{$rhs}mxis )
+    : $condition =~ m{\A(not_contains)\Z}mxs      ? ( $lhs !~ m{$rhs}mxis )
     : $condition =~ m{\A(=\^|starts)\Z}mxs           ? ( $lhs =~ m{\A$rhs}mxis )
     : $condition =~ m{\A(!\^|not_starts)\Z}mxs       ? ( $lhs !~ m{\A$rhs}mxis )
     : $condition =~ m{\A(=\$|ends)\Z}mxs             ? ( $lhs =~ m{$rhs\Z}mxis )
@@ -61,7 +76,7 @@ h3. Sytnax
 
 h3. Purpose
 
-Generate a random block of text
+Hide a block of HTML
 
 h3. Options
 

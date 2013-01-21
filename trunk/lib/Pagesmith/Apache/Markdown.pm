@@ -17,17 +17,17 @@ use version qw(qv); our $VERSION = qv('0.1.0');
 
 use Text::Markdown 'markdown';
 
-use Pagesmith::Apache::Base qw(_handler _expand_content);
+use Pagesmith::Apache::Base qw(my_handler expand_content);
 
 sub handler {
   my $r = shift;
-  return _handler(
+  return my_handler(
     sub {
       my ( $content, $uri, $author ) = @_;
 
       my $html = markdown(${$content});
 
-      return _expand_content( \$html, $html =~ m{<(h\d)>(.*)</\1>}mxs ? $2 : $uri, $author );
+      return expand_content( \$html, $html =~ m{<(h\d)>(.*)</\1>}mxs ? $2 : $uri, $author );
     },
     $r,
   );

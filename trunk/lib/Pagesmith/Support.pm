@@ -23,6 +23,7 @@ use HTML::Entities qw(encode_entities);
 use Apache2::Request;
 
 use Pagesmith::Adaptor;
+use Pagesmith::Cache;
 use Pagesmith::Session::User;
 
 ## empty constructor!
@@ -192,25 +193,29 @@ sub apr {
 
 sub table_from_query {
   my( $self, $dba, $sql, @params ) = @_;
-  return $self->_table_from_query( $self->table, $dba, $sql, @params );
+  return $self->base_table_from_query( $self->table, $dba, $sql, @params );
 }
 
 sub my_table_from_query {
   my( $self, $dba, $sql, @params ) = @_;
-  return $self->_table_from_query( $self->my_table, $dba, $sql, @params );
+  return $self->base_table_from_query( $self->my_table, $dba, $sql, @params );
 }
 
-sub _table_from_query {
+sub base_table_from_query {
   my( $self, $table, $dba, $sql, @params ) = @_;
   my $sth = $dba->prepare( $sql );
   $sth->execute( @params );
 
   my $html = $table
-    ->add_columns(  map { {'key'=>$_} } @{ $sth->{'NAME'} } )
+    ->add_columns(  map { {'key'=>lc $_,'caption'=>$_} } @{ $sth->{'NAME'} } )
     ->add_data( @{$sth->fetchall_arrayref( {} )} )
     ->render;
   $sth->finish;
   return $html;
 }
 
+sub cache {
+  my( $self, @params ) = @_;
+  return Pagesmith::Cache->new( @params );
+}
 1;

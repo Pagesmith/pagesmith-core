@@ -68,7 +68,7 @@ sub get_days_with_events {
   }
   return \%res;
 }
-sub _connection_pars {
+sub connection_pars {
   return 'hinxton';
 }
 

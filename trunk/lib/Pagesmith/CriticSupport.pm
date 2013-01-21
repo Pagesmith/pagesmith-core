@@ -123,12 +123,12 @@ sub get_files {
   my $dh;
   return unless opendir $dh, $path;
   while ( defined (my $file = readdir $dh) ) {
-    next if $file =~ m{^\.}mxs;
+    next if $file =~ m{^[.]}mxs;
     my $new_path = "$path/$file";
     if( -e $new_path && -f $new_path ) { ## no critic (Filetest_f)
       my $regexp         = qq(\\.$self->{'extn'}\\Z);
       next unless $new_path =~ m{$regexp}mxs;
-      next if     $new_path =~ m{[.-](gcc|min)\.js\Z}mxs;
+      next if     $new_path =~ m{[.-](gcc|min)[.]js\Z}mxs;
       $self->{'files'}{ $s } { "$prefix$file" } = $new_path;
     } elsif( -d $new_path ) {
       $self->get_files( $new_path, $s, "$prefix$file/" );

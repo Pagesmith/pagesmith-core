@@ -24,13 +24,17 @@ sub new {
   );
 }
 
+sub extra_markup {
+  return 'autocomplete="off" ';
+}
 sub widget_type {
   return 'password';
 }
 
-sub _is_valid {
+sub validate {
   my $self = shift;
-  return $self->value =~ m{\A\S{6,16}\Z}mxs;
+  return $self->set_valid if $self->value =~ m{\A\S{6,16}\Z}mxs;
+  return $self->set_invalid;
 }
 
 sub element_class {
@@ -39,7 +43,7 @@ sub element_class {
   return;
 }
 
-sub _render_value {
+sub  render_value {
   my $self = shift;
   return q();
 }

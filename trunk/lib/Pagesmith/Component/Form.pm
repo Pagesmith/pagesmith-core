@@ -37,6 +37,23 @@ use Apache2::URI;
 # <% Form Generic form_x _id_ {parameter_name} %>
 ##
 
+sub usage {
+  return {
+    'parameters'  => '{form_type/code} {generic_code}?',
+    'description' => 'Display form embeded in page...',
+    'notes'       => [ 'Can use CGI params form_type / Generic_type instead of above...',
+      'NOTE: Not fully tested with latest version of form code - works with simple forms...' ],
+  };
+}
+
+sub define_options {
+  my $self = shift;
+  return (
+    { 'code' => 'progress', 'defn' => q(), 'description' => 'Whether or not to insert a progress panel' },
+    { 'code' => 'parse',    'defn' => q(), 'description' => 'If set parse the output of the form to replace directives' },
+  );
+}
+
 sub execute {
   my $self = shift;
 
@@ -67,13 +84,13 @@ sub execute {
   ## Set the view URL - this is the URL of the page, but remove the form specific bits!
   my $html = $form_object->render();
   $self->form_progress( $form_object ) if $self->option( 'progress' ) || $form_object->config->option('progress_panel');
-  $self->_parse( \$html )              if $self->option( 'parse'    ); # Only need to enable if form is inserting <% %> blocks!
+  $self->parse( \$html )               if $self->option( 'parse'    ); # Only need to enable if form is inserting <% %> blocks!
 
   return $html;
 }
 
 ## Set up progress of form!
-sub _goto_url {
+sub goto_url {
 
 #@param ($self)
 #@param (string)  $url Base url

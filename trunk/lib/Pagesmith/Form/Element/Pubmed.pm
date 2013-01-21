@@ -17,19 +17,20 @@ use version qw(qv); our $VERSION = qv('0.1.0');
 use base qw( Pagesmith::Form::Element::String );
 use HTML::Entities qw(encode_entities);
 
-sub _is_valid {
+sub validate {
   my $self = shift;
-  return $self->value =~ m{\A(SID_)?\d+\Z}mxs;
+  return $self->set_valid if $self->value =~ m{\A(SID_)?\d+\Z}mxs;
+  return $self->set_invalid;
 }
 
-sub _render_readonly {
+sub  render_readonly {
   my $self = shift;
   return q(--) unless $self->value;
   return sprintf '<%% References %d %%>', $self->value;
 }
-sub _render_widget {
+sub render_widget {
   my $self = shift;
-  my $html = $self->SUPER::_render_widget;
+  my $html = $self->SUPER::render_widget;
   $html .= sprintf '<%% References %s %%>', encode_entities( $self->value ) if $self->value;
   return $html;
 }

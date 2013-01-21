@@ -18,14 +18,14 @@ use utf8;
 
 use version qw(qv); our $VERSION = qv('0.1.0');
 
-sub _init {    # Stub class that does nothing!
+sub init {    # Stub class that does nothing!
 }
 
 sub new {
   my ( $class, $adpt, @pars ) = @_;
   my $self = { '_adpt' => $adpt, 'ip' => undef, 'useragent' => undef };
   bless $self, $class;
-  $self->_init(@pars);
+  $self->init(@pars);
   return $self;
 }
 

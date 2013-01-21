@@ -29,6 +29,33 @@ Readonly my $DEFAULT_RENDERER => 'ul';
 
 ##no critic (ExcessComplexity)
 
+sub usage {
+  my $self = shift;
+  return {
+    'parameters'  => '{pubmed id etc)',
+    'description' => 'Display list of references',
+    'notes'       => [],
+  };
+}
+
+sub define_options {
+  my $self = shift;
+  return (
+    $self->ajax_option,
+    { 'code' => 'group',          'defn' => '=s', 'description' => q(Group of footnotes to display) },
+    { 'code' => 'collapse',       'defn' => '=s', 'description' => q(Whether to collapse the box or not - and if set either open/closed to include default status) },
+    { 'code' => 'tag',            'defn' => '=s', 'description' => q(Display all references for a given tag in the database) },
+    { 'code' => 'authors',        'defn' => '=s', 'description' => q(Either full/first to display either the first author or all authors) },
+    { 'code' => 'link',           'defn' => '=s', 'description' => q(list of ID classes to add anchor links to) },
+    { 'code' => 'sort_by',        'defn' => '=s', 'description' => q(Order to sort by) },
+    { 'code' => 'render_as',      'defn' => '=s', 'description' => q(How to render - p/div/plain #/ordered/numbered/number/numbers list/unordered/ul/* table) },
+    { 'code' => 'include_count',  'defn' => '=s', 'description' => 'If set then includes a count at the top of the list'},
+    { 'code' => 'full',           'defn' => q(),  'description' => q(Show authors abstracts etc) },
+    { 'code' => 'footnotes',      'defn' => q(),  'description' => q(Include entries refered to by <% Cites %>) },
+    { 'code' => 'abstract',       'defn' => '=s', 'description' => q(Show abstract) },
+  );
+}
+
 my %renderers = ( q(#),
 qw(
             ol
@@ -132,21 +159,21 @@ sub execute {
   # Sort references
   my $sort_by = $self->option('sort_by', 'newest' );
 
-  @references = sort { $a->_title cmp $b->_title }                                                    @references if $sort_by eq 'alpha';
-  @references = sort { lc( $a->author_list ) cmp lc( $b->author_list ) || $a->_title cmp $b->_title } @references if $sort_by eq 'author';
+  @references = sort { $a->sort_title cmp $b->sort_title }                                                    @references if $sort_by eq 'alpha';
+  @references = sort { lc( $a->author_list ) cmp lc( $b->author_list ) || $a->sort_title cmp $b->sort_title } @references if $sort_by eq 'author';
   ##no critic (ReverseSortBlock)
   @references = sort { $a->pubmed <=> $b->pubmed || $a->sid cmp $b->sid }                             @references if $sort_by eq 'id';
 
   @references =
     map { $_->[1] }
-    sort { $b->[0] cmp $a->[0] || $a->[1]->_title cmp $b->[1]->_title }
+    sort { $b->[0] cmp $a->[0] || $a->[1]->sort_title cmp $b->[1]->sort_title }
     map { [ $_->pub_date =~ m{\A0000-00-00}mxs ? '9999-99-99' : $_->pub_date, $_ ] }
     @references if $sort_by eq 'newest';
 
   ##use critic (ReverseSortBlock)
   @references =
     map { $_->[1] }
-    sort { $a->[0] cmp $b->[0] || $a->[1]->_title cmp $b->[1]->_title }
+    sort { $a->[0] cmp $b->[0] || $a->[1]->sort_title cmp $b->[1]->sort_title }
     map { [ $_->pub_date =~ m{\A0000-00-00}mxs ? '9999-99-99' : $_->pub_date, $_ ] }
     @references if $sort_by eq 'oldest';
 
@@ -220,7 +247,7 @@ sub execute {
     push @html, sprintf qq(\n<p class="publication">%s</p>),       $reference->publication                      if $reference->publication;
     push @html, sprintf qq(\n<p class="links">%s</p>),             $reference->links                            if $reference->links;
     # Any additional markup required by inherited component...
-    push @html, $self->_extra_markup( $reference );
+    push @html, $self->extra_markup( $reference );
     push @html, $end_row;
     # Flip flow highlighting class
     $class = $class == 2 ? 1 : 2;
@@ -236,14 +263,14 @@ sub execute {
 }
 ##use critic (ExcessComplexity)
 ## Extra h
-sub _extra_markup {
+sub extra_markup {
   my( $self, $reference ) = @_;
   return q();
 }
 
 sub expemail {
   my ( $self,$string ) = @_;
-  $string =~ s{(\w[^\s;]*@\S*\w)}{$self->_safe_email( $1,$1 )}mxegs;
+  $string =~ s{(\w[^\s;]*@\S*\w)}{$self->safe_email( $1,$1 )}mxegs;
   return $string;
 }
 1;

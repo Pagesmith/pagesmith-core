@@ -27,21 +27,25 @@ use Pagesmith::Utils::Validator::XHTML;
 ### sure that the validation does not allow HTML check to be bypassed
 ### This package checks for a limited safe subset of HTML tags
 
-sub _init {
+sub init {
   my( $self, $params ) = @_;
   $self->{'_rows'} = $params->{'rows'} || $DEFAULT_ROWS;
   $self->{'_cols'} = $params->{'cols'} || $DEFAULT_COLS;
   return;
 }
 
-sub _is_valid {
+sub validate {
   my $self = shift;
   my $validator = Pagesmith::Utils::Validator::XHTML->new;
-  return $validator->validate( $self->value ) ? 0 : 1;
+  return $self->set_invalid if $validator->validate( $self->value );
+  return $self->set_valid;
 }
 
-sub _class {
-  return '_html';
+sub element_class {
+  my $self = shift;
+  $self->add_class( '_html' );
+  return;
 }
+
 
 1;

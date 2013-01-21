@@ -19,7 +19,7 @@ use base qw(Pagesmith::Object);
 
 use English qw(-no_match_vars $PID);
 
-sub _super_init {
+sub super_init {
   my $self = shift;
   $self->{'_pid'} = $PID;
   return;

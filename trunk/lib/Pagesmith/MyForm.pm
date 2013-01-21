@@ -77,12 +77,12 @@ sub ip_useragent_details {
   return join q(), map { sprintf "%20s : %s\n", $_, $self->object->$_ } qw(ip created_at useragent);
 }
 
-sub _get_name {
+sub get_name {
   my $self;
   return 'Name';
 }
 
-sub _get_email {
+sub get_email {
   my $self;
   return 'Email';
 }

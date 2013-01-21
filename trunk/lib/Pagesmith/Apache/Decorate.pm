@@ -64,7 +64,7 @@ my %doctypes = (
 sub _content_type {
   my $r = shift;
   my $accept_header = $r->headers_in->get('Accept') || q();
-  return 'text/html; charset=utf-8' unless $accept_header =~ m{xhtml\+xml}mxs;
+  return 'text/html; charset=utf-8' unless $accept_header =~ m{xhtml[+]xml}mxs;
   my $t = get_config('ContentType');
   return ($t eq 'xhtml' || $t eq 'default' || !$t) ? 'application/xhtml+xml; charset=utf-8' : 'text/html; charset=utf-8';
 }
@@ -75,7 +75,7 @@ sub handler : FilterRequestHandler {
   my $r      = $filter->r;
 
   ## Wrap only HTML files
-  if ( $r->content_type !~ m{\A(text/html|application/xhtml\+xml)\b}mxs
+  if ( $r->content_type !~ m{\A(?:text/html|application/xhtml[+]xml)\b}mxs
     || $r->headers_out->get('X-Pagesmith-Template')||q() eq 'No' ) {
     $filter->remove;    ## Remove the filter so not called multiple times for files we won't handle!
     $r->headers_out->set( 'X-Pagesmith-Debug', sprintf '!%s:%d', hostname, $PID );
@@ -135,7 +135,7 @@ sub handler : FilterRequestHandler {
       my $renderer = Pagesmith::Page->new(
         $r,
         {
-          'type'          => $accept_header =~ m{xhtml\+xml}mxs ? 'xhtml' : 'html',
+          'type'          => $accept_header =~ m{xhtml[+]xml}mxs ? 'xhtml' : 'html',
           'last_mod'      => $last_mod,
           'filename'      => $r->filename,
           'uri'           => $r->uri,
@@ -154,7 +154,7 @@ sub handler : FilterRequestHandler {
         );
         ## use critic
         my $messages = $r->pnotes( 'errors' );
-        while( $html =~ s{<!--\sERRORS\s([=\+\/\w]+)\s-->}{}smx ) {
+        while( $html =~ s{<!--\sERRORS\s([=+/\w]+)\s-->}{}smx ) {
           my $Z= $cipher->decrypt( decode_base64( $1 ) );
           if( $Z ) {
             my $non_object_data = JSON::XS->new->decode( $Z );
@@ -261,7 +261,7 @@ sub expiry_evaluate {
 # {\d\d:\d\d} {Mon/Tues/Wed...}             -- expires at 'hr':'min' on next occurance of day
 # {\d\d:\d\d} {-\d}                         -- expires at 'hr':'min' on nth day of month
   my $expiry_string = shift;
-  if( $expiry_string =~ m{\A(\d+)(?:\s+(min|minute|m|mn|hour|hr|h)s?)?\Z}mxs ) {
+  if( $expiry_string =~ m{\A(\d+)(?:\s+(min|minute|mn|hour|hr|[mh])s?)?\Z}mxs ) {
     my $expires = 0 - $1;
     my $unit    = $2 || 's';
     $unit = substr $unit,0,1;
@@ -269,7 +269,7 @@ sub expiry_evaluate {
     $expires *= $HOUR   if $unit eq 'h';
     return $expires;
   }
-  if( $expiry_string =~ m{\A(\d\d)(|:\d\d)?(\s+(-?\d+|(?:Mo(?:n)?|Tu(?:es)?|We(?:d(?:nes)?)?|Th(?:u(?:rs)?)?|Fr(?:i)?|Sa(?:t(?:ur)?)?|Su(?:n)?)(?:day)?))?\Z}mxgis ) {
+  if( $expiry_string =~ m{\A(\d\d)(|:\d\d)?(\s+(-?\d+|(?:Mo(?:n)?|Tu(?:es)?|We(?:d(?:nes)?)?|Th(?:u(?:rs)?)?|Fr(?:i)?|Sa(?:t(?:ur)?)?|Su(?:n)?)(?:day)?))?\Z}mxgis ) { ## no critic (ComplexRegexes)
     my( $hr,$mn,$day ) = ($1,$2,$3);
     $mn  = $mn ? substr $mn,1,2 : 0;
     $day ||= q();

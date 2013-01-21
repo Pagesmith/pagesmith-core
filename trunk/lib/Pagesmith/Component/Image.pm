@@ -52,11 +52,44 @@ my %credits = (
   'wl'                                  => 'Wellcome Library, London',
 );
 
-sub _credit {
+sub credit {
   my( $self, $credit ) = @_;
   #return q() unless $credit;
   $credit ||= 'wtsi';
   return $credits{$credit}||$credit;
+}
+
+sub define_options {
+  my $self = shift;
+
+  return (
+    $self->SUPER::define_options,
+    { 'code' => 'quality',        'defn' => '=i', 'default' => $DEFAULT_QUALITY ,  'description' => 'Quality of thumbnail (jpg)' },
+    { 'code' => 'left',           'defn' => q(),  'description' => 'Float left' },
+    { 'code' => 'right',          'defn' => q(),  'description' => 'Float right' },
+    { 'code' => 'center',         'defn' => q(),  'description' => 'Centre align' },
+    { 'code' => 'short',          'defn' => '=s',  'description' => 'Short caption' },
+    { 'code' => 'noshort',        'defn' => q(),   'description' => q(Don't display short caption) },
+    { 'code' => 'credit',         'defn' => '=s',  'description' => 'Credit' },
+    { 'code' => 'nocredit',       'defn' => q(),   'description' => q(Don't display credit) },
+    { 'code' => 'nozoom',         'defn' => q(),   'description' => q(Don't display zoom link) },
+    { 'code' => 'boxpadding',     'defn' => '=i', 'default' => $DEFAULT_PADDING ,  'description' => 'Padding around image' },
+    { 'code' => 'boxwidth',       'defn' => '=i', 'default' => $DEFAULT_WIDTH  + $DEFAULT_BOX_EXTRA_WIDTH  ,  'description' => 'Box width' },
+    { 'code' => 'height',         'defn' => '=i', 'default' => $DEFAULT_HEIGHT  ,  'description' => 'Max height of image to use' },
+    { 'code' => 'width',          'defn' => '=i', 'default' => $DEFAULT_WIDTH   ,  'description' => 'Max width of image to use' },
+    { 'code' => 'w',              'defn' => '=i', 'default' => $DEFAULT_HEIGHT  ,  'description' => 'Alternative to height' },
+    { 'code' => 'h',              'defn' => '=i', 'default' => $DEFAULT_WIDTH   ,  'description' => 'Alternative to width' },
+    { 'code' => 'tn',             'defn' => '=s', 'description' => 'Thumbnail image over-ride name' },
+    { 'code' => 'clear',          'defn' => q(),  'description' => q(If set add clear style so doesn't break float pattern) },
+  );
+}
+
+sub usage {
+  return {
+    'parameters'  => '{image name}',
+    'description' => 'Displays a thumnail image in a floating/centered box with a link to a popup zoom window...',
+    'notes'       => [  ],
+  };
 }
 
 ##no critic (ExcessComplexity)
@@ -66,8 +99,8 @@ sub _thumbnail {
   my ( $self, $in_filename, $width, $height ) = @_;
   ## Read the file with image Magick...
 
-  my ($extn) = $in_filename =~ m{\.(\w+)\Z}mxs;
-  $extn = $extn =~ m{^jp(eg|e|g)\Z}mxs ? 'jpg' : 'png';
+  my ($extn) = $in_filename =~ m{[.](\w+)\Z}mxs;
+  $extn = $extn =~ m{^jp(?:eg|[eg])\Z}mxs ? 'jpg' : 'png';
   my $image = Image::Magick->new();
   ## Couldn't read file
   my $res = $image->Read($in_filename);
@@ -129,7 +162,7 @@ sub _thumbnail {
 }
 ##use critic (ExcessComplexity)
 
-sub _cache_key {
+sub my_cache_key {
   my $self = shift;
   return $self->checksum_parameters();
 }
@@ -144,11 +177,11 @@ sub execute {
 
   return $err if $err;
 
-  my ( $root, $extn ) = $self->filename =~ m{^(.+)\.(\w+)\Z}mxs;
-  return $self->_error('Image requires extension') unless $root;
+  my ( $root, $extn ) = $self->filename =~ m{^(.+)[.](\w+)\Z}mxs;
+  return $self->error('Image requires extension') unless $root;
   my ( $img_x, $img_y ) = imgsize( $self->filename );
   my ( $orig_img_x, $orig_img_y ) = ( $img_x, $img_y );
-  return $self->_error('Malformed image') unless $img_x;
+  return $self->error('Malformed image') unless $img_x;
 
   my $side =
       $self->option('left')   ? 'left'
@@ -167,7 +200,7 @@ sub execute {
   if ($credit) {
     $credit = $credits{$credit} if exists $credits{$credit};
     if( $credit =~ m{\Ahttps?://\S+$}mxs ) {
-      $credit_marked_up = "\n[". $self->_safe_link( $credit, $LINK_SIZE ).q(]);
+      $credit_marked_up = "\n[". $self->safe_link( $credit, $LINK_SIZE ).q(]);
     }
     $credit = "\n[" . encode_entities($credit) . q(]);
     $credit_marked_up ||= $credit;

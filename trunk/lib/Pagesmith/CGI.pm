@@ -56,7 +56,7 @@ sub new {
 
 sub header {
   my( $self, @param ) = @_;
-  $html_output = 1 if $param[0] =~ m{\b(text/html|application/xhtml\+xml)\b}mxs;
+  $html_output = 1 if $param[0] =~ m{\b(text/html|application/xhtml[+]xml)\b}mxs;
   return $self->SUPER::header(@param);
 }
 

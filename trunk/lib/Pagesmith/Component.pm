@@ -23,6 +23,7 @@ use English qw(-no_match_vars $EVAL_ERROR);
 use HTML::Entities qw(encode_entities decode_entities);
 use Text::ParseWords qw(shellwords);    ## Parsing parameters for components
 use Time::HiRes qw(time);
+use Getopt::Long qw(GetOptionsFromString :config permute);
 
 use Pagesmith::Core qw(safe_md5);
 use Pagesmith::HTML::Table;
@@ -34,9 +35,39 @@ use Pagesmith::Utils::FormObjectCreator;
 #@property (arrayref{}) _options Hashref of arrayrefs containing options passed in <% %>
 #@property (string[]) _pars Array of parameters passed inside the <% %> tags
 
+sub usage {
+  return {
+    'parameters' => 'unknown',
+    'description' => 'unknown',
+    'notes' => [ 'No documentation has been written for this component' ],
+  };
+}
+
+## NO DEFINED OPTIONS
+sub define_options {
+  return;
+}
+
+sub ajax_option {
+  return { 'code' => 'ajax', 'description' => 'Load component with AJAX if available' };
+}
+
+sub click_ajax_option {
+  my $self = shift;
+  return (
+    $self->ajax_option,
+    { 'code' => 'ajax-type', 'defn' => '=s', 'description' => 'Either no-cache and/or click to change behaviour of ajax action' },
+  );
+}
+
 sub default_ajax {
   my $self = shift;
   return $self->option('ajax') ? 1 : 0;
+}
+
+sub click_ajax {
+  my $self = shift;
+  return $self->option('ajax') ? ( $self->option('ajax-type') || 1 ) : 0;
 }
 
 sub user {
@@ -74,9 +105,9 @@ sub trim_param {
   return $self->_trim( $self->apr->param(@param) );
 }
 
-sub _parse {
+sub parse {
   my( $self, $html ) = @_;
-  ${$html} =~ s{<%\s+([A-Z][\w:]+)\s+(%>|(.*?)\s+%>)}{$self->page->execute( $1, $3 )}mxesg;
+  ${$html} =~ s{<%\s+([[:upper:]][\w:]+)\s+(%>|(.*?)\s+%>)}{$self->page->execute( $1, $3 )}mxesg;
 
   ## Hide any content marked as <% hide %>..<% end %>
   ## <% If %> directive either returns <% hide %> or <% show %>
@@ -157,11 +188,11 @@ sub ajax {
 
 
 sub ajax_message {
-
+  my( $self, $flag ) = @_;
 #@param (self)
 #@return (HTML) HTML to display in AJAX placeholder
 ## This function is over-riden in the child module if required
-  return 'Loading...';
+  return $flag && $flag =~ m{click}mxs ? '<span class="click">Click to load content</span>' : 'Loading...';
 }
 
 
@@ -173,7 +204,16 @@ sub cache_key {
 
   my $self = shift;
   return unless $self->page->can_cache('components');
-  return join '__', $self->_cache_key();    ## Join the cache key / merge with double "_" signs...
+  return join '__', $self->my_cache_key();    ## Join the cache key / merge with double "_" signs...
+}
+
+sub my_cache_key {
+
+#@param (self)
+#@return (array) Array of strings defining the cache key.
+## This function is over-riden in the child module if required
+  my $self = shift;
+  return $self->_cache_key;
 }
 
 sub _cache_key {
@@ -220,7 +260,6 @@ sub page {
 }
 
 sub options {
-
 #@param (self)
 #return (hashref) Options hash ref
 ## accessor (read-only)
@@ -228,12 +267,32 @@ sub options {
   return $self->{'_options'};
 }
 
+sub option_scalar {
+  my( $self, $key ) = @_;
+  return unless exists $self->{'_options'}{$key};  ## Doesn't exist
+  my $ret = $self->{'_options'}{$key};
+  return $ret unless 'ARRAY' eq ref $ret;          ## Scalar so return it!
+  return unless @{$ret};                           ## Empty arrayref so return nothing
+  return $ret->[0];                                ## Return first element of array
+}
+
+sub option_arrayref {
+  my( $self, $key ) = @_;
+  return [] unless exists $self->{'_options'}{$key};  ## Doesn't exist so return empty array
+  my $ret = $self->{'_options'}{$key};
+  return $ret if 'ARRAY' eq ref $ret;                 ## Arrayref so return it
+  return [$ret];                                      ## Scalar so wrap it in array ref!
+}
+
 sub next_par {
 #@param (self)
 #return (scalar) first parameter
 ## accessor (read-only)
   my $self = shift;
-  return shift @{ $self->{'_pars'} };
+  return unless @{ $self->{'_pars'} };
+  my $par  = shift @{ $self->{'_pars'} };
+  return $par->{'value'} if ref $par;
+  return $par;
 }
 
 sub pars {
@@ -241,10 +300,26 @@ sub pars {
 #return (array) array of parameters
 ## accessor (read-only)
   my $self = shift;
+  return map { ref $_ ? $_->{'value'} : $_ } @{ $self->{'_pars'} };
+}
+
+sub pars_hash {
+#@param (self)
+#return (array) array of parameters
+## accessor (read-only)
+  my $self = shift;
   return @{ $self->{'_pars'} };
 }
 
-sub _error {
+sub next_par_hash {
+#@param (self)
+#return (scalar) first parameter
+## accessor (read-only)
+  my $self = shift;
+  return shift @{ $self->{'_pars'} };
+}
+
+sub error {
   my ( $self, $msg ) = @_;
   return qq(<span class="web-error">$msg</span>);
 }
@@ -258,6 +333,35 @@ sub push_message {
 sub parse_parameters {
   my ( $self, $pars ) = @_;
 
+  if( $self->can( 'define_options' ) ) {
+    my @configuration = $self->define_options;
+    my $options       = { map { ($_->{'code'} => $_->{'default'}||undef) } @configuration };
+    my @get_opt_pars  = map { $_->{'code'}.($_->{'defn'}||q()) } @configuration;
+    my $params        = [];
+    my @interleave    = map { $_->{'interleave'} ? $_->{'code'} : () } @configuration;
+    push @get_opt_pars, q(<>), sub { push @{$params}, { 'value' => $_[0]->name, map { $_ => $options->{$_} } @interleave }; } if @interleave;
+
+    my( $res, $args, @warnings );
+    my $rv = eval {
+      local $SIG{'__WARN__'} = sub { push @warnings, @_; };
+      ( $res, $args ) = GetOptionsFromString( $pars, $options, @get_opt_pars );
+    };
+    if( @warnings ) {
+      ## no critic (Carping)
+      warn sprintf q(!raw!<p>The component:</p><blockquote>%s</blockquote><p>with parameters:</p><blockquote>%s</blockquote><p>returns the following warnings:</p><ul>%s</ul>),
+        $self->my_name,
+        $self->encode( $pars ),
+        join q(), map { sprintf '<li>%s</li>', $self->encode( $_ ) } @warnings;
+      ## use critic
+    }
+    push @{$params},
+      map { @interleave ? { ('value' => $_, map { ($_ => $options->{$_}) } @interleave) } : $_ }
+      @{$args} if $args && @{$args};
+    $self->{'_options'} = $options;
+    $self->{'_pars'}    = $params;
+    return;
+  }
+  ## Fall back to old methos! ##
   my @p = eval {
     map { decode_entities($_) } shellwords($pars);
   };
@@ -269,8 +373,8 @@ sub parse_parameters {
   foreach (@p) {
     if ( $_ eq q(--) ) {
       $opt_flag = 0;
-    } elsif ( $opt_flag && m{\A-(.*?)(=(.*))?\Z}mxs ) {
-      push @{ $self->{'_options'}{$1} }, defined $3 && $3 ne q() ? $3 : 1;
+    } elsif ( $opt_flag && m{\A-(.*?)(?:=(.*))?\Z}mxs ) {
+      push @{ $self->{'_options'}{$1} }, defined $2 && $2 ne q() ? $2 : 1;
     } else {
       push @{ $self->{'_pars'} }, $_;
       $opt_flag = 0;
@@ -296,18 +400,27 @@ sub checksum_parameters {
 
 sub option {
   my( $self, $key, $default ) = @_;
-  unless( exists $self->{'_options'}{$key} ) {
+
+  unless( exists $self->{'_options'}{$key} && defined $self->{'_options'}{$key} ) {
     return $default unless ref $default eq 'ARRAY';
     return wantarray ? @{$default} : $default->[0];
   }
-  my @vals = @{ $self->{'_options'}{$key} || [] };
+
+  my @vals;
+  if( defined $self->{'_options'}{$key} ) {
+    if( ref $self->{'_options'}{$key} ) {
+      @vals = @{ $self->{'_options'}{$key} };
+    } else {
+      @vals = ( $self->{'_options'}{$key} );
+    }
+  }
   return
       wantarray ? @vals
     : @vals     ? $vals[-1]
     :             undef;
 }
 
-sub _qs {
+sub qs {
   my $self = shift;
   my $apr  = $self->page->apr;
   my @pairs;
@@ -324,7 +437,7 @@ sub _qs {
 
 sub execute {
   my $self = shift;
-  return $self->_error( 'The component "' . encode_entities( ref $self ) . '" has not been created yet' );
+  return $self->error( 'The component "' . encode_entities( ref $self ) . '" has not been created yet' );
 }
 
 sub wrap {
@@ -364,8 +477,6 @@ sub get_output {
   return join q(), @{$self->{'_output'}};
 }
 
-## Diagnostic event timer code!
-
 sub table {
   my( $self, @pars ) = @_;
   return Pagesmith::HTML::Table->new( $self->r, @pars );
@@ -394,6 +505,21 @@ sub twocol {
 sub tabs {
   my( $self, @pars ) = @_;
   return Pagesmith::HTML::Tabs->new( @pars );
+}
+
+sub fake_tabs {
+  my( $self, @pars ) = @_;
+  return $self->tabs( @pars )->set_option( 'fake', 1 );
+}
+
+sub hidden_tabs {
+  my( $self, @pars ) = @_;
+  return $self->fake_tabs->add_classes('hidden');
+}
+
+sub second_tabs {
+  my( $self, @pars ) = @_;
+  return $self->fake_tabs->add_classes('second-tabs')->set_option( 'no_heading', 1 );
 }
 
 sub is_xhr {

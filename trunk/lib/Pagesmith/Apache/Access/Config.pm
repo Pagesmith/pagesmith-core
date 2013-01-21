@@ -15,12 +15,12 @@ use utf8;
 
 use version qw(qv); our $VERSION = qv('0.1.0');
 
-use Pagesmith::Apache::Access qw(_handler);
+use Pagesmith::Apache::Access qw(my_handler);
 use List::MoreUtils qw(any);
 
 sub handler {
   my $r = shift;
-  return _handler( sub {
+  return my_handler( sub {
     my( $apache_r, $user ) = @_;
 
     ## First check if a configuration is set for authenticating against groups...

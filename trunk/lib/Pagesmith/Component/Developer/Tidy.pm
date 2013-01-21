@@ -35,7 +35,7 @@ sub execute {
   my $critic = $self->r->pnotes( 'critic' );
 
   unless( $critic ) {
-    if( $self->page->filename =~ m{\.html\Z}mxgs ) {
+    if( $self->page->filename =~ m{[.]html\Z}mxgs ) {
       $filename = $self->page->filename;
     } elsif( $self->r->notes->get( 'html' ) ) {
       $filename = $self->page->tmp_filename('html');
@@ -80,7 +80,7 @@ sub execute {
     foreach( @messages) {
       my $msgs;
       if( $_->{'level'} eq 'Access' ) {
-        $msgs = join q(), map { m{\[(\d+\.\d+\.\d+\.\d+)\]:\s+(.*)\Z}mxgs ?
+        $msgs = join q(), map { m{\[(\d+[.]\d+[.]\d+[.]\d+)\]:\s+(.*)\Z}mxgs ?
           sprintf '<dt>%s %d: %s</dt><dd>%s</dd>', @{$critic->access_level($1)}, $1, encode_entities($2) :
           sprintf '<dt>*</dt><dd>%s</dd>', $_
         } @{ $_->{'messages'} };

@@ -83,13 +83,13 @@ sub check {
 
   splice @lines,0,$ERROR_BLOCK_LINES;
   my $counts_line = pop @lines;
-  my( $errors,$warns ) = $counts_line =~ m{\A(\d+)\serror\(s\),\s(\d+)\swarning\(s\)}mxs ? ($1,$2) : (0,0);
+  my( $errors,$warns ) = $counts_line =~ m{\A(\d+)\serror[(]s[)],\s(\d+)\swarning[(]s[)]}mxs ? ($1,$2) : (0,0);
   my $ignored = 0;
   my @error_messages;
   while(@lines>0) {
     my ($msg,$source,$arrow,$blank) = splice @lines,0,$ERROR_BLOCK_LINES;
     my $c = 0;
-    if( defined $arrow && $arrow =~ m{\A(\.*)\^}mxs ) {
+    if( defined $arrow && $arrow =~ m{\A([.]*)[^]}mxs ) {
       $c = length $1;
     } else {
       splice @lines,0,0,defined $source ? $source : (),defined $arrow ? $arrow:(),defined $blank ? $blank:();
@@ -111,7 +111,7 @@ sub check {
 #  (2) unexpected end of line - if using <-'. to split chained jQuery blocks
     if( $message eq 'undeclared identifier: console' ||
         $message eq 'unexpected end of line; it is ambiguous whether these lines are part of the same statement' &&
-        $source =~ m{\A\s*\.}mxs ) {
+        $source =~ m{\A\s*[.]}mxs ) {
       $warns  --;
       $ignored++;
       $level  = 'Ignored';

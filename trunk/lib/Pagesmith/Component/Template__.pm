@@ -17,6 +17,20 @@ use version qw(qv); our $VERSION = qv('0.1.0');
 
 use base qw(Pagesmith::Component);
 
+sub usage {
+  my $self = shift;
+  return {
+    'parameters'  => q(),
+    'description' => q(),
+    'notes'       => [],
+  };
+}
+
+sub define_options {
+  my $self = shift;
+  return ();
+}
+
 sub execute {
 
 #@param (self)

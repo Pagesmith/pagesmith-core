@@ -17,6 +17,15 @@ use version qw(qv); our $VERSION = qv('0.1.0');
 
 use base qw(Pagesmith::Component);
 
+sub usage {
+  my $self = shift;
+  return {
+    'parameters'  => q(none),
+    'description' => 'Inserts an extra class tag into the body to change the zoom level...',
+    'notes'       => [],
+  };
+}
+
 sub execute {
 
 #@param (self)

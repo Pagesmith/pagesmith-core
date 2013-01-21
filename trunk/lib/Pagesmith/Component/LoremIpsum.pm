@@ -35,6 +35,25 @@ my %valid = qw(
   bytes 300
 );
 
+sub usage {
+  my $self = shift;
+  return {
+    'parameters'  => '{amount=i} {what=s}?',
+    'description' => 'Display a chunk of Lorem Ipsum text',
+    'notes'       => [
+      '{what} can be one of bytes, lists, paras, words',
+    ],
+  };
+}
+
+sub define_options {
+  my $self = shift;
+  return (
+    { 'code' => 'start', 'defn' => q(!), 'default' => 1,
+      'description' => 'Indicate whether to add ;start - i.e. force data to be cut from start of lorem ipsum', },
+  );
+}
+
 sub execute {
 
 #@param (self)
@@ -50,7 +69,7 @@ sub execute {
 
   $ua->proxy( 'http', get_config( 'ProxyURL' ) );
 
-  my $extra = $self->option('start') && $self->option('start') ne 'no' ? '&start=yes' : q();
+  my $extra = $self->option('start') ? '&start=yes' : q();
 
   my $output = q(could not retrieve text);
   my $rv = eval {
@@ -69,7 +88,7 @@ sub execute {
         map {
           sprintf '%s.', encode_entities($_)
         }
-        split m{\.\s+}mxs, $_
+        split m{[.]\s+}mxs, $_
       }
       split m{\n}mxs, $output if $what eq 'lists';
   };

@@ -23,8 +23,43 @@ use File::Spec;
 use HTML::Entities qw(encode_entities);
 use utf8;
 
+
+sub usage {
+  my $self = shift;
+  return {
+    'parameters'  => '{abstract=s@}',
+    'description' => 'Create a reference which is displayed by the references directive <% References %>',
+    'notes'       => [ q(If supplied abstract is anything which isn't an option) ],
+  };
+}
+
+sub define_options {
+  my $self = shift;
+  return (
+    { 'code' => 'pub_date',           'defn' => '=s',  'description' => 'Publication date - see pubmed XML format' },
+    { 'code' => 'year',               'defn' => '=s',  'description' => 'Publication year - see pubmed XML format' },
+    { 'code' => 'journal',            'defn' => '=s',  'description' => 'Journal - see pubmed XML format' },
+    { 'code' => 'month',              'defn' => '=s',  'description' => 'Publication month - see pubmed XML format' },
+    { 'code' => 'day',                'defn' => '=s',  'description' => 'Publication day - see pubmed XML format' },
+    { 'code' => 'title',              'defn' => '=s',  'description' => 'Title - see pubmed XML format' },
+    { 'code' => 'key',                'defn' => '=s',  'description' => 'Key - to use if cited' },
+    { 'code' => 'url',                'defn' => '=s',  'description' => 'URL - see pubmed XML format' },
+    { 'code' => 'pages',              'defn' => '=s',  'description' => 'Page numbers - see pubmed XML format' },
+    { 'code' => 'issue',              'defn' => '=s',  'description' => 'Issue - see pubmed XML format' },
+    { 'code' => 'volume',             'defn' => '=s',  'description' => 'Volume - see pubmed XML format' },
+    { 'code' => 'authors_incomplete', 'defn' => '=s',  'description' => 'True if authors incomplete - see pubmed XML format' },
+    { 'code' => 'doi',                'defn' => '=s',  'description' => 'DOI id - see pubmed XML format' },
+    { 'code' => 'pmc',                'defn' => '=s',  'description' => 'PMC id - see pubmed XML format' },
+    { 'code' => 'author',             'defn' => '=s@', 'description' => 'Authors (may have multiple values) - see pubmed XML format' },
+  );
+}
+
+
 sub execute {
   my $self = shift;
+
+  ## Get/create the temporary references store on the page object so it can be picked up
+  ## by the references directive
 
   my $ref_arr = $self->init_store( 'tmp_refs', [] );
 
@@ -32,9 +67,11 @@ sub execute {
   foreach (qw(doi pmc)) {
     $reference_data->{'ids'}{$_} = $self->option($_);
   }
-  foreach (qw(pub_date year journal month day abstract title key url pages issue volume authors_incomplete)) {
+
+  foreach (qw(pub_date year journal month day title key url pages issue volume authors_incomplete)) {
     $reference_data->{$_} = $self->option($_) if defined $self->option($_);
   }
+
   $reference_data->{'abstract'} = join q( ), $self->pars;
   my @authors = map { { 'name' => $_ } } $self->option('author');
   $reference_data->{'authors'} = \@authors;

@@ -31,7 +31,7 @@ use English qw(-no_match_vars $UID $EVAL_ERROR);
 # This isn't an object so we will have to use Exporter to export
 # functions...
 
-our @EXPORT_OK = qw(__warn fullescape safe_md5 parse_cookie clean_template_type safe_base64_encode safe_base64_decode user_info);
+our @EXPORT_OK = qw(full__warn fullescape safe_md5 parse_cookie clean_template_type safe_base64_encode safe_base64_decode user_info);
 our %EXPORT_TAGS = ( 'ALL' => \@EXPORT_OK );
 
 # At some point we should move these to the Apache config
@@ -49,7 +49,7 @@ sub user_info {
     $in_uid =~ m{\D}mxs ? getpwnam $in_uid : getpwuid $in_uid;
   my $user_info;
   if( $uid ) {
-    $gcos =~ s{\,.*}{}mxs; ## Removing trailing comments!
+    $gcos =~ s{,.*}{}mxs; ## Removing trailing comments!
     $user_info = {
       'username'  => $name,
       'name'      => $gcos,
@@ -77,7 +77,7 @@ sub safe_base64_encode {
    my $string = shift;
    my $enc = encode_base64( $string );
    chomp $enc;
-   $enc =~ s{\+}{-}mxgs;
+   $enc =~ s{[+]}{-}mxgs;
    $enc =~ s{/}{_}mxgs;
    return $enc;
 }
@@ -97,12 +97,12 @@ sub safe_md5 {
 ## Tweak it by converting "+" -> "-" and "/" -> "_"
 ## so it is a safe filename for the file sytem!
 
-  ( my $str = md5_base64($string) ) =~ s{\+}{-}mxgs;
+  ( my $str = md5_base64($string) ) =~ s{[+]}{-}mxgs;
   $str =~ s{/}{_}mxgs;
   return $str;
 }
 
-sub __warn {
+sub full__warn {
   my $r = shift;
   my $flag = shift || 'out in env';
 

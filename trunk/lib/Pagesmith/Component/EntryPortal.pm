@@ -24,9 +24,28 @@ use HTML::Entities qw(encode_entities);
 use Image::Magick;
 use Image::Size qw(imgsize);
 
-sub _cache_key {
+sub my_cache_key {
   my $self = shift;
   return $self->checksum_parameters();
+}
+
+sub define_options {
+  my $self = shift;
+  return (
+    { 'code' => 'wrap',     'defn' => '=s', 'description' => 'Wrap title within a tag' },
+    { 'code' => 'raw',      'description' => 'Embed raw HTML for body' },
+    { 'code' => 'noframe',  'description' => 'Do not include panel div' },
+    { 'code' => 'offset',   'defn' => '=s', 'description' => 'Offset in sprited image' },
+  );
+}
+
+sub usage {
+  my $self = shift;
+  return {
+    'parameters'  => '{url} {img} {title} {body}*',
+    'description' => 'Display image with caption for faculty pages',
+    'notes'       => [],
+  };
 }
 
 sub execute {
@@ -40,7 +59,7 @@ sub execute {
   if( $self->option( 'wrap' ) ) {
     $title = sprintf '<%s>%s</%s>', $self->option('wrap'), $title, $self->option('wrap');
   }
-  my $body  = join q( ), @Q;
+  my $body  = "@Q";
      $body  = encode_entities( $body ) unless $self->option( 'raw' );
 
   my $about_info = encode_entities( $self->option('about') ) || $title;

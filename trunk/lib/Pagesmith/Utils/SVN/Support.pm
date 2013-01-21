@@ -116,7 +116,7 @@ sub push_changes {
   my @entries;
   my $skipped = 0;
   foreach my $line (@{$changes}) {
-    if( $line =~ m{\A\s{4}\(from\s(.*?):r(\d+)\)}mxs && !$skipped ) {
+    if( $line =~ m{\A\s{4}[(]from\s(.*?):r(\d+)[)]}mxs && !$skipped ) {
       $entries[-1]{ 'action'        } = 'copy';
       $entries[-1]{ 'copy_from'     } = $1;
       $entries[-1]{ 'copy_revision' } = $2;

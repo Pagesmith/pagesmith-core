@@ -16,6 +16,15 @@ use utf8;
 
 use version qw(qv); our $VERSION = qv('0.1.0');
 
+sub usage {
+  my $self = shift;
+  return {
+    'parameters'  => q(),
+    'description' => 'To display an RSS feed - currently removed!',
+    'notes'       => [],
+  };
+}
+
 1;
 
 __END__
@@ -43,7 +52,7 @@ sub ajax {
   return 1;
 }
 
-sub _cache_key {
+sub my_cache_key {
 ## This component can be cached to memcached/sql/disk cache
 ## - just cache based on the given parameters...
   my $self = shift;

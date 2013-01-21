@@ -43,7 +43,7 @@ sub _short_das_desc {
   if (length $desc > $DAS_DESC_WIDTH) {
     $self->{'comment'} = $desc;
     $desc = substr $desc, 0, $DAS_DESC_WIDTH;
-    $desc =~ s{\s[a-zA-Z0-9]+\Z}{ \.\.\.}mxs; # replace final space with " ..."
+    $desc =~ s{\s[[:alnum:]]+\Z}{ \.\.\.}mxs; # replace final space with " ..."
   }
   $self->{'notes'} = encode_entities($desc);
   $self->{'notes'} .= sprintf ' [<a target="_new" href="%s" rel="external">Homepage</a>]', $source->homepage if $source->homepage;

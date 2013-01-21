@@ -31,7 +31,7 @@ use HTML::Entities qw(encode_entities);
 
 my @months = qw(January February March April May June July August September October November December);
 
-sub _init {
+sub init {
   my $self = shift;
   $self->blank;
   return $self;
@@ -139,7 +139,7 @@ sub update_from_apr {
   return;
 }
 
-sub _render_widget_paper {
+sub render_widget_paper {
   my $self = shift;
   my $v = $self->value;
   return sprintf '<div class="bordered_short">%s</div>',
@@ -152,12 +152,12 @@ sub _render_widget_paper {
               $v->{'year'}-$YEAR_OFFSET );
 }
 
-sub _render_widget {
+sub render_widget {
   my $self = shift;
-  return $self->_render_widget_date.q( ).$self->_render_widget_time.$self->req_opt_string;
+  return $self->render_widget_date.q( ).$self->render_widget_time.$self->req_opt_string;
 }
 
-sub _render_widget_time {
+sub render_widget_time {
   my $self = shift;
   my $code = encode_entities( $self->code );
   my $id   = $self->generate_id_string;
@@ -193,7 +193,7 @@ sub _render_widget_time {
   return $return;
 }
 
-sub _render_widget_date {
+sub render_widget_date {
   my $self = shift;
   my $code = encode_entities( $self->code );
   my $id   = $self->generate_id_string;
@@ -246,7 +246,7 @@ sub element_class {
   return $self;
 }
 
-sub _render_readonly_date {
+sub  render_readonly_date {
   my $self = shift;
   my $v = $self->value;
   return encode_entities(strftime( '%e %b %Y', 0,0,0,$v->{'day'}, $v->{'month'}-1, $v->{'year'} - $YEAR_OFFSET )) if defined $v->{'day'} && $v->{'day'} ne q();
@@ -255,7 +255,7 @@ sub _render_readonly_date {
   return q();
 }
 
-sub _render_readonly_time {
+sub  render_readonly_time {
   my $self = shift;
   my $v = $self->value;
   return encode_entities(strftime( '%H:%M:%S', $v->{'second'}, $v->{'minute'}, $v->{'hour'}, 0, 0, 0 )) if defined $v->{'second'} ;
@@ -264,9 +264,9 @@ sub _render_readonly_time {
   return q();
 }
 
-sub _render_readonly {
+sub  render_readonly {
   my $self = shift;
-  my $value = $self->_render_readonly_time.q( ).$self->_render_readonly_date;
+  my $value = $self-> render_readonly_time.q( ).$self-> render_readonly_date;
   $value = q(--) if $value eq q( );
   return $value;
 }

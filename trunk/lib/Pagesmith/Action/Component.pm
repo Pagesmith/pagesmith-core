@@ -44,11 +44,11 @@ sub run {
   my $return;
   if ( $self->dynamic_use($module) ) {
     my $full_uri = $self->r->headers_in->{'Referer'};
-    ( my $uri = $full_uri||q() ) =~ s{\?.*\Z}{}mxs;
+    ( my $uri = $full_uri||q() ) =~ s{[?].*\Z}{}mxs;
     my $accept_header = $self->r->headers_in->get('Accept')||q(xhtml+xhml);
        $accept_header = q(xhtml+xhml) if $accept_header eq q(*/*);
     my $component = $module->new( Pagesmith::Page->new( $self->r, {
-      'type'          => $accept_header =~ m{xhtml\+xml}mxs ? 'xhtml' : 'html',
+      'type'          => $accept_header =~ m{xhtml[+]xml}mxs ? 'xhtml' : 'html',
       'filename'      => docroot() . $uri,
       'uri'           => $uri,
       'full_uri'      => $full_uri,
@@ -80,7 +80,7 @@ sub run {
     }
   } else {
     ( my $module_tweaked = $module ) =~ s{::}{/}mxgs;
-    if( $self->dynamic_use_failure($module) =~ m{\ACan't\slocate\s$module_tweaked\.pm\sin\s\@INC}mxs ) {
+    if( $self->dynamic_use_failure($module) =~ m{\ACan't\slocate\s$module_tweaked[.]pm\sin\s[@]INC}mxs ) {
       $return = $self->error( $action, 'locate' );
     } else {
       warn __PACKAGE__ . " $action COMPILATION FAILED...", $self->dynamic_use_failure($module), "\n";

@@ -17,6 +17,7 @@ use version qw(qv); our $VERSION = qv('0.1.0');
 
 use Readonly qw(Readonly);
 Readonly my $MAX_FAILURES  => 3;
+Readonly my $SLEEP_FACTOR  => 10;
 
 use base qw(Pagesmith::MyForm);
 use Pagesmith::Utils::Authenticate;
@@ -42,8 +43,8 @@ sub render_extra {
 
   my $pch = Pagesmith::Config->new( { 'file' => 'oauth2', 'location' => 'site' } );
   $self->{'oauth_data'} ||= $pch->load(1)->get;
-  my $html ||= join q(),
-    map { sprintf '<li><a href="/action/OAuth2/%s/%s">%s</li>', $_, $self->code, $self->{'oauth_data'}{$_}{'name'}||$_  }
+  my $html = join q(),
+    map { sprintf '<li><a href="/action/OAuth2/%s/%s">%s</a></li>', $_, $self->code, $self->{'oauth_data'}{$_}{'name'}||$_  }
     sort grep { exists $self->{'oauth_data'}{$_}{'enabled'} && $self->{'oauth_data'}{$_}{'enabled'} } keys %{$self->{'oauth_data'}};
 
   return q() unless $html;
@@ -82,6 +83,7 @@ sub initialize_form {
       $self->add( 'Password', "p$id" )->set_caption('Password')->set_do_not_store;
       $self->add( 'CheckBox', 'remember_me' )->remove_layout('eighty20')->set_optional();
       $self->add( { 'type' => 'Information', 'caption' => 'Please note we use cookies to identify your user, and by logging in you accept that we will write a cookie to your computer.' } );
+
   $self->add_redirect_stage( );
 
   $self->add_error_stage( 'unknown_user' )->set_back( 'Try again' )->set_back_stage( 0 );
@@ -103,7 +105,7 @@ sub extra_validation {
 
   ## If we have more failures than the current max failures we will automatically show the unknown user error page!
 
-  return $self->set_stage_by_name( 'unknown_user' ) if $self->attribute( 'failures' ) >= $MAX_FAILURES;
+  return $self->fail_user( $user_element, $pass_element ) if  $self->attribute( 'failures' ) >= $MAX_FAILURES;
 
   return unless $user_element->value && $pass_element->value;
   ## We need to validate the user and password to see if we recognise them!
@@ -130,6 +132,7 @@ sub fail_user {
 
   $self->update_attribute( 'failures', $self->attribute( 'failures' ) + 1 );
   if( $self->attribute( 'failures' ) >= $MAX_FAILURES ) {
+    sleep $self->attribute( 'failures' ) * $SLEEP_FACTOR;
     $self->set_stage_by_name( 'unknown_user' );
   }
   return;

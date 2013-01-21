@@ -32,6 +32,12 @@ use Pagesmith::Cache::SQL;
 use Pagesmith::Cache::File;
 use Pagesmith::ConfigHash qw(site_key get_config);
 
+use Data::UUID;
+use Readonly qw(Readonly);
+Readonly my $UUID64_LENGTH         => 22;
+Readonly my $MICRO_SLEEP           =>  0.001;
+Readonly my $MAX_SLEEP             =>  5;
+
 #= Usage
 
 ##no critic (CommentedOutCode)
@@ -84,7 +90,7 @@ sub new {
   my($class, $type, $key, $cachetype, $site_key ) = @_;
   $cachetype ||= get_config('CacheType') || 'MS';
   $site_key ||= site_key;
-  $key =~ s{[^-a-zA-Z0-9._=|]}{}mxgs;
+  $key =~ s{[^-\w.=|]}{}mxgs;
   my $self = {
     '_mem' => ( $cachetype =~ m{M}mxs && Pagesmith::Cache::Memcache::configured() ? 1 : 0 ),
     '_sql' => ( $cachetype =~ m{S}mxs && Pagesmith::Cache::SQL::configured()      ? 1 : 0 ),
@@ -226,14 +232,14 @@ sub get {
 
 #== Checking existance of caches
 
-sub _mem {
+sub mem_configured {
 #@param self
 #@return boolean true if memcached cache configured and enabled
   my $self = shift;
   return $self->{'_mem'} && Pagesmith::Cache::Memcache::configured; ##no critic (CallsToUnexportedSubs)
 }
 
-sub _sql {
+sub sql_configured {
 
 #@param self
 #@return boolean true if SQL cache configured and enabled
@@ -241,7 +247,7 @@ sub _sql {
   return $self->{'_sql'} && Pagesmith::Cache::SQL::configured; ##no critic (CallsToUnexportedSubs)
 }
 
-sub _fs {
+sub fs_configured {
 
 #@param self
 #@return boolean true if File cache configured and enabled
@@ -278,6 +284,62 @@ sub _thaw {
   my ( $self, $content ) = @_;
   my $t = substr( $content, 0, 1, q() ) ? eval $content : $content; ##no critic (StringyEval)
   return $t;
+}
+
+sub lock_details {
+  my $self = shift;
+  unless( exists $self->{'_lock_key'} ) {
+    $self->{'_lock_key'} = 'lock:'.$self->{'_cachekey'};
+    $self->{'uuid_gen'} ||= Data::UUID->new;
+    ( my $t = $self->{'uuid_gen'}->create_b64() ) =~ s{[+]}{-}mxgs;
+    $t =~ s{/}{_}mxgs;
+    $self->{'_lock_val'} = substr $t, 0, $UUID64_LENGTH;    ## Don't really need the two == signs at the end!
+  }
+  return ($self->{'_lock_key'},$self->{'_lock_val'});
+}
+
+sub lock_val {
+  my $self = shift;
+  return $self->{'_lock_val'};
+}
+
+##no critic (CallsToUnexportedSubs)
+sub get_lock {
+  my( $self, $expiry, $timeout ) = @_;
+  return $self->{'_mem'} ? Pagesmith::Cache::Memcache::get_lock( $self->lock_details, $expiry, $timeout )
+       : $self->{'_sql'} ? Pagesmith::Cache::SQL::get_lock(       $self->lock_details, $expiry, $timeout )
+       : 1
+       ;
+}
+
+sub release_lock {
+  my $self = shift;
+  return $self->{'_mem'} ? Pagesmith::Cache::Memcache::release_lock( $self->lock_details )
+       : $self->{'_sql'} ? Pagesmith::Cache::SQL::release_lock(       $self->lock_details )
+       : ()
+       ;
+}
+
+sub is_free_lock {
+  my $self = shift;
+  return $self->{'_mem'} ? Pagesmith::Cache::Memcache::is_free_lock( $self->lock_details )
+       : $self->{'_sql'} ? Pagesmith::Cache::SQL::is_free_lock(       $self->lock_details )
+       : 1
+       ;
+}
+
+sub is_used_lock {
+  my $self = shift;
+  return $self->{'_mem'} ? Pagesmith::Cache::Memcache::is_used_lock( $self->lock_details )
+       : $self->{'_sql'} ? Pagesmith::Cache::SQL::is_used_lock(       $self->lock_details )
+       : 0
+       ;
+}
+## use critic
+sub has_lock {
+  my $self = shift;
+  my $is_used = $self->is_used_lock;
+  return $is_used == 1 ? 1 : 0;
 }
 
 1;

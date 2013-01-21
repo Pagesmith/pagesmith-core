@@ -107,7 +107,7 @@ sub run {
     } );
   my $token;
   if( $resp->is_success ) {
-    if( $resp->content =~ m{\A\{}mxs ) {
+    if( q({) eq substr $resp->content, 0, 1 ) {
       my $token_info = eval { $self->json_decode( $resp->content ) };
       $token = $token_info->{'access_token'} if $token_info && ref $token_info eq 'HASH';
     } else {

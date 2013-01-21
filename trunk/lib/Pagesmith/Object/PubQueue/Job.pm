@@ -29,9 +29,9 @@ my $ALLOWED_TRANSITIONS = {
   'processing' => { 'done' => 1, 'failed' => 1 },
 };
 
-sub _init {
+sub init {
   my( $self, $href ) =@_;
-  $self->_super_init();
+  $self->super_init();
   $self->{ '_status'   } = $href->{'status'}          || q();
   $self->{ '_action'   } = $href->{'code'}            || q();
   $self->{ '_id'       } = $href->{'job_id'}          || 0;

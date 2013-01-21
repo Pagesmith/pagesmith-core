@@ -21,7 +21,10 @@ use Time::HiRes qw(time);
 use Cache::Memcached::Tags;
 use POSIX qw(ceil);
 
-use Pagesmith::Cache::Base qw(_expires _columns);
+use Readonly qw(Readonly);
+Readonly my $MAX_SLEEP   => 0.02;
+Readonly my $MICRO_SLEEP => 0.001;
+use Pagesmith::Cache::Base qw(expires columns);
 
 my $memd_config = { 'servers' => [], 'debug' => 'off' };
 my $server_keys = {};
@@ -74,11 +77,11 @@ sub set {    ## Returns true if set was successful...
   my ( $key, $content, $expires ) = @_;
   $memd ||= _new_cache;
   return unless $memd;
-  $expires = _expires($expires);
+  $expires = expires($expires);
   #printf {*STDERR} "SETTING TO %s ... %s [%s] %d\n", $memd, $key, $expires, length $content;
   return unless defined $content;
-  my @t = split m{\|}mxs, $key;
-  my @cols = _columns($t[0]);
+  my @t = split m{[|]}mxs, $key;
+  my @cols = columns($t[0]);
   return unless @cols;   ## Unknown table name...
   my @keys = ( 'category', 'sitekey', @cols );
   my @tags = map { ( shift @keys ) . q(:) . $_ } @t;
@@ -121,7 +124,7 @@ sub touch {
   return unless $memd;
   my $content = $memd->get($key);
   return unless defined $content;
-  $expires = _expires($expires);
+  $expires = expires($expires);
   if ( $content =~ m{\A2(\d+)\Z}mxs ) {
     my @keys = map { $key . q(:) . $_ } 1 .. $1;
     my $y = $memd->get_multi(@keys);
@@ -143,5 +146,56 @@ sub exists {
   return $memd->get($key) ? 1 : 0;
 }
 ##use critic (BuiltinHomonyms)
+
+sub get_lock {
+  my( $lock_key, $lock_val, $expiry, $timeout ) = @_;
+  $memd ||= _new_cache;
+  return 1 unless $memd; ## if can't get memcached then we have to assume lock is successful!
+  my $mult = 0;
+  my $end_timeout = time + $timeout;
+  while( time < $end_timeout ) {
+    $memd->add( $lock_key, $lock_val, $expiry );
+    my $actual_lock_val = $memd->get( $lock_key );
+    return 1 if $actual_lock_val eq $lock_val; ## Yes we have the lock!
+    $mult++ if $mult < $MAX_SLEEP;
+    sleep $MICRO_SLEEP * $mult;
+  }
+  return 0; ## Failed to get lock!
+}
+
+sub release_lock {
+  my( $lock_key, $lock_val ) = @_;
+  $memd ||= _new_cache;
+  return 1 unless $memd; ## if can't get memcached then we have to release is successful!
+  my $actual_lock_val = $memd->get( $lock_key );
+  if( $actual_lock_val eq $lock_val ) {
+    $memd->delete;
+    return 1;
+  } else {
+    return 0;
+  }
+}
+
+sub is_free_lock {
+#@return integer - 1 if lock is not used, 0 otherwise
+  my( $lock_key, $lock_val ) = @_;
+  $memd ||= _new_cache;
+  return 1 unless $memd; ## if can't get memcached then we have to assume lock is free
+  my $actual_lock_val = $memd->get( $lock_key );
+  return $actual_lock_val ? 0 : 1;
+}
+
+sub is_used_lock {
+#@return integer - 1 if lock is used and is owned by this process, -1 if lock is used but not by this cache element, 0 if free
+  my( $lock_key, $lock_val ) = @_;
+  $memd ||= _new_cache;
+  return 0 unless $memd; ## if can't get memcached then we have to assume lock is free
+  my $actual_lock_val = $memd->get( $lock_key );
+  return $actual_lock_val eq $lock_val ? 1
+       : $actual_lock_val              ? - 1
+       :                                 0
+       ;
+}
+
 1;
 

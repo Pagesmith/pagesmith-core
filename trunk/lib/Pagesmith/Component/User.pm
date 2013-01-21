@@ -20,9 +20,43 @@ use List::MoreUtils qw(any);
 use base qw(Pagesmith::Component);
 use HTML::Entities qw(encode_entities);
 
+sub usage {
+  my $self = shift;
+  return {
+    'parameters'  => q(realms),
+    'description' => 'Displays user information panel if the user is logged in OR if the page is being viewed from a selected list of Realms a login link...',
+    'notes'       => [],
+  };
+}
+
+sub define_options {
+  my $self = shift;
+  return { 'code' => 'template', 'defn' => '=s', 'default' => 'default', 'description' => 'template to use' };
+}
+
+my $template_sets = {
+  'default' => [
+    '<div id="user">%s logged in <a href="/action/logout"><img id="logout" src="/core/gfx/blank.gif" alt="Logout" /></a></div>',
+    '<div id="user"><a href="/login"><img id="login" src="/core/gfx/blank.gif" alt="Login" /></a></div>',
+  ],
+  'span' => [
+    '<span id="user">%s logged in <a href="/action/logout">logout</a></span>',
+    '<span id="user"><a href="/login">Login</a></span>',
+  ],
+  'div' => [
+    '<div id="user">%s logged in <a href="/action/logout">logout</a></div>',
+    '<div id="user"><a href="/login">Login</a></div>',
+  ],
+  'raw' => [
+    '%s logged in <a href="/action/logout">logout</a>',
+    '<a href="/login">Login</a>',
+  ],
+};
 sub execute {
   my $self = shift;
   my @realms = $self->pars;
+  my $template = $self->option( 'template' );
+  $template = 'default' unless exists $template_sets->{$template};
 # No restriction so return!
   my $login_realm = 1;
   if( @realms ) {
@@ -38,12 +72,9 @@ sub execute {
 
   ## Initialise User session object!
   my $user_session = $self->page->user;
-  if( $user_session && $user_session->fetch ) {
-    return sprintf q(<div id="user">%s logged in <a href="/action/logout"><img id="logout" src="/core/gfx/blank.gif" alt="Logout" /></a></div>),
-      encode_entities( $user_session->name );
-  }
-  return q() unless $login_realm;
-  return q(<div id="user"><a href="/login"><img id="login" src="/core/gfx/blank.gif" alt="Login" /></a></div>);
+  return sprintf $template_sets->{$template}[0], encode_entities( $user_session->name ) if
+    $user_session && $user_session->fetch;
+  return $login_realm ? $template_sets->{$template}[1] : q();
 }
 
 1;

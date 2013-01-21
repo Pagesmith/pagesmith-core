@@ -15,18 +15,27 @@ use utf8;
 
 use version qw(qv); our $VERSION = qv('0.1.0');
 
-use base qw(Pagesmith::Component::File);
+use base qw(Pagesmith::Component::File Pagesmith::Component::Date);
 use File::Basename qw(basename);
 
-use Date::Format qw(time2str);
+sub usage {
+  my $self = shift;
+  return {
+    'parameters'  => '{filename}?',
+    'description' => 'Display last modified time of named file (or self if no file passed)',
+    'notes'       => [],
+  };
+}
 
 sub execute {
   my $self = shift;
-  my $fn = $self->_get_filename( $self->next_par || basename( $self->page->filename ) );
+  my $fn = $self->get_filename( $self->next_par || basename( $self->page->filename ) );
   return 'Unable to find file' unless $fn;
+
+  ## Get details of file...
   my ($dev,$ino,$mode,$nlink,$uid,$gid,$rdev,$size, $atime,$mtime,$ctime,$blksize,$blocks) = stat $fn;
-  my $format = $self->option( 'format', '%a, %d %b %Y %H:%M %Z' );
-  return time2str( $format, $mtime );
+  ## call parent process!
+  return $self->execute_time( $mtime );
 }
 1;
 

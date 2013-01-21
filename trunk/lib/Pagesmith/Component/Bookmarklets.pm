@@ -20,6 +20,14 @@ use List::MoreUtils qw(any);
 use base qw(Pagesmith::Component);
 use HTML::Entities qw(encode_entities);
 
+sub usage {
+  return {
+    'parameters'  => q({domain}+),
+    'description' => 'Generates a block of links which can be used to flip the browser between sandbox/dev/staging/live sites',
+    'notes'       => [ 'If "THIS" is in the list - generates a sandbox for this domain - usually this will be the sandbox' ],
+  };
+}
+
 sub execute {
   my $self = shift;
   my @domains = $self->pars;
@@ -27,7 +35,7 @@ sub execute {
   my @links;
   foreach my $domain ( @domains ) {
     $domain = $self->r->hostname if $domain eq 'THIS';
-    ( my $name = $domain ) =~ s{\.([-\w]+)\.ac\.uk}{}mxs;
+    ( my $name = $domain ) =~ s{[.]([-\w]+)[].ac[.]uk}{}mxs;
     push @links, sprintf q(  <li><a href="javascript:(function() {window.location.href=window.location.toString().replace(/^http:\/\/([^\/]+)/,'http://%s');})()">%s</a></li>),
       $domain, $name;
   }

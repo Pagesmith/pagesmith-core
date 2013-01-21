@@ -24,10 +24,27 @@ use base qw(Pagesmith::Component);
 
 use LWP::Simple qw($ua get);
 
+sub define_options {
+  my $self = shift;
+  return (
+    $self->ajax_option,
+    { 'code' => 'length',    'defn' => '=i', 'Restrict the length of the URL if the link is longer than this length' },
+    { 'code' => 'get_title', 'description' => 'If set retrieve page and parse title from response' },
+  );
+}
+
+sub usage {
+  my $self = shift;
+  return {
+    'paramters'   => q({name=s}+),
+    'description' => 'Push javascript files into the page (either as embed files or src links)',
+    'notes'       => [q({name} name of file)],
+  };
+}
+
 sub ajax {
   my $self = shift;
-  return 0 unless $self->option('ajax');
-  return 1;
+  return $self->default_ajax;
 }
 
 sub execute {
@@ -47,7 +64,7 @@ sub execute {
       $extra->{'title'} = 'Untitled';
     }
   }
-  return $self->_safe_link( $url, $self->option( 'length' ), $extra );
+  return $self->safe_link( $url, $self->option( 'length' ), $extra );
 }
 
 1;

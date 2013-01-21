@@ -20,19 +20,23 @@ Readonly my $MAX_AGE => 150;
 
 use base qw( Pagesmith::Form::Element::String);
 
-sub _init {
+sub init {
   my( $self, $params ) = @_;
   $self->style = 'short';
   return;
 }
 
-sub _is_valid {
+sub validate {
   my $self = shift;
-  return $self->value =~ m{\A\d+\Z}mxs && $self->value > 0 && $self->value <=$MAX_AGE;
+  return $self->is_valid if $self->value =~ m{\A\d+\Z}mxs && $self->value > 0 && $self->value <=$MAX_AGE;
+  return $self->is_invalid;
 }
 
-sub _class {
-  return '_age';
+sub element_class {
+  my $self = shift;
+  $self->add_class( '_age' );
+  $self->add_class( 'short' );
+  return;
 }
 
 1;

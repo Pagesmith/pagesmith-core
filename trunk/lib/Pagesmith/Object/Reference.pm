@@ -68,13 +68,8 @@ sub touch_values {
   $self->{'links'}       = $self->_links;
   $self->{'grants'}      = $self->_grants;
   $self->{'publication'} = $self->_publication;
-  $self->{'reparse_at'}  = $self->_reparse_at;
+  $self->{'reparse_at'}  = $self->reparse_at;
   return $self;
-}
-sub _enc {
-  local $_ = shift;
-  s{([^\x20-\x7F])}{'&\#'.ord($1).';'}gmxse;
-  return $_;
 }
 
 sub _month {
@@ -297,7 +292,7 @@ sub _pub_date {
   return sprintf '%04d-%02d-%02d', $self->{'_raw'}{'year'}||0, $self->_month( $self->{'_raw'}{'month'} )||0, $day||0;
 }
 
-sub _title {
+sub sort_title {
   my $self = shift;
   unless( exists $self->{'_title'} ) {
     ( my $_title = $self->title ) =~ s{\W+}{ }mxgs;
@@ -309,7 +304,7 @@ sub _title {
   return $self->{'_title'};
 }
 
-sub _reparse_at {
+sub reparse_at {
   my $self = shift;
   my $t = ( $self->pmc && $self->doi ) ? $ONE_MONTH : $ONE_WEEK;
   my ( $s, $m, $h, $dy, $mn, $yr ) = gmtime $t * $ONE_DAY + time;
@@ -333,7 +328,7 @@ sub _links {
   );
   foreach (qw(pubmed pmc doi)) {
     if ( $self->{$_} ) {
-      push @t, sprintf '%s: <a href="%s" rel="external">%s</a>',
+      push @t, sprintf '%s: <a href="%s">%s</a>',
         uc($_), encode_entities( sprintf $links{$_}, uri_escape_utf8( $self->{$_} ) ),
         encode_entities( $self->{$_} );
     }

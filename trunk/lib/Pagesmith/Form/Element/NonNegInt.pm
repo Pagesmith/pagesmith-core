@@ -17,7 +17,7 @@ use version qw(qv); our $VERSION = qv('0.1.0');
 
 use base qw( Pagesmith::Form::Element::String );
 
-sub _init {
+sub init {
   my($self,$element_data) = @_;
   $self->{'_max'}   = $element_data->{'max'};
   $self->{'_class'} = 'short';
@@ -28,14 +28,18 @@ sub max {
   return $self->{'_max'};
 }
 
-sub _is_valid {
+sub validate {
   my $self = shift;
-  return $self->value =~ m{\A[+-]?\d+\Z}mxs && $self->value > 0;
+  return $self->set_valid  if $self->value =~ m{\A[+]?\d+\Z}mxs;
+  return $self->set_invalid;
 }
 
-sub _class {
+sub element_class {
   my $self = shift;
-  return 'short _nonnegint' . ($self->max ? ' max_' . $self->max : q());
+  $self->add_class( '_nonnegint' );
+  $self->add_class( 'short' );
+  $self->add_class( 'max_'.$self->max ) if $self->max;
+  return;
 }
 
 sub required_string {

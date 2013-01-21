@@ -51,7 +51,7 @@ sub child_init_handler {
   $min_time      = $VERY_LARGE_TIME;
   $max_time      = 0;
   $total_time_squared  = 0;
-  ($size,$shared,$unshared) = Apache2::SizeLimit->_check_size(); ##no critic(PrivateSubs)
+  ($size,$shared,$unshared) = Apache2::SizeLimit->_check_size(); ##no critic(PrivateSubs)  ## non-PS private fn
   printf {*STDERR} "TI:   Start child   %9d\n", $PID;
   return DECLINED;
 }

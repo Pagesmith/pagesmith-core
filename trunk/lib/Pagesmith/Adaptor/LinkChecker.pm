@@ -29,7 +29,7 @@ use URI;
 my $protocols = {};
 my $sites     = {};
 
-sub _connection_pars {
+sub connection_pars {
   return 'link_check';
 }
 

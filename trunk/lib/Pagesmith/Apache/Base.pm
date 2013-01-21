@@ -31,11 +31,11 @@ use Pagesmith::Cache;
 use Pagesmith::ConfigHash qw(can_cache get_config);
 use Pagesmith::Core qw(safe_md5 parse_cookie clean_template_type);
 
-our @EXPORT_OK = qw(_handler _expand_content);
+our @EXPORT_OK = qw(my_handler expand_content);
 our %EXPORT_TAGS = ('ALL' => \@EXPORT_OK);
 
 
-sub _expand_content {
+sub expand_content {
 ## Used by helper functions - just an HTML wrapper that sets the author and
 ## title for text based files...
   my ( $html, $title, $author ) = @_;
@@ -46,7 +46,7 @@ sub _expand_content {
   return \$t;
 }
 
-sub _handler {
+sub my_handler {
 
 ## Base handler ... called by handler functions in derived classes, takes
 ## a callback function which manipulates the contents of the file and the
@@ -73,8 +73,8 @@ sub _handler {
   ## grab the file from the cache if it is there!!!
 
   if ( can_cache('pages') ) {
-    my ( $uri, $qs ) = split m{\?}mxs, $r->unparsed_uri, 2;
-    $uri =~ s{/index\.html\Z}{/}mxs;    ## Remove the trailing index.html
+    my ( $uri, $qs ) = split m{[?]}mxs, $r->unparsed_uri, 2;
+    $uri =~ s{/index[.]html\Z}{/}mxs;    ## Remove the trailing index.html
     $uri =~ s{[/|]}{=}mxgs;                ## Replace / with =..
     my $flags     = parse_cookie($r);
     my $flush_cache = ( ($r->headers_in->{'Cache-Control'}||q()) =~ m{max-age=0}mxs || ($r->headers_in->{'Pragma'}||q()) eq 'no-cache' )
@@ -120,7 +120,7 @@ sub _handler {
   my $html = &{$callback}(
     $r->slurp_filename,                       ## scalar ref to contents of file!
     $r->uri,                                  ## URI of page...
-    sprintf '%s (%s)', $author_name, $author_id  ## Author as "Name (username)"
+    sprintf '%s (%s)', $author_name, $author_id,  ## Author as "Name (username)"
   );
   $r->headers_out->set( 'Last-modified', time2str( '%a, %d %b %Y %H:%M:%S %Z', $r->finfo->mtime, 'GMT' ) );
   ## Set appropriate headers...

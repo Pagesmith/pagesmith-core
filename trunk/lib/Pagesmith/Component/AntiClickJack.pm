@@ -20,16 +20,24 @@ use version qw(qv); our $VERSION = qv('0.1.0');
 
 use base qw(Pagesmith::Component);
 
+sub usage {
+  return {
+    'parameters'  => q(),
+    'description' => q(Inserts an AntiClickJack HTML/CSS/Javascript blob in the top of the page),
+    'notes'       => [ 'The purpose of this module is to stop the pages being embedded inside frames or iframes' ],
+  };
+}
+
 sub execute {
   my $self = shift;
   ## no critic (ImplicitNewlines)
-  return q(<style type="text/css" id="antiClickjack">/*<![CDATA[*/
+  return q(<style type="text/css" id="acj">/*<![CDATA[*/
   body{display:none !important;}
 /*]]>*/</style>
 <script type="text/javascript">// <![CDATA[
   if (self === top) {
-    var antiClickjack = document.getElementById("antiClickjack");
-    antiClickjack.parentNode.removeChild(antiClickjack);
+    var acj_obj = document.getElementById("acj");
+    acj_obj.parentNode.removeChild(acj_obj);
   } else {
     top.location = self.location;
   }

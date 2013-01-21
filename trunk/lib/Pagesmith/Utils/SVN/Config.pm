@@ -113,7 +113,7 @@ sub get_method_for {
 
   my $subroutine = 'noextension';
   my $extn       = q(-);
-  if( $filename =~ m{\.([-\w]+)\Z}mxs ) {
+  if( $filename =~ m{[.]([-\w]+)\Z}mxs ) {
     $extn = $1;
     unless( $self->{'syntax_map'} ) {
       foreach my $method ( keys %{ $self->{'raw'}{'syntax_checker'} } ) {
@@ -140,13 +140,13 @@ sub _get_structure {
   if( -d $path ) {
     if( opendir my $dh, $path ) {
       while( my $part = readdir $dh ) {
-        next if $part =~ m{\A\.}mxs;
-        (my $key = $part) =~ s{\.yaml\Z}{}mxs;
+        next if $part =~ m{\A[.]}mxs;
+        (my $key = $part) =~ s{[.]yaml\Z}{}mxs;
         $structure->{$key} ||= {};
         $return_value = 0 unless $self->_get_structure( $path.q(/).$part, $structure->{$key} );
       }
     }
-  } elsif( -f _ && $path =~ m{\.yaml}mxs && open my $fh, '<', $path ) {
+  } elsif( -f _ && $path =~ m{[.]yaml}mxs && open my $fh, q(<), $path ) {
     local $INPUT_RECORD_SEPARATOR = undef;
     my $yaml   = <$fh>.qq(\n);
     close $fh; ## no critic (RequireChecked)

@@ -30,7 +30,7 @@ sub run {
   my $qr_url = get_config( 'QrURL' ) || $self->base_url.'/qr/';
 
   my $key   = $self->next_path_info;
-  my $image = $key =~ s{\.png\Z}{}mxs ? 1 : 0;
+  my $image = $key =~ s{[.]png\Z}{}mxs ? 1 : 0;
 
   unless( $image ) {
     my $qr_obj = Pagesmith::Adaptor::Qr->new()->get_by_code( $key );

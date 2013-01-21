@@ -25,14 +25,14 @@ sub update_from_apr {
   return;
 }
 
-sub _render_widget {
+sub render_widget {
   my $self = shift;
-  return $self->_render_widget_time;
+  return $self->render_widget_time;
 }
 
-sub _render_readonly {
+sub  render_readonly {
   my $self = shift;
-  return $self->_render_readonly_time;
+  return $self-> render_readonly_time;
 }
 
 sub element_class {

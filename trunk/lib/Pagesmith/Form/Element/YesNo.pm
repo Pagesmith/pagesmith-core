@@ -29,14 +29,14 @@ use base qw( Pagesmith::Form::Element::DropDown );
 # whilst the 'value' element is passed as a form variable
 #--------------------------------------------------------------------
 
-sub _init {
+sub init {
   my( $self, $element_data ) = @_;
   $self->add_layout( 'eighty20' );
   $element_data->{'values'} = [
     { 'value' => 'no', 'name' => 'No' },
     { 'value' => 'yes', 'name' => 'Yes' },
   ];
-  $self->SUPER::_init( $element_data );
+  $self->SUPER::init( $element_data );
   return;
 }
 

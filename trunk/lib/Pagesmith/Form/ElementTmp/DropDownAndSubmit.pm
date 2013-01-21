@@ -31,7 +31,7 @@ use base qw( Pagesmith::Form::Element );
 
 use HTML::Entities qw(encode_entities);
 
-sub _init {
+sub init {
   my($self, $params ) = @_;
 
   $self->render_as    = $params->{'select'} ? 'select' : 'radiobutton';
@@ -39,11 +39,6 @@ sub _init {
   $self->firstlin     = $params->{'firstline'};
   $self->button_value = $params->{'button_value'};
   return $self;
-}
-
-sub _validate {
-  my $self = shift;
-  return $self->render_as eq 'select';
 }
 
 sub firstline {

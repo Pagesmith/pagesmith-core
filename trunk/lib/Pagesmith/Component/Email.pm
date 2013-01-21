@@ -17,12 +17,21 @@ use version qw(qv); our $VERSION = qv('0.1.0');
 
 use base qw(Pagesmith::Component);
 
+sub usage {
+  my $self = shift;
+  return {
+    'parameters'  => '{email=s} {name=s*}',
+    'description' => 'Displays an escaped email link',
+    'notes'       => [],
+  };
+}
+
 sub execute {
   my $self = shift;
   my ( $email, @name ) = $self->pars;
   my $name = join q( ),@name;
 
-  return $self->_safe_email( $email, $name );
+  return $self->safe_email( $email, $name );
 }
 
 1;

@@ -57,9 +57,9 @@ sub allow_vector {
   return $self->{'allow_vector'};
 }
 
-sub _remove_uploaded_file {
+sub remove_uploaded_file {
   my( $self, $key ) = @_;
-  $self->SUPER::_remove_uploaded_file( $key );
+  $self->SUPER::remove_uploaded_file( $key );
   return 1;
 }
 
@@ -170,7 +170,7 @@ sub render_single {
   ## use critic
 }
 
-sub _extra_columns {
+sub extra_columns {
   my $self = shift;
   my $prefix = $self->config->option('code').q(/).$self->code;
   return (

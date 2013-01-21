@@ -31,7 +31,7 @@ Readonly my $LONG_LINE_LENGTH  => 72;
 Readonly my $SHORT_LINE_LENGTH => 40;
 Readonly my $CAPTION_WIDTH     => 26;
 
-sub _init {
+sub init {
   my $self = shift;
   return $self;
 }
@@ -148,7 +148,7 @@ sub new {
   };
   $self->{ 'code' } = $element_data->{ 'code' }||$self->{ 'id' };
   bless $self, $class;
-  $self->_init( $element_data );
+  $self->init( $element_data );
   $self->element_class;
 
   if( exists $element_data->{'class'} ) {
@@ -565,13 +565,13 @@ sub render {
     $self->generate_label_string,
     $layout_string,
     $self->info  ? qq(\n        <div class="clear">\n          ) . $self->info  . "\n        </div>" : q(),
-    $self->_render_widget,
-    $self->_extra_information,
+    $self->render_widget,
+    $self->extra_information,
     $self->notes ? qq(\n        <div class="clear">\n          ) . $self->notes . "\n        </div>" : q(),
   ;
 }
 
-sub _extra_information {
+sub extra_information {
   return q();
 }
 
@@ -584,7 +584,7 @@ sub render_paper {
     ( $self->raw_caption ? $self->caption : encode_entities( $self->caption ) ) || '&nbsp;',
     $class_string,
     $self->info ? qq(\n    <div class="clear">) . $self->info . '</div>' : q(),
-    $self->_render_widget_paper(),
+    $self->render_widget_paper(),
     $self->notes ? qq(\n    <div class="clear">) . $self->notes . '</div>' : q(),
   ;
 }
@@ -598,16 +598,16 @@ sub render_readonly {
     $layout_string,
     ( $self->raw_caption ? $self->caption : encode_entities( $self->caption ) ) || '&nbsp;',
     $layout_string,
-    $self->_render_readonly()
+    $self->render_widget_readonly()
   ;
 }
 
-sub _render_widget_paper {
+sub render_widget_paper {
   my $self = shift;
-  return $self->_render_widget;
+  return $self->render_widget;
 }
 
-sub _render_readonly {
+sub render_widget_readonly {
   my $self = shift;
   my $val = $self->raw ? $self->value : eval { encode_entities( $self->value ); } || $self->value;
   $val = '&nbsp;' if $val =~ m{\A\s*\Z}mxs;
@@ -626,7 +626,7 @@ sub twrap {
 
 sub render_email {
   my( $self, $form ) = @_;
-  my $value = $self->_render_readonly;
+  my $value = $self->render_readonly;
   $value = q(--) if $value eq '&nbsp;';
   $value =~ s{<[^>]+>}{}mxgs;
   $value = decode_entities( $value );

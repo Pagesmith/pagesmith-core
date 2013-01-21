@@ -31,7 +31,7 @@ use HTML::Entities qw(encode_entities);
 # whilst the 'value' element is passed as a form variable
 #--------------------------------------------------------------------
 
-sub _init {
+sub init {
   my($self, $params ) = @_;
 
   $self->{'render_as'}    = $params->{'select'} ? 'select' : 'radiobutton';
@@ -39,11 +39,6 @@ sub _init {
   $self->{'string_name'}  = $params->{'string_name'};
   $self->{'string_label'} = $params->{'string_label'};
   return $self;
-}
-
-sub _validate {
-  my $self = shift;
-  return $self->render_as eq 'select';
 }
 
 sub string_name {

@@ -103,7 +103,7 @@ sub tab_type {
   return $self->option('fake') ? 'fake-tabs' : 'tabs';
 }
 
-sub render {
+sub render_ul_block {
   my $self = shift;
   my @html;
   push @html, sprintf q(  <ul class="%s">), join q( ), $self->tab_type, @{$self->{'classes'}||[]};
@@ -113,6 +113,12 @@ sub render {
     push @html, sprintf '    <li><a href="#%s"%s>%s</a></li>', encode_entities($entry->{'key'}), $extra, encode_entities($entry->{'title'});
   }
   push @html, q(  </ul>);
+  return join qq(\n), @html;
+}
+
+sub render_div_block {
+  my $self = shift;
+  my @html;
   foreach my $entry ( @{$self->{'tabs'}} ) {
     my $html = q();
     unless( $entry->{'title'} eq q() || exists $entry->{'options'}{'no_heading'} && $entry->{'options'}{'no_heading'}) {
@@ -138,6 +144,11 @@ sub render {
     push @html, sprintf '  <div id="%s"%s>%s</div>', encode_entities($entry->{'key'}), $div_class, $html;
   }
   return join qq(\n), @html;
+}
+
+sub render {
+  my $self = shift;
+  return $self->render_ul_block.$self->render_div_block;
 }
 
 1;

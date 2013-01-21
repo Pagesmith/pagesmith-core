@@ -19,7 +19,7 @@ use base qw( Pagesmith::Form::Element::DropDown );
 
 use Pagesmith::Form::Constants qw(COUNTRIES);
 
-sub _init {
+sub init {
   my $self = shift;
   return $self
     ->set_values( COUNTRIES )

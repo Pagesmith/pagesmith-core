@@ -180,13 +180,4 @@ use Pagesmith::Page;
 use Pagesmith::Root;
 use Pagesmith::Adaptor;
 
-use Apache2::SizeLimit;
-# sizes are in KB
-
-## no critic (MagicNumbers)
-$Apache2::SizeLimit::MAX_PROCESS_SIZE  = 786_432; # 0.75 GB
-$Apache2::SizeLimit::MAX_UNSHARED_SIZE = 786_432; # 0.75 GB
-$Apache2::SizeLimit::CHECK_EVERY_N_REQUESTS = 3;
-## use critic
-
 1;

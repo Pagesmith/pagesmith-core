@@ -20,6 +20,16 @@ use version qw(qv); our $VERSION = qv('0.1.0');
 
 use base qw(Pagesmith::Component);
 
+sub usage {
+  my $self = shift;
+  return {
+    'parameters'  => q(),
+    'description' => 'Marks the end of an if block - content is removed if the if is not true',
+    'notes'       => [ 'Usually use with <%~ ~%> delayed directive style as usually want to cache content before if applied....' ] ,
+    'see_also'    => { 'Pagesmith::Component::If' => 'See notes on If to understand what conditions are possible' },
+  };
+}
+
 sub execute {
   return '<% end %>';
 }
@@ -47,8 +57,7 @@ h3. Notes
 * Condition is one of =|==|eq|equals; !|!=|ne|not_equals; =~|~|contains;
   !~|not_contains; =^|starts; !^|not_starts; =$|ends; !$|not_ends
 
-* Usually use with <%~ ~%> delayed directive style as usually want to cache
-  content before if applied....
+* 
 
 h3. See Also
 

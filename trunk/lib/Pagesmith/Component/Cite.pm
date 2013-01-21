@@ -29,11 +29,30 @@ my $wrap_map = {
   'none'   => [ q(),   q()  ],
 };
 
+sub usage {
+  my $self = shift;
+  return {
+    'parameters'  => '{SID_\d+|tmp-key|pmid}+',
+    'description' => 'Includes a citation link within the body of the page, for which the reference will be displayed later',
+    'notes'       => ['Can have one or more IDs', 'displays errors in logs if ID type is not recognised'],
+  };
+}
+
+sub define_options {
+  my $self = shift;
+   return  (
+     { 'code' => 'style',     'defn' => '=s', 'default' => 'footnote',  'description' => 'Style to display citation in' },
+     { 'code' => 'delimiter', 'defn' => '=s', 'default' => 'square',    'description' => 'Symbols to wrap around entry - one of square, round, none'},
+     { 'code' => 'name',      'defn' => q(),                            'description' => 'meta style -> inline/refname & round'},
+     { 'code' => 'group',     'defn' => '=s', 'default' => 'default',   'description' => 'Key for group of references to be displayed in' },
+  );
+}
+
 sub execute {
   my $self = shift;
 
-  my $style_flag = $self->option('style')     ? $self->option('style')      : 'footnote';
-  my $delim_flag = $self->option('delimiter') ? $self->option('delimiter' ) : q(square);
+  my $style_flag = $self->option('style',     'footnote' );
+  my $delim_flag = $self->option('delimiter', 'square' );
      $style_flag = 'inline refname' if $self->option( 'name' );
      $delim_flag = 'round'          if $self->option( 'name' );
   my $style = $self->init_store( 'refstyle',  $style_flag );
