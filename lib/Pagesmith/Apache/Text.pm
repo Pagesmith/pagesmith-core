@@ -20,17 +20,17 @@ use version qw(qv); our $VERSION = qv('0.1.0');
 
 use HTML::Entities qw(encode_entities);
 
-use Pagesmith::Apache::Base qw(_handler _expand_content);
+use Pagesmith::Apache::Base qw(my_handler expand_content);
 
 sub handler {
   my $r = shift;
-  return _handler(
+  return my_handler(
     sub {
       my ( $content, $uri, $author ) = @_;
 
       my $html = '<pre>' . encode_entities(${$content}) . '</pre>';
 
-      return _expand_content( \$html, $uri, $author );
+      return expand_content( \$html, $uri, $author );
     },
     $r,
   );

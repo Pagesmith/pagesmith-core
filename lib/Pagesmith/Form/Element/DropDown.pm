@@ -31,7 +31,7 @@ use HTML::Entities qw(encode_entities);
 # whilst the 'value' element is passed as a form variable
 #--------------------------------------------------------------------
 
-sub _init {
+sub init {
   my( $self, $element_data ) = @_;
 
   $element_data ||= {};
@@ -114,12 +114,7 @@ sub set_print_as_list {
   return $self;
 }
 
-sub _validate {
-  my $self = shift;
-  return $self->render_as eq 'select';
-}
-
-sub _render_widget_paper {
+sub render_widget_paper {
   my $self = shift;
   if( $self->print_as eq 'box' ) {
     my $class = $self->generate_class_string =~ m{short}mxs ? 'bordered_short' : 'bordered';
@@ -155,7 +150,7 @@ sub _render_widget_paper {
   return qq(<ul class="boxes">$options</ul>);
 }
 
-sub _render_readonly {
+sub  render_readonly {
   my $self = shift;
   my $value = $self->value;
   my ($text)  = map { ( ref $_ ? ($_->{'value'} eq $value ? ($_->{'name'}) : ()) : ( $_ eq $value ? ($_) : () ) ) } $self->values;
@@ -163,7 +158,7 @@ sub _render_readonly {
   return $self->raw ? $text : encode_entities( $text );
 }
 
-sub _render_widget {
+sub render_widget {
   my $self = shift;
   my $options = q();
   my $current_group = q();

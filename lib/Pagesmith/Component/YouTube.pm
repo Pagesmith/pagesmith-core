@@ -19,7 +19,29 @@ use base qw(Pagesmith::Component);
 
 use HTML::Entities qw(encode_entities);
 
-sub _cache_key {
+sub usage {
+  my $self = shift;
+  return {
+    'parameters'  => '[{key=s} {caption=s}]+',
+    'description' => 'Display an embedded YouTube video - size/positioning is dependent on the template used',
+    'notes'       => [
+      '{key} code for video as in http://www.youtube.com/v/...',
+      '{caption} caption to appear under the video',
+    ],
+  };
+}
+
+sub define_options {
+  my $self = shift;
+  return (
+    { 'code' => 'template', 'defn' => q(=s), 'default' => 'small',
+      'description' => 'Template to use to render elements', 'values'=>qw(small small-right centered large) },
+    { 'code' => 'channel',  'defn' => q(=s), 'default' => q(),
+      'description' => 'If set the video(s) is/are wrapped in an HTML panel with a link to the channel as defined', },
+  );
+}
+
+sub my_cache_key {
   my $self = shift;
   return $self->checksum_parameters();
 }
@@ -34,8 +56,7 @@ my $templates = {
 sub execute {
   my $self = shift;
   my $html = ();
-  my $template = $self->option('template')||q();
-     $template = 'small' unless $template && exists $templates->{$template};
+  my $template = $self->option('template','small');
   my @Q = $self->pars;
   while ( my ( $key, $caption ) = splice @Q, 0, 2 ) {
     $caption = q() unless defined $caption;
@@ -80,4 +101,6 @@ h3. Notes
 * Default format is small but not wrapped (to be embedded in the RHS column of the page)
 
 h3. See also
+
 * CSS: core/css/pagesmith-classes.css - contains CSS to format p/div
+

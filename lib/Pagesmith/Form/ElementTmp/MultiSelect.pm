@@ -18,7 +18,7 @@ use base qw( Pagesmith::Form::Element );
 
 use HTML::Entities qw(encode_entities);
 
-sub _init {
+sub init {
   my( $self, $params ) = @_;
   $self->{'render_as'}  = $params->{'select'} ? 'select' : 'radiobutton';
   $self->{'values'}     = $params->{'values'};

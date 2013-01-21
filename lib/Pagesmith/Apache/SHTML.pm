@@ -17,13 +17,13 @@ use version qw(qv); our $VERSION = qv('0.1.0');
 
 use utf8;
 
-use Pagesmith::Apache::Base qw(_handler);
+use Pagesmith::Apache::Base qw(my_handler);
 use Pagesmith::Utils::Tidy;
 use Pagesmith::Utils::SHTML;
 
 sub handler {
   my $r = shift;
-  return _handler(
+  return my_handler(
     sub {
       my ( $content, $uri, $author ) = @_;
       utf8::decode(${$content}); ##no critic (CallsToUnexportedSubs)

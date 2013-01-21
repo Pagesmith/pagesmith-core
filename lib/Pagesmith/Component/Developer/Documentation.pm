@@ -23,15 +23,22 @@ use English qw($EVAL_ERROR $INPUT_RECORD_SEPARATOR -no_match_vars);
 use Readonly qw(Readonly);
 Readonly my $ACCESS_LEVEL => 1;
 
-
-sub _cache_key {
+sub define_options {
   my $self = shift;
-  return;
+  return $self->ajax_option;
 }
 
-sub _relative_to_serverroot {
+sub usage {
+  return {
+    'parameters'  => '{module_name module_file}',
+    'description' => 'Generate documentation from file',
+    'notes' => [ 'Deprecated' ],
+  };
+}
+
+sub my_cache_key {
   my $self = shift;
-  return 1;
+  return;
 }
 
 sub execute {
@@ -42,7 +49,7 @@ sub execute {
 
   return $err if $err;
 
-  return $self->_error( 'Forbidden - could not open file: ' . encode_entities($module_file) )
+  return $self->error( 'Forbidden - could not open file: ' . encode_entities($module_file) )
     unless open my $fh, '<', $self->filename;
   my @lines = <$fh>;
   close $fh; ## no critic (RequireChecked)
@@ -57,7 +64,7 @@ sub execute {
       next;
     }
     next unless $flag;
-    if( $line =~ m{\Ah3\.\s+(.*)}mxs ) {
+    if( $line =~ m{\Ah3[.]\s+(.*)}mxs ) {
       if( @sections ) {
         $sections[-1]->{'content'} = [ @l ];
         @l = ();
@@ -97,7 +104,7 @@ sub _render {
         $html .= encode_entities($line_x)."\n";
       }
       $html .= '</pre>';
-    } elsif( $line =~ m{\A\*\s+(.*)}mxs ) {
+    } elsif( $line =~ m{\A[*]\s+(.*)}mxs ) {
       $html .="\n<ul>  \n  <li>\n    ".encode_entities( $1 );
       $flag = 1;
       while( @{$content_ref} ) {
@@ -105,7 +112,7 @@ sub _render {
         if( $line_x =~ m{\A\s*\Z}mxs ) {
           $html .= "\n  </li>" if $flag == 1;
           $flag = 0;
-        } elsif( $flag == 0 && $line_x =~ m{\A\*\s*(.*)}mxs ) {
+        } elsif( $flag == 0 && $line_x =~ m{\A[*]\s*(.*)}mxs ) {
           $html .= "\n  <li>\n    ".encode_entities( $1 );
           $flag = 1;
         } elsif( $flag == 0 ) {

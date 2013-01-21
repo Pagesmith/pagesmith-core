@@ -21,7 +21,23 @@ use Cwd qw(cwd realpath);
 use English qw(-no_match_vars $INPUT_RECORD_SEPARATOR);
 use HTML::Entities qw(encode_entities);
 
-sub _cache_key {
+sub define_options {
+  my $self = shift;
+  return (
+    { 'code' => 'embed', 'description' => 'If included embed the Javascript in the page' },
+  );
+}
+
+sub usage {
+  my $self = shift;
+  return {
+    'paramters'   => q({name=s}+),
+    'description' => 'Push javascript files into the page (either as embed files or src links)',
+    'notes'       => q({name} name of file),
+  };
+}
+
+sub my_cache_key {
   my $self = shift;
   return;
 }

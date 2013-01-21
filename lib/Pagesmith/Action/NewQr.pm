@@ -64,7 +64,7 @@ sub create_new_url {
   if (!$userid || !$url) {
     return $self->html->print( '<p>Error: Parameter not specified correctly</p>' )->ok;
   }
-  if ($url !~ m{^http(s)?:\/\/}xms ) {
+  if ($url !~ m{^https?:\/\/}xms ) {
     return $self->html->print( '<p>Error: URL Parameter not specified correctly</p>' )->ok;
   }
 

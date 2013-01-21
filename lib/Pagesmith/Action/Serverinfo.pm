@@ -23,7 +23,7 @@ sub run {
   if( open my $fh, q(-|), q(uptime) ) {
     my $uptime = <$fh>;
     close $fh; ## no critic (RequireChecked)
-    if( $uptime =~ m{load\s+average:\s*(\d+\.\d+),\s*(\d+\.\d+),\s*(\d+\.\d+)}mxs ) {
+    if( $uptime =~ m{load\s+average:\s*(\d+[.]\d+),\s*(\d+[.]\d+),\s*(\d+[.]\d+)}mxs ) {
       $ret->{'load_1'}  = $1;
       $ret->{'load_5'}  = $2;
       $ret->{'load_15'} = $3;

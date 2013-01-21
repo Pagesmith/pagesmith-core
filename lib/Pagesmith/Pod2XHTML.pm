@@ -86,15 +86,15 @@ sub _render_list {
   my($self,$pars,@vars) = @_;
   my $t    = $vars[0][2];
   my ( $type, $subtype ) =
-      $t =~ m{\A\d+\)}mxs   ? qw( ol decimal )
-    : $t =~ m{\AA\)}mxs     ? qw( ol upper-alpha )
-    : $t =~ m{\AI\)}mxs     ? qw( ol upper-roman )
-    : $t =~ m{\Aa\)}mxs     ? qw( ol lower-alpha )
-    : $t =~ m{\Ai\)}mxs     ? qw( ol lower-roman )
-    : $t =~ m{\A[-\.]\s}mxs ? qw( ul disc )
-    : $t =~ m{\Ao\s}mxs     ? qw( ul circle )
-    : $t =~ m{\A\#\s}mxs    ? qw( ul square )
-    :                       qw( ul none )
+      $t =~ m{\A\d+[)]}mxs   ? qw( ol decimal )
+    : $t =~ m{\AA[)]}mxs     ? qw( ol upper-alpha )
+    : $t =~ m{\AI[)]}mxs     ? qw( ol upper-roman )
+    : $t =~ m{\Aa[)]}mxs     ? qw( ol lower-alpha )
+    : $t =~ m{\Ai[)]}mxs     ? qw( ol lower-roman )
+    : $t =~ m{\A[-.]\s}mxs   ? qw( ul disc )
+    : $t =~ m{\Ao\s}mxs      ? qw( ul circle )
+    : $t =~ m{\A#\s}mxs      ? qw( ul square )
+    :                          qw( ul none )
     ;
   my $html = qq(<$type style="list-style-type: $subtype">\n);
   foreach my $ar (@vars) {
@@ -102,7 +102,7 @@ sub _render_list {
     if ( $x eq 'over-text' ) {
       $html .= "<li>\n" . $self->_render_list( $params, @ar ) . "</li>\n";
     } else {
-      $ar[0] =~ s{^((\d+|A|I|a|i)\)|[-\.o\#])\s}{}mxs unless ref $ar[0];
+      $ar[0] =~ s{^((\d+|[AIai])[)]|[-.o#])\s}{}mxs unless ref $ar[0];
       $html .= $self->_render_block( 'li', @ar );
     }
   }

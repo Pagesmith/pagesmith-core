@@ -42,7 +42,7 @@ use Pagesmith::ConfigHash qw(site_key);
 
 my $ID = 0;
 
-sub _header_safe {
+sub header_safe {
   my( $self, $string ) = @_;
   $string =~ s{\s+}{ }mxgs;
   $string =~ s{(['"<>\\])}{\\$1}mxgs;
@@ -881,12 +881,12 @@ sub destroy_object {
 ## Store the form object to memory cache!
 sub generate_checksum {
   my( $self, $user_data ) = @_;
-  return safe_md5( $self->_dumper( $user_data, 'user_data' ) );
+  return safe_md5( $self->raw_dumper( $user_data, 'user_data' ) );
 }
 
 sub validate_checksum {
   my( $self, $checksum ) = @_;
-  return $checksum eq safe_md5( $self->_dumper( $self->get_data_from_elements, 'user_data' ) );
+  return $checksum eq safe_md5( $self->raw_dumper( $self->get_data_from_elements, 'user_data' ) );
 }
 
 sub store {

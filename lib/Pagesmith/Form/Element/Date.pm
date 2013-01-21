@@ -34,9 +34,9 @@ sub update_from_apr {
   return;
 }
 
-sub _render_widget {
+sub render_widget {
   my $self = shift;
-  return $self->_render_widget_date.$self->req_opt_string;
+  return $self->render_widget_date.$self->req_opt_string;
 }
 
 sub element_class {
@@ -45,9 +45,9 @@ sub element_class {
   return $self;
 }
 
-sub _render_readonly {
+sub  render_readonly {
   my $self = shift;
-  my $value = $self->_render_readonly_date;
+  my $value = $self-> render_readonly_date;
   $value = q(--) if $value eq q();
   return $value;
 }

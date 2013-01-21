@@ -17,7 +17,7 @@ use version qw(qv); our $VERSION = qv('0.1.0');
 
 use base qw( Pagesmith::Form::Element );
 
-sub _init {
+sub init {
   my( $self, $params ) = @_;
   $self->{'render_as'} = $params->{'select'} ? 'select' : 'radiobutton';
   return;

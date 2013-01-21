@@ -77,12 +77,12 @@ sub run {
     my $total = 0;
     while ( defined( my $file = readdir $bin ) ) {
       next if $file eq q(.) or $file eq q(..);
-      next if $file =~ m{(^\.|(~|\.bak)$)}mxs;
+      next if $file =~ m{(^[.]|(~|[.]bak)$)}mxs;
       $total++;
       if ( -d "$full_dir$file" ) {
         push @{ $files[0] }, ['dir coll', $file];
       } else {
-        my ($ext) = $file =~ m{\.([^.]+)\Z}mxs ? $1 : q();
+        my ($ext) = $file =~ m{[.]([^.]+)\Z}mxs ? $1 : q();
         $ext = exists $types{$ext} ? $types{$ext} : 'unknown';
         push @{ $files[1] }, ["file ext_$ext", $file];
       }
@@ -111,7 +111,7 @@ sub run {
       $st_gid,$st_rdev,$st_size,$st_atime,$st_mtime,
       $st_ctime,$st_blksize,$st_blocks ) = stat $full_dir;
 
-    my ($ext) = $dir =~ m{\.([^.]+)\Z}mxs ? $1 : q();
+    my ($ext) = $dir =~ m{[.]([^.]+)\Z}mxs ? $1 : q();
     $ext = exists $types{$ext} ? $types{$ext} : 'unknown';
 
     ## Get author information so we can set it!

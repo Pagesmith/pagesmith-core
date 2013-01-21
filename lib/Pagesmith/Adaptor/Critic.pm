@@ -26,7 +26,7 @@ use utf8;
 
 use Pagesmith::Object::Reference;
 
-sub _connection_pars {
+sub connection_pars {
   return ( 'dbi:mysql:critic:web-vm-db-dev:3302', 'critic_rw', 'Cr171Qz' );
 }
 

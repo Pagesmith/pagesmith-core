@@ -19,13 +19,33 @@ use base qw(Pagesmith::Component::Image);
 
 use HTML::Entities qw(encode_entities);    ## HTML entity escaping
 
+sub define_options {
+  my $self = shift;
+  return (
+    { 'code' => 'credit', 'defn' => '=s', 'default' => q(), 'description' => 'Caption for image' },
+    { 'code' => 'class',  'defn' => '=s', 'default' => q(), 'description' => 'Additional classes for feature div' },
+    { 'code' => 'popup',                  'description' => 'Wheter image is clickable to bring up a thick box panel' },
+  );
+}
+
+sub usage {
+  my $self = shift;
+  return {
+    'parameters'  => '{image} {caption}*',
+    'description' => 'Display image in resizing box on feature pages',
+    'notes'       => [],
+  };
+}
+
 sub execute {
   my $self = shift;
-  my ( $img, $cap ) = $self->pars;
-  my $credit = $self->_credit( $self->option('credit') || q() );
+  my ( $img, @cap ) = $self->pars;
+  my $cap = "@cap";
+  my $credit = $self->credit( $self->option('credit') );
 
   my $extra_class = q();
-  $extra_class .= ' class="' . encode_entities( $self->option('class') ) . q(") if $self->option('class');
+  my $class_flag = $self->option('class');
+  $extra_class .= sprintf ' class="%s"', encode_entities( $class_flag ) if $class_flag;
   if ( $self->option('popup') ) {
     return
       sprintf

@@ -27,9 +27,23 @@ use Syntax::Highlight::Perl::Improved;
 
 use Pagesmith::ConfigHash qw(server_root);
 
-sub filename {
+sub define_options {
   my $self = shift;
-  return $self->{'_filename'};
+  return (
+    $self->ajax_option,
+    { 'code' => 'format', 'defn' => '=s', 'description' => 'format of sequence' },
+    { 'code' => 'number', 'defn' => '=s', 'description' => 'prefix to add to ids of each row...' },
+    { 'code' => 'height', 'defn' => '=s', 'description' => 'height of box to display' },
+    { 'code' => 'title',  'defn' => '=s', 'description' => 'title string to add to documentation' },
+  );
+}
+
+sub usage {
+  return {
+    'parameters'  => '{file_name}',
+    'description' => 'Mark-up file...',
+    'notes' => [],
+  };
 }
 
 sub ajax {
@@ -42,7 +56,12 @@ sub _relative_to_serverroot {
   return $self->option('format') eq 'perl';
 }
 
-sub _get_filename {
+sub filename {
+  my $self = shift;
+  return $self->{'_filename'};
+}
+
+sub get_filename {
   my ( $self, $fn ) = @_;
   unless ( $self->filename ) {
     my $root = $self->page->docroot;
@@ -58,17 +77,17 @@ sub _get_filename {
 
 sub check_file {
   my ( $self, $fn ) = @_;
-  my $filename = $self->_get_filename($fn);
-  return $self->_error( 'Unknown filename: ' . encode_entities($fn) ) unless $filename;
+  my $filename = $self->get_filename($fn);
+  return $self->error( 'Unknown filename: ' . encode_entities($fn) ) unless $filename;
   my $root = server_root;
-  return $self->_error( 'Forbidden invalid path: ' . encode_entities($fn) ) unless substr( $filename, 0, length $root ) eq $root;
-  return $self->_error( 'Unable to read file: ' . encode_entities($fn) ) unless -e $filename;
-  return $self->_error( 'Forbidden - no permission: ' . encode_entities($fn) ) unless -r $filename;
+  return $self->error( 'Forbidden invalid path: ' . encode_entities($fn) ) unless substr( $filename, 0, length $root ) eq $root;
+  return $self->error( 'Unable to read file: ' . encode_entities($fn) ) unless -e $filename;
+  return $self->error( 'Forbidden - no permission: ' . encode_entities($fn) ) unless -r $filename;
 
   return;
 }
 
-sub _cache_key {
+sub my_cache_key {
   my $self = shift;
   my ($fn) = $self->pars;
 
@@ -76,7 +95,7 @@ sub _cache_key {
     $fn =~ m{\A/(.*)\Z}mxs
     ? File::Spec->rel2abs( $1,  $self->page->docroot )
     : File::Spec->rel2abs( $fn, dirname( $self->page->filename ) );
-  while ( $key =~ s{/[^\/]+/\.\.}{}mxgs ) {
+  while ( $key =~ s{/[^/]+/[.]{2}}{}mxgs ) {
     1;
   }
   return
@@ -94,7 +113,7 @@ sub execute {
 
   my $err = $self->check_file($fn);
   return $err if $err;
-  return $self->_error( 'Forbidden - could not open file: ' . encode_entities($fn) ) unless open my $fh, '<', $self->filename;
+  return $self->error( 'Forbidden - could not open file: ' . encode_entities($fn) ) unless open my $fh, '<', $self->filename;
 
   my $html;
   {
@@ -148,7 +167,7 @@ sub execute {
 
   if( $self->option( 'number' ) ) {
     my $line     = 0;
-    my $template =  $self->option( 'number' ) =~ m{\A([a-z]+)}mxis ? qq(<span id="$1_%d" class="linenumber">%1\$5d:</span> %s\n)
+    my $template =  $self->option( 'number' ) =~ m{\A([[:alpha:]]+)}mxs ? qq(<span id="$1_%d" class="linenumber">%1\$5d:</span> %s\n)
                  :                                                   qq(<span class="linenumber">%5d:</span> %s\n)
                  ;
     $html = join q(),

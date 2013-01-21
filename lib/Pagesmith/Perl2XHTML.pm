@@ -56,8 +56,8 @@ while (@lines) {
     };
     next;
   }
-  if ( m{\A\#\#\s*(.*)\Z}mxs && $sub_start ) {
-    $doc_info{$current_sub}{'description'} .= "$_ ";
+  if ( m{\A[#]{2}\s*(.*)\Z}mxs && $sub_start ) {
+    $doc_info{$current_sub}{'description'} .= "$1 ";
     next;
   }
   if ( m{\A\#\@(\w+)(.*)\Z}mxs ) {

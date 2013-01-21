@@ -17,7 +17,16 @@ use version qw(qv); our $VERSION = qv('0.1.0');
 
 use base qw(Pagesmith::Component);
 
-sub _cache_key {
+sub usage {
+  my $self = shift;
+  return {
+    'parameters'  => q(),
+    'description' => 'Creates a series of share with links for the footer of the page',
+    'notes'       => [],
+  };
+}
+
+sub my_cache_key {
   my $self = shift;
   return 1;
 }

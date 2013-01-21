@@ -20,7 +20,7 @@ Readonly my $FUTURE => 0x7fffffff;
 
 use base qw(Exporter);
 
-our @EXPORT_OK = qw(_expires _columns);
+our @EXPORT_OK = qw(expires columns);
 our %EXPORT_TAGS = ( 'ALL' => \@EXPORT_OK );
 
 my $columns = {
@@ -39,12 +39,12 @@ my $columns = {
   'session'   => [qw(type session_key)],
 };
 
-sub _columns {
+sub columns {
   my $key = shift;
   return @{ $columns->{$key} || [] };
 }
 
-sub _expires {
+sub expires {
   my $expires = shift;
 
   $expires ||= 0;

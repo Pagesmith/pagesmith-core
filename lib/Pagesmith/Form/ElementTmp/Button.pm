@@ -19,7 +19,7 @@ use base qw( Pagesmith::Form::Element );
 
 use HTML::Entities qw(encode_entities);
 
-sub _init {
+sub init {
   return;
 }
 sub render {

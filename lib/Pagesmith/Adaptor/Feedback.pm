@@ -19,7 +19,7 @@ use base qw(Pagesmith::Adaptor);
 
 use Pagesmith::Object::Feedback;
 
-sub _connection_pars {
+sub connection_pars {
   return 'feedback';
 }
 

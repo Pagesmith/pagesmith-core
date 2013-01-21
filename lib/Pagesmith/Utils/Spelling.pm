@@ -72,7 +72,7 @@ sub check_html {
 sub check {
   my( $self, $word ) = @_;
   unless( exists $self->{'seen'}{$word} )  {
-    if( $word =~ m{\A\d+(th|st|nd|rd|am|pm)\Z}mxs || $word =~ m{\A[A-Z0-9]+\Z}mxs ) {
+    if( $word =~ m{\A\d+(th|st|nd|rd|am|pm)\Z}mxs || $word =~ m{\A[[:upper:]\d]+\Z}mxs ) {
       $self->{'seen'}{$word} = 1;
     } else {
       $self->{'seen'}{$word} = $self->{'spell_checker'}->check( $word );
@@ -96,11 +96,11 @@ sub _spell_check {
     my $ret = { 'flag' => 0, 'marked_up' => encode_entities($string) };
     return $ret;
   }
-  my @Q = split m{([a-z0-9]+)}mxis, $string;
+  my @Q = split m{([[:alnum:]]+)}mxis, $string;
   my $result = q();
   my $flag = 0;
   foreach(@Q) {
-    if( m{[A-Z0-9]}mxis ) {
+    if( m{[[:alnum:]]}mxis ) {
       my $f = $self->check( $_ );
       if( $f ) {
         $result .= encode_entities($_);
@@ -119,15 +119,15 @@ sub _spell_check {
 
 sub skippable {
   my( $self, $token ) = @_;
-  return 1 if $token =~ m{\A(["']?-[-\w]+=)?([-\w\.]+)\@([-\w]+\.)+\w+["']?\Z}mxs;
+  return 1 if $token =~ m{\A(["']?-[-\w]+=)?([-\w.]+)@([-\w]+[.])+\w+["']?\Z}mxs;
 # relative path...
-  return 1 if $token =~ m{\A(["']?-[-\w]+=)?([-\w\.]+/)+["']?\Z}mxs;
-  return 1 if $token =~ m{\A(["']?-[-\w]+=)?([-\w\.]+/)+([-\w\.]+|[-\w\.]+\.\w{2,5})?["']?\Z}mxs;
+  return 1 if $token =~ m{\A(["']?-[-\w]+=)?([-\w.]+/)+["']?\Z}mxs;
+  return 1 if $token =~ m{\A(["']?-[-\w]+=)?([-\w.]+/)+([-\w.]+|[-\w.]+[.]\w{2,5})?["']?\Z}mxs; ## no critic (ComplexRegexes)
 # file path (absolute/web)
-  return 1 if $token =~ m{\A(["']?-[-\w]+=)?(https?:)?/.*(\.\w{2,5}|/)["']?\Z}mxs;
+  return 1 if $token =~ m{\A(["']?-[-\w]+=)?(https?:)?/.*([.]\w{2,5}|/)["']?\Z}mxs;
   return 1 if $token =~ m{\A(["']?-[-\w]+=)?/\w+["']?\Z}mxs;
 # file (relative - no path)
-  return 1 if $token =~ m{\A(["']?-[-\w]+=)?[-\w]+\.\w{2,5}["']?\Z}mxs;
+  return 1 if $token =~ m{\A(["']?-[-\w]+=)?[-\w]+[.]\w{2,5}["']?\Z}mxs;
 
   return 0;
 }
@@ -200,7 +200,7 @@ sub _xml {
       $self->_xml( $xml_tag, $sub_attr, $sub_contents );
     }
   }
-  $self->{'marked_up'} =~ s{\{entity:(\w+)\}}{<span class="html_entity">&amp;$1;</span>}mxgs;
+  $self->{'marked_up'} =~ s{[{]entity:(\w+)[}]}{<span class="html_entity">&amp;$1;</span>}mxgs;
   $self->{'marked_up'} .= sprintf
    '<span class="html_tag">&lt;/%s&gt;</span>', $tag;
   return;

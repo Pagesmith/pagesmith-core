@@ -121,7 +121,7 @@ sub get {
   return;
 }
 
-sub _store {
+sub store {
   my $self = shift;
   return unless @{ $self->{'changes'} };
   $self->get_session;

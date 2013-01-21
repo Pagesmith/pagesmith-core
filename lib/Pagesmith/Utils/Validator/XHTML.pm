@@ -149,7 +149,7 @@ sub validate {
         my $TN  = $1;
         my $ATS = $2;
         my $SCL = $3 eq q(/) ? 1 : 0;
-        return qq(Non lower-case tag: "$TN") if $TN=~m{[A-Z]}mxs;
+        return qq(Non lower-case tag: "$TN") if $TN=~m{[[:upper:]]}mxs;
         return qq(Tag "$TN" not allowed)              unless $self->info('nts')->{$TN};
         return qq(Tag "$TN" not allowed in "$LN")     if  $LN && !$self->info('nts')->{$LN}{'tg'}{$TN};
         return qq(Tag "$TN" not allowed at top level) if !$LN && !$self->info('nts')->{$TN}{'rt'};
@@ -158,7 +158,7 @@ sub validate {
         while( $ATS =~ s{\A\s+(\w+)\s*=\s*"([^"]*)"}{}mxs ) {
           my $AN = $1;
           my $vl = $2;
-          return qq(Non lower case attr name "$AN" in tag "$TN") if $AN =~ m{[A-Z]}mxs;
+          return qq(Non lower case attr name "$AN" in tag "$TN") if $AN =~ m{[[:upper:]]}mxs;
           return qq(Attr "$AN" not valid in tag "$TN")           unless $self->info('ats')->{$AN} || $self->info('nts')->{$TN}{'at'}{$AN};
           foreach my $e ( split m{(?=&)}mxs, $vl ) {
             return q(Unknown entity ").$self->trim($e).qq(" in attr "$AN" in tag"$TN") if substr($e,0,1) eq q(&) && $e !~ m{$ent_regexp}mxs;

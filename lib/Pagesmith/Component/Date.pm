@@ -19,11 +19,32 @@ use base qw(Pagesmith::Component);
 
 use Date::Format qw(time2str);
 
+sub define_options {
+  my $self = shift;
+  return (
+    { 'code' => 'zone',  'defn' => '=s',                                       'description' => 'Time zone' },
+    { 'code' => 'format','defn' => '=s', 'default' => '%a, %d %b %Y %H:%M %Z', 'description' => 'Standard time2str date format' },
+  );
+}
+
+sub usage {
+  my $self = shift;
+  return {
+    'parameters'  => q(),
+    'description' => 'Display the current time',
+    'notes'       => [],
+  };
+}
+
+
+sub execute_time {
+  my ($self, $time ) = @_;
+  return time2str( $self->option( 'format' ), $time, $self->option( 'zone' ) );
+}
+
 sub execute {
   my $self = shift;
-  my $time = time;
-  my $format = $self->option( 'format', '%a, %d %b %Y %H:%M %Z' );
-  return time2str( $format, $time );
+  return $self->execute_time( time );
 }
 1;
 

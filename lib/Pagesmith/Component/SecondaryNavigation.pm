@@ -20,7 +20,18 @@ use base qw(Pagesmith::Component::Navigation);
 use Readonly qw(Readonly);
 Readonly my $URL_PARTS_SUB => 4;
 
-sub _cache_key {
+sub usage {
+  my $self = shift;
+
+  return {
+    'parameters'  => q(),
+    'description' => 'Displays the secondary navigation tabs on the webpage',
+    'notes'       => [],
+    'see_also'    => { 'sites/{site_name}/data/config/{site_name}.yaml' => 'Contains the YAML file' },
+  };
+}
+
+sub my_cache_key {
   my $self = shift;
   my @Q = split m{/}mxs, $self->page_path, $URL_PARTS_SUB;
   return @Q[1, 2];
@@ -28,12 +39,12 @@ sub _cache_key {
 
 sub execute {
   my $self = shift;
-  my @n    = $self->_nav;
+  my @n    = $self->nav_conf;
   my ( $zz, $primary, $secondary ) = split m{/}mxs, $self->page_path, $URL_PARTS_SUB;
   $secondary ||= q();
   my $t;
   foreach my $ref (@n) {
-    $t = $ref if ($ref->[0] =~ m{\A(.*?)\|}mxs ? $1 : $ref->[0]) eq $primary;
+    $t = $ref if ($ref->[0] =~ m{\A(.*?)[|]}mxs ? $1 : $ref->[0]) eq $primary;
   }
   $t ||= $n[0];
 

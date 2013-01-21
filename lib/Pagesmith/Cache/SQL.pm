@@ -17,11 +17,13 @@ use version qw(qv); our $VERSION = qv('0.1.0');
 
 use Readonly qw(Readonly);
 Readonly my $MAX_SIZE => 5e6;
+Readonly my $MAX_SLEEP   => 0.02;
+Readonly my $MICRO_SLEEP => 0.001;
 
 use DBIx::Connector;
 use POSIX qw(ceil);
 
-use Pagesmith::Cache::Base qw(_expires _columns);
+use Pagesmith::Cache::Base qw(expires columns);
 
 my $dbh_config = {
   'dsn'     => q(),
@@ -81,9 +83,9 @@ sub _site_key {
 
 sub _parse_key {
   my $key = shift;
-  my ( $table, $site_key, @pars ) = split m{\|}mxs, $key;
+  my ( $table, $site_key, @pars ) = split m{[|]}mxs, $key;
   return if $table =~ m{\W}mxs;    ## Dodgy table name
-  my @cols = _columns( $table );
+  my @cols = columns( $table );
   return unless @cols;    ## Unknown table name...
   return unless @pars == @cols;
   my $site_id =
@@ -101,6 +103,12 @@ sub _parse_key {
 sub _scalar {
   my($sql,@pars) = @_;
   my ($t) = $dbh->run( 'fixup' =>  sub { return $_->selectrow_array( $sql, {}, @pars ); } );
+  return $t;
+}
+
+sub _now {
+  my($sql,@pars) = @_;
+  my ($t) = $dbh->run( 'fixup' =>  sub { return $_->selectrow_array( 'select now()', {}, @pars ); } );
   return $t;
 }
 
@@ -177,7 +185,7 @@ sub touch {
   return unless $t;
   _new_cache unless $dbh;
   return unless $dbh;
-  $expires = _expires($expires);
+  $expires = expires($expires);
   my $content =
     _scalar( "select left(content,20) from $t->{'table'} where site_id = ? and $t->{'where'}", $t->{'site_id'}, @{ $t->{'pars'} } );
   if ( $content =~ m{\A2(\d+)}mxs ) {
@@ -203,7 +211,7 @@ sub set {    ## Returns true if set was successful...
   $dbh ||= _new_cache;
   return unless $dbh;
 
-  $expires = _expires($expires);
+  $expires = expires($expires);
 
   my $where = join( '=? and ', @{ $t->{'cols'} } ) . q(=?);
 
@@ -247,6 +255,57 @@ sub set {    ## Returns true if set was successful...
   return $f;
 }
 ##use critic (AmbiguousNames)
+
+sub get_lock {
+  my( $lock_key, $lock_val, $expiry, $timeout ) = @_;
+
+  _new_cache unless $dbh;
+  return 1 unless $dbh; ## if can't get dbh then we have to assume lock is successful!
+
+  my $mult = 0;
+  my $end_timeout = time + $timeout;
+  _do( 'insert ignore into lock_table (key,value,expiry) values(?,?,adddate(?, interval ? second))', $lock_key, q(), _now, $expiry );
+  while( time < $end_timeout ) {
+    my $flag = _do( 'update lock_table set value = ? where key = ? and expiry < now()' );
+    return 1 if $flag;
+    $mult++ if $mult < $MAX_SLEEP;
+    sleep $MICRO_SLEEP * $mult;
+  }
+  return 0; ## Failed to get lock!
+}
+
+sub release_lock {
+  my( $lock_key, $lock_val ) = @_;
+
+  _new_cache unless $dbh;
+  return 1 unless $dbh; ## if can't get dbh then we have to assume release is successful!
+
+  return _do( 'delete from lock_table where key = ? and value = ?', $lock_key, $lock_val ) ? 1 : 0;
+}
+
+sub is_free_lock {
+#@return integer - 1 if lock is not used, 0 otherwise
+  my( $lock_key, $lock_val ) = @_;
+
+  _new_cache unless $dbh;
+  return 1 unless $dbh; ## if can't get dbh then we have to assume lock is free
+
+  return _scalar( 'select value from lock_table where key = ?', $lock_key ) ? 1 : 0;
+}
+
+sub is_used_lock {
+#@return integer - 1 if lock is used and is owned by this process, -1 if lock is used but not by this cache element, 0 if free
+  my( $lock_key, $lock_val ) = @_;
+
+  _new_cache unless $dbh;
+  return 0 unless $dbh; ## if can't get dbh then we have to assume lock is free
+
+  my $actual_lock_val = _scalar(  'select value from lock_table where key = ?', $lock_key );
+  return $actual_lock_val eq $lock_val ? 1
+       : $actual_lock_val              ? - 1
+       :                                 0
+       ;
+}
 
 1;
 

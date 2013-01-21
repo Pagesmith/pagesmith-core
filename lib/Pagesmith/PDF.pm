@@ -300,7 +300,7 @@ sub save_as {
 
 sub set_image {
   my( $self, $key, $file, $format ) = @_;
-  $format = $file =~ m{\.(\w+)\Z}mxs ? $1 : 'png' unless $format;
+  $format = $file =~ m{[.](\w+)\Z}mxs ? $1 : 'png' unless $format;
   my $method = "image_$format";
   $self->{'images'}{$key} = $self->pdf->$method( $self->{'file_root'}.$file )
     if -e $self->{'file_root'}.$file && $self->pdf->can( $method );
@@ -501,7 +501,7 @@ sub text_block {
   return {(
     'last_width' => $endw,
     'last_ypos'  => $ypos,
-    'overflow'   => join "\n", @paragraphs
+    'overflow'   => join "\n", @paragraphs,
   )};
 }
 ## use critic
@@ -537,9 +537,9 @@ sub draw_table {
 ## Compute cell widths!
   foreach my $col ( @{$columns} ) {
     $col->{'width'}||='1*';
-    if( $col->{'width'} =~ m{([\d\.]*)\*}mxs ) {
+    if( $col->{'width'} =~ m{([\d.]*)[*]}mxs ) {
       $stars += $1||1;
-    } elsif( $col->{'width'} =~ m{([\d\.]*)%}mxs ) {
+    } elsif( $col->{'width'} =~ m{([\d.]*)%}mxs ) {
       $fixed += $col->{'width'} = $1/$PERC*$table_width;
     } else {
       $fixed += $col->{'width'};
@@ -548,7 +548,7 @@ sub draw_table {
   my $star_width = $stars ? ( $table_width - $fixed ) / $stars : 0;
   foreach my $col ( @{$columns} ) {
     $col->{'width'}||='1*';
-    if( $col->{'width'} =~ m{([\d\.]*)\*}mxs ) {
+    if( $col->{'width'} =~ m{([\d.]*)[*]}mxs ) {
       $col->{'width'} = ($1||1) * $star_width;
     }
   }

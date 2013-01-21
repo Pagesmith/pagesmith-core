@@ -45,7 +45,7 @@ sub render {
     $stage_count++;
     $output .= $st->render_readonly( $form, 'readonly_section' );
   }
-  $output .= $self->_render( q(), q() ) if $self->{'button_html'}{'bottom'};
+  $output .= $self->base_render( q(), q() ) if $self->{'button_html'}{'bottom'};
 
   return $output;
 }

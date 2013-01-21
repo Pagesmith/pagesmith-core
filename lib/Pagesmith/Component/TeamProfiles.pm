@@ -31,9 +31,26 @@ use utf8;
 
 use Pagesmith::Adaptor::Generic::Profile;
 
+sub usage {
+  my $self = shift;
+  return {
+    'parameters'  => q({team-{teamcode}|edit-{formcode}|username}+),
+    'description' => 'Displays an individual or teams profile entry',
+    'notes'       => [ 'NEED TO CONVERT TO USE Tabs/Twocol' ],
+  };
+}
+
+sub define_options {
+  my $self = shift;
+  return (
+    $self->ajax_option,
+    {'code' => 'prefix', 'defn' => '=s', 'default' => 'team', 'description' => 'Team code' },
+  );
+}
+
 sub ajax {
   my $self = shift;
-  return $self->option('ajax') ? 1 : 0;
+  return $self->default_ajax;
 }
 
 sub _format {
@@ -49,7 +66,7 @@ sub _format {
 sub _email {
   my( $self, $profile ) = @_;
   return q(-) unless lc($profile->get_email_flag) eq 'true';
-  return $self->_safe_email( $profile->get_email );
+  return $self->safe_email( $profile->get_email );
 }
 
 sub execute {
@@ -67,7 +84,7 @@ sub execute {
       push @profiles, @{$adaptor->get_all( $1 )};
     } elsif( $id =~ m{\Aedit-(.*)\Z}mxs ) {
       my $fo = $self->form_by_code( $1 );
-      $fo->_update_object;
+      $fo->update_object;
       push @profiles, $fo->object;
     } else {
       my $profile = $adaptor->get( $id );
@@ -79,7 +96,7 @@ sub execute {
       $prefix, $profile->get_username, encode_entities( $profile->get_display );
     ## no critic (ImplicitNewlines)
     my $email_block = q();
-    $email_block = sprintf '<span>%s</span>', $self->_safe_email( $profile->get_email )
+    $email_block = sprintf '<span>%s</span>', $self->safe_email( $profile->get_email )
       if lc($profile->get_email_flag) eq 'true';
     my $idx = sprintf '
       <dt><a class="change-tab" href="#sub_%s_%s">%s</a></dt>
@@ -92,7 +109,7 @@ sub execute {
     my $ref_block = q();
     $ref_block = sprintf '
         <h4>References</h4>
-        <%% References -full -collapse=closed %s %%>', join q( ), @{ $profile->get_references || [] } if  @{ $profile->get_references||[] };
+        <%% References -full -collapse closed %s %%>', join q( ), @{ $profile->get_references || [] } if  @{ $profile->get_references||[] };
 
     my $entry = sprintf '
       <div id="sub_%s_%s">

@@ -26,7 +26,7 @@ use Pagesmith::Action;
 use Pagesmith::Cache;
 use Pagesmith::Support;
 
-our @EXPORT_OK = qw(_handler);
+our @EXPORT_OK = qw(my_handler);
 our %EXPORT_TAGS = ('ALL' => \@EXPORT_OK);
 
 sub munge_path {
@@ -39,7 +39,7 @@ sub munge_path {
 
 sub handler {
   my $r = shift;
-  return _handler(
+  return my_handler(
     sub {
       my( $apache_r, $rpath, $path_info ) = @_;
       if ( $rpath =~ m{\A/(\w+)}mxs ) {
@@ -51,7 +51,7 @@ sub handler {
   );
 }
 
-sub _handler {
+sub my_handler {
   my( $path_munger, $r ) = @_;
   my $t = Pagesmith::Support->new()->set_r( $r );
 
@@ -69,11 +69,15 @@ sub _handler {
 
   my $parsed = APR::URI->parse($r->pool, $r->uri);
 
+  ## $extra - contains a data structure returned by the path_munger
+  ## which is stored so that it can be retrieved by the action
+  ## component later
+
   my $extra = &{$path_munger}( $r, $parsed->rpath, \@path_info );
 
   my $module_name = $t->safe_module_name( shift @path_info );
   ## Check namespace ...
-  if( $module_name =~ m{\A([a-z]+)::}mxis && ! can_name_space( $1 ) ) {
+  if( $module_name =~ m{\A([[:alpha:]]+)::}mxs && ! can_name_space( $1 ) ) {
     warn "ACTION: cannot perform $module_name - not in valid name space\n";
     return NOT_FOUND;
   }

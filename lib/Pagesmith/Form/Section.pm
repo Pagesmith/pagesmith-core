@@ -208,7 +208,7 @@ sub add {
       'getter'    => "get_$id",
       'setter'    => "set_$id",
       'required'  => 'yes',
-    }
+    };
   }
   my $type = $self->safe_module_name( $element_data->{'type'} );
 
@@ -245,7 +245,7 @@ sub generate_id_string {
     encode_entities( $self->id );
 }
 
-sub _render {
+sub base_render {
   my ( $self, $elements, $hidden ) = @_;
 
   my $output = sprintf qq(\n  <div id="%s"), $self->generate_id_string;
@@ -294,7 +294,7 @@ sub render {
   my $hidden     = join q(), map { $_->render( $form ) } grep { ref($_) =~ m{Hidden}mxs } $self->elements;
 
   my $not_hidden = $self->render_group( q(-), $form ); ## Render the top level group....
-  return $self->_render( $not_hidden, $hidden );
+  return $self->base_render( $not_hidden, $hidden );
 }
 
 sub render_group {
@@ -340,7 +340,7 @@ sub render_readonly {
   return q() if $self->has_logic && ! $form->evaluate_logic( $self );
   my $not_hidden = $self->render_group( q(-), $form, 'two_col', 'readonly' );
 
-  return $self->_render( $not_hidden , q(), ' class="twocol"' );
+  return $self->base_render( $not_hidden , q(), ' class="twocol"' );
 }
 
 sub render_paper {
@@ -351,7 +351,7 @@ sub render_paper {
   return q() if $self->has_logic && ! $form->evaluate_logic( $self ); #??#
   my $not_hidden = join q(), map { $_->render_paper( $form ) } grep { ref($_)!~ m{Hidden}mxs } $self->elements;
 
-  return $self->_render( $not_hidden, q(), ' class="twocol"' );
+  return $self->base_render( $not_hidden, q(), ' class="twocol"' );
 }
 
 1;

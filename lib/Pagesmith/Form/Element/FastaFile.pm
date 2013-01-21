@@ -31,9 +31,9 @@ use English qw(-no_match_vars);
 use base qw( Pagesmith::Form::Element::File );
 use Pagesmith::Cache;
 
-sub _remove_uploaded_file {
+sub remove_uploaded_file {
   my( $self, $key ) = @_;
-  $self->SUPER::_remove_uploaded_file( $key );
+  $self->SUPER::remove_uploaded_file( $key );
   return 1;
 }
 
@@ -102,7 +102,7 @@ sub extra_file_info {
 sub res {
   my( $self, $seq_ref) = @_;
   my $s = uc ${$seq_ref};
-  return ( 'raw_length' => length $s, 'length' => 0, 'dna' => 0, 'pep' => 0, 'valid' => 0 ) unless $s=~ m{[-A-Z\.\*]}mxs;
+  return ( 'raw_length' => length $s, 'length' => 0, 'dna' => 0, 'pep' => 0, 'valid' => 0 ) unless $s=~ m{[-[:upper:].*]}mxs;
   my $s_saa  = $s =~ tr{ACGTUN\-.}{ACGTUN\-.};
   my $s_daa  = $s =~ tr{IKMRSWYX}{IKMRSWYX};
   my $s_taa  = $s =~ tr{BDHV}{BDHV};
@@ -114,7 +114,7 @@ sub res {
   return ( 'raw_length' => length $s , 'length' => $length, 'dna' => $dna_score/$length, 'pep' => $pep_score/$length, 'valid' => $length/length $s);
 }
 
-sub _extra_columns {
+sub extra_columns {
   my $self = shift;
   my $prefix = $self->config->{'code'}.q(/).$self->code;
   return (

@@ -22,7 +22,7 @@ use base qw( Pagesmith::Form::Element );
 
 use HTML::Entities qw(encode_entities);
 
-sub _init {
+sub init {
   my $self = shift;
   $self->{'size'} = $self->{'_options'}{'size'} || $DEFAULT_SIZE;
   return;
@@ -53,29 +53,29 @@ sub validate {
   return $self->set_valid;
 }
 
-sub _render_widget_paper {
+sub render_widget_paper {
   my $self = shift;
 
   my $class = $self->generate_class_string =~ m{short}mxs ? 'bordered_short' : 'bordered';
   return sprintf '<div class="%s">%s</div>%s',
     $class,
-    ( $self->raw ? $self->_render_value : encode_entities( $self->_render_value ) ) ||'&nbsp;',
+    ( $self->raw ? $self-> render_value : encode_entities( $self-> render_value ) ) ||'&nbsp;',
     $self->req_opt_string,
   ;
 }
 
-sub _render_value {
+sub  render_value {
   my $self = shift;
   return $self->value;
 }
 
-sub _render_widget {
+sub render_widget {
   my $self = shift;
 
   return sprintf '<input type="%s" name="%s" value="%s" id="%s" class="%s" size="%s" %s/>%s',
     $self->widget_type,
     encode_entities( $self->code ),
-    ( $self->raw ? $self->_render_value : encode_entities( $self->_render_value ) ),
+    ( $self->raw ? $self-> render_value : encode_entities( $self-> render_value ) ),
     $self->generate_id_string,
     $self->generate_class_string,
     $self->size || $DEFAULT_SIZE,

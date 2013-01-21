@@ -19,6 +19,14 @@ use base qw(Pagesmith::Component);
 
 use HTML::Entities qw(encode_entities);
 
+sub usage {
+  return {
+    'parameters'  => q(None),
+    'description' => q(Lists all images that are in galleries on the current page)
+    'notes' => [ 'Galleries push thie information in the page store "gallery_images"'],
+  };
+}
+
 sub execute {
   my $self = shift;
 

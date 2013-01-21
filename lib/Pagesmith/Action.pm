@@ -179,8 +179,8 @@ sub csv_string {
   my( $self, $display_data ) = @_;
   my @out;
   foreach( @{$display_data} ) {
-    $self->_csv->combine( @{$_} );
-    my $s = $self->_csv->string;
+    $self->csv_handler->combine( @{$_} );
+    my $s = $self->csv_handler->string;
     push @out, $s;
   }
   return join "\n", @out;
@@ -233,13 +233,6 @@ sub _trim {
   $x =~ s{\A\s+}{}mxs;
   $x =~ s{\s+\Z}{}mxs;
   return $x;
-}
-
-sub _esc {
-  my $self = shift;
-  my $str  = shift;
-  $str =~ s{([-+!\(\)\{\}\[\]\^"~\*\?:\\])}{}mxgs;
-  return $str;
 }
 
 sub content {

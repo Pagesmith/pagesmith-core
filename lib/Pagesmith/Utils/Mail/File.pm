@@ -11,9 +11,9 @@ package Pagesmith::Utils::Mail::File;
 
 use strict;
 use warnings;
+use utf8;
 
-use version qw(qv);
-our $VERSION = qv('0.1.0');
+use version qw(qv); our $VERSION = qv('0.1.0');
 
 use English qw(-no_match_vars $INPUT_RECORD_SEPARATOR);
 
@@ -21,6 +21,8 @@ use Mime::Base64 qw(encode_base64);
 use Digest::MD5 qw(md5_hex);
 use Image::Size qw(imgsize);
 use Image::Magick;
+use WWW::Curl::Easy;
+use Pagesmith::ConfigHash qw(proxy_url);
 
 my $_cid = 0;
 
@@ -36,7 +38,7 @@ sub new {
     'width'     => 0,
     'height'    => 0,
     'image'     => 1,
-    'inline'    => 'inline'
+    'inline'    => 'inline',
   };
   bless $self, $class;
   return $self;
@@ -251,8 +253,7 @@ sub render {
   } else {
     $render .= sprintf
       "Content-Disposition: attachment\r\nContent-Type: %s; name= %s\r\n",
-      $self->mime, $self->code
-    );
+      $self->mime, $self->code;
     if( $self->encoding ) {
       $render .= sprintf "Content-Encoding: %s\r\n", $self->encoding;
     }
@@ -260,20 +261,19 @@ sub render {
   $render .= sprintf
     "Content-ID: %s\r\nContent-Transfer-Encoding: base64\r\n\r\n%s",
     $self->cid,
-    base64_encode( $self->content )
-  ;
+    encode_base64( $self->content );
   return $render;
 }
-  
+
 sub load_from_string {
   my( $self, $code, $string, $mime_type );
   $mime_type ||= 'text/plain';
   $self->set_content(  $string );
   $self->set_code(     $code );
-  $self->set_filename( $code =~ m{([^\s\/]+)\Z}mx ? $1 : $code );
+  $self->set_filename( $code =~ m{([^\s/]+)\Z}msx ? $1 : $code );
   $self->set_cid(      md5_hex( $_cid++ ) );
   $self->set_mime(     $mime_type;
-  return unless $mime_type =~ m{\Aimage\/(.*)\Z}mx ) && !$self->width;
+  return unless $mime_type =~ m{\Aimage/(.*)\Z}msx ) && !$self->width;
 
   my $image = Image::Magick->new( $1 );
   $image->BlobToImage( $string );
@@ -288,7 +288,7 @@ sub load_from_file {
   my( $self, $file, $code, $mime_type ) = @_;
   $mime_type ||= q();
   $code      = $file unless $code;
-  return 0 unless -e $file && -r $file && -f $file;
+  return 0 unless -e $file && -r $file && -f $file; ## no critic (Filetest_f)
   if( open my $fh, q(<), $file ) {
     local $INPUT_RECORD_SEPARATOR = undef;
     my $img_content = <$fh>;
@@ -297,29 +297,35 @@ sub load_from_file {
     return unless $x;
     $self->set_width(  $x );
     $self->set_height( $y );
-    $mime_type ||= 'image/'.lc($type);
+    $mime_type ||= 'image/'.lc $type;
     return $self->load_from_string( $code, $string, $mime_type );
   }
   return;
 }
-  
+
 sub load_from_url {
   my( $self, $url, $doc_root, $mime_type ) = @_;
   $doc_root ||= q();
   $mime_type ||= q();
-  if( $url =~ m{\Ahttps?://}mx ) {
+  if( $url =~ m{\Ahttps?://}msx ) {
     ## Do a curl fetch here!
-    $ch = curl_init();
-    curl_setopt( $ch, CURLOPT_URL, $url );        // set the URL
-    curl_setopt($ch, CURLOPT_HEADER, 0  );        // No headers
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);  // Return value
-    $content = curl_exec( $ch ); 
-    curl_close( $ch );
+    my $curl = WWW::Curl::Easy->new;
+## no critic (CallsToUndeclaredSubs)
+    $curl->setopt( CURLOPT_URL, $url );
+    $curl->setopt( CURLOPT_HEADER, 0 );
+    $curl->setopt( CURLOPT_RETURNTRANSFER, 1 );
+    my( $host, $port ) = split m{:}mxs, proxy_url();
+    $self->setopt( CURLOPT_PROXY,     $host );
+    $self->setopt( CURLOPT_PROXYPORT, $port );
+    my $content;
+    $curl->setopt(CURLOPT_WRITEDATA,\$content);
+    my $ret = $curl->perform;
+## use critic;
     return unless $content;
     return $self->load_from_string( $url, $content, $mime_type );
   }
-  $doc_root ||= q()#;$GLOBALS['DOCUMENT_ROOT'];
-  
+  $doc_root ||= q();#;$GLOBALS['DOCUMENT_ROOT'];
+
   return $self->load_from_file( $doc_root.$url, $url, $mime_type );
 }
 

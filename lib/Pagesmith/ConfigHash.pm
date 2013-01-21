@@ -46,7 +46,6 @@ my $defaults = { qw(
     CacheType       MS
     TmpUrl          /t/
     TmpDir          /www/tmp/www-trunk/tmp/
-    RealTmp         /tmp/
     ConfigKey       dev
     ServerStatus    unknown
     AuthServer      http://localhost

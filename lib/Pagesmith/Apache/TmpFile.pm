@@ -44,7 +44,7 @@ sub handler {
     $r->filename( $tmp_url );
     $r->push_handlers( 'PerlResponseHandler' => \&send_content );
     return OK;
-  } elsif ( $r->uri =~ m{(/\.svn/|/CVS/)}mxs ) {
+  } elsif ( $r->uri =~ m{(?:/[.]svn/|/CVS/)}mxs ) {
     return FORBIDDEN;
   } else {
     $r->add_output_filter( \&Pagesmith::Apache::Decorate::handler ); ##no critic (CallsToUnexportedSubs)
@@ -63,7 +63,7 @@ sub send_content {
   return DECLINED if $r->method_number == M_OPTIONS;
   return HTTP_METHOD_NOT_ALLOWED if $r->method_number != M_GET;
 ## We are going to serve static content from memcached if is there!
-  ( my $filename = $r->notes->get('filename') ) =~ s{[^-\|\w\.]}{}mxgs;
+  ( my $filename = $r->notes->get('filename') ) =~ s{[^-|\w.]}{}mxgs;
 
 ## Create a new Cache file!
 
@@ -75,7 +75,7 @@ sub send_content {
     my $content = $ch->get();
 
     if ($content) {
-      my ($extn) = $filename =~ m{\.(\w+)\Z}mxs;
+      my ($extn) = $filename =~ m{[.](\w+)\Z}mxs;
       $r->content_type(
           $extn eq 'css'  ? 'text/css;charset=utf-8'
         : $extn eq 'js'   ? 'text/javascript;charset=utf-8'

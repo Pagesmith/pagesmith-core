@@ -108,7 +108,7 @@ sub check {
 
   while(<$scriptout>) {
     chomp;
-    if( m{\Aline\s+(\d+)\s+column\s+(\d+)\s+-\s+([A-Z][a-z]+):\s+(.*)\Z}mxgs ) {
+    if( m{\Aline\s+(\d+)\s+column\s+(\d+)\s+-\s+([[:upper:]][[:lower:]]+):\s+(.*)\Z}mxs ) { ## no critic (ComplexRegexes)
       push @{ $tmphash{ $3 }{ $1 }{ $2 } }, $4;
     }
     push @{ $self->{'raw'} }, $_;

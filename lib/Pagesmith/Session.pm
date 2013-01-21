@@ -25,6 +25,9 @@ Readonly my $FRACTION    =>  7;
 
 Readonly my $END_OF_TIME => (1<<31)-1;
 
+Readonly my $DEFAULT_EXPIRY  => 2;
+Readonly my $DEFAULT_TIMEOUT => 10;
+
 use Carp qw(carp);
 use Crypt::CBC;
 use English qw(-no_match_vars $EVAL_ERROR);
@@ -64,6 +67,9 @@ sub new {
     'inactive_expiry' => $unit_value * get_config( 'AuthExpireCount' ),
     'ssl_only'        => $params->{'ssl_only'} || 0,
     'ip'              => ':::::',
+    'writeable'       => 0,
+    'lock_expiry'     => $DEFAULT_EXPIRY,
+    'lock_timeouit'   => $DEFAULT_TIMEOUT,
   };
 
   bless $self, $class;
@@ -135,7 +141,7 @@ sub permanent {
   return $self->{'permanent'};
 }
 
-sub cache {
+sub session_cache {
   my $self = shift;
   return unless $self->{'uuid'};
   return $self->{'cache'} ||= Pagesmith::Cache->new( 'session', "$self->{'type'}|$self->{'uuid'}" );
@@ -143,7 +149,7 @@ sub cache {
 
 sub store {
   my $self = shift;
-  $self->cache->set( $self->encrypt( $self->data, 1 ), $self->expiry_time );
+  $self->session_cache->set( $self->encrypt( $self->data, 1 ), $self->expiry_time );
   return $self;
 }
 
@@ -153,6 +159,7 @@ sub write_cookie {
     '-path'  => q(/),
     '-name'  => $self->cookie_name,
     '-value' => $self->generate_cookie_value,
+    #'-httponly' => 1,
   );
   $params{ 'expires' } = $END_OF_TIME - time if $self->permanent;
 
@@ -168,7 +175,7 @@ sub write_cookie {
 
 sub clear {
   my $self = shift;
-  $self->cache->unset;
+  $self->session_cache->unset;
   return $self;
 }
 
@@ -206,9 +213,9 @@ sub _initialize {
 
 sub fetch {
   my( $self, $force ) = @_;
-  return unless $self->cache;
+  return unless $self->session_cache;
   if( $force || ! keys %{$self->{'data'}} ) {
-    my $val = $self->cache->get;
+    my $val = $self->session_cache->get;
     $self->{'data'} = $self->decrypt( $val, 1 );
   }
   return $self->{'data'};
@@ -236,7 +243,7 @@ sub read_cookie {
   my $details = $self->parse_cookie_value( $cookie );
   unless( $details->{'uuid'} ) { ## This is a broken cookie so "remove" it!
     $self->clear_cookie;
-    $self->cache->unset;
+    $self->session_cache->unset;
     return 0;
   }
   $self->{'uuid'}      = $details->{'uuid'};
@@ -245,14 +252,14 @@ sub read_cookie {
   my $now = time;
   if( $now > $details->{'expiry_time'} ) {
     $self->clear_cookie;
-    $self->cache->unset;
+    $self->session_cache->unset;
     return 0;
   }
 
   if( $now > $details->{'refresh_time'} ) {
     $self->touch;
     $self->write_cookie;
-    $self->cache->touch( $self->{'expiry_time'} );
+    $self->session_cache->touch( $self->{'expiry_time'} );
 
   }
   return 1;
@@ -308,4 +315,30 @@ sub parse_cookie_value {
   )};
 }
 
+sub set_attribute {
+  my( $self, $attr, $value ) = @_;
+  $self->data->{$attr} = $value;
+  return $self;
+}
+
+sub remove_attribute {
+  my( $self, $attr ) = @_;
+  delete $self->data->{$attr};
+  return $self;
+}
+
+sub has_attribute {
+  my( $self, $attr ) = @_;
+  return exists $self->data->{$attr};
+}
+
+sub get_attribute {
+  my( $self, $attr ) = @_;
+  return $self->data->{$attr};
+}
+
+sub attribute {
+  my( $self, $attr ) = @_;
+  return $self->data->{$attr};
+}
 1;

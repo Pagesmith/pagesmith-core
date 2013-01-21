@@ -48,7 +48,7 @@ sub run {
     } else {
       $form_type    = $form_code;
       my $module_name = $self->safe_module_name( $form_type );
-      if( $module_name =~ m{\A([a-z]+)::}mxis && ! can_name_space( $1 ) ) {
+      if( $module_name =~ m{\A([[:lower:]]+)::}mxis && ! can_name_space( $1 ) ) {
         return $self->wrap(
           'Form error',
           sprintf q(<p>Unable to generate form object of type '%s'</p>),
@@ -179,7 +179,7 @@ sub run_view {
     return $self->run_next;
   }
   if( $self->form_object->stage_object->isa( 'Pagesmith::Form::Stage::Error' ) ) {
-    $self->form_object->on_error( $self->form_object->stage_object )
+    $self->form_object->on_error( $self->form_object->stage_object );
   }
   return $self->_view( $self->form_object->render );
 }

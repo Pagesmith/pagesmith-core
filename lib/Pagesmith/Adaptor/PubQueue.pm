@@ -32,7 +32,7 @@ sub new {
   return $self;
 }
 
-sub _connection_pars {
+sub connection_pars {
   return 'pubqueue';
 }
 

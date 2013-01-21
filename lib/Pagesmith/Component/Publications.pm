@@ -15,26 +15,32 @@ use utf8;
 
 use version qw(qv); our $VERSION = qv('0.1.0');
 
-use base qw(Pagesmith::Component::Email);
+use base qw(Pagesmith::Component::References);
 
 use HTML::Entities qw(encode_entities);
-use Readonly qw(Readonly);
 use utf8;
 
 use Pagesmith::Adaptor::Reference;
 use Pagesmith::Object::Reference;
 
-Readonly my $DEFAULT_RENDERER => 'ul';
+sub usage {
+  my $self = shift;
+  return {
+    'parameters'  => q({year}+ or {tags}+),
+    'description' => 'Put in block of references for given Year or given tag',
+    'notes'       => [ 'Deprecated - see functions now in references for tags' ],
+  };
+}
 
-sub _navigation {
-  my( $self, $prefix, $string ) = @_;
-  return sprintf qq(\n      <li><a href="#sub_%s_%s">%s</a></li>), $prefix, lc($string), $string;
+sub define_options {
+  my $self = shift;
+  return $self->SUPER::define_options;
 }
 
 sub _contents {
-  my( $self, $prefix, $string, $ids ) = @_;
-  return sprintf qq(\n    <div id="sub_%s_%s">\n      <h3>%s Publications</h3>\n      <%% References%s %%>\n    </div>),
-    $prefix, lc($string), $string, $ids;
+  my( $self, $string, $options, $ref_data ) = @_;
+  return sprintf qq(<h3>%s Publications</h3>\n      <%% References%s %%>),
+    $string, join q( ), $options, @{ $ref_data };
 }
 
 sub execute {
@@ -64,13 +70,16 @@ sub execute {
     my $reference_data = $rh->get_ids_for_tag( $tag );
     my $navigation = q();
     my $contents   = q();
+    my $tabs = $self->tabs( {'fake'=>1} );
     if( @{$reference_data->{'selected'}} ) {
-      $navigation .= $self->_navigation($tag, 'Selected');
-      $contents   .= $self->_contents(  $tag, 'Selected', join q( ), $options, @{ $reference_data->{'selected'} } );
+      $self->add_tab( "sub_$tag".'_selected', 'Selected',
+        $self->_contents( 'Selected', $options, $reference_data->{'selected'} ),
+      );
     }
     foreach my $year ( reverse sort keys %{ $reference_data->{'years'} } ) {
-      $navigation .= $self->_navigation($tag, $year);
-      $contents   .= $self->_contents(  $tag, $year, join q( ), $options, @{ $reference_data->{'years'}{$year} } );
+      $self->add_tab( "sub_$tag".'_'.$year, $year,
+        $self->_contents( $year, $options, $reference_data->{'years'}{$year} ),
+      );
     }
     return q() unless $navigation;
     ## no critic (ImplicitNewlines)
@@ -79,12 +88,12 @@ sub execute {
   <h2>Publications</h2>
   <div class="sub_nav">
     <h3>Year</h3>
-    <ul class="fake-tabs">%s
-    </ul>
+    %s
   </div>
-  <div class="sub_data">%s
+  <div class="sub_data">
+    %s
   </div>
-</div>', $navigation, $contents;
+</div>', $tabs->render_ul_block, $tabs->render_div_block;
     ## use critic
   }
 }

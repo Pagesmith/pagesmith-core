@@ -21,10 +21,29 @@ use Cwd qw(cwd realpath);
 use English qw(-no_match_vars $INPUT_RECORD_SEPARATOR);
 use HTML::Entities qw(encode_entities);
 
-sub _cache_key {
+sub my_cache_key {
   my $self = shift;
   return;
 }
+
+sub define_options {
+  my $self = shift;
+  return (
+    { 'code' => 'embed', 'description' => 'Embed CSS in page' },
+    { 'code' => 'ie67',  'description' => 'Embed wrapped in conditional comments so only included in IE 6 and 7' },
+    { 'code' => 'ie678', 'description' => 'Embed wrapped in conditional comments so only included in IE less than version 9' },
+  );
+}
+
+sub usage {
+  my $self = shift;
+  return {
+    'parameters'  => q({name=s}+),
+    'description' => 'Push CSS files into the page (either as embed files or src links)',
+    'notes'       => q({name} name of file),
+  };
+}
+
 
 sub execute {
   my $self = shift;

@@ -42,10 +42,47 @@ use Pagesmith::ConfigHash qw(get_config);
 use Pagesmith::Core qw(safe_md5);
 
 ##no critic (ExcessComplexity)
+sub define_options {
+  my $self = shift;
+  return (
+    { 'code' => 'raw',            'defn' => q(),  'description' => q(If set do not escape html) },
+    { 'code' => 'height',         'defn' => '=i', 'default' => $DEFAULT_HEIGHT  ,  'description' => 'Max height of image to use' },
+    { 'code' => 'width',          'defn' => '=i', 'default' => $DEFAULT_WIDTH   ,  'description' => 'Max width of image to use' },
+    { 'code' => 'back',           'defn' => '=s', 'default' => 'ffffff'         ,  'description' => 'Background color' },
+    { 'code' => 'extn',           'defn' => '=s', 'default' => 'jpg'            ,  'description' => 'Extension for thumbnail jpg/png' },
+    { 'code' => 'quality',        'defn' => '=i', 'default' => $DEFAULT_QUALITY ,  'description' => 'Quality of thumbnail (jpg)' },
+    { 'code' => 'quality_png',    'defn' => '=i', 'default' => $DEFAULT_QUALITY_PNG ,  'description' => 'Quality of thumbnail (png)' },
+    { 'code' => 'padding',        'defn' => '=i', 'default' => $DEFAULT_PADDING ,  'description' => 'Padding around image' },
+    { 'code' => 'box_height',     'defn' => '=i', 'default' => $DEFAULT_HEIGHT + $DEFAULT_BOX_EXTRA_HEIGHT ,  'description' => 'Box height' },
+    { 'code' => 'box_width',      'defn' => '=i', 'default' => $DEFAULT_WIDTH  + $DEFAULT_BOX_EXTRA_WIDTH  ,  'description' => 'Box width' },
+    { 'code' => 'show_captions',  'defn' => q(),  'description' => 'If set show captions' },
+    { 'code' => 'columns',        'defn' => '=i', 'description' => 'Number of columns to show' },
+    { 'code' => 'align',          'defn' => '=s', 'default' => 'c','description' => 'Alignment of block' },
+    { 'code' => 'credit',         'defn' => '=s', 'description' => 'Credit' , 'interleave' => 1 },
+    { 'code' => 'link',           'defn' => '=s', 'description' => 'Link', 'interleave' => 1  },
+    { 'code' => 'links',          'defn' => q(),  'description' => 'If set show links' },
+    { 'code' => 'dir',            'defn' => '=s', 'description' => 'Show all files in given directory' },
+  );
+}
+
+sub usage {
+  return {
+    'parameters'  => '{image name}',
+    'description' => 'Displays a thumbnail gallery of images (thumbnails are sprited into a large image)',
+    'notes'       => [  ],
+  };
+}
+
+sub interleave_options {
+  my $self = shift;
+  return qw(credit link);
+}
+
 sub execute {
   my $self = shift;
   ## Check file exists....
-  my @Q           = $self->pars;
+  my @Q           = $self->pars_hash;
+$self->dumper( \@Q );
   my $err         = q();
   my $raw         = $self->option('raw') || 0;
   my $height      = $self->option('height') || $DEFAULT_HEIGHT;
@@ -67,10 +104,6 @@ sub execute {
   my $image_ref = $self->init_store( 'gallery_images', { 'images' => [] } );
 
   # Grab initial credit and link parameters...
-  my %opts = (
-    'credit' => $self->option('credit') || q(),
-    'link'   => $self->option('link')   || q()
-  );
 
 # If we have -dir flag - grab all images from that folder!
 
@@ -81,7 +114,7 @@ sub execute {
       if ( -d $dir && opendir my $dh, $dir ) {
         while ( my $f = readdir $dh ) {
           next unless -f "$dir/$f" && -e _; ## no critic (Filetest_f)
-          next if $f =~ m{\.html\Z}mxs;
+          next if $f =~ m{[.]html\Z}mxs;
           push @images, { 'img' => "$rel_dir/$f", 'tn' => "$rel_dir/$f", 'caption' => $f };
         }
       }
@@ -91,15 +124,12 @@ sub execute {
   }
 
   # Now loop through parameters;
-  while ( my $img = shift @Q ) {
-    if ( $img =~ m{\A-(credit|link)=?(.*)\Z}mxs ) {
-      $opts{$1} = $2;
-      next;
-    }
-    my ( $link, $link_text ) = split m{\s+}mxs, $opts{'link'}, 2;
+  while ( my $img_ref = shift @Q ) {
+    my $img = $img_ref->{'value'};
+    my ( $link, $link_text ) = split m{\s+}mxs, $img_ref->{'link'};
     my $tn = $img =~ s{:(.*)\Z}{}mxs ? $1 : $img;
     my $caption =
-      ( @Q && $Q[0] !~ m{\A\S+\.\w+\Z}mxs && $Q[0] !~ m{\A-}mxs )
+      ( @Q && $Q[0] !~ m{\A\S+[.]\w+\Z}mxs && $Q[0] !~ m{\A-}mxs )
       ? shift @Q
       : $img;
     if( $show_captions && !$link_text ) {
@@ -113,9 +143,8 @@ sub execute {
       'img'      => $img,
       'tn'       => $tn,
       'caption'  => $caption,
-      'credit'   => $self->_credit( $opts{'credit'} ),
+      'credit'   => $self->credit( $img_ref->{'credit'} ),
     };
-    $opts{'link'} = q();
   }
   my $key = safe_md5( join q(::), $self->page->full_uri, map( { $_->{'tn'} } @images ), "$height-$width" );
   my $out_filename =  "$key.$out_extn";
@@ -147,7 +176,7 @@ sub execute {
           }
         }
       }
-      my ( $root, $extn ) = $self->filename =~ m{\A(.+)\.(\w+)\Z}mxs;
+      my ( $root, $extn ) = $self->filename =~ m{\A(.+)[.](\w+)\Z}mxs;
       unless ($root) {
         $error_flag++;
         warn "Image requires extension: $_->{'img'}/$_->{'tn'}"; ## no critic (Carping)

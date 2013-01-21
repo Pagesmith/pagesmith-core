@@ -69,7 +69,7 @@ sub _directive {
     } elsif ( $pars =~ m{virtual="/perl/footer"}mxs ) {
       return sprintf "%s\n</body>\n</html>", $self->{'js'};
     } elsif ( $pars =~ m{(virtual|file)\s*=\s*"(.*?)"}mxs ) {
-      ( my $file = $2 ) =~ s{\.shtml\Z}{\.inc}mxs;
+      ( my $file = $2 ) =~ s{[.]shtml\Z}{.inc}mxs;
       return sprintf '<%% File "%s" %%>', $file;
     }
   } else {

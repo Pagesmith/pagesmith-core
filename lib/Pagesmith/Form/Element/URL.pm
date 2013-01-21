@@ -18,14 +18,15 @@ use base qw( Pagesmith::Form::Element::String );
 
 use HTML::Entities qw(encode_entities);
 
-sub _is_valid {
+sub validate {
   my $self = shift;
-  return $self->value =~ m{\Ahttps?://\w.*\Z}mxs;
+  return $self->set_valid if $self->value =~ m{\Ahttps?://\w.*\Z}mxs;
+  return $self->set_invalid;
 }
 
-sub _render_widget {
+sub render_widget {
   my $self = shift;
-  my $return = $self->SUPER::_render_widget();
+  my $return = $self->SUPER::render_widget();
   $return .= sprintf '<p><%% Link -ajax -get_title %s %%></p>', encode_entities( $self->value ) if $self->value;
   return $return;
 }

@@ -20,7 +20,29 @@ use base qw(Pagesmith::Component::File);
 
 use HTML::Entities qw(encode_entities);
 
-sub _cache_key {
+sub usage {
+  ## no critic (ImplicitNewlines)
+  return {
+    'parameters'  => '{URL=s} {title=s+}',
+    'description' => 'Includes a link to an audio file (mp3) along with an optional transcript (and description)',
+    'notes'       => [],
+    'see_also'    => { '/core/js/pagesmith/audio-mp3.js' =>
+      'Script which converts the link to the audio file into an embeded
+       audio control, either as a native HTML <audio> tag - using OGG
+       format version of file or an embeded player for MP3 files' ,
+    },
+  };
+  ## use critic
+}
+
+sub define_options {
+  my $self = shift;
+  return  (
+    { 'code' => 'transcript', 'defn' => '=s', 'default' => q(), 'description' => 'Text of transcript of audio file' },
+  );
+}
+
+sub my_cache_key {
   my $self = shift;
   return $self->checksum_parameters();
 }
@@ -29,7 +51,7 @@ sub execute {
   my $self = shift;
 
   my $trans_markup = q();
-  my $transcript = $self->option('transcript')||q();
+  my $transcript = $self->option('transcript');
   if( $transcript ) {
     my $err = $self->check_file($transcript);
     unless( $err ) {

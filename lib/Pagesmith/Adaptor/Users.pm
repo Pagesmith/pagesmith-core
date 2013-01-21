@@ -27,7 +27,7 @@ use Pagesmith::Object::Users::User;
 
 use Pagesmith::Utils::Bcrypt; # if you want to be able to update password (requires libcrypt-eksblowfish-perl + libcrypt-openssl-random-perl)
 
-sub _connection_pars {
+sub connection_pars {
   return 'users';
 }
 

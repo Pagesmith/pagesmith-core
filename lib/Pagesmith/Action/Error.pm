@@ -97,7 +97,7 @@ sub run {
       while( $p ) {
         if( exists $url_maps->{'path_match'}{ $p } ) {
           my $t = $url_maps->{'path_match'}{ $p };
-          if( $t =~ s{\*$}{}mxs ) {
+          if( $t =~ s{[*]$}{}mxs ) {
             return $self->redirect( "$t$remainder" );
           } else {
             return $self->redirect( "$t" );

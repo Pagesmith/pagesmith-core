@@ -369,8 +369,10 @@ sub compile_template {
 ## Stage 2 - look for javascript and css files in header/body
 ##         - load and merge them... and if required minify them
 
+  ## no critic (ComplexRegexes)
   $html =~ s{<link\s+rel="stylesheet"\s+type="text/css"\s+href="([^"]+)"\s*/>}{$self->merge_cssjs('css',$css_flag,$1)}egmxs;
   $html =~ s{<script\s+type="text/javascript"\s+src="([^"]+)"\s*>\s*</script>}{$self->merge_cssjs('js', $js_flag, $1)}egmxs;
+  ## use critic
 ## Stage 3 - optimize template...
   $html =~ s{<%~?\s+(\S*::)?Developer::[^>]\s+~?%>}{}mxgs unless $self->developer;
 
@@ -432,7 +434,7 @@ sub execute {
   # Remove need to "::" in URLs... by splitting on "_" to separate the action out!
   # Note cannot have a component with an underscore in the name!
   $action = $self->safe_module_name( $action );
-  if( $action =~ m{\A([a-z0-9]+)::}mxis && ! can_name_space( $1 ) ) {
+  if( $action =~ m{\A([[:alnum:]]+)::}mxs && ! can_name_space( $1 ) ) {
     warn "ACTION: cannot perform $action - not in valid name space\n";
     return q();
   }
@@ -446,7 +448,7 @@ sub execute {
     ## Warn error message to error log, and output "error" block to
     ## the website.
     ( my $module_tweaked = $module ) =~ s{::}{/}mxgs;
-    if( $self->dynamic_use_failure($module) =~ m{\ACan't\slocate\s$module_tweaked\.pm\sin\s\@INC}mxs ) {
+    if( $self->dynamic_use_failure($module) =~ m{\ACan't\slocate\s$module_tweaked[.]pm\sin\s@INC}mxs ) {
       $self->push_message( "Unknown Component $action", 'fatal' );
       return $self->error( 'Component '. encode_entities( $action ).' not found' );
     }
@@ -519,14 +521,16 @@ sub _parse_head {
   ## pushed from the action of from CssFile OR from any other components...
   ## Additionally we push through any Components that are in the head...
 
+  ## no critic (ComplexRegexes)
   while(
     $head =~ s{(?:
       (<!\[endif\]-->|<!--\[if.*?\]>|<%\s[^>]*\s%>)|
       <link([^>]+>)|
-      <style([^>]+)>\s*(/\*\s*<!\[CDATA\[\s*\*/.*?/\*\s*\]\]>\s*\*/)\s*</style>|
+      <style([^>]+)>\s*(/[*]\s*<!\[CDATA\[\s*[*]/.*?/[*]\s*\]\]>\s*[*]/)\s*</style>|
       <script([^>]+)>\s*(//\s*<!\[CDATA\[.*?//\s*\]\]>)?\s*</script>
     )}{}smx
   ) {
+  ## use critic
     my( $other, $link_tag, $style_tag, $style_txt, $script_tag, $script_txt ) =
       ( $1, $2, $3, $4, $5, $6 );
 ## warn sprintf "!pre!\nO:  %s\nL:  %s\nS:  %s\nST: %s\nJ:  %s\nJT: %s", $1||q(-), $2||q(-), $3||q(-), $4||q(-),$5||q(-),$6||q(-);
@@ -608,9 +612,11 @@ sub _parse_body {
 
   ## Look for trailing <script></script> tags and take them out of the content -
   ## so they don't get wrapped in the page divs!
+## no critic (ComplexRegexes)
   while (
      $html =~ s{(<script[^>]+)>\s*(//\s*<!\[CDATA\[.*?//\s*\]\]>)?\s*</script>\s*\Z}{}mxs
   ) {
+## use critic
     my ( $tag, $txt ) = ( $1, $2 );
     $extra_body =
       $tag =~ m{src\s*=\s*(['"])(.*?)\1}mxs
@@ -795,7 +801,7 @@ sub _parse {
   my ( $self, $out_ref, $pars ) = @_;
 
   ## Execute any directives in the page....
-  ${$out_ref} =~ s{<%\s+([A-Z][\w:]+)\s+(%>|(.*?)\s+%>)}{$self->execute( $1, $3 )||q()}mxesg;
+  ${$out_ref} =~ s{<%\s+([[:upper:]][\w:]+)\s+(?:%>|(.*?)\s+%>)}{$self->execute( $1, $2 )||q()}mxesg;
 
   ## Hide any content marked as <% hide %>..<% end %>
   ## <% If %> directive either returns <% hide %> or <% show %>

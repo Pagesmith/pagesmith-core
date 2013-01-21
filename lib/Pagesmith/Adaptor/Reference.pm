@@ -31,7 +31,7 @@ use Pagesmith::ConfigHash qw(get_config);
 
 use Pagesmith::Object::Reference;
 
-sub _connection_pars {
+sub connection_pars {
   return 'references';
 }
 
@@ -148,9 +148,9 @@ sub write_to_db {
              class_id    = ?
        where id = ?',
       $entry->pubmed,   $entry->doi,         $entry->pmc,         $entry->title, $entry->sid,
-      $entry->xml,      $entry->_title,      $entry->affiliation, $entry->author_list, $entry->url,
+      $entry->xml,      $entry->sort_title,  $entry->affiliation, $entry->author_list, $entry->url,
       $entry->issn,     $entry->publication, $entry->links,       $entry->pub_date,
-      $entry->precis,   $entry->_reparse_at, $now,                $entry->grants,
+      $entry->precis,   $entry->reparse_at,  $now,                $entry->grants,
       $entry->class_id,
       $entry->id,
     );
@@ -173,9 +173,9 @@ sub write_to_db {
       ?,?
     )', 'entry', 'id',
     $entry->pubmed, $entry->doi,         $entry->pmc,         $entry->title,  $entry->sid,
-    $entry->xml,    $entry->_title,      $entry->affiliation, $entry->author_list, $entry->url,
+    $entry->xml,    $entry->sort_title,  $entry->affiliation, $entry->author_list, $entry->url,
     $entry->issn,   $entry->publication, $entry->links,       $entry->pub_date,
-    $entry->precis, $entry->_reparse_at, $now,                $now,
+    $entry->precis, $entry->reparse_at,  $now,                $now,
     $entry->grants, $entry->class_id );
   if( $id ) {
     $entry->set_id( $id );
@@ -421,13 +421,16 @@ sub parse_pubmed_xml {
   my $res = [];
   return $res unless $_;
   utf8::decode($_); ##no critic (CallsToUnexportedSubs)
-  foreach (m{<PubmedArticle>(.*?)</PubmedArticle>}mxsg) {
+  foreach my $pa (m{<PubmedArticle>(.*?)</PubmedArticle>}mxsg) { ## no critic (UnusedCapture)
+    local $_ = $pa;
     my $block = { 'xml' => "<PubmedArticle>$_</PubmedArticle>" };
-    if (m{<MedlineCitation(.*?)>(.*?)</MedlineCitation>}mxs) {
-      local $_ = $2;
-      $block->{'ids'}{'pubmed'} = $self->_decode($1) if m{<PMID>(\d+)</PMID>}mxs;
-      if (m{<Article(.*?)>(.*?)</Article>}mxs) {
-        local $_ = $2;
+    if (m{<MedlineCitation.*?>(.*?)</MedlineCitation>}mxs) {
+      local $_ = $1;
+      if( m{<PMID>(\d+)</PMID>}mxs ) {
+        $block->{'ids'}{'pubmed'} = $self->_decode($1);
+      }
+      if (m{<Article.*?>(.*?)</Article>}mxs) {
+        local $_ = $1;
         if (m{<ArticleTitle>(.*?)</ArticleTitle>}mxs) {
           $block->{'title'} = $self->_decode($1);
         }
@@ -436,7 +439,9 @@ sub parse_pubmed_xml {
         }
         if (m{<Pagination>(.*?)</Pagination>}mxs) {
           local $_ = $1;
-          $block->{'pages'} = $self->_decode($1) if m{<MedlinePgn>(.*?)</MedlinePgn>}mxs;
+          if( m{<MedlinePgn>(.*?)</MedlinePgn>}mxs ) {
+            $block->{'pages'} = $self->_decode($1);
+          }
         }
         if (m{<Abstract>(.*?)</Abstract>}mxs) {
           local $_ = $1;
@@ -457,33 +462,35 @@ sub parse_pubmed_xml {
         }
         if (m{<GrantList(.*?)>(.*?)</GrantList>}mxs) {
           local $_ = $2;
-          $block->{'grants_incomplete'} = 1 if $1 =~ m{\s*CompleteYN="(N)"}mxs;
-          foreach (m{<Grant>(.*?)</Grant>}mxsg) {
-            my $agency = m{<Agency>(.*?)</Agency>}mxs ? $1 : 'Unspecified';
-            $block->{'grants'}{$agency}{ m{<GrantID>(.*?)</GrantID>}mxs ? $1 : q(-) }++;
+          if( $1 =~ m{\s*CompleteYN="(N)"}mxs ) {
+            $block->{'grants_incomplete'} = 1;
+          }
+          foreach my $gr (m{<Grant>(.*?)</Grant>}mxsg) { ## no critic (UnusedCapture)
+            my $agency = $gr =~ m{<Agency>(.*?)</Agency>}mxs ? $1 : 'Unspecified';
+            $block->{'grants'}{$agency}{ $gr =~  m{<GrantID>(.*?)</GrantID>}mxs ? $1 : q(-) }++;
           }
         }
         if (m{<AuthorList(.*?)>(.*?)</AuthorList>}mxs) {
           local $_ = $2;
           $block->{'authors_incomplete'} = 1 if $1 =~ m{\s+CompleteYN="(N)"}mxs;
-          foreach (m{<Author(.*?>.*?)</Author>}mxsg) {
+          foreach my $au (m{<Author(.*?>.*?)</Author>}mxsg) { ## no critic (UnusedCapture)
             my $author = {};
             ##no critic (ProhibitDeepNests)
-            if(m{<CollectiveName>(.*?)</CollectiveName>}mxs) {
+            if($au =~ m{<CollectiveName>(.*?)</CollectiveName>}mxs) {
               $author->{'name'} = $1;
               $author->{'type'} = 'collective';
             } else {
               $author->{'type'} = 'individual';
-              if (m{\A\s+ValidYN="$1">}mxs) {
+              if ($au =~ m{\A\s+ValidYN="([^"]+)">}mxs) {
                 $author->{'valid'} = $self->_decode($1)||q();
               }
-              if (m{<LastName>(.*?)</LastName>}mxs) {
+              if ($au =~ m{<LastName>(.*?)</LastName>}mxs) {
                 $author->{'last'} = $self->_decode($1)||q();
               }
-              if (m{<ForeName>(.*?)</ForeName>}mxs) {
+              if ($au =~ m{<ForeName>(.*?)</ForeName>}mxs) {
                 $author->{'first'} = $self->_decode($1)||q();
               }
-              if (m{<Initials>(.*?)</Initials>}mxs) {
+              if ($au =~ m{<Initials>(.*?)</Initials>}mxs) {
                 $author->{'init'} = $self->_decode($1)||q();
               }
               $author->{'name'} = exists $author->{'init'} ? "$author->{'last'} $author->{'init'}" : $author->{'last'};
@@ -499,8 +506,8 @@ sub parse_pubmed_xml {
           if (m{<Title>(.*?)</Title>}mxs) {
             $block->{'journal'} = $self->_decode($1);
           }
-          if (m{<JournalIssue(.*?)>(.*?)</JournalIssue>}mxs) {
-            local $_ = $2;
+          if (m{<JournalIssue.*?>(.*?)</JournalIssue>}mxs) {
+            local $_ = $1;
             ##no critic (ProhibitDeepNests)
             if (m{<Volume>(.*?)</Volume>}mxs) {
               $block->{'volume'} = $self->_decode($1);
@@ -514,7 +521,7 @@ sub parse_pubmed_xml {
                 $block->{'year'}  = $1;
                 $block->{'month'} = $2;
                 $block->{'day'}   = $3;
-              } elsif (m{<MedlineDate>(\d+)\s+(\w+)-(\w+)</MedlineDate>}mxs) {
+              } elsif (m{<MedlineDate>(\d+)\s+(\w+)-\w+</MedlineDate>}mxs) {
                 $block->{'year'}  = $1;
                 $block->{'month'} = $2;
                 $block->{'day'}   = q();
@@ -542,8 +549,8 @@ sub parse_pubmed_xml {
       local $_ = $1;
       if (m{<ArticleIdList>(.*?)</ArticleIdList>}mxs) {
         local $_ = $1;
-        foreach( m{<ArticleId\s+IdType="(\w+">[^>]+?)</ArticleId>}mxgs ) {
-          if( m{\A(.*?)">(.*)\Z}mxs) {
+        foreach my $ail ( m{<ArticleId\s+IdType="(\w+">[^>]+?)</ArticleId>}mxgs ) { ## no critic (UnusedCapture)
+          if( $ail =~ m{\A(.*?)">(.*)\Z}mxs) {
             $block->{'ids'}{$1} = $self->_decode($2);
           }
         }
@@ -562,7 +569,7 @@ sub _decode {
 sub _doi_to_pubmed {
   my ( $self, @dois ) = @_;
   my $search_query = join '+or+', map { sprintf 'term=%s[doi]', uri_escape_utf8($_) } @dois;
-  my $url .= 'http://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&id='.$search_query;
+  my $url = 'http://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&id='.$search_query;
   $ua->proxy( 'http', $self->{'_proxy_url'} );
   my $response = get $url;
   my @ids = $response =~ m{<Id>(\d+)</Id>}mxgs;

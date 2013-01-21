@@ -146,7 +146,7 @@ sub delete_account {
 # Setup self so connect_to_db can work
 # $self->{'_dsn'}, $self->{'_dbuser'}, $self->{'_dbpass'}, $self->{'_dbopts'}
 #  return $self->get_connection('');
-sub _connection_pars {
+sub connection_pars {
   return 'wtccc';
 }
 sub user_t {

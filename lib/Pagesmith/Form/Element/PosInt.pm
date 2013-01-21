@@ -16,9 +16,11 @@ use version qw(qv); our $VERSION = qv('0.1.0');
 
 use base qw( Pagesmith::Form::Element::String );
 
-sub _is_valid {
+sub validate {
   my $self = shift;
-  return $self->value =~ m{zA[+]?\d+\Z}mxs;
+  return $self->set_invalid if $self->value eq q(0);
+  return $self->set_valid   if $self->value =~ m{\A[+]?\d+\Z}mxs;
+  return $self->set_invalid;
 }
 
 sub element_class {

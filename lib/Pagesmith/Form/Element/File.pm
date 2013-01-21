@@ -188,7 +188,7 @@ sub clear_accepted {
   return $self;
 }
 
-sub _render_widget {
+sub render_widget {
    my $self = shift;
 
 ## Widget layout is ...
@@ -212,10 +212,18 @@ sub _render_widget {
   return $html;
 }
 
-sub _remove_uploaded_file {
+sub remove_uploaded_file {
   my( $self, $key ) = @_;
   Pagesmith::Cache->new( 'form_file', $key )->unset;
   delete $self->{'user_data'}{'files'}{$key};
+  return 1;
+}
+
+sub remove_all_uploaded_files {
+  my $self = shift;
+  foreach my $key ( keys %{ $self->{'user_data'}{'files'} } ) {
+    $self->remove_uploaded_file( $key );
+  }
   return 1;
 }
 
@@ -224,7 +232,7 @@ sub get_uploaded_file {
   return Pagesmith::Cache->new( 'form_file', $key )->get;
 }
 
-sub _add_uploaded_file {
+sub add_uploaded_file {
   my( $self, $upload ) = @_;
   return unless $upload;
   my $size = $upload->size;
@@ -270,28 +278,27 @@ sub update_from_apr {
   $del_all = 2 if !$self->multiple && @uploads && any { $_ } @uploads;
   foreach my $key ( keys %{ $self->{'user_data'}{'files'} } ) {
     my $idx = $self->{'user_data'}{'files'}{$key}{'ndx'};
-    $self->_remove_uploaded_file( $key ) if $del_all || $apr->param( $self->code.'_del_'.$idx );
+    $self->remove_uploaded_file( $key ) if $del_all || $apr->param( $self->code.'_del_'.$idx );
   }
 
   if( $self->multiple ) {
     ## Loop through all files and add them....
     foreach( @uploads ) {
-      $self->_add_uploaded_file( $_ );
+      $self->add_uploaded_file( $_ );
     }
   } else {
     ## Take the single entry and replace it!
-
-    $self->_add_uploaded_file( $uploads[0] ) if @uploads;
+    $self->add_uploaded_file( $uploads[0] ) if @uploads;
   }
   return;
 }
 
-sub _extra_columns {
+sub extra_columns {
   my $self = shift;
   return ();
 }
 
-sub _render_readonly {
+sub  render_readonly {
   my $self = shift;
   return $self->multiple ? $self->render_table( 0 ) : $self->render_single( 0 );
 }
@@ -306,7 +313,7 @@ sub render_email {
   my( $self, $form ) = @_;
   my ($entry) = values %{$self->{'user_data'}{'files'}||{}};
   my $prefix = $self->config->option('code').q(/).$self->code;
-  return $self->_render_email( sprintf qq(%s (%0.1fk %s)\n%s/action/FormFile/%s/%d/%s-%d.%s),
+  return $self->SUPER::render_email( sprintf qq(%s (%0.1fk %s)\n%s/action/FormFile/%s/%d/%s-%d.%s),
     $entry->{'name'}, $entry->{'size'}/$K, $entry->{'type'},
     $self->base_url($self->{'r'}),
     $prefix, $entry->{'ndx'}, $prefix, $entry->{'ndx'},$entry->{'xtn'},
@@ -354,7 +361,7 @@ sub render_table {
     { 'key' => 'name', 'label' => 'Name', },
     { 'key' => 'type', 'label' => 'Type', },
     { 'key' => 'size', 'label' => 'Size', 'align' => 'right' },
-    $self->_extra_columns,
+    $self->extra_columns,
   );
 
   push @columns,
@@ -374,7 +381,7 @@ sub render_table {
   return $table->render;
 }
 
-sub _render_value {
+sub  render_value {
   my $self = shift;
   return $self->pre_dumper( $self->value );
 }
@@ -389,11 +396,6 @@ sub widget_type {
 sub validate {
   my $self = shift;
   return $self->set_valid;
-}
-
-sub _extra {
-  my $self = shift;
-  return sprintf 'class="input-file %s"', $self->style;
 }
 
 sub png_or_jpg {

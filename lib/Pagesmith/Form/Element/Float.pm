@@ -17,7 +17,7 @@ use version qw(qv); our $VERSION = qv('0.1.0');
 
 use base qw( Pagesmith::Form::Element::String );
 
-sub _init {
+sub init {
   my $self = shift;
   $self->style = 'short';
   return;
@@ -25,7 +25,7 @@ sub _init {
 
 sub validate {
   my $self = shift;
-  $self->set_valid( $self->value =~ m{\A([+-]?)(?=\d|\.\d)\d*(\.\d*)?([Ee]([+-]?\d+))?\Z}mxs );
+  $self->set_valid( $self->value =~ m{\A[+-]?(?=\d|[.]\d)\d*(?:[.]\d*)?(?:[Ee][+-]?\d+)?\Z}mxs );
   return 1;
 }
 

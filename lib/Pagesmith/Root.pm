@@ -124,7 +124,7 @@ sub encode {
   return encode_entities( $value );
 }
 
-sub _csv {
+sub csv_handler {
 #@param ($self)
 #@return (Text::CSV_XS)
 ## Lazy load CSV creation object
@@ -134,7 +134,7 @@ sub _csv {
   });
 }
 
-sub _json {
+sub json_handler {
 #@param ($self)
 #@return (JSON::XS)
 ## Lazy load JSON creation object
@@ -149,13 +149,13 @@ sub trim {
 
 sub json_encode {
   my( $self, $perl_ref ) = @_;
-  return $self->_json->encode( $perl_ref );
+  return $self->json_handler->encode( $perl_ref );
 }
 
 sub json_decode {
   my( $self, $scalar ) = @_;
   return unless $scalar;
-  return $self->_json->decode( $scalar );
+  return $self->json_handler->decode( $scalar );
 }
 
 sub safe_bit {
@@ -172,7 +172,7 @@ sub safe_module_name {
 sub safe_uuid {
   my $self = shift;
   $self->{'uuid_gen'} ||= Data::UUID->new;
-  ( my $t = $self->{'uuid_gen'}->create_b64() ) =~ s{\+}{-}mxgs;
+  ( my $t = $self->{'uuid_gen'}->create_b64() ) =~ s{[+]}{-}mxgs;
   $t =~ s{/}{_}mxgs;
   return substr $t, 0, $UUID64_LENGTH;    ## Don't really need the two == signs at the end!
 }
@@ -239,7 +239,7 @@ sub dynamic_use {
   if ( $EVAL_ERROR || !$return ) {
     my $module_name = $classname;
     $module_name =~ s{::}{/}mxgs;
-    cluck "Pagesmith::Root: failed to use $classname\nPagesmith::Root: $EVAL_ERROR" unless $EVAL_ERROR =~ m{\ACan't\slocate\s$module_name\.pm}mxs;
+    cluck "Pagesmith::Root: failed to use $classname\nPagesmith::Root: $EVAL_ERROR" unless $EVAL_ERROR =~ m{\ACan't\slocate\s$module_name[.]pm}mxs;
 
     $failed_modules->{$classname} = $EVAL_ERROR || 'Unknown failure when dynamically using module';
     return 0;
@@ -254,19 +254,19 @@ sub dynamic_use_failure {
   return $failed_modules->{$classname};
 }
 
-sub _full_escape {
+sub full_escape {
   my( $self, $string ) = @_;
   return q() unless $string;
   return join q(), map { sprintf '%%%02x', ord $_ } split m{}mxs, $string;
 }
 
-sub _full_encode {
+sub full_encode {
   my( $self, $string ) = @_;
   return q() unless $string;
   return encode_entities( $string, q(^~) );
 }
 
-sub _safe_email {
+sub safe_email {
   my( $self, $email, $name ) = @_;
   return q() unless $email;
   $name ||= $email;
@@ -275,29 +275,29 @@ sub _safe_email {
   }
   if( $email ne $name ) {
     return sprintf '<a href="mailto:%s">%s</a>',
-      $self->_full_escape( "$name <$email>" ),
-      $name =~ m{@}mxs ? $self->_full_encode( $name ) : encode_entities($name);
+      $self->full_escape( "$name <$email>" ),
+      $name =~ m{@}mxs ? $self->full_encode( $name ) : encode_entities($name);
   } else {
     return sprintf '<a href="mailto:%s">%s</a>',
-      $self->_full_escape( $email ),
-      $self->_full_encode( $email );
+      $self->full_escape( $email ),
+      $self->full_encode( $email );
   }
 }
 
-sub _dumper {
+sub raw_dumper {
   my( $self, $data_to_dump, $name_of_data ) = @_;
   return Data::Dumper->new( [ $data_to_dump ], [ $name_of_data ] )->Sortkeys(1)->Indent(1)->Terse(1)->Dump();
 }
 
 sub pre_dumper {
   my( $self, $data_to_dump, $name_of_data ) = @_;
-  return '<pre>'.encode_entities( $self->_dumper( $data_to_dump, $name_of_data )).'</pre>';
+  return '<pre>'.encode_entities( $self->raw_dumper( $data_to_dump, $name_of_data )).'</pre>';
 }
 
 sub dumper {
   my( $self, $data_to_dump, $name_of_data ) = @_;
   $name_of_data ||= 'data';
-  carp '!pre!', $self->_dumper( $data_to_dump, $name_of_data );
+  carp '!pre!', $self->raw_dumper( $data_to_dump, $name_of_data );
   return;
 }
 
@@ -333,7 +333,7 @@ sub get_adaptor_conn {
   return Pagesmith::Adaptor->new( $conn );
 }
 
-sub _safe_link {
+sub safe_link {
   my( $self, $url, $max_length, $extra ) = @_;
   $max_length ||= $MAX_VIS_LENGTH;
   $extra      ||= {};

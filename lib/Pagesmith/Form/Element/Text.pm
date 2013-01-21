@@ -27,7 +27,7 @@ use HTML::Entities qw(encode_entities);
 
 ### Textarea element;
 
-sub _init {
+sub init {
   my( $self, $element_data ) = @_;
   if( exists $element_data->{'max_length'} ) {
     $self->set_max_length( $element_data->{'max_length'}||0,
@@ -87,7 +87,7 @@ sub count {
   return length $self->value;
 }
 
-sub _extra_information {
+sub extra_information {
   my $self = shift;
   return q() unless $self->{'max_length'};
   return sprintf '<div class="max_len">Length: <span class="count">%d</span>/<span class="max">%d</span> <span class="units">%s</span></div>',
@@ -114,7 +114,7 @@ sub is_list {
 }
 
 
-sub _render_widget {
+sub render_widget {
   my $self = shift;
   my $id_string = $self->generate_id_string;
 
@@ -128,18 +128,18 @@ sub _render_widget {
     $self->req_opt_string;
 }
 
-sub _render_readonly {
+sub  render_readonly {
   my $self = shift;
   return '&nbsp' unless $self->value;
   return sprintf '<ul>%s</ul>', join q(), map { sprintf '<li>%s</li>', encode_entities( $_ )  } split m{\n+}mxs, $self->value if $self->is_list;
   return join q(), map { sprintf '<p>%s</p>', encode_entities( $_ ) } split m{\n\s*\n}mxs, $self->value;
 }
 
-sub _render_widget_paper {
+sub render_widget_paper {
   my $self = shift;
 
   return sprintf '<div class="bordered_tall">%s</div>',
-    $self->_render_widget_readonly( $self->value );
+    $self->render_widget_readonly( $self->value );
 }
 
 sub element_class {

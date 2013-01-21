@@ -23,7 +23,7 @@ use base qw( Pagesmith::Form::Element );
 
 use HTML::Entities qw(encode_entities);
 
-sub _init {
+sub init {
   my $self = shift;
   $self->{'readonly_when_true'}  = exists $self->{'_options'}{'readonly_when_true' } ? $self->{'_options'}{'readonly_when_true'}  : 0;
   $self->{'on_value'}  = exists $self->{'_options'}{'on_value' } ? $self->{'_options'}{'on_value'}  : $DEFAULT_ON_VALUE;
@@ -105,7 +105,7 @@ sub render_email {
   return q() if $self->{'readonly_when_true'} && $self->value ne $self->on_value;
   return $self->SUPER::render_email( $form );
 }
-sub _render_widget_paper {
+sub render_widget_paper {
   my $self = shift;
 
   return sprintf '<div class="%s">%s</div>%s',
@@ -115,7 +115,7 @@ sub _render_widget_paper {
   ;
 }
 
-sub _render_widget {
+sub render_widget {
   my $self = shift;
   return sprintf
     '<input type="checkbox" name="%s" id="%s" class="%s" value="%s"%s%s/>%s',

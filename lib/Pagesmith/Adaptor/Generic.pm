@@ -22,7 +22,7 @@ use MIME::Base64 qw(decode_base64 encode_base64);
 
 use Pagesmith::Object::Generic;
 
-sub _connection_pars {
+sub connection_pars {
   return 'objectstore';
 }
 

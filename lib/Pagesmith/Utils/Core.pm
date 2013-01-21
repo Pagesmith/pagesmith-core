@@ -70,7 +70,7 @@ sub safe_read_from_pipe {
 sub _pipe {
   my( $self, @command ) = @_;
   my $safe_read;
-  my $pid = open $safe_read, q(-|);
+  my $pid = open $safe_read, q(-|); ## no critic (BriefOpen)
   die "$PROGRAM_NAME: cannot fork: $ERRNO\n" unless defined $pid;
   unless ($pid) {
     open STDERR, '>&STDOUT' or die "$PROGRAM_NAME: cannot dup STDOUT: $ERRNO\n";

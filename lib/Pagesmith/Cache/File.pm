@@ -21,7 +21,7 @@ Readonly my $DIR_MASK => oct 775;
 use English qw(-no_match_vars $INPUT_RECORD_SEPARATOR);
 
 use Pagesmith::Core qw(safe_md5);
-use Pagesmith::Cache::Base qw(_expires);
+use Pagesmith::Cache::Base qw(expires);
 
 my $fs_config = { 'path' => undef, 'options' => {} };
 
@@ -44,10 +44,10 @@ sub _get_path {
 
 #@param $key,string Converts the key into a path....
   my $key = shift;
-  my @path = split m{\|}mxs, $key;
+  my @path = split m{[|]}mxs, $key;
   return unless @path;
   foreach (@path) {
-    return if m{\A/}mxs || m{/\Z}mxs || m{//+}mxs || m{[^-\w\./]}mxs;
+    return if m{\A/}mxs || m{/\Z}mxs || m{//+}mxs || m{[^-\w[.]/]}mxs;
     ## musn't start with a q(/), have multiple '/' OR contain letters outside '.-\w/'
   }
   my $last_part = pop @path;
@@ -57,7 +57,7 @@ sub _get_path {
 
   @path = map { split m{/}mxs, $_ } @path;
   foreach (@path) {
-    return if m{\A\.\.?\Z}mxs;    # return if there are any "." or ".." in the path
+    return if m{\A[.][.]?\Z}mxs;    # return if there are any "." or ".." in the path
   }
   return @path;
 }
@@ -141,7 +141,7 @@ sub touch {
   return unless @path;    # Invalid path!
   my $fn = $fs_config->{'path'} . join q(/), @path;    # This is safe!!
   return unless -e $fn && -r $fn;
-  utime undef, _expires($expires), $fn;
+  utime undef, expires($expires), $fn;
   return 1;
 }
 
@@ -169,7 +169,7 @@ sub set {
   return unless open my $fh, '>', $fn;          # Create the file and write to it!
   return unless print {$fh} $content; # The parent cache module has already 'serialised' the object
   close $fh; ##no critic (CheckedSyscalls CheckedClose)
-  utime undef, _expires($expires), $fn;     # Change the expiry date timestamp...
+  utime undef, expires($expires), $fn;     # Change the expiry date timestamp...
   return 1;
 }
 ##use critic (AmbiguousNames);

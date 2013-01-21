@@ -81,7 +81,7 @@ sub munge_info {
   $self->{'swpu'}      = $self->{'swap'} - $self->{'swpf'};
   $self->{'idle_p'}    = $self->{'idle'}/$self->{'uptime'}/$self->{'cpus'} if $self->{'uptime'} && $self->{'cpus'};
   $self->{'used_p'}    = 1-$self->{'idle_p'};
-  if( $self->{'description'} =~ m{(\d+\.\d+\.\d+)}mxs ) {
+  if( $self->{'description'} =~ m{(\d+[.]\d+[.]\d+)}mxs ) {
     $self->{'release'} = $1;
   }
   return $self;
@@ -213,11 +213,10 @@ sub process_disk {
   foreach( @{$self->{'raw'}{'disk'}} ) {
     next if m{\A(?:Filesystem|none|tmpfs|udev)\s}mxs;
     next if m{/boot\Z}mxs;
-    ## no critic (CaptureWithoutTest)
     given( $_ ) {
       when( m{\s/nfs/users/}mxs                        ) { $self->{'user_dirs'} = 'Y'; }
-      when( m{\s(/vol)?/software\b}mxs                 ) { $self->{'software'}  = 'Y'; }
-      when( m{\s(/(nfs|www/mnt)/\S+)\Z}mxs             ) { $self->{'nfs'}{$1}++;       }
+      when( m{\s(?:/vol)?/software\b}mxs               ) { $self->{'software'}  = 'Y'; }
+      when( m{\s(/(?:nfs|www/mnt)/\S+)\Z}mxs             ) { $self->{'nfs'}{$1}++;       }
       when( m{\s(/(?:shared_|web_|)tmp)\Z}mxs          ) { $self->{'nfs'}{$1}++;       }
       when( m{\A\S*\s+(\d+)\s+(\d+)\s+(\d+)\s+\d+%\s+(/\S*)\Z}mxs ) {
         # $1 - size of disk in (k);
@@ -227,7 +226,6 @@ sub process_disk {
         $self->{'disks'}{ $4 } = { 'size' => $1/$K/$K, 'used' => $2/$K/$K, 'available' => $3/$K/$K };
       }
     }
-    ## use critic
   }
   return;
 }
@@ -252,7 +250,7 @@ sub process_apt {
 sub process_upgrade {
   my $self = shift;
   $self->{'upgrade'} = @{$self->{'raw'}{'upgrade'}} ? $self->{'raw'}{'upgrade'}[0] : q();
-  if($self->{'upgrade'} =~ m{New\srelease\s'(.*?)'\savailable\.}mxsi) {
+  if($self->{'upgrade'} =~ m{New\srelease\s'(.*?)'\savailable[.]}mxsi) {
     $self->{'upgrade'} = $1;
   }
   return $self;
@@ -275,7 +273,6 @@ sub process_reboot {
 sub process_ipconfig {
   my $self = shift;
   foreach ( @{$self->{'raw'}{'ipconfig'}||[]} ) {
-    ## no critic (CaptureWithoutTest)
     if( m{\A(\w+)}mxs ) {
       $self->{'interface'} = $1;
     }
@@ -283,16 +280,17 @@ sub process_ipconfig {
       when( m{HWaddr\s+(\w\w:\w\w:\w\w:\w\w:\w\w:\w\w)}mxs ) {
         $self->{'mac_addr'}  = $1;
       }
-      when( m{inet\s+addr:(\d+\.\d+\.\d+\.\d+)\s+Bcast:(\d+\.\d+\.\d+\.\d+)\s+Mask:(\d+\.\d+\.\d+\.\d+)}mxs ) {
+      ## no critic (ComplexRegexes)
+      when( m{inet\s+addr:(\d+[.]\d+[.]\d+[.]\d+)\s+Bcast:(\d+[.]\d+[.]\d+[.]\d+)\s+Mask:(\d+[.]\d+[.]\d+[.]\d+)}mxs ) {
         $self->{'ip_addr'}    = $1;
         $self->{'bcast_addr'} = $2;
         $self->{'gway_addr'}  = $3;
       }
-      when( m{inet6\s+addr:\s*([\w:]+(/\d+)?)\s+}mxs ) {
+      ## use critic
+      when( m{inet6\s+addr:\s*([\w:]+(?:/\d+)?)\s+}mxs ) {
         $self->{'ip6_addr'}   = $1;
       }
     }
-    ## use critic
   }
   return;
 }

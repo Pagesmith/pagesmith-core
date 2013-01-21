@@ -20,6 +20,15 @@ use Pagesmith::Adaptor::Qr;
 
 use Pagesmith::ConfigHash qw(get_config);
 
+sub usage {
+  my $self = shift;
+  return {
+    'parameters'  => q(),
+    'description' => q(Display a block containing a QR code link and the QR code image),
+    'notes'       => [],
+  };
+}
+
 sub execute {
   my $self = shift;
   return q() unless get_config( 'QrEnabled' );
@@ -36,7 +45,7 @@ sub execute {
   }
   my $adap = Pagesmith::Adaptor::Qr->new();
   my $key  = $self->base_url( $r ). $r->uri;
-  $key =~ s{/index\.html}{/}mxs; ## remove trailing index.html
+  $key =~ s{/index[.]html}{/}mxs; ## remove trailing index.html
   my $qr_obj = $adap->get_by_url( $key );
   if( defined $qr_code && ( !defined $qr_obj || $qr_obj->code ne $qr_code ) ) {
     my $qr_obj_fixed = $adap->create({'url' => $key, 'prime'=>'yes','code'=>$qr_code});

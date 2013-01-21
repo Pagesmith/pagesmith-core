@@ -24,6 +24,23 @@ use Socket qw(inet_aton AF_INET);
 
 use Pagesmith::Message;
 
+sub usage {
+  return {
+    'parameters'  => q(),
+    'description' => q(Render error messages in a neat format to help debugging),
+    'notes' => [],
+  };
+}
+
+sub define_options {
+  my $self = shift;
+  return (
+    { 'code' => 'severity',          'defn' => '=s', 'default' => 'fatal' },
+    { 'code' => 'stack_trace',       'defn' => '=i', 'default' => 0       },
+    { 'code' => 'stack_trace_level', 'defn' => '=s', 'default' => 'fatal' },
+  );
+}
+
 sub _resolve {
   my $ip = shift;
   my $iaddr = inet_aton($ip); # or whatever address
@@ -75,7 +92,7 @@ sub execute {
 
   my $IP = $self->r->headers_in->{ 'X-Forwarded-For' } || $self->r->connection->remote_ip;
 
-  $IP =~ s{(\b\d+\.\d+\.\d+\.\d+)}{_resolve($1)}mxges;
+  $IP =~ s{(\b\d+[.]\d+[.]\d+[.]\d+)}{_resolve($1)}mxges;
   ## no critic (ImplicitNewlines)
   return sprintf q(
 <div style="clear:both;overflow:auto" class="panel box-warn collapsible collapsed developer devpanel">

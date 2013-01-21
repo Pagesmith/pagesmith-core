@@ -26,7 +26,7 @@ use Pagesmith::Object::Qr;
 use Pagesmith::Config;
 use DBI;
 
-sub _connection_pars {
+sub connection_pars {
   return 'objectstore';
 }
 

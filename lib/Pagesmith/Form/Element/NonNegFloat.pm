@@ -17,14 +17,14 @@ use version qw(qv); our $VERSION = qv('0.1.0');
 
 use base qw( Pagesmith::Form::Element::String );
 
-sub _init {
+sub init {
   my $self = shift;
   return;
 }
 
 sub validate {
   my $self = shift;
-  return $self->set_valid if $self->value =~ m{\A(?=\d|\.\d)\d*(\.\d*)?([Ee]([+-]?\d+))?\Z}mxs;
+  return $self->set_valid if $self->value =~ m{\A(?=\d|[.]\d)\d*(?:[.]\d*)?(?:[Ee][+-]?\d+)?\Z}mxs;
   return $self->set_invalid;
 }
 

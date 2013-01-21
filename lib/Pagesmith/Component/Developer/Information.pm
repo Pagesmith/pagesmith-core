@@ -29,6 +29,14 @@ use Sys::Hostname::Long qw(hostname_long);
 
 use Pagesmith::ConfigHash;
 
+sub usage {
+  return {
+    'parameters'  => q(None),
+    'description' => q(Full dump of information about the request and the server - environment, server settings, headers, parameters etc),
+    'notes' => [],
+  };
+}
+
 ##no critic (ExcessComplexity)
 sub execute {
 #@param (self)
@@ -311,7 +319,7 @@ sub value {
   return q(-) unless $x;
   my $return = ref($x) eq 'HASH'  ? sprintf '{ %s }', join ' , ', map { $self->hex_encode( $_.': '.$x->{$_} ) } sort keys %{$x}
              : ref($x) eq 'ARRAY' ? sprintf '[ %s ]', join ' , ', map { $self->hex_encode( $_ ) } @{$x}
-             : ref($x)            ? sprintf '<pre>%s</pre>', $self->hex_encode( $self->_dumper( $x ) )
+             : ref($x)            ? sprintf '<pre>%s</pre>', $self->hex_encode( $self->raw_dumper( $x ) )
              : $x =~ m{\n}mxs      ? sprintf "\n      <pre>%s</pre>", $self->hex_encode($x )
              :                        $self->hex_encode( $x )
              ;

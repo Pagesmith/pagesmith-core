@@ -27,7 +27,7 @@ use POSIX qw(ceil);
 use Pagesmith::Cache;
 use Pagesmith::Core qw(safe_md5);
 
-sub _cache_key {
+sub my_cache_key {
 ## Do not cache!
   return;
 }
@@ -37,7 +37,33 @@ sub cache_expiry {
   return;
 }
 
+sub define_options {
+  return (
+    { 'code' => 'parameter',     'defn' => '=s', 'description' => 'Name of CGI parameter to define page' },
+    { 'code' => 'cache_expiry',  'defn' => '=s', 'description' => 'Expiry for cache'},
+    { 'code' => 'empty',         'defn' => '=s', 'description' => 'String to display if query returns no results'},
+    { 'code' => 'include_index', 'defn' => q(),  'description' => 'Include an index column as the first column'},
+    { 'code' => 'pagesize',      'defn' => '=i', 'description' => 'Size of each block'},
+    { 'code' => 'sortable',      'defn' => q(),  'description' => 'Makes table sortable' },
+    { 'code' => 'align',         'defn' => '=s', 'description' => 'Alignment of table' },
+    { 'code' => 'summary',       'defn' => '=s', 'description' => 'Summary to add to table' },
+    { 'code' => 'header_row',    'defn' => '=s', 'description' => q(If off don't display header row) },
+    { 'code' => 'dsn',           'defn' => '=s', 'description' => 'DSN of database connection' },
+    { 'code' => 'user',          'defn' => '=s', 'description' => 'User for database connection' },
+    { 'code' => 'pass',          'defn' => '=s', 'description' => 'Password for database connection' },
+  );
+}
+
+sub usage {
+  return (
+    'parameters'  => '{SQL query} {parameters}*',
+    'description' => 'Display a table based on an SQL query',
+    'notes'       => [ 'OLD CODE! - should be re-written to use table module!' ],
+  );
+}
 ##no critic (ExcessComplexity)
+
+
 sub execute {
 ## Main function
   my $self = shift;
@@ -50,7 +76,7 @@ sub execute {
   ## appropriate APR parameter.
   foreach (@pars) {
     if (m{\A\$(\w+)\s*(.*)\Z}mxs) {
-      my ($t) = $self->page->apr->param($1);
+      my ($t) = $self->param($1);
       $t = $2 unless defined $t;
       push @real_pars, $t;
     } else {
@@ -70,7 +96,7 @@ sub execute {
       ( $sth, $err, $err_extra ) = $self->_generate_sth( $query, @real_pars );    ## Connect to database and try to execute query.
       unless ( defined $sth ) {
         $self->page->push_message( "$err\n$err_extra", 'error', 1 );
-        return $self->_error($err);
+        return $self->error($err);
       }
       $table_data = {
         'head' => [@{ $sth->{'NAME'} }],                                           ## Column names to use as captions
@@ -84,7 +110,7 @@ sub execute {
     ( $sth, $err, $err_extra ) = $self->_generate_sth( $query, @real_pars );         ## Connect to database and try to execute query.
     unless ( defined $sth ) {
       $self->page->push_message( "$err\n$err_extra", 'error', 1 );
-      return $self->_error($err);
+      return $self->error($err);
     }
     $rows = $sth->rows;
   }
@@ -153,7 +179,7 @@ sub execute {
     $self->page->apr->delete($par);    ## Remove the current page parameter
     $return .= $self->_paginate( {
       'url'       => $self->r->uri,
-      'qs'        => $self->_qs,
+      'qs'        => $self->qs,
       'page'      => $page,
       'parameter' => $par,
       'pagesize'  => $pagesize,

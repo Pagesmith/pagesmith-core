@@ -21,10 +21,14 @@ use Time::HiRes qw(sleep);
 
 sub run {
   my $self  = shift;
+  $self->init_events;
   my $sleep = $self->next_path_info;
+  $self->push_event( 'Get path info' );
   my $url   = join q(/), q(), $self->path_info;
-
+  $self->push_event( 'Generated URL' );
   sleep $sleep;
+  $self->push_event( 'Slept' );
+  $self->dump_events;
   return $self->redirect($url);
 }
 
