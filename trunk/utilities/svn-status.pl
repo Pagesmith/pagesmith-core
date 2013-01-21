@@ -70,8 +70,8 @@ foreach (@files) {
   $fn = "$ROOT_PATH/tmp/svn/$fn.";
   my $path = "$ROOT_PATH/$_->[1]";
   my @commands = (
-    [ 'update',   [qw(svn up -q --accept postpone)] ],
-    [ 'status',   [qw(svn status -u)] ],
+    [ 'update',   [@svn_command,qw(up -q --accept postpone)] ],
+    [ 'status',   [@svn_command,qw(status -u)] ],
     [ 'stage',    [qw(/www/utilities/stage -d)] ],
     [ 'publish',  [qw(/www/utilities/publish -d)] ],
   );
@@ -102,13 +102,13 @@ foreach (@files) {
         open my $o, '>', "$fn$cmd->[0]";
 ## no critic (ImplicitNewlines)
         printf {$o} '
-========================================================================
+------------------------------------------------------------------------
  %s for %s
 ------------------------------------------------------------------------
 
 %s
 
-========================================================================
+------------------------------------------------------------------------
 ',
         $cmd->[0], $_->[0], $contents;
 ## use critic
@@ -131,13 +131,13 @@ sub _find_repositories {
     next unless opendir $dh, $path;
     while( defined( my $dir = readdir $dh ) ) {
       next if $dir eq q(..) || $dir eq q(.);
-      ## no critic (Filetest_f)
+      ## no critic (Filetest_f ComplexRegexes)
       if( -d "$path/$dir" && -d "$path/$dir/.svn" &&
           -f "$path/$dir/.svn/entries" &&
           open my $fh, q(<), "$path/$dir/.svn/entries" ) {
         while( my $line = <$fh> ) {
           chomp $line;
-          if( $line =~ m{\Asvn\+ssh://[^/]+/repos/svn/([^/]+)/(trunk|live|staging)(.*)\Z}mxs ) {
+          if( $line =~ m{\Asvn[+]ssh://[^/]+/repos/svn/([^/]+)/(trunk|live|staging)(.*)\Z}mxs ) {
             push @{ $repos{ $1 }{ $2 } }, { 'path' => $3, 'directory' => $paths{$path}.$dir };
             last;
           }

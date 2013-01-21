@@ -99,7 +99,7 @@ sub push_changes {
             'User "%s" unable to add/delete directory at "%s" repository "%s"',
             $user, $filename, $repos);
         }
-        if( $flags eq 'A ' && $filename =~ m{[A-Z]}mxs && $filename !~ m{/lib/}mxs ) {
+        if( $flags eq 'A ' && $filename =~ m{[[:upper;]]}mxs && $filename !~ m{/lib/}mxs ) {
           $l_exit_status++;
           $l_support->send_message(
             'Directory names must be lower case: "%s"',
@@ -423,7 +423,7 @@ sub check_html {
   my $html = join qq(\n), @contents;
   if( $params->{'extension'} eq 'tmpl' ) {
     ## Remove expanded out CSS/Javascript lines in templates.
-    $html =~ s{(<link\s+rel="stylesheet"\s+type="text/css"\s+href=")([^"]+)("\s*/>)}{$1merged$3}mxsg;
+    $html =~ s{(<link\s+rel="stylesheet"\s+type="text/css"\s+href=")([^"]+)("\s*/>)}{$1merged$3}mxsg; ## no critic (ComplexRegexes)
     $html =~ s{(<script\s+type="text/javascript"\s+src=")([^"]+)("\s*>)}{$1merged$3}mxsg;
   }
   ## Remove directives from within tags....
@@ -470,7 +470,7 @@ sub check_html {
 sub _check_lower {
   my( $name, $type ) = @_;
   return unless $name =~ m{\A[^/]+/htdocs(-\w+)?/}mxs; ## Only check htdocs directories...
-  return unless $name =~ m{[A-Z]}mxs;                  ## Return if it doesn't contain any Uppercase letters
+  return unless $name =~ m{[[:upper:]]}mxs;                  ## Return if it doesn't contain any Uppercase letters
   printf {*STDERR} "Cannot commit %s files with upper case characters in names '%s'\n", $type, $name;
   return 1;
 }

@@ -77,7 +77,7 @@ push @cookies, 'PageSmith=%7B%22a%22%3A%22e%22%7D' if $ajax;
 push @headers, 'Pragma: no-cache'                  if $flush;
 push @headers, $xhtml ? 'Accept: text/html,application/xhtml+xml,application/xml' : 'Accept: text/html';
 
-( my $repos  = $host ) =~ s{\.}{-}mxsg;
+( my $repos  = $host ) =~ s{[.]}{-}mxsg;
 
 $repos = $repos_name if $repos_name;
 
@@ -98,18 +98,18 @@ my @urls;
 my $rv = eval {
   my @out = $support->read_from_process( 'svn', 'list', '-R',
     sprintf '%s/%s/%s/htdocs', $repos_root, $repos, $branch);
-  my @pages = grep { m{\.html\Z}mxs } @out;
+  my @pages = grep { m{[.]html\Z}mxs } @out;
   my @externals = $support->read_from_process( 'svn', 'propget', 'svn:externals',
       sprintf '%s/%s/%s/htdocs', $repos_root, $repos, $branch);
   foreach my $ext (@externals) {
     next unless $ext;
     my ($d, $r) = split m{\s+}mxs, $ext;
     my @ext_out = $support->read_from_process( 'svn', 'list', '-R', $r );
-    push @pages, map { "$d/$_" } grep { m{\.html\Z}mxs } @ext_out;
+    push @pages, map { "$d/$_" } grep { m{[.]html\Z}mxs } @ext_out;
   }
   foreach( @pages ) {
 ## We have a web page to get...
-    s{\A(|.*/)index\.html\Z}{$1}mxs;
+    s{\A(|.*/)index[.]html\Z}{$1}mxs;
     push @urls, sprintf 'http://%s/%s', $host, $_;
   }
 

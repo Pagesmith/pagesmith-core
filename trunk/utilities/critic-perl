@@ -70,10 +70,10 @@ sub _init {
     'lib=s'   => \@lib_paths,
   );
 
-  die( 'You must specify a site or out path to generate the HTML into' ) unless $site || $html_path;
+  die 'You must specify a site or out path to generate the HTML into' unless $site || $html_path; ## no critic (RequireCarping)
   $dir_root  ||= $ROOT_PATH;
 
-  $html_path ||= "$dir_root/sites/'.$site.'/htdocs/docs/critic";
+  $html_path ||= "$dir_root/sites/$site/htdocs/developer/critic";
   $cache_filename = $dir_root.'/tmp/packed/critic-perl';
   if( @lib_paths ) {
     %dir_map = map { ($_ => $_) } @lib_paths;
@@ -82,13 +82,21 @@ sub _init {
     %dir_map   = ("$dir_root/lib" => 'lib', "$dir_root/utilities" => 'utilities' );
 ## Will need to add new-lib & utility directories
     my $dh;
-    return unless opendir $dh, "$dir_root/sites";
     my @dirs;
-    while ( defined (my $file = readdir $dh) ) {
-      next if $file =~ m{\A\.}mxs;
-      push @dirs, [ "$dir_root/sites/$file", $file ];
+    if( opendir $dh, "$dir_root/sites" ) {
+      while ( defined (my $file = readdir $dh) ) {
+        next if $file =~ m{\A[.]}mxs;
+        push @dirs, [ "$dir_root/sites/$file", $file ];
+      }
+      closedir $dh;
     }
-    closedir $dh;
+    if( opendir $dh, $dir_root ) {
+      while ( defined (my $file = readdir $dh) ) {
+        next if $file =~ m{\A[.]}mxs;
+        push @dirs, [ "$dir_root/$file", $file ];
+      }
+      closedir $dh;
+    }
     foreach my $a_ref ( sort { $a->[0] cmp $b->[0] } @dirs) {
       my $new_path = $a_ref->[0];
       my $file     = $a_ref->[1];
@@ -290,7 +298,7 @@ sub _parse_file_for_exceptions {
     $line ++;
     my( $prefix, $flag, $critic ) = split m{\#\#\s*(no|use)\s+critic\s*}mxs;
     next unless $flag;
-    my @modules = $critic =~ m{\(([^\)]+)\)}mxs ? split m{\s+}mxs, $1 : ('************');
+    my @modules = $critic =~ m{[(]([^)]+)[)]}mxs ? split m{\s+}mxs, $1 : ('************');
     push @exceptions, map {
       { 'postfix' => $prefix =~ m{\S}mxs ? 1 : 0, 'flag' => $flag, 'module' => $_, 'line' => $line }
     } @modules;
@@ -305,10 +313,10 @@ sub _get_files {
   return unless opendir $dh, $path;
   while ( defined (my $file = readdir $dh) ) {
     my $new_path = "$path/$file";
-    next if $file =~ m{^\.}mxs;
-    next if $file =~ m{(\.bak|\.bck|~)$}mxs;
+    next if $file =~ m{^[.]}mxs;
+    next if $file =~ m{([.]b[ac]k|~)$}mxs;
     if( -f $new_path ) { ## no critic (Filetest_f)
-      if( $file =~ m{^(.*)\.p[ml]$}mxs ) { ## .pl || .pm files
+      if( $file =~ m{^(.*)[.]p[ml]$}mxs ) { ## .pl || .pm files
         $l_files->{$root}{ "$prefix$1" } = $new_path;
       } else { ## Check other files to see if have #! line...
         next unless open my $in_fh, '<', $new_path;
@@ -457,7 +465,7 @@ sub _generate_module_html {
     </table>
   </div>
   <div id="source">
-    <%% Markedup -format=perl -number=line -ajax %s %%>
+    <%% Markedup -format perl -number line -ajax %s %%>
   </div>
   <div id="docs">
     <%% Developer_Documentation -ajax %s %s %%>
