@@ -68,7 +68,7 @@ sub touch_values {
   $self->{'links'}       = $self->_links;
   $self->{'grants'}      = $self->_grants;
   $self->{'publication'} = $self->_publication;
-  $self->{'reparse_at'}  = $self->reparse_at;
+  $self->{'reparse_at'}  = $self->touch_reparse_at;
   return $self;
 }
 
@@ -304,7 +304,7 @@ sub sort_title {
   return $self->{'_title'};
 }
 
-sub reparse_at {
+sub touch_reparse_at {
   my $self = shift;
   my $t = ( $self->pmc && $self->doi ) ? $ONE_MONTH : $ONE_WEEK;
   my ( $s, $m, $h, $dy, $mn, $yr ) = gmtime $t * $ONE_DAY + time;
