@@ -31,7 +31,7 @@ sub define_options {
   my $self = shift;
   return (
     $self->ajax_option,
-    { 'code' => 'format', 'defn' => '=s', 'default' => 'perl', 'description' => 'format of sequence' },
+    { 'code' => 'format', 'defn' => '=s', 'default' => 'perl', 'description' => 'format of file' },
     { 'code' => 'number', 'defn' => '=s', 'description' => 'prefix to add to ids of each row...' },
     { 'code' => 'height', 'defn' => '=s', 'description' => 'height of box to display' },
     { 'code' => 'title',  'defn' => '=s', 'description' => 'title string to add to documentation' },
