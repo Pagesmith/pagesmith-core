@@ -332,7 +332,7 @@ sub push_message {
 
 sub parse_parameters {
   my ( $self, $pars ) = @_;
-
+  $pars ||= q();
   if( $self->can( 'define_options' ) ) {
     my @configuration = $self->define_options;
     my $options       = { map { ($_->{'code'} => $_->{'default'}||undef) } @configuration };
@@ -344,7 +344,7 @@ sub parse_parameters {
     my( $res, $args, @warnings );
     my $rv = eval {
       local $SIG{'__WARN__'} = sub { push @warnings, @_; };
-      ( $res, $args ) = GetOptionsFromString( $pars, $options, @get_opt_pars );
+      ( $res, $args ) = GetOptionsFromString( decode_entities( $pars ), $options, @get_opt_pars );
     };
     if( @warnings ) {
       ## no critic (Carping)
