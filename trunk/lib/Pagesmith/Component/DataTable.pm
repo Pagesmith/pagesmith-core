@@ -43,7 +43,7 @@ sub define_options {
     { 'code' => 'cache_expiry',  'defn' => '=s', 'description' => 'Expiry for cache'},
     { 'code' => 'empty',         'defn' => '=s', 'description' => 'String to display if query returns no results'},
     { 'code' => 'include_index', 'defn' => q(),  'description' => 'Include an index column as the first column'},
-    { 'code' => 'pagesize',      'defn' => '=i', 'description' => 'Size of each block'},
+    { 'code' => 'pagesize',      'defn' => '=i', 'default' => '25', 'description' => 'Size of each block'},
     { 'code' => 'sortable',      'defn' => q(),  'description' => 'Makes table sortable' },
     { 'code' => 'align',         'defn' => '=s', 'description' => 'Alignment of table' },
     { 'code' => 'summary',       'defn' => '=s', 'description' => 'Summary to add to table' },

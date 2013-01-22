@@ -122,11 +122,11 @@ sub execute {
   # Now loop through parameters;
   while ( my $img_ref = shift @Q ) {
     my $img = $img_ref->{'value'};
-    my ( $link, $link_text ) = split m{\s+}mxs, $img_ref->{'link'};
+    my ( $link, $link_text ) = split m{\s+}mxs, $img_ref->{'link'}||q();
     my $tn = $img =~ s{:(.*)\Z}{}mxs ? $1 : $img;
     my $caption =
-      ( @Q && $Q[0] !~ m{\A\S+[.]\w+\Z}mxs && $Q[0] !~ m{\A-}mxs )
-      ? shift @Q
+      ( @Q && $Q[0]{'value'} !~ m{\A\S+[.]\w+\Z}mxs && $Q[0]{'value'} !~ m{\A-}mxs )
+      ? (shift @Q)->{'value'}
       : $img;
     if( $show_captions && !$link_text ) {
       $link_text = q(*);
