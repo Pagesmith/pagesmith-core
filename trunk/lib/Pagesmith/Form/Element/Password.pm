@@ -24,9 +24,6 @@ sub new {
   );
 }
 
-sub extra_markup {
-  return 'autocomplete="off" ';
-}
 sub widget_type {
   return 'password';
 }
