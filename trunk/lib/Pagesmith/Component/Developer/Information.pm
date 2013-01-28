@@ -25,7 +25,7 @@ use Apache2::URI;
 use URI::Escape qw(uri_escape_utf8);
 use English qw(-no_match_vars $PID $EVAL_ERROR);
 use HTML::Entities qw(encode_entities);
-use Sys::Hostname::Long qw(hostname_long);
+use Sys::Hostname qw(hostname);
 
 use Pagesmith::ConfigHash;
 
@@ -82,6 +82,8 @@ my $LIST_T = "\n    <li>%s</li>";
   <dl style="font-size: 80%" class="twocol">);
 
   #-- Dump general information about the virtual server!
+  my @host_info = gethostbyname hostname();
+  my $host_name = @host_info ? $host_info[0] : q(--);
   my @Q = qw(
     args            bytes_sent      content_encoding    content_languages
     content_type    filename        header_only         hostname
@@ -93,7 +95,7 @@ my $LIST_T = "\n    <li>%s</li>";
     as_string       default_type    document_root       get_limit_req_body
     get_server_name get_server_port is_initial_req      location
   );
-  $html .= sprintf $ROW_T, 'Host', encode_entities( hostname_long );
+  $html .= sprintf $ROW_T, 'Host', encode_entities( $host_name );
   $html .= sprintf $ROW_T, 'PID',  $PID;
   foreach( @Q ) {
     my $ret = eval { sprintf $ROW_T, encode_entities( $_ ), $self->value( $r->$_ ); };
