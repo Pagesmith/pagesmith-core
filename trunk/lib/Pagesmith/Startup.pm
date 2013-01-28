@@ -91,7 +91,6 @@ use Image::Size;
 use POSIX qw(floor ceil);
 use Syntax::Highlight::HTML;
 use Sys::Hostname;
-use Sys::Hostname::Long; ## For getting machine name out!
 use Text::Markdown;
 use Text::MediawikiFormat;
 use Text::ParseWords;
