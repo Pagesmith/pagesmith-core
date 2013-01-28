@@ -204,11 +204,11 @@ sub my_table_from_query {
 sub base_table_from_query {
   my( $self, $table, $dba, $sql, @params ) = @_;
   my $sth = $dba->prepare( $sql );
-  $sth->execute( @params );
+     $sth->execute( @params );
 
   my $html = $table
     ->add_columns(  map { {'key'=>lc $_,'caption'=>$_} } @{ $sth->{'NAME'} } )
-    ->add_data( @{$sth->fetchall_arrayref( {} )} )
+    ->add_data( @{$sth->fetchall_arrayref( )} )
     ->render;
   $sth->finish;
   return $html;
