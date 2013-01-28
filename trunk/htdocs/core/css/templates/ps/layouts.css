@@ -82,7 +82,7 @@ body { margin: 0 auto; border:0; background:#fff; padding: 0 10px;   min-width:8
   padding: 0 10px 10px 10px; margin:0; }
 #featureR div.seq { height: 220px; }
 #featureR div {
-  max-width: 450px;   height: 170px; background-position: top center; border: 4px solid #bcc5cc; margin: 0 10px 0 auto; }
+  max-width: 450px;   height: 170px; background-position: top center; border: 4px solid #bcc5cc; margin: 0 10px 0 auto; background-repeat:no-repeat; background-color: #bcc5cc }
 /*----------------------------------------------------------------------
   faculty pages....
 ------------------------------------------------------------------------
