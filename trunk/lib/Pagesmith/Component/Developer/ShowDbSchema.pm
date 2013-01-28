@@ -122,13 +122,14 @@ sub execute_oracle {
 sub execute_mysql {
   my( $self, $db, $dba ) = @_;
   return sprintf '<h3>Database: %s</h3><p>Unable to connect</p>', encode_entities($db) unless $dba->dbh;
+  ( my $safe_db = $db ) =~ s{\W}{_}mxsg;
 
   my $tables = $dba->col( 'show tables' );
   ## no critic (Implicit Newline)
   my $tabs = $self->tabs( { 'fake' => 1 } );
-  $tabs->add_tab( "sub_${db}_summary", 'Summary', $self->table_from_query( $dba, 'show table status' ) );
+  $tabs->add_tab( "sub_${safe_db}_summary", 'Summary', $self->table_from_query( $dba, 'show table status' ) );
   foreach my $tb ( @{$tables} ) {
-    $tabs->add_tab( "sub_${db}_$tb", $tb, sprintf '<h4>Columns</h4>%s<h4>Keys</h4>%s<h4>Samples</h4>%s',
+    $tabs->add_tab( "sub_${safe_db}_$tb", $tb, sprintf '<h4>Columns</h4>%s<h4>Keys</h4>%s<h4>Samples</h4>%s',
       $self->my_table_from_query( $dba, "describe $tb" ),
       $self->my_table_from_query( $dba, "show keys from $tb" ),
       $self->my_table_from_query( $dba, "select * from $tb limit 20" ),
