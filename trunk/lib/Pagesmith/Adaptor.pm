@@ -22,7 +22,7 @@ use DBIx::Connector;
 ## The following are used to fake useragent/ip if called from a script!
 
 use Socket qw(inet_ntoa);
-use Sys::Hostname::Long qw(hostname_long);
+use Sys::Hostname qw(hostname);
 use English qw(-no_match_vars $PROGRAM_NAME);
 use Scalar::Util qw(blessed weaken isweak);
 
@@ -355,7 +355,7 @@ sub set_ip_and_useragent {
     );
     $object_to_update->set_useragent( $self->r->headers_in->{'User-Agent'} || q(--) );
   } else {
-    my $host = hostname_long() || 'localhost';
+    my $host = hostname() || 'localhost';
     $object_to_update->set_ip( inet_ntoa( scalar gethostbyname $host ) );
     $object_to_update->set_useragent( "$ENV{q(SHELL)} $PROGRAM_NAME" );
   }
