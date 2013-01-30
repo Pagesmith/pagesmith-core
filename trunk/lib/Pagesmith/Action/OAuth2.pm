@@ -45,9 +45,9 @@ sub error {
 
 sub get_conf {
   my( $self, $key ) = @_;
-  my $pch = Pagesmith::Config->new( { 'file' => 'oauth2', 'location' => 'site' } );
+  my $pch = Pagesmith::Config->new( { 'file' => 'external_auth', 'location' => 'site' } );
      $pch->load(1);
-  return $pch->get( $key );
+  return $pch->get( 'oauth2', $key );
 }
 
 sub send_to_oauth2_provider {
@@ -121,7 +121,6 @@ sub run {
   $resp = $ua->get( $conf->{'get_userinfo'}.'?access_token='.$token );
 
   my $user_info = eval { $resp->is_success ? $self->json_decode( $resp->content ) : undef; };
-$self->dumper( $user_info );
   return $self->error( 'connection failed', $form ) unless $user_info && ref $user_info eq 'HASH';
 
   ## Create user session and write cookie...
