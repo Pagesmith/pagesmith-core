@@ -69,7 +69,7 @@ sub user_info {
 
 sub clean_template_type {
   my $r  = shift;
-  my $tt = $r->headers_in->get('X-Pagesmith-TemplateType');
+  my $tt = $r->headers_in->get('X-Pagesmith-TemplateType') ||q();
   return $valid_templates{$tt} || 'normal';
 }
 
