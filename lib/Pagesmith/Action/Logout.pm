@@ -26,7 +26,7 @@ sub run {
 
   my $user_session = Pagesmith::Session::User->new($self->r);
 
-  $user_session->clear_cookie->cache->unset if $user_session->read_cookie;
+  $user_session->clear_cookie->session_cache->unset if $user_session->read_cookie;
 
   return $self->redirect( $self->r->headers_in->{'Referer'} || $self->base_url.q(/) );
 }
