@@ -41,14 +41,26 @@ use Pagesmith::Config;
 sub render_extra {
   my $self = shift;
 
-  my $pch = Pagesmith::Config->new( { 'file' => 'oauth2', 'location' => 'site' } );
-  $self->{'oauth_data'} ||= $pch->load(1)->get;
-  my $html = join q(),
-    map { sprintf '<li><a href="/action/OAuth2/%s/%s">%s</a></li>', $_, $self->code, $self->{'oauth_data'}{$_}{'name'}||$_  }
-    sort grep { exists $self->{'oauth_data'}{$_}{'enabled'} && $self->{'oauth_data'}{$_}{'enabled'} } keys %{$self->{'oauth_data'}};
+  my $pch = Pagesmith::Config->new( { 'file' => 'external_auth', 'location' => 'site' } )->load(1);
 
-  return q() unless $html;
-  return sprintf q(<div class="panel"><h3>External logins</h3><ul>%s</ul></div>), $html;
+  my $oauth = $pch->get( 'oauth2' );
+  my $html = join q(),
+    map { sprintf '<li><a href="/action/OAuth2/%s/%s">Use %s</a></li>', $_, $self->code, $oauth->{$_}{'name'}||$_  }
+    sort grep { exists $oauth->{$_}{'enabled'} && $oauth->{$_}{'enabled'} } keys %{$oauth};
+
+  if( $pch->get( 'shibboleth', 'enabled' ) ) {
+    $html .= sprintf '<li><a href="/action/Shibboleth/%s">Use shibboleth</a></li>', $self->code;
+  }
+  $html = sprintf '<h3>External authentication</h3><ul>%s</ul>', $html if $html;
+
+  ## no critic (ImplicitNewlines)
+  if( $pch->get( 'openid', 'enabled' ) ) {
+    $html .= sprintf '<h3>Login with open ID:</h3>
+      <form method="post" action="/action/OpenId/%s" class="check"><p class="c"><input style="background: url(/core/gfx/openid.png) no-repeat 2px; width: 70%%; padding-left:22px" type="text" id="url" name="url" class="openid _url required" value="%s" /> <input type="submit" value="Go" /></p></form>', $self->code, $self->param( 'url' )||q();
+  }
+  ## use critic
+  return q() unless $html || $html;
+  return sprintf q(<div class="panel">%s</div>), $html;
 }
 
 sub initialize_form {
@@ -58,7 +70,7 @@ sub initialize_form {
   my $ret = $self->attribute( 'ref' )||q();
   $ret =~ s{\Ahttps?://[^/]+/}{/}mxs;
   $self->set_title( 'Login' )
-       ->set_secure()
+       ->set_secure
        ->add_class(          'form',     'check' )          # Javascript validation is enabled
        ->add_class(          'form',     'cancel_quietly' ) # Cancel doens't throw warning!
        ->add_class(          'section',  'panel' )          # Form sections are wrapped in panels
