@@ -89,7 +89,7 @@ sub check {
   while(@lines>0) {
     my ($msg,$source,$arrow,$blank) = splice @lines,0,$ERROR_BLOCK_LINES;
     my $c = 0;
-    if( defined $arrow && $arrow =~ m{\A([.]*)[^]}mxs ) {
+    if( defined $arrow && $arrow =~ m{\A([.]*)\^}mxs ) {
       $c = length $1;
     } else {
       splice @lines,0,0,defined $source ? $source : (),defined $arrow ? $arrow:(),defined $blank ? $blank:();
