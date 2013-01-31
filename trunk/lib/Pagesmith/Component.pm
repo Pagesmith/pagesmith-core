@@ -295,6 +295,12 @@ sub next_par {
   return $par;
 }
 
+sub unshift_par {
+  my( $self, $value ) = @_;
+  unshift @{$self->{'_pars'}}, $value;
+  return $self;
+}
+
 sub pars {
 #@param (self)
 #return (array) array of parameters
