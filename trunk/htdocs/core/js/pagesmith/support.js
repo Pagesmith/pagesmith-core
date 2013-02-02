@@ -64,23 +64,24 @@ PageSmith.expand_format = function (format, val) {
       return parseFloat(val).toFixed(match[2] || 0);
     case 'g':
       return parseFloat(val).toPrecision(match[2] || 3);
-    case 'p':
+    default: // case 'p'
       perc = 100 * parseFloat(val);
       return perc.toFixed(match[2] || 0) + '%';
-    default:
-      switch (f) {
-      case 'd':
-        return parseFloat(val).toFixed(0);
-      case 'r':
-        return val;
-      case 'u':
-      case 'ur':
-        // url encode
-        return encodeURI(val);
-      default: // encode entities
-        return escapeHTML(val);
-      }
     }
+  }
+  switch (f) {
+  case 'd':
+    return parseFloat(val).toFixed(0);
+  case 'r':
+    return val;
+  case 's':
+    return val.replace(/\W+/g,'_');
+  case 'u':
+  case 'ur':
+    // url encode
+    return encodeURI(val);
+  default: // encode entities
+    return escapeHTML(val);
   }
 };
 
@@ -118,7 +119,7 @@ PageSmith.expand_template = function (template, val, row) {
     t = template;
   }
   while (t.length > 0) {
-    match = t.match(/^(.*?)\[\[([efgp]:\d+:[\-\w]+|[ruhdefgp]:[\-\w]+|[\-\w]+)\]\](.*)$/);
+    match = t.match(/^(.*?)\[\[([efgp]:\d+:[\-\w]+|[ruhdefsgp]:[\-\w]+|[\-\w]+)\]\](.*)$/);
     if (match) {
       result += match[1];
       type = match[2].substr(0, 2);
@@ -132,6 +133,9 @@ PageSmith.expand_template = function (template, val, row) {
         break;
       case 'h:':
         result += escapeHTML(PageSmith.clean(row[part], ''));
+        break;
+      case 's:':
+        result += PageSmith.clean(row[part],'').replace(/\W+/g,'_');
         break;
       case 'e:':
         match2 = part.match(/(\d+):(\w+)/);
@@ -298,7 +302,7 @@ PageSmith.Table.prototype = {
           new_class = this.options.row_class;
         }
         if (new_class !== '') {
-          tr_x += new_class;
+          tr_x += this.expand_template(new_class,'',row);
         }
       }
       if (tr_x) {
