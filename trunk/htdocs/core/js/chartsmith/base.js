@@ -92,20 +92,6 @@ Chartsmith.Bump.prototype = {
   }
 };
 
-var cs_defaults = {
-  height:     null,
-  width:      null,
-  popup_text: null,
-  popup_box:  null,
-  margins:    { left: 20, right: 20, top: 20, bottom: 20 }, // Configuration setting for margins
-  xaxis:      { label_style: '', minvalue: null, maxvalue: null, dir: '+', label: '', line: null, scaling: 'linear', major: 1, minor: 1, axis_pos: 'below', labelsize: 14, size: 10, ticksize: 4, values: [], label_scale: 0, label_dp: 0, label_suffix: '', hide: 0 }, // Configurat
-  yaxis:      { label_style: '', minvalue: null, maxvalue: null, dir: '-', label: '', line: null, scaling: 'linear', major: 1, minor: 1, axis_pos: 'left',  labelsize: 14, size: 10, ticksize: 4, values: [], label_scale: 0, label_dp: 0, label_suffix: '', hide: 0 },
-  background: '#eee',
-  title:      { text: undefined, position: 'above', size: 20, fill: '#000', offset: 5 },
-  edge:       '',
-  notIE:      true
-};
-
 Raphael.fn.cs_merge = function (keys, pars) {
   var key, key_n, prop;
   for (key_n in keys) {
@@ -131,8 +117,26 @@ Constructor: initialize parameters (copy from passed pars hash)
 Raphael.fn.cs_init = function (pars) {
   // Store the object in the collector so that we can get it back later...
   Chartsmith.Collector[pars.object] = this;
-  this.cs = cs_defaults;
-  this.notIE = document.all ? false : true;
+  this.cs = {
+    height:     null,
+    width:      null,
+    popup_text: null,
+    popup_box:  null,
+    margins:    { left: 20, right: 20, top: 20, bottom: 20 }, // Configuration setting for margins
+    xaxis:      { label_style: '', minvalue: null, maxvalue: null, dir: '+', label: '', line: null,
+                  scaling: 'linear', major: 1, minor: 1, axis_pos: 'below', labelsize: 14, size: 10,
+                  ticksize: 4, values: [], label_scale: 0, label_dp: 0, label_suffix: '', hide: 0
+                }, // Configurat
+    yaxis:      { label_style: '', minvalue: null, maxvalue: null, dir: '-', label: '', line: null,
+                  scaling: 'linear', major: 1, minor: 1, axis_pos: 'left',  labelsize: 14, size: 10,
+                  ticksize: 4, values: [], label_scale: 0, label_dp: 0, label_suffix: '', hide: 0,
+                  label_len: 6
+                },
+    background: '#eee',
+    title:      { text: undefined, position: 'above', size: 20, fill: '#000', offset: 5 },
+    edge:       '',
+    notIE:      document.all ? false : true
+  };
   this.cs_merge([ 'xaxis', 'yaxis', 'background', 'title', 'edge', 'margins' ], pars);
 // Default margin = 20px
   this.cs.width  = $('#' + pars.object).width();
@@ -146,7 +150,7 @@ Raphael.fn.cs_init = function (pars) {
   //   * the y-axis numbering is on the left hand side!
   if (!this.cs.yaxis.hide) {
     if (this.cs.yaxis.axis_pos === 'left' || this.cs.yaxis.scaling  === 'discrete' || (this.cs.yaxis.axis_pos === 'on' && (this.cs.yaxis.scaling === 'log' ? 1 : 0) < this.cs.yaxis.minvalue)) {
-      this.cs.margins.left += this.cs.yaxis.size * 6 + 10;
+      this.cs.margins.left += this.cs.yaxis.size * this.cs.yaxis.label_len * 0.6 + 10;
     }
   }
 //  Bottom margin needs to be expanded IF
@@ -334,11 +338,13 @@ Configure the axes
         A = tck.label.toString();
         ma = A.match(/^10\^(-?\d+)(\w*)$/);
         if (ma) {
+          AA = this.cs.yaxis.pos - this.cs.yaxis.ticksize - 5;
           if (ma[2]) {
-            t = this.cs_add_text({ align: 'right', raw: 1, x: this.cs.yaxis.pos - this.cs.yaxis.ticksize - 5, y: tck.pos, t: ma[2], opts: { fill: '#000', 'font-size': this.cs.yaxis.size + 'pt' } });
+            t = this.cs_add_text({ align: 'right', raw: 1, x: AA, y: tck.pos, t: ma[2], opts: { fill: '#000', 'font-size': this.cs.yaxis.size + 'pt' } });
+            AA -= t.getBBox().width;
           }
-          t = this.cs_add_text({ align: 'right', raw: 1, x: this.cs.yaxis.pos - this.cs.yaxis.ticksize - 5, y: tck.pos - 3, t: ma[1], opts: { fill: '#000', 'font-size': this.cs.yaxis.size * 0.6 + 'pt' } });
-          AA = 2 * t.attrs.x - this.cs.yaxis.pos + this.cs.yaxis.ticksize - 3;
+          t = this.cs_add_text({ align: 'right', raw: 1, x: AA, y: tck.pos - 3, t: ma[1], opts: { fill: '#000', 'font-size': this.cs.yaxis.size * 0.6 + 'pt' } });
+          AA -= t.getBBox().width;
           t = this.cs_add_text({ align: 'right', raw: 1, x: AA, y: tck.pos, t: '10', opts: { fill: '#000', 'font-size': this.cs.yaxis.size + 'pt' } });
         } else {
           t = this.cs_add_text({ align: 'right', raw: 1, x: this.cs.yaxis.pos - this.cs.yaxis.ticksize - 5, y: tck.pos, t: tck.label, opts: { fill: '#000', 'font-size': this.cs.yaxis.size + 'pt' } });
