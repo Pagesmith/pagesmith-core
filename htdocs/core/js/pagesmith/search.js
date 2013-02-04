@@ -33,7 +33,7 @@ $('#search_a').bind('click', function () {
 $(function () {
   $('#q[value="' + PageSmith.search_message + '"]')
     .addClass('qdef')
-    .live('focus', function () {
+    .on('focus', function () {
       $(this).removeClass('qdef').val('');
     });
 });
@@ -45,12 +45,12 @@ $('div.collapsible h3, div.collapsible h4.keep').livequery(function () {
 });
 
 $(function () {
-  $('#collapse-all').live('click', function () {
+  $('#collapse-all').on('click', function () {
     $('div.collapsible').addClass('collapsed');
     PageSmith.flags['t'] = 'c';
     PageSmith.setCookie();
   });
-  $('#expand-all').live('click', function () {
+  $('#expand-all').on('click', function () {
     $('div.collapsible').removeClass('collapsed');
     PageSmith.flags['t'] = 'e';
     PageSmith.setCookie();

@@ -52,51 +52,46 @@
     }
   });
 
-  $('.presentation')
-    .livequery(function () {
-      var html = '<div class="title"></div><div><span class="prev">&lt;prev</span>', c = 0;
-      $(this).children('img').first().siblings().addClass('preshid');
-      $(this).children('img').each(function () {
-        c++;
-        html += ' <span class="slide">' + c + '</span>';
-      });
-      html += ' <span class="next">next&gt;</span></div>';
-      $(this).append(html).pres_set_title();
-    })
-    .find('img')
-    .live('click', function () {
-      $(this).addClass('preshid');
-      if ($(this).next('img').length) {
-        $(this).next('img').removeClass('preshid');
-      } else {
-        $(this).siblings('img').first().removeClass('preshid');
-      }
-      $(this).closest('.presentation').pres_set_title();
-    })
-    .end().find('.prev')
-    .live('click', function () {
-      var x = $(this).closest('div').siblings('img:visible').addClass('preshid');
-      if (x.prev('img').length) {
-        x.prev('img').removeClass('preshid');
-      } else {
-        x.siblings('img').last().removeClass('preshid');
-      }
-      $(this).closest('.presentation').pres_set_title();
-    })
-    .end().find('.next')
-    .live('click', function () {
-      var x = $(this).closest('div').siblings('img:visible').addClass('preshid');
-      if (x.next('img').length) {
-        x.next('img').removeClass('preshid');
-      } else {
-        x.siblings('img').first().removeClass('preshid');
-      }
-      $(this).closest('.presentation').pres_set_title();
-    })
-    .end().find('.slide')
-    .live('click', function () {
-      $(this).closest('div').siblings('img:visible').addClass('preshid');
-      $(this).closest('div').siblings('img').eq($(this).text() - 1).removeClass('preshid');
-      $(this).closest('.presentation').pres_set_title();
+  $('.presentation').livequery(function () {
+    var html = '<div class="title"></div><div><span class="prev">&lt;prev</span>', c = 0;
+    $(this).children('img').first().siblings().addClass('preshid');
+    $(this).children('img').each(function () {
+      c++;
+      html += ' <span class="slide">' + c + '</span>';
     });
+    html += ' <span class="next">next&gt;</span></div>';
+    $(this).append(html).pres_set_title();
+  });
+  $('body').on('click','.presentation img', function () {
+    $(this).addClass('preshid');
+    if ($(this).next('img').length) {
+      $(this).next('img').removeClass('preshid');
+    } else {
+      $(this).siblings('img').first().removeClass('preshid');
+    }
+    $(this).closest('.presentation').pres_set_title();
+  });
+  $('body').on('click','.presentation .prev', function () {
+    var x = $(this).closest('div').siblings('img:visible').addClass('preshid');
+    if (x.prev('img').length) {
+      x.prev('img').removeClass('preshid');
+    } else {
+      x.siblings('img').last().removeClass('preshid');
+    }
+    $(this).closest('.presentation').pres_set_title();
+  });
+  $('body').on('click','.presentation .next', function() {
+    var x = $(this).closest('div').siblings('img:visible').addClass('preshid');
+    if (x.next('img').length) {
+      x.next('img').removeClass('preshid');
+    } else {
+      x.siblings('img').first().removeClass('preshid');
+    }
+    $(this).closest('.presentation').pres_set_title();
+  });
+  $('body').on('click','.presentation .slide',function() {
+    $(this).closest('div').siblings('img:visible').addClass('preshid');
+    $(this).closest('div').siblings('img').eq($(this).text() - 1).removeClass('preshid');
+    $(this).closest('.presentation').pres_set_title();
+  });
 }(jQuery));
