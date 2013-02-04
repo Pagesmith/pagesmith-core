@@ -1,5 +1,5 @@
-.ajaxwait { padding-left: 20px; background-image: url(/core/gfx/anim/spinner.gif); background-position: left; background-repeat: no-repeat }
 @charset "UTF-8";
+.ajaxwait { padding-left: 20px; background-image: url(/core/gfx/anim/spinner.gif); background-position: left; background-repeat: no-repeat }
 /*jslint css: true */
  /* classes to do simple css, float, align, "hide", etc, clear floats */
 div.right, .right { float: right; }
