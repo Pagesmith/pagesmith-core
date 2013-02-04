@@ -14,7 +14,7 @@
  * etc can be shown/hidden
  */
 
-$('.ref-coll h4').live('click', function () {
+$('body').on('click','.ref-coll h4',function () {
   $(this).closest('.ref-coll').toggleClass('ref-closed');
 });
 

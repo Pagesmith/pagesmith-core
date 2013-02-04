@@ -1,24 +1,24 @@
-$('#hide-ignore').click(function () {
+$('#hide-ignore').on('click',function () {
   $(this).val($(this).val() === 'Show ignored' ? 'Hide ignored' : 'Show ignored');
   $('.ignore').toggleClass('ignore-show');
-}).click();
+}).trigger('click');
 
-$('#hide-forced').click(function () {
+$('#hide-forced').on('click',function () {
   $(this).val($(this).val() === 'Show forced' ? 'Hide forced' : 'Show forced');
   $('.forced').toggleClass('forced-show');
-}).click();
+}).trigger('click');
 
-$('#hide-info').click(function () {
+$('#hide-info').on('click',function () {
   $(this).val($(this).val() === 'Show info' ? 'Hide info' : 'Show info');
   $('.info').toggleClass('info-show');
-}).click();
+}).trigger('click');
 
-$('.goto').live('click', function () {
+$('body').on('click','.goto', function () {
   $('a[href=#source]').trigger('click');
   $(document).scrollTop($('#line_' + $(this).text()).position().top);
   return true;
 });
-$('#hide-ind').click(function () {
+$('#hide-ind').on('click',function () {
   if ($(this).val() === 'Show individual') {
     $('.ind').addClass('ind-show');
     $(this).val('Hide individual');
@@ -26,16 +26,16 @@ $('#hide-ind').click(function () {
     $('.ind').removeClass('ind-show');
     $(this).val('Show individual');
   }
-}).click();
+}).trigger('click');
 
-$('.collapse_ol').live('click', function () { $(this).closest('li').find('ol').toggle(); });
-$(function () { $('.collapse_ol').click(); });
+$('body').on('click','.collapse_ol', function () { $(this).closest('li').find('ol').toggle(); });
+$(function () { $('.collapse_ol').trigger('click'); });
 
-$('.ind-container').click(function () {$(this).find('ol').toggleClass('ind-show'); });
+$('.ind-container').on('click',function () {$(this).find('ol').toggleClass('ind-show'); });
 
-$('.description').click(function () {$(this).find('div').toggleClass('info-hid'); });
+$('.description').on('click',function () {$(this).find('div').toggleClass('info-hid'); });
 
-$('#severity').change(function () {
+$('#severity').on('change',function () {
   var v = $(this).val(), i;
   for (i = 5; i; i--) {
     if (i < v) {

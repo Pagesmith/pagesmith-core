@@ -172,8 +172,8 @@ var FormValidator = {
     return s.replace(/^(\s+)?(.*\S)(\s+)?$/, '$2');
   },
 
-  isInt: function (s) { return s.match(/^[\-+]?\d+$/); },
-  isRef: function (s) { return s.match(/^(SID_)?\d+$/); },
+  isInt:     function (s) { return s.match(/^[\-+]?\d+$/); },
+  isRef:     function (s) { return s.match(/^(SID_)?\d+$/); },
   isRefList: function (s) { return s.match(/^\s*((SID_)?\d+\s+)*(SID_)?\d+\s*$/); },
   isIntList: function (s) { return s.match(/^[\d\s]+$/); },
   isFloat:   function (s) { return s.match(/^[\-+]?(\d+\.\d+|\d+\.?|\.\d+)?([Ee][\-+]?\d+)?$/); },
@@ -185,6 +185,14 @@ var FormValidator = {
   isAlpha:   function (s) { return s.match(/^\w+$/); },
   isHTML:    function (s) { return !XHTMLValidator.validate(s); },
 
+  validators: {
+    vstrongpassword: function(that,s) { return [ that.isPass(s) && that.isStrong(s, 4) ? 2 : (that.isPass(s) ? 1 : false), []]; },
+    strongpassword:  function(that,s) { return [ that.isPass(s) && that.isStrong(s, 3) ? 2 : (that.isPass(s) ? 1 : false), []]; },
+    fstrongpassword: function(that,s) { return [ that.isPass(s) && that.isStrong(s, 2) ? 2 : (that.isPass(s) ? 1 : false), []]; },
+    password:        function(that,s) { return [ that.isPass(s), []]; },
+    even:            function(that,s) { return [ that.isInt(s) && (parseInt(s,10)%2 === 0), []]; },
+    odd:             function(that,s) { return [ that.isInt(s) && (parseInt(s,10)%2 === 1), []]; }
+  },
   valid: function (el, s) {
     var m, els, optgp, v, cl, max;
     if (el.is('select')) {
@@ -216,49 +224,48 @@ var FormValidator = {
       cl  = 'max_len';
     }
     max = el.prop('className').match(/\bmax_(\d+)\b/);
-    switch (cl) {
-    case 'vstrongpassword':
-      return [(this.isPass(s) && this.isStrong(s, 4) ? 2 : (this.isPass(s) ? 1 : false)), []];
-    case 'strongpassword':
-      return [(this.isPass(s) && this.isStrong(s, 3) ? 2 : (this.isPass(s) ? 1 : false)), []];
-    case 'fstrongpassword':
-      return [(this.isPass(s) && this.isStrong(s, 2) ? 2 : (this.isPass(s) ? 1 : false)), []];
-    case 'max_len':
-      return [this.update_count(el), []];
-    case 'int':
-      return [this.isInt(s), []];
-    case 'float':
-      return [this.isFloat(s), []];
-    case 'email':
-      return [this.isEmail(s), []];
-    case 'url':
-      return [this.isURL(s), []];
-    case 'password':
-      return [this.isPass(s), []];
-    case 'code':
-      return [this.isCode(s), []];
-    case 'alpha':
-      return [this.isAlpha(s), []];
-    case 'html':
-      return [this.isHTML(s), []];
-    case 'file':
-      return [true, []];
-    case 'age':
-      return [this.isInt(s)   && parseInt(s, 10)   >= 0 && parseInt(s, 10) <= 150, []];
-    case 'pubmed_list':
-      return [this.update_count(el) && this.isRefList(s), []];
-    case 'pubmed':
-      return [this.isRef(s), []];
-    case 'posint':
-      return [this.isInt(s)   && parseInt(s, 10)   >  0, []];
-    case 'nonnegint':
-      return [this.isInt(s)   && parseInt(s, 10)   >= 0 && (max === null || parseInt(s, 10) <= max[1]), []];
-    case 'posfloat':
-      return [this.isFloat(s) && parseFloat(s) >  0, []];
-    case 'nonnegfloat':
-      return [this.isFloat(s) && parseFloat(s) >= 0, []];
-    default:
-      return [true, []];
+    if( this.validators[cl] ) {
+      console.log( "VAL>>>" );
+      return this.validators[cl](this,s);
+    } else {
+      switch (cl) {
+        case 'max_len':
+          return [this.update_count(el), []];
+        case 'int':
+          return [this.isInt(s),    []];
+        case 'float':
+          return [this.isFloat(s),  []];
+        case 'email':
+          return [this.isEmail(s),  []];
+        case 'url':
+          return [this.isURL(s),    []];
+        case 'password':
+          return [this.isPass(s),   []];
+        case 'code':
+          return [this.isCode(s),   []];
+        case 'alpha':
+          return [this.isAlpha(s), []];
+        case 'html':
+          return [this.isHTML(s), []];
+        case 'file':
+          return [true, []];
+        case 'age':
+          return [this.isInt(s)   && parseInt(s, 10)   >= 0 && parseInt(s, 10) <= 150, []];
+        case 'pubmed_list':
+          return [this.update_count(el) && this.isRefList(s), []];
+        case 'pubmed':
+          return [this.isRef(s), []];
+        case 'posint':
+          return [this.isInt(s)   && parseInt(s, 10)   >  0, []];
+        case 'nonnegint':
+          return [this.isInt(s)   && parseInt(s, 10)   >= 0 && (max === null || parseInt(s, 10) <= max[1]), []];
+        case 'posfloat':
+          return [this.isFloat(s) && parseFloat(s) >  0, []];
+        case 'nonnegfloat':
+          return [this.isFloat(s) && parseFloat(s) >= 0, []];
+        default:
+          return [true, []];
+      }
     }
   },
 
@@ -390,7 +397,7 @@ var FormValidator = {
         value = 1; // 'we have an attached file!'
       }
       if( input.hasClass('_checkbox') &&
-          input.attr('checked') !== 'checked'
+          input.prop('checked') !== 'checked'
       ) {
         value = '';
       }
@@ -575,107 +582,112 @@ var FormValidator = {
 // Now allocate functions....
 
 // Make elements of class autocomplete "james" objects...
-$('.auto_complete').livequery(function () {
-  $(this).attr('autocomplete', 'off');
-  var mat = $(this).attr('title').match(/^(\w+)=([^?]+)\??(.*)$/);
-  if (mat) {
-    $(this).james(mat[2], {params: mat[3], varname: mat[1], minlength: 2});
-  }
-  $(this).attr('title', '');
-});
-$.fn.extend({
-  toggleAttr : function (attrib) {
-    if (this.attr(attrib)) {
-      this.removeAttr(attrib);
-    } else {
-      this.attr(attrib, attrib);
-    }
-    return this;
-  }
-});
 
-$('body').delegate(
-  // "url" elements do a check of the URL
-  'form ._url',
-  'blur',
-  function () {
-    return FormValidator.load_url($(this));
-  }
-).delegate(// text area - with max length
-  'form ._max_len',
-  'change keyup',
-  function () {
-    return FormValidator.update_count($(this));
-  }
-).delegate(// and strings - with max length
-  'form.check :input',
-  'change keyup',
-  function () {
-    return FormValidator.check($(this));
-  }
-).delegate(// this element is refered to by a "logic" tag...
-  '.logic_change',
-  'change',
-  function () {
-    return FormValidator.check_logic($(this));
-  }
-).delegate(// "pubmed" elements get information about the paper!
-  'form ._pubmed, form ._pubmed_list',
-  'blur',
-  function () {
-    if (FormValidator.valid($(this), $(this).val())) {
-      FormValidator.load_pubmed($(this));
+$(function () {
+  $('.auto_complete').livequery(function () {
+    $(this).attr('autocomplete', 'off');
+    var mat = $(this).attr('title').match(/^(\w+)=([^?]+)\??(.*)$/);
+    if (mat) {
+      $(this).james(mat[2], {params: mat[3], varname: mat[1], minlength: 2});
     }
-  }
-).delegate(// Mouse down anywhere resets the action to the submit to next...
-  'form.check',
-  'mousedown',
-  function () {
-    $(this).closest('form').find(':input[name="action"]').attr('value', 'next');
-  }
-).delegate(// Mouse up on submit buttons sets the action to the value of the button
-  'form.check :input[type="submit"]',
-  'mouseup',
-  function (ev) {
-    $(this).closest('form').find(':input[name="action"]').attr('value', $(this).attr('name'));
-  }
-).delegate(// action a submit button!
-  'form.check',
-  'reset',
-  function () {
-    $(this).find(':input').each(function () {
+    $(this).attr('title', '');
+  });
+  $.fn.extend({
+    toggleAttr : function (attrib) {
+      if (this.attr(attrib)) {
+        this.removeAttr(attrib);
+      } else {
+        this.attr(attrib, attrib);
+      }
+      return this;
+    }
+  });
+
+  $('body').on(
+    // "url" elements do a check of the URL
+    'blur',
+    'form ._url',
+    function () {
+      return FormValidator.load_url($(this));
+    }
+  ).on(// text area - with max length
+    'change keyup',
+    'form ._max_len',
+    function () {
+      return FormValidator.update_count($(this));
+    }
+  ).on(// and strings - with max length
+    'change keyup',
+    'form.check :input',
+    function () {
       return FormValidator.check($(this));
-    });
-  }
-).delegate(// action a submit button!
-  'form.check',
-  'submit',
-  function () {
-    return FormValidator.submit_button($(this));
-  }
-).delegate(// Clicking on "file-blob" checkbox toggles "deleted" class on "row"
-  '.checkbox',
-  'click',
-  function () {
-  // Separate into delete all AND delete one...
-    $(this).filter('[name$=_del_all]').closest('.file-details').toggleClass('deleted').closest('table').find('tbody').not('.foot').toggleClass('all-deleted').find('input').toggleAttr('disabled').end().find('img').closest('span').toggleClass('opac20');
-    $(this).not('[name$=_del_all]').closest('.file-details').toggleClass('deleted').find('img').toggleClass('opac20').end().prev().filter('.file-blob').toggleClass('opac20');
-    if ($(this).closest('.file-details').length) {
-      var upload_id = $(this).attr('name');
-      upload_id = upload_id.substr(0, upload_id.lastIndexOf('_del_'));
-      return FormValidator.check($(this).closest('form').find('input[name=' + upload_id + ']'));
     }
-  }
-);
+  ).on(// this element is refered to by a "logic" tag...
+    'change',
+    '.logic_change',
+    function () {
+      return FormValidator.check_logic($(this));
+    }
+  ).on(// "pubmed" elements get information about the paper!
+    'blur',
+    'form ._pubmed, form ._pubmed_list',
+    function () {
+      if (FormValidator.valid($(this), $(this).val())) {
+        FormValidator.load_pubmed($(this));
+      }
+    }
+  ).on(// Mouse down anywhere resets the action to the submit to next...
+    'mousedown',
+    'form.check',
+    function () {
+      $(this).closest('form').find(':input[name="action"]').attr('value', 'next');
+    }
+  ).on(// Mouse up on submit buttons sets the action to the value of the button
+    'mouseup',
+    'form.check :input[type="submit"]',
+    function (ev) {
+      $(this).closest('form').find(':input[name="action"]').attr('value', $(this).attr('name'));
+    }
+  ).on(// action a submit button!
+    'reset',
+    'form.check',
+    function () {
+      $(this).find(':input').each(function () {
+        return FormValidator.check($(this));
+      });
+    }
+  ).on(// action a submit button!
+    'submit',
+    'form.check',
+    function () {
+      return FormValidator.submit_button($(this));
+    }
+  ).on(// Clicking on "file-blob" checkbox toggles "deleted" class on "row"
+    'click',
+    '.checkbox',
+    function () {
+    // Separate into delete all AND delete one...
+      $(this).filter('[name$=_del_all]').closest('.file-details').toggleClass('deleted').closest('table').find('tbody').not('.foot').toggleClass('all-deleted').find('input').toggleAttr('disabled').end().find('img').closest('span').toggleClass('opac20');
+      $(this).not('[name$=_del_all]').closest('.file-details').toggleClass('deleted').find('img').toggleClass('opac20').end().prev().filter('.file-blob').toggleClass('opac20');
+      if ($(this).closest('.file-details').length) {
+        var upload_id = $(this).attr('name');
+        upload_id = upload_id.substr(0, upload_id.lastIndexOf('_del_'));
+        return FormValidator.check($(this).closest('form').find('input[name=' + upload_id + ']'));
+      }
+    }
+  );
 
-/* Finally the live query stuff! */
+  /* Finally the live query stuff! */
 
-$('.logic').livequery(function () {
-  if (!$(this).is('form')) {
-    $(this).closest('form').addClass('logic');
-  }
+  $('.logic').livequery(function () {
+    if (!$(this).is('form')) {
+      $(this).closest('form').addClass('logic');
+    }
+  });
+  $('form.logic').livequery(function () { return FormValidator.check_logic($(this)); });
+  $('form.check :input').livequery(function () { return FormValidator.check($(this)); });
+  $('label').livequery(function () { return FormValidator.push_label($(this)); });
 });
-//$('form ._password').livequery( function () { $(this).attr('autocomplete','off'); return; } );
 $('form.logic').livequery(function () { return FormValidator.check_logic($(this)); });
 $('form.check :input').livequery(function () { return FormValidator.check($(this)); });
 $('label').livequery(function () { return FormValidator.push_label($(this)); });
