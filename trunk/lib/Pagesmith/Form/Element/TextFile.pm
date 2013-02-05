@@ -119,7 +119,7 @@ sub render_widget {
   ;
 }
 
-sub  render_readonly {
+sub render_widge_readonly {
   my $self = shift;
   return '&nbsp' unless $self->value;
   return sprintf '<ul>%s</ul>', join q(), map { sprintf '<li>%s</li>', encode_entities( $_ )  } split m{\n+}mxs, $self->value if $self->is_list;

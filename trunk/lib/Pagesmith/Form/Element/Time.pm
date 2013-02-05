@@ -30,9 +30,9 @@ sub render_widget {
   return $self->render_widget_time;
 }
 
-sub  render_readonly {
+sub render_widget_readonly {
   my $self = shift;
-  return $self-> render_readonly_time;
+  return $self->render_readonly_time;
 }
 
 sub element_class {

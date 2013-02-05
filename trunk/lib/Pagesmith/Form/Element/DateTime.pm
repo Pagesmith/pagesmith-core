@@ -246,7 +246,7 @@ sub element_class {
   return $self;
 }
 
-sub  render_readonly_date {
+sub render_readonly_date {
   my $self = shift;
   my $v = $self->value;
   return encode_entities(strftime( '%e %b %Y', 0,0,0,$v->{'day'}, $v->{'month'}-1, $v->{'year'} - $YEAR_OFFSET )) if defined $v->{'day'} && $v->{'day'} ne q();
@@ -255,7 +255,7 @@ sub  render_readonly_date {
   return q();
 }
 
-sub  render_readonly_time {
+sub render_readonly_time {
   my $self = shift;
   my $v = $self->value;
   return encode_entities(strftime( '%H:%M:%S', $v->{'second'}, $v->{'minute'}, $v->{'hour'}, 0, 0, 0 )) if defined $v->{'second'} ;
@@ -264,9 +264,9 @@ sub  render_readonly_time {
   return q();
 }
 
-sub  render_readonly {
+sub render_widget_readonly {
   my $self = shift;
-  my $value = $self-> render_readonly_time.q( ).$self-> render_readonly_date;
+  my $value = $self->render_readonly_time.q( ).$self->render_readonly_date;
   $value = q(--) if $value eq q( );
   return $value;
 }

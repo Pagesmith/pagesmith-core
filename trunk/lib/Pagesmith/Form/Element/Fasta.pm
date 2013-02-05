@@ -35,7 +35,7 @@ sub res {
   my( $self, $seq ) = @_;
   return $seq =~  tr{[a-z*A-Z]}{[a-z*A-Z]} ;
 }
-sub  render_readonly {
+sub render_widge_readonly {
   my $self = shift;
   return '&nbsp' unless $self->value;
 
