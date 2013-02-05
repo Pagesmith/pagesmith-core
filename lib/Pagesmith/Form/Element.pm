@@ -626,7 +626,7 @@ sub twrap {
 
 sub render_email {
   my( $self, $form ) = @_;
-  my $value = $self->render_readonly;
+  my $value = $self->render_widget_readonly;
   $value = q(--) if $value eq '&nbsp;';
   $value =~ s{<[^>]+>}{}mxgs;
   $value = decode_entities( $value );
