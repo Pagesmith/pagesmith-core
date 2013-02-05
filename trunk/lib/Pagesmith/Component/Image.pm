@@ -74,7 +74,7 @@ sub define_options {
     { 'code' => 'nocredit',       'defn' => q(),   'description' => q(Don't display credit) },
     { 'code' => 'nozoom',         'defn' => q(),   'description' => q(Don't display zoom link) },
     { 'code' => 'boxpadding',     'defn' => '=i', 'default' => $DEFAULT_PADDING ,  'description' => 'Padding around image' },
-    { 'code' => 'boxwidth',       'defn' => '=i', 'default' => $DEFAULT_WIDTH  + $DEFAULT_BOX_EXTRA_WIDTH  ,  'description' => 'Box width' },
+    { 'code' => 'boxwidth',       'defn' => '=i', 'default' => 0 ,  'description' => 'Box width' },
     { 'code' => 'height',         'defn' => '=i', 'default' => 0  ,  'description' => 'Max height of image to use' },
     { 'code' => 'width',          'defn' => '=i', 'default' => 0   ,  'description' => 'Max width of image to use' },
     { 'code' => 'w',              'defn' => '=i', 'default' => 0  ,  'description' => 'Alternative to height' },
