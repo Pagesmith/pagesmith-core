@@ -150,7 +150,7 @@ sub render_widget_paper {
   return qq(<ul class="boxes">$options</ul>);
 }
 
-sub  render_readonly {
+sub render_widget_readonly {
   my $self = shift;
   my $value = $self->value;
   my ($text)  = map { ( ref $_ ? ($_->{'value'} eq $value ? ($_->{'name'}) : ()) : ( $_ eq $value ? ($_) : () ) ) } $self->values;

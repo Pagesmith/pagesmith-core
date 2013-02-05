@@ -45,9 +45,9 @@ sub element_class {
   return $self;
 }
 
-sub  render_readonly {
+sub render_widget_readonly {
   my $self = shift;
-  my $value = $self-> render_readonly_date;
+  my $value = $self->render_readonly_date;
   $value = q(--) if $value eq q();
   return $value;
 }

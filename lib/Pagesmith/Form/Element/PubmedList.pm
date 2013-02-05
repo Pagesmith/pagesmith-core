@@ -23,7 +23,7 @@ sub validate {
   return $self->set_invalid;
 }
 
-sub  render_readonly {
+sub render_widge_readonly {
   my $self = shift;
   return q(--) unless $self->value;
   return sprintf '<%% References %s %%>', encode_entities( $self->value );

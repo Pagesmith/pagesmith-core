@@ -128,7 +128,7 @@ sub render_widget {
     $self->req_opt_string;
 }
 
-sub  render_readonly {
+sub render_widget_readonly {
   my $self = shift;
   return '&nbsp' unless $self->value;
   return sprintf '<ul>%s</ul>', join q(), map { sprintf '<li>%s</li>', encode_entities( $_ )  } split m{\n+}mxs, $self->value if $self->is_list;

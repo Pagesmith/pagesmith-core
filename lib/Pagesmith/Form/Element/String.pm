@@ -59,12 +59,12 @@ sub render_widget_paper {
   my $class = $self->generate_class_string =~ m{short}mxs ? 'bordered_short' : 'bordered';
   return sprintf '<div class="%s">%s</div>%s',
     $class,
-    ( $self->raw ? $self-> render_value : encode_entities( $self-> render_value ) ) ||'&nbsp;',
+    ( $self->raw ? $self->render_value : encode_entities( $self-> render_value ) ) ||'&nbsp;',
     $self->req_opt_string,
   ;
 }
 
-sub  render_value {
+sub render_value {
   my $self = shift;
   return $self->value;
 }
