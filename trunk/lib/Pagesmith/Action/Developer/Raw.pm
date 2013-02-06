@@ -1,4 +1,4 @@
-package Pagesmith::Action::Raw;
+package Pagesmith::Action::Developer::Raw;
 
 ## Dumps raw HTML of the file to the browser (syntax highlighted)
 ## Author         : js5
@@ -35,8 +35,8 @@ sub run {
   ## All should apply basic secutiy at this point.
 
   my $file = join q(/), $self->path_info;
+  $file .= '/index.html' unless $file =~ m{[.](?:html|inc)\Z}mxs;
   $file =~ s{\A/+}{}mxgs;
-
   my $root = $self->r->document_root;
   my $full_file = realpath( File::Spec->rel2abs( $file, $root ) );
   return $self->not_found unless -e $full_file;    ## Check exists and database
@@ -70,7 +70,7 @@ sub run {
   return $self->no_decor->html->printf( '<html>
 <head>
   <title>Source of %s</title>
-  <link rel="stylesheet" type="text/css" href="/developer/css/html-syntax.css" />
+  <link rel="stylesheet" type="text/css" href="/core/css/utils/syntax.css" />
 </head>
 <body>
   %s
