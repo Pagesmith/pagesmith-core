@@ -15,12 +15,25 @@
     when the box is collapsed
 ----------------------------------------------------------------------*/
 
-.collapsible h3:first-child img { background: url(/core/gfx/icons-120724.png) -16px -1400px no-repeat; height:16px; width:16px; padding: 0px; margin-right: 0.5em; float: left; display: block; }
-.collapsed h3:first-child img { background-position: -32px -1380px; }
+.collapsible h3:first-child img ,
+  .collapsible h4.keep img ,
+  .collapsible p.head img {
+     cursor: pointer;
+     background: url(/core/gfx/icons-120724.png) -16px -1400px no-repeat;
+     height:16px; width:16px; padding: 0px; margin-right: 0.5em; float: left; display: block; }
 
-.collapsible h4.keep img { background: url(/core/gfx/icons-120724.png) -16px -1400px no-repeat; height:16px; width:16px; padding: 0px; margin-right: 0.5em; float: left; display: block; }
-.collapsed h4.keep img { background-position: -32px -1380px; }
+.collapsed h3:first-child img,
+  .collapsed h4.keep      img,
+  .collapsed p.head       img { background-position: -32px -1380px; }
 
 .collapsed div.coll, .collapsed ul, .collapsed .searchhit, .collapsed table, .collapsed pre, .collapsed h4, .collapsed p, .collapsed dl, .collapsed ul, .collapsed ol { display: none; }
 
 .collapsed h4.keep { display: block; }
+
+.collapsed p.head { display: block }
+
+.collapsible p.head .hide { display: inline }
+.collapsible p.head .show { display: none }
+
+.collapsed p.head .hide { display: none }
+.collapsed p.head .show { display: inline }
