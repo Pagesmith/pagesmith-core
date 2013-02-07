@@ -39,30 +39,3 @@ p.link { margin-left: 4em; font-size: 90%; }
 }
 
 #collapse-all { background-position: -40px -1360px; }
-
-/*----------------------------------------------------------------------
-  Collapse + expand functionality
-------------------------------------------------------------------------
-  buttons
-    A blank gif is inserted into each of the ".collapsible h3" elements
-    on the page - which is then styled as below.. it uses the same
-    graphic as the expand/collapse all and is only changed by the
-    vertical position within the image.
-  hiding div
-    When collapsed we need to hide the div - this is simply a case of
-    setting display to none!
-  box styling
-    We over-ride the box styling by moving the image around, the two
-    of the collapsable boxes are always v-light grey, and the bottom is
-    when the box is collapsed
-----------------------------------------------------------------------*/
-
-.collapsible h3:first-child img { background: url(/core/gfx/icons-120724.png) -16px -1400px no-repeat; height:16px; width:16px; padding: 0px; margin-right: 0.5em; float: left; display: block; }
-.collapsed h3:first-child img { background-position: -32px -1380px; }
-
-.collapsible h4.keep img { background: url(/core/gfx/icons-120724.png) -16px -1400px no-repeat; height:16px; width:16px; padding: 0px; margin-right: 0.5em; float: left; display: block; }
-.collapsed h4.keep img { background-position: -32px -1380px; }
-
-.collapsed div.coll, .collapsed ul, .collapsed .searchhit, .collapsed table, .collapsed pre, .collapsed h4, .collapsed p, .collapsed dl, .collapsed ul, .collapsed ol { display: none; }
-
-.collapsed h4.keep { display: block; }
