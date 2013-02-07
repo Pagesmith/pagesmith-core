@@ -38,12 +38,6 @@ $(function () {
     });
 });
 
-$('div.collapsible h3, div.collapsible h4.keep').livequery(function () {
-  $(this).prepend('<img src="/core/gfx/blank.gif" />').bind('click', function () {
-    $(this).closest('div.collapsible').toggleClass('collapsed');
-  });
-});
-
 $(function () {
   $('#collapse-all').on('click', function () {
     $('div.collapsible').addClass('collapsed');
