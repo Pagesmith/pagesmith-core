@@ -7,7 +7,7 @@
   Dependency: none
 ----------------------------------------------------------------------*/
 
-$('div.collapsible h3, div.collapsible h4.keep').livequery(function () {
+$('div.collapsible p.head, div.collapsible h3, div.collapsible h4.keep').livequery(function () {
   $(this).prepend('<img src="/core/gfx/blank.gif" />').bind('click', function () {
     $(this).closest('div.collapsible').toggleClass('collapsed');
   });
