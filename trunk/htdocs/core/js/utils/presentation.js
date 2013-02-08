@@ -53,15 +53,15 @@
   });
 
   $('.presentation').livequery(function () {
-    var html = '<div class="title"></div><div><span class="prev">&lt;prev</span>', c = 0;
-    $(this).children('img').first().siblings().addClass('preshid');
-    $(this).children('img').each(function () {
-      c++;
-      html += ' <span class="slide">' + c + '</span>';
+      var html = '<div class="title"></div><div><span class="prev">&lt;prev</span>', c = 0;
+      $(this).children('img').first().siblings().addClass('preshid');
+      $(this).children('img').each(function () {
+        c++;
+        html += ' <span class="slide">' + c + '</span>';
+      });
+      html += ' <span class="next">next&gt;</span></div>';
+      $(this).append(html).pres_set_title();
     });
-    html += ' <span class="next">next&gt;</span></div>';
-    $(this).append(html).pres_set_title();
-  });
   $('body').on('click','.presentation img', function () {
     $(this).addClass('preshid');
     if ($(this).next('img').length) {
