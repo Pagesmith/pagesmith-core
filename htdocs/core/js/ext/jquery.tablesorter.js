@@ -862,7 +862,7 @@
             };
             this.clearTableBody = function (table) {
               if( table.tBodies.length == 0 ) { return; }
-                if (document.all && !document.querySelector) {
+                if (document.all) {
                     function empty() {
                         while (this.firstChild)
                         this.removeChild(this.firstChild);
