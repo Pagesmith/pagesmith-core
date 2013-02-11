@@ -154,7 +154,7 @@ use Pagesmith::HTML::Tabs;
 
 use Pagesmith::Object::Reference;
 
-use Pagesmith::Action::Raw;
+use Pagesmith::Action::Developer::Raw;
 use Pagesmith::Action::Error;
 use Pagesmith::Action::Serverinfo;
 use Pagesmith::Action::Delay;
