@@ -298,7 +298,7 @@ sub extra_columns {
   return ();
 }
 
-sub render_widge_readonly {
+sub render_widget_readonly {
   my $self = shift;
   return $self->multiple ? $self->render_table( 0 ) : $self->render_single( 0 );
 }
@@ -381,7 +381,7 @@ sub render_table {
   return $table->render;
 }
 
-sub  render_value {
+sub render_value {
   my $self = shift;
   return $self->pre_dumper( $self->value );
 }
