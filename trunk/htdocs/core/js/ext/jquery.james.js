@@ -66,11 +66,11 @@ jQuery.fn.james = function (url_to_call, options) {
    */
   var initCSS = function initCSS() {
     var input_offset = that.position();
-    var offset = ( $(window).width() - $('body').width() ) / 2; // Hack to solve issue of using margin: auto
+    var offset = 0;
     ul_element.css({
       top:    input_offset.top + that.outerHeight(),
       width:  that.outerWidth(),
-      left:   input_offset.left - offset +10,
+      left:   input_offset.left + 2,
       position:   "absolute"
     });
   };
@@ -140,7 +140,7 @@ jQuery.fn.james = function (url_to_call, options) {
    * This method performs AJAX calls
    */
   var ajaxUpdate = function () {
-    var value_to_send = that.attr("value");
+    var value_to_send = that.prop("value");
     // Check length of input's value
     if (value_to_send.length > 0 &&
       (o.minlength === false ||
@@ -150,7 +150,7 @@ jQuery.fn.james = function (url_to_call, options) {
         type:     o.method,
         // @TODO: Would be great if params could be an object
         data:     o.varname + "=" + value_to_send + "&" + ($.isFunction(o.params)?o.params():o.params),
-        url:    url_to_call,
+        url:      url_to_call,
         dataType:   "json",
         success:  function (data) {
           var arr = o.onKeystroke(data);
