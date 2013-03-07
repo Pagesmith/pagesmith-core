@@ -77,6 +77,7 @@ Chartsmith.Genbank.prototype = {
         fs.features = new_features;
       }
     }
+    return this;
   },
   process_features: function () {
     var tp = new Raphael(0, 0, 1, 1), j, type, fs, k, f, renderer;
@@ -107,6 +108,7 @@ Chartsmith.Genbank.prototype = {
     }
     tp.remove();
     /* At this point we have computed all the meta information about the features */
+    return this;
   },
 
   place_features: function () {
@@ -148,6 +150,7 @@ Chartsmith.Genbank.prototype = {
       }
       track_y += bump.height;
     }
+    return this;
   },
 
   resize_image: function () {
@@ -162,6 +165,7 @@ Chartsmith.Genbank.prototype = {
     });
     this.diagonal = this.gbimg.cs.yaxis.mult / this.gbimg.cs.xaxis.mult / 10;
     this.dom_node.after();
+    return this;
   },
 
   render_features: function () {
@@ -204,6 +208,7 @@ Chartsmith.Genbank.prototype = {
         }
       }
     }
+    return this;
   },
   draw_arrow: function (f) {
     var l, s, e, st;
@@ -226,6 +231,7 @@ Chartsmith.Genbank.prototype = {
         });
       }
     }
+    return this;
   },
   draw_transcript2: function (f) {
     var l, s, e, st, pts;
@@ -254,6 +260,7 @@ Chartsmith.Genbank.prototype = {
       }
       this.gbimg.cs_add_poly({ pts: pts, fill: f.color, stroke: 'black' });
     }
+    return this;
   },
   draw_generic: function (f) {
     var l, s, e, st;
@@ -268,5 +275,6 @@ Chartsmith.Genbank.prototype = {
         stroke: 'black'
       });
     }
+    return this;
   }
 };
