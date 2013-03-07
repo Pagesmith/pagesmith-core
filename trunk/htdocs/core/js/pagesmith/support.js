@@ -202,12 +202,14 @@ PageSmith.Tabs.prototype = {
       flag = { 'pos': 'left' };
     }
     this.tabs.push({ name: name, title: title, content: content, flag: flag });
+    return this;
   },
   unshift_tab: function (name, title, content, flag) {
     if (typeof (flag) === 'undefined') {
       flag = 'left';
     }
     this.tabs.unshift({ name: name, title: title, content: content, flag: flag });
+    return this;
   },
   attach_functions: function () {
     var j, t, x;
@@ -218,6 +220,7 @@ PageSmith.Tabs.prototype = {
         $('a[href=#' + t.name + ']').bind('click', x);
       }
     }
+    return this;
   },
   classes_string: function () {
     var a = this.classes;
@@ -228,8 +231,9 @@ PageSmith.Tabs.prototype = {
     var i;
     for (i = arguments.length; i; i) {
       i--;
-      this.classes.push(arguments.unshift());
+      this.classes.push(arguments[i]);
     }
+    return this;
   },
   render: function () {
     var j, nav = [], navr = [], contents = [], t, extra, html;
@@ -332,6 +336,9 @@ PageSmith.Table.prototype = {
       } else if (tr_class === 'even ') {
         tr_class = 'odd ';
       }
+    }
+    if( this.options.noheading ) {
+      return '<table class="' + this.options.className + '"><tbody>' + rs.join('') + '</tbody></table>';
     }
     return '<table class="' + this.options.className + '"><thead><tr>' + h.join('') + '</tr></thead><tbody>' + rs.join('') + '</tbody></table>';
   }
