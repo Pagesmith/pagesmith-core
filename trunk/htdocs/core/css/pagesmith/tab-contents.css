@@ -17,6 +17,7 @@
 .no-top-border  > h3      { display: block; margin-top: 5px; }
 .hide-heading   > h3      { display: none }
 .tabc h4, .tabc > h3.keep { display:block; margin-top: 5px; }
+.tabc p + h4, .tabc ul + h4, .tabc ol + h4, .tabc div + h4, .tabc dl + h4 { margin-top: 12px}
 /* re-instate when checked that all the headings are the right size!
   #project #main .tabc h3 {background:none; border-bottom:none}
 */
