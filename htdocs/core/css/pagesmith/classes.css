@@ -50,3 +50,6 @@ span.tag { font-weight: bold; color: #006; }
 .countdown span.pause,
 .countdown span.refresh
   { color: black; cursor: pointer; padding: 1px 0.5em; font-weight: bold; background-color: #ccc }
+
+.redstuff{ color: #ff0000; font-weight: bold;}
+.warning { color: #8e0018; font-weight: bold;}
