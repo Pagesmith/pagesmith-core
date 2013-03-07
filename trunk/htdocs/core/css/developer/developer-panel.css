@@ -1,7 +1,8 @@
 .devpanel                 { margin: 0 auto; text-align: left; background-color: #fdd }
 .devpanel dl.twocol       { margin-top: 0.5em; }
-.devpanel h3              { background-color: #fcc }
+.devpanel h3              { background-color: #fcc; margin-top: 0 }
 .devpanel .twocol dt      { clear:both;  width:20%; float:left; text-align:right; margin: 1px 0; font-weight: bold }
 .devpanel .twocol dd      { float:right; width:77%; padding:0 5px; margin: 1px 0 0.5em 0; clear: right}
 .devpanel .twocol dd pre
   .devpanel .twocol dd p, { padding: 0; margin:0 0 0.5em 0; }
+.devpanel tr              { vertical-align: top }
