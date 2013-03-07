@@ -234,31 +234,26 @@ $('.exportable').livequery(function () {
     cellsToRotate.each(function () {
       var cell        = $(this),
           newText     = $.trim(cell.text()),
+          tt          = cell.html( $('<span>').text(newText)),
           isOpera     = window.opera,
           SF          = 1,//isOpera ? (4/3) : 1,
           height      = cell.innerHeight(),
-          width       = cell.innerWidth(),
+          width       = cell.find('span').innerWidth(),
           newDiv      = $('<div>').height( (width+10)*SF ).width( height*SF ).css('margin','0 auto'),
-          newInnerDiv = $('<div>', { text: newText, 'class': 'rotated' }),
+          newInnerDiv = $('<div>', { 'class': 'rotated' }).html(newText),
           t_string    = (width / 2 + 4 ) + 'px ' + ( 4 + width / 2) + 'px';
       newInnerDiv.css('-webkit-transform-origin', t_string );
       newInnerDiv.css('-moz-transform-origin',    t_string );
       newInnerDiv.css('-ms-transform-origin',     t_string );
       newInnerDiv.css('-o-transform-origin',      t_string );
       newDiv.append(newInnerDiv);
-      newInnerDiv.css( 'background-color', $(this).css('background-color') );
+      newInnerDiv.css( $(this).css('background-color') );
       betterCells.push(newDiv);
     });
     cellsToRotate.each(function (i) {
       $(this).html(betterCells[i]);
-/*
-      console.log( ">" + $(this).height() );
-      console.log( ">>" + $(this).children().first().height() );
-      console.log( ">>>" + $(this).children().first().children().first().height() );
-*/
     });
     cellsToRotate.each(function () {
-//      $(this).css( 'padding-left', '2px' );
       $(this).css({'padding-right':'4px','padding-left':'4px'});
     });
     $(this).addClass('headers_rotated');
