@@ -25,6 +25,8 @@ use Date::Format qw(time2str);
 use File::Basename qw(dirname);
 use Cwd qw(abs_path);
 use HTML::Entities qw(encode_entities);
+use IO::File;
+use List::MoreUtils qw(any);
 
 use Const::Fast qw(const);
 const my $MAX_LENGTH => 50;
@@ -49,6 +51,7 @@ foreach my $libpath (@{$res->{'paths'}}) {
 }
 #print raw_dumper( $files );exit;
 my $t = time;
+STDERR->autoflush(1); ## no critic (ExplicitInclusion)
 printf {*STDERR} "%-40s :      %7.3f\n", 'Got files', $t - $t_init;
 my $cc = 0;
 my $parsed_files = {};
@@ -59,9 +62,8 @@ foreach my $path ( sort keys %{$files} ) {
   ( my $root_file_name   = $res->{'map'}{$path} ) =~ s{/}{_}mxsg;
   foreach my $module ( sort keys %{$files->{$path}} ) {
     my $filename = $files->{$path}{$module};
-    my $package_obj = get_details_file( $filename );
+    my $package_obj = get_details_file( $filename, $module );
        $package_obj->set_root_directory( $path );
-       $package_obj->set_name( $module ) unless $package_obj->name;
     ( my $output_file_name = $package_obj->name )                          =~ s{::}{-}mxsg;
     $package_obj->set_doc_filename( sprintf '%s-%s.html', $root_file_name, $output_file_name );
     $parsed_files->{$filename} = $package_obj;
@@ -107,12 +109,14 @@ foreach my $path ( sort keys %{$files} ) {
     push @tree, sprintf q(<li class="node"><a href="%s">%s</a></li>), $package_obj->doc_filename,$node;
     @current_branch = @this_branch;
     ## Now we have to push the entry into the tree!
+    $c++;
   }
-  shift @current_branch;
   foreach ( @current_branch ) {
     push @tree, q(</ul></li>);
   }
-  push @tree, q(</ul></li>);
+  my $t_last = time;
+  printf {*STDERR} "%-40s : %4d %7.3f\n", q(  ).$res->{'map'}{$path}, $c, $t_last - $t;
+  $t = $t_last;
 }
 push @tree, q(</ul>);
 open my $fh, q(>), "$root_docs/inc/list.inc"; ## no critic (RequireChecked)
@@ -192,10 +196,10 @@ sub get_perl_files {
 
 ## no critic (ExcessComplexity)
 sub get_details_file {
-  my $filename = shift;
+  my( $filename, $module_name ) = @_;
   my $file_object = Pagesmith::Utils::Documentor::File->new( $filename );
   my $package     = Pagesmith::Utils::Documentor::Package->new( $file_object );
-
+  $package->set_name( $module_name );
   $file_object->open_file;
 
   my $start_block = 1;
@@ -204,6 +208,9 @@ sub get_details_file {
 
   while( my $line = $file_object->next_line ) {
     ## no critic (CascadingIfElse ComplexRegexes)
+    if( $line =~ m{\A[#]!}mxs ) {
+      next;
+    }
     if( $start_block ) {
       if( $line =~ m{package\s+([\w:]+)}mxs ) {
         $package->set_name( $1 );
@@ -260,25 +267,46 @@ sub get_details_file {
         next;
       }
       ## no critic (ComplexRegexes)
-      if( $line =~ m{\A\s*(?:Readonly|Const::Fast)\s+my\s+([\$]\w+)\s*=>\s*(.*?);\Z}mxs ) {
+      if( $line =~ m{\A\s*(?:Readonly|Const::Fast)\s+my\s+([\$]\w+)\s*=>\s*(.*?);?\Z}mxs ) {
         $package->push_constant( $1, $2 );
+        next;
       }
+      if( $line =~ m{\A\s*my\s+([\$]\w+)\s*=\s*(.*?);?\Z}mxs ) {
+        $package->push_package_variable( $1, $2 );
+        next;
+      }
+      if( $line =~ m{\A\s*my\s+([\$]\w+);\Z}mxs ) {
+        $package->push_package_variable( $1 );
+      }
+      next;
       ## use critic
+    }
+    if( $line =~ m{\A[#]@class\s*(\S+)}mxs ) {
+      $current_sub->set_class( $1 );
+      $file_object->empty_line;
       next;
     }
     if( $line =~ m{\A[#]@params\s*(.*)}mxs ) {
       $current_sub->set_documented;
       my $params = $1;
-      while( $params =~ s{\A[(](\S+?)(?:\s+(.*?))?[)]([*+?]?)(\s.*|)\Z}{$4}mxs ) {
-        $current_sub->push_parameter( $1, $3, $2 );
+      while( $params =~ s{\A[(](\S+?)(?:\s+(.*?)\s*)?[)]([*+?]?)(\s.*|)\Z}{$4}mxs ) {
+        my( $description, $type, $optional, $name ) = (q(),$1,$3,$2);
+        if( $name && $name =~ s{\s+-\s+($.*)\Z}{}mxs ) {
+          $description = $1;
+        }
+        $current_sub->push_parameter( $type, $name, $optional, $description );
         $params =~ s{\A\s+}{}mxs;
       }
       $file_object->empty_line;
       next;
     }
     if( $line =~ m{\A[#]@param\s*[(](\S+?)[)]([*+?]?)(?:\s+(.*))?\Z}mxs ) {
+      my( $description, $type, $optional, $name ) = (q(),$1,$2,$3);
+      if( $name && $name =~ s{\s+-\s+($.*)\Z}{}mxs ) {
+        $description = $1;
+      }
       $current_sub->set_documented;
-      $current_sub->push_parameter( $1, $2, $3 );
+      $current_sub->push_parameter( $type, $name, $optional, $description );
       $file_object->empty_line;
       next;
     }
@@ -340,6 +368,14 @@ sub write_docs_file {
   my $tabs = Pagesmith::HTML::Tabs->new;
   $tabs->add_tab( 'details', 'Details',            generate_details( $package_obj ) );
   $tabs->add_tab( 'summary', 'Methods',            generate_summary( $package_obj ) );
+  if( $package_obj->parents ) {
+    ( my $fn = $package_obj->doc_filename ) =~ s{[.]html\Z}{.inc}msx;
+    ( my $output_filename = $filename     ) =~ s{[^/]+\Z}{inc/methods/$fn}mxs;
+    $tabs->add_tab( 'summary_full', 'All methods', sprintf '<%% File -ajax /docs/perl/inc/methods/%s %%>', $fn );
+    open my $inc_fh, q(>), $output_filename;               ## no critic (RequireChecked)
+    print {$inc_fh} generate_summary_full( $package_obj ); ## no critic (RequireChecked)
+    close $inc_fh;                                         ## no critic (RequireChecked)
+  }
   $tabs->add_tab( 'docs',    'Documented methods', generate_methods( $package_obj ) );
   $tabs->add_tab( 'general', 'General notes',      generate_notes(   $package_obj ) );
   $tabs->add_tab( 'source',  'Source',             generate_source(  $package_obj ) );
@@ -347,18 +383,18 @@ sub write_docs_file {
     $tabs->add_tab( 'Usage',  'Usage',             sprintf '<%% Usage %s %%>', $1 );
   }
   ## no critic (ImplicitNewlines)
-  my $markup = q(<?xml version="1.0" encoding="UTF-8"?>
+  my $markup = sprintf q(<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html>
 <head>
   <title>Package: %s</title>
   <%% CssFile /docs/perl/css/documentor.css /core/css/beta/nav.css %%>
-  <%% JsFile  /core/js/beta/nav.js %%>
+  <%% JsFile  /docs/perl/js/documentor.js   /core/js/beta/nav.js   %%>
 </head>
 <body id="documentor">
   <div id="main">
     <div class="panel">
-      <h2>%s</h2>
+      <h2><span class="toggle-width"><=></span>%s</h2>
       %s
     </div>
   </div>
@@ -383,8 +419,21 @@ sub write_docs_file {
 sub generate_source {
   my $package_obj = shift;
   my $short_filename = substr $package_obj->file->name, length $ROOT_PATH;
-  return sprintf '<%% Markedup -format perl -number line -ajax %s %%>',
+  return sprintf '<%% Markedup -format perl -number line %s %%>',
     $short_filename;
+}
+
+sub isa_list {
+  my ( $package_obj, $isa_list ) = @_;
+  if( $package_obj->parents ) {
+    foreach my $pg ( $package_obj->parents ) {
+      next if any { $pg eq $_ } @{$isa_list};
+      push @{$isa_list}, $pg;
+      next unless exists $module_cache->{$pg};
+      isa_list( $module_cache->{$pg}, $isa_list );
+    }
+  }
+  return;
 }
 
 sub generate_details {
@@ -395,12 +444,17 @@ sub generate_details {
   foreach my $k ('Author','Created','Maintainer','Last commit by','Last modified','Repository URL') {
     $twocol->add_entry( $k, $package_obj->rcs_keyword( $k ) || q(-) );
   }
+  my $list_of_packages = [];
   if( $package_obj->parents ) {
-    foreach my $package ( $package_obj->parents ) {
+    isa_list( $package_obj, $list_of_packages );
+    my %real_parents = map { ($_=>1) } $package_obj->parents;
+    foreach my $package ( @{$list_of_packages} ) {
+      my $name = $package;
+      $name = "<em>$package</em>" unless exists $real_parents{$package};
       if( exists $module_cache->{$package}) {
-        $package = sprintf '<a href="%s">%s</a>', $module_cache->{$package}->doc_filename, $package;
+        $name = sprintf '<a href="%s">%s</a>', $module_cache->{$package}->doc_filename, $name;
       }
-      $twocol->add_entry( 'Parent', $package )
+      $twocol->add_entry( 'Parent(s)', $name )
     }
   }
   my %used = $package_obj->used_packages;
@@ -427,6 +481,14 @@ sub generate_details {
     }
     $twocol->add_entry( 'Constant', $const->render );
   }
+  my %package_variables = $package_obj->package_variables;
+  if( keys %package_variables ) {
+    my $pv = Pagesmith::HTML::TwoCol->new({'class'=>'twothird'});
+    foreach my $name ( sort keys %package_variables ) {
+      $pv->add_entry( $name, encode_entities($package_variables{$name}) );
+    }
+    $twocol->add_entry( 'Package variables', $pv->render );
+  }
   $html .= $twocol->render;
   return $html;
 }
@@ -434,20 +496,89 @@ sub generate_details {
 sub generate_summary {
   my $package_obj = shift;
   ## no critic (LongChainsOfMethodCalls)
+  my @methods = $package_obj->methods;
   my $table = Pagesmith::HTML::Table->new
     ->make_sortable
     ->add_class( 'before narrow-sorted' )
     ->set_filter
     ->set_export( [qw(txt csv xls)] )
+    ->set_pagination( ['all'] )
     ->add_columns(
-      { 'key' => 'name',                        'label' => 'Name'                         },
+      { 'key' => q(#), },
+      { 'key' => 'name',                        'label' => 'Name',
+        'link' => [ [ 'class=change-tab #method_[[h:name]]', 'exact', 'is_documented', 'Y' ] ],
+      },
       { 'key' => 'is_documented',               'label' => 'Doc?',        'align'  => 'c' },
       { 'key' => 'is_method',                   'label' => 'Meth?',       'align'  => 'c' },
       { 'key' => 'format_parameters_short',     'label' => 'Parameters',  'format' => 'r' },
       { 'key' => 'format_return_short',         'label' => 'Return',      'format' => 'r' },
       { 'key' => 'format_description',          'label' => 'Description', 'format' => 'r' },
+      { 'key' => 'location',                    'label' => 'Location',
+        'link' => '#line_[[d:start]]',
+        'template' => '[[d:start]]-[[d:end]]', 'align' => 'c' },
     )
-    ->add_data( $package_obj->methods );
+    ->add_data( @methods );
+  ## use critic
+  return $table->render;
+}
+
+sub generate_summary_full {
+  my $package_obj = shift;
+  ## no critic (LongChainsOfMethodCalls)
+  my @methods = $package_obj->methods;
+  my $list_of_packages = [];
+  my %seen_methods = map { ( $_->name => 1 ) } @methods;
+  isa_list( $package_obj, $list_of_packages );
+  my $hidden = {};
+  foreach my $par ( @{$list_of_packages} ) {
+    next unless exists $module_cache->{$par};
+    foreach my $method_obj ( $module_cache->{$par}->methods ) {
+      if( $seen_methods{ $method_obj->name } ) {
+        $hidden->{$par}{$method_obj->name}=1;
+      } else {
+        $seen_methods{ $method_obj->name }=1;
+      }
+      push @methods, $method_obj;
+    }
+  }
+  my $table = Pagesmith::HTML::Table->new
+    ->make_sortable
+    ->add_class( 'before narrow-sorted' )
+    ->set_filter
+    ->set_export( [qw(txt csv xls)] )
+    ->set_pagination( [qw(10 20 50 100 all)], q(20) )
+    ->make_scrollable
+    ->set_current_row_class( sub {
+      return exists $hidden->{ $_[0]->package }{ $_[0]->name } ? 'parent struck'
+           : $_[0]->package ne $package_obj->name              ? 'parent'
+           :                                                     q()
+           ;
+    })
+    ->add_columns(
+      { 'key' => q(#), },
+      { 'key' => 'name',                        'label' => 'Name',
+        'link' => sub {
+           return q() unless $_[0]->is_documented;
+           return sprintf '%s#method_%s',
+             $_[0]->package eq $package_obj->name ? q() : 'rel=external '.$module_cache->{$_[0]->package}->doc_filename,
+             $_[0]->name;
+        } },
+        #'link' => [ [ 'class=change-tab #method_[[h:name]]', 'exact', 'is_documented', 'Y' ] ] },
+      { 'key' => 'is_documented',               'label' => 'Doc?',        'align'  => 'c' },
+      { 'key' => 'is_method',                   'label' => 'Meth?',       'align'  => 'c' },
+      { 'key' => 'format_parameters_short',     'label' => 'Parameters',  'format' => 'r' },
+      { 'key' => 'format_return_short',         'label' => 'Return',      'format' => 'r' },
+      { 'key' => 'format_description',          'label' => 'Description', 'format' => 'r' },
+      { 'key' => 'location',                    'label' => 'Location',
+        'link' => sub {
+           return sprintf '%s#line_%d',
+             $_[0]->package eq $package_obj->name ? q() : 'rel=external '.$module_cache->{$_[0]->package}->doc_filename,
+             $_[0]->start;
+        },
+        'template' => '[[d:start]]-[[d:end]]', 'align' => 'c' },
+      { 'key' => 'package',                     'label' => 'Package'                      },
+    )
+    ->add_data( @methods );
   ## use critic
   return $table->render;
 }
@@ -456,19 +587,28 @@ sub generate_methods {
   my $package_obj = shift;
   my @methods = $package_obj->documented_methods;
   return '<p>No documented methods</p>' unless @methods;
-  my $twocol = Pagesmith::HTML::TwoCol->new;
+  my $fake_tabs = Pagesmith::HTML::Tabs->new({'fake'=>1});
   foreach (@methods) {
     my $meth = Pagesmith::HTML::TwoCol->new;
+    my $notes = $_->format_notes;
+    $meth->add_entry( 'Type',       $_->method_desc );
     $meth->add_entry( 'Parameters', $_->format_parameters );
-    $meth->add_entry( 'Return',     $_->format_return );
+    $meth->add_entry( 'Returns',    $_->format_return );
+    $meth->add_entry( 'Notes', $notes ) if $notes;
     ## no critic (ImplicitNewlines)
-    $meth->add_entry( 'Code', sprintf '<div class="collapsible collapsed">
+    $fake_tabs->add_tab(
+      'method_'.$_->name, $_->name,
+      $_->format_description.
+      $meth->render.
+      sprintf '<h4>Code</h4><div class="collapsible collapsed">
      <p class="head">Lines %d - %d <span class="show"> [show source code]</span><span class="hide"> [hide source code]</span>
-     <pre class="code">%s</pre></div>', $_->start, $_->end, $_->code );
+     <pre class="code">%s</pre></div>
+     <p><a href="#line_%s">View in main source code</a></p>', $_->start, $_->end, $_->code, $_->start,
+    );
     ## use critic
-    $twocol->add_entry( $_->name, $_->format_description.$meth->render );
   }
-  return $twocol->render;
+  return sprintf '<div class="sub_nav left"><h4>Methods</h4>%s</div><div class="sub_data">%s</div>',
+    $fake_tabs->render_ul_block, $fake_tabs->render_div_block;
 }
 
 sub generate_notes {
@@ -476,12 +616,3 @@ sub generate_notes {
   return $package_obj->format_notes;
 }
 __END__
-
-sub format_return {
-  my ( $type, $desc ) = @_;
-  if( $type||q() ) {
-    return '<strong>self</strong>' if $type eq 'self';
-    return sprintf '%s (%s)', $type, $desc||q(-);
-  }
-  return $desc||q(-);
-}
