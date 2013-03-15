@@ -549,8 +549,8 @@ sub generate_summary_full {
     ->set_pagination( [qw(10 20 50 100 all)], q(20) )
     ->make_scrollable
     ->set_current_row_class( sub {
-      return exists $hidden->{ $_[0]->package }{ $_[0]->name } ? 'parent struck'
-           : $_[0]->package ne $package_obj->name              ? 'parent'
+      return exists $hidden->{ $_[0]->package_name }{ $_[0]->name } ? 'parent struck'
+           : $_[0]->package_name ne $package_obj->name              ? 'parent'
            :                                                     q()
            ;
     })
@@ -560,7 +560,7 @@ sub generate_summary_full {
         'link' => sub {
            return q() unless $_[0]->is_documented;
            return sprintf '%s#method_%s',
-             $_[0]->package eq $package_obj->name ? q() : 'rel=external '.$module_cache->{$_[0]->package}->doc_filename,
+             $_[0]->package_name eq $package_obj->name ? q() : 'rel=external '.$module_cache->{$_[0]->package_name}->doc_filename,
              $_[0]->name;
         } },
         #'link' => [ [ 'class=change-tab #method_[[h:name]]', 'exact', 'is_documented', 'Y' ] ] },
@@ -572,7 +572,7 @@ sub generate_summary_full {
       { 'key' => 'location',                    'label' => 'Location',
         'link' => sub {
            return sprintf '%s#line_%d',
-             $_[0]->package eq $package_obj->name ? q() : 'rel=external '.$module_cache->{$_[0]->package}->doc_filename,
+             $_[0]->package_name eq $package_obj->name ? q() : 'rel=external '.$module_cache->{$_[0]->package_name}->doc_filename,
              $_[0]->start;
         },
         'template' => '[[d:start]]-[[d:end]]', 'align' => 'c' },
