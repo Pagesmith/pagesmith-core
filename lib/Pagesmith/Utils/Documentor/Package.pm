@@ -39,6 +39,7 @@ sub new {
     'used_packages'     => {},
     'imported_methods'  => {},
     'constants'         => {},
+    'package_variables' => {},
     'rcs'               => { map { ($_ => undef) } ('Author','Created','Maintainer','Last commit by','Last modified','Revision','Repository URL') },
   };
   bless $self, $class;
@@ -90,9 +91,24 @@ sub push_constant {
 
 sub constants {
 #@params (self)
-#@return (string)+ list of used packages;
+#@return (hash) of constants and their values;
   my $self = shift;
   return %{$self->{'constants'}};
+}
+
+sub push_package_variable {
+#@params (self) (string name) (string value)
+#@return (self)
+  my( $self, $name, $value ) = @_;
+  $self->{'package_variables'}{$name} = $value||q();
+  return $self;
+}
+
+sub package_variables {
+#@params (self)
+#@return (hash) of variables and initial values;
+  my $self = shift;
+  return %{$self->{'package_variables'}};
 }
 
 sub name {
@@ -206,7 +222,7 @@ sub new_method {
 #@return (Pagesmith::Utils::Documentor::Method)
 ## Create a new Pagesmith::Utils::Documentor::Method object;
   my( $self, $name ) = @_;
-  my $method = Pagesmith::Utils::Documentor::Method->new( $name, $self->file );
+  my $method = Pagesmith::Utils::Documentor::Method->new( $name, $self->file, $self->name );
   push @{$self->{'methods'}}, $method;
   return $method;
 }
@@ -227,10 +243,8 @@ sub methods {
 ## Return array of methods
   my $self = shift;
   return
-    grep { $self->is_action     && $_->name ne 'run' ||
-           $self->is_component  && $_->name ne 'execute' &&
-            $_->name ne 'usage' && $_->name ne 'define_options' ||
-           ! $self->is_component && ! $self->is_action }
+    grep { $self->is_component && $_->name ne 'usage' && $_->name ne 'define_options' ||
+           ! $self->is_component }
     @{$self->{'methods'}};
 }
 
