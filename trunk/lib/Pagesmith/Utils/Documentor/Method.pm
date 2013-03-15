@@ -21,14 +21,18 @@ use Pagesmith::HTML::TwoCol;
 use Const::Fast qw(const);
 use HTML::Entities qw(encode_entities);
 use Syntax::Highlight::Perl::Improved;
-const my $MAP => { q(?) => ' (optional)', q(+) => ' (multiple)', q(*) => ' (multiple optional)' };
+
+const my $OPT_MAP    => { q(?) => ' (optional)', q(+) => ' (multiple)', q(*) => ' (multiple optional)' };
+const my $CLASSES    => { qw(set Set get Get setter Set getter Get getsetter Acc accessor Acc acc Acc) };
+const my $CLASS_DESC => { 'Set' => 'Setter', 'Get' => 'Getter', 'Acc' => 'Accessor', 'Con' => 'Constructor', 'Y' => 'Method', q(-) => 'Function' };
 
 sub new {
-#@params (class) (string method name) (Pagesmith::Utils::Documentor::File source file)
-  my( $class, $name, $file ) = @_;
+#@params (class) (string method name) (Pagesmith::Utils::Documentor::File source file) (string package name)
+  my( $class, $name, $file, $package ) = @_;
   my $self = {
     'name'        => $name,
     'start'       => undef,
+    'class'       => undef,
     'end'         => undef,
     'file'        => $file,
     'description' => [],
@@ -37,6 +41,7 @@ sub new {
     'parameters'  => [],
     'documented'  => 0,
     'notes'       => [],
+    'package'     => $package,
   };
   bless $self, $class;
   return $self;
@@ -47,6 +52,13 @@ sub name {
 #@return (string) method name
   my $self = shift;
   return $self->{'name'};
+}
+
+sub package_name {
+#@params (self)
+#@return (string) method name
+  my $self = shift;
+  return $self->{'package'};
 }
 
 sub file {
@@ -81,21 +93,50 @@ sub documented {
 
 sub is_documented {
 #@params (self)
-#@return (strign) yes if method id documented
+#@return (string) yes if method id documented
 ## Test to see if method has been documented
   my $self = shift;
   return $self->{'documented'} ? 'Y' : q(-);
 }
 
+sub class {
+#@params (self)
+#@return (string) class of method
+## Return class of method (accessor/getter/setter)
+  my $self = shift;
+  return $self->{'class'};
+}
+
+sub set_class {
+#@params (self) (string class)
+#@return (self)
+## Sets class of method (accessor/getter/setter)
+  my( $self, $class ) = @_;
+  return $self->{'class'} = exists $CLASSES->{$class} ? $class : undef;
+}
+
 sub is_method {
 #@params (self)
-#@return (strign) yes if method id documented
+#@return (string) yes if method id documented
 ## Test to see if subtroutine is an object "method" OR just a function!
   my $self = shift;
   return q(.)   unless $self->number_parameters;
-  return 'Y' if $self->{'parameters'}[0]{'type'} eq 'self';
+  if( $self->{'parameters'}[0]{'type'} eq 'self' ) {
+    return $CLASSES->{$self->{'class'}} if $self->{'class'};
+    return 'Y';
+  }
   return 'Con' if $self->{'parameters'}[0]{'type'} eq 'class';
   return q(-);
+}
+
+sub method_desc {
+#@params (self)
+#@return (string) Type of method - one of Getter, Setter, Accessor, Method, Function, ..
+## Long form of the function "class"...
+  my $self = shift;
+  my $method = $self->is_method;
+  return $CLASS_DESC->{$method} if exists $CLASS_DESC->{$method};
+  return 'Unknown';
 }
 
 sub set_documented {
@@ -223,11 +264,17 @@ sub format_return {
 sub push_parameter {
 #@params (self) (string object type) (string optional state ?*+)? (string description)?
 #@return (self)
-  my( $self, $type, $optional, $description ) = @_;
+  my( $self, $type, $optional, $name, $description ) = @_;
   $type        =~ s{\A\s*(.*?)\s*\Z}{$1}mxs if $type;
   $optional    =~ s{\A\s*(.*?)\s*\Z}{$1}mxs if $optional;
+  $name        =~ s{\A\s*(.*?)\s*\Z}{$1}mxs if $name;
   $description =~ s{\A\s*(.*?)\s*\Z}{$1}mxs if $description;
-  push @{$self->{'parameters'}}, { 'type' => $type || q(), 'optional' => $optional || q(), 'description' => $description||q() };
+  push @{$self->{'parameters'}}, {
+    'type'        => $type        || q(),
+    'optional'    => $optional    || q(),
+    'name'        => $name        || q(),
+    'description' => $description || q(),
+  };
   return $self;
 }
 
@@ -240,7 +287,7 @@ sub format_parameters_short {
   my $self = shift;
   my $markup = join q(; ),
     map { $_->[0] ? sprintf '<span title="%s">%s</span>', $_->[0], $_->[1] : $_->[1] }
-    map { [$_->{'type'}, $_->{'description'}.($_->{'optional'}||q())] }
+    map { [$_->{'type'}, $_->{'name'}.($_->{'optional'}||q())] }
     grep { $_->{'type'} ne 'self' && $_->{'type'} ne 'class' }
     @{$self->{'parameters'}};
   return $markup || q(-);
@@ -254,8 +301,8 @@ sub format_parameters {
   foreach (@{$self->{'parameters'}}) {
     next if $_->{'type'} eq 'self' || $_->{'type'} eq 'class';
     $return->add_entry( $_->{'type'},
-      ($_->{'description'}||q()).
-      (exists $MAP->{$_->{'optional'}} ? $MAP->{$_->{'optional'}} : q()),
+      ($_->{'name'}||q()).
+      (exists $OPT_MAP->{$_->{'optional'}} ? $OPT_MAP->{$_->{'optional'}} : q()),
     );
   }
   return $return->render;
