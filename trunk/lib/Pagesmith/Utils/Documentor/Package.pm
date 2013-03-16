@@ -34,8 +34,11 @@ sub new {
     'description'       => [],
     'notes'             => [],
     'methods'           => [],
+    'full_methods'      => [],
+    'hidden_methods'    => {},
     'file'              => $file,
     'parents'           => [],
+    'ancestors'         => [],
     'used_packages'     => {},
     'imported_methods'  => {},
     'constants'         => {},
@@ -59,6 +62,21 @@ sub parents {
 #@return (string)+ list of parent module names
   my $self = shift;
   return @{$self->{'parents'}};
+}
+
+sub set_ancestors {
+#@params (self) (string ancestor name)+
+#@return (self)
+  my( $self, @modules ) = @_;
+  $self->{'ancestors'} = \@modules;
+  return $self;
+}
+
+sub ancestors {
+#@params (self)
+#@return (string)+ list of ancestor names
+  my $self = shift;
+  return @{$self->{'ancestors'}};
 }
 
 sub push_use {
@@ -222,6 +240,7 @@ sub new_method {
 #@return (Pagesmith::Utils::Documentor::Method)
 ## Create a new Pagesmith::Utils::Documentor::Method object;
   my( $self, $name ) = @_;
+  $name=~s{\s*\{\s*\Z}{}mxs; ## no critic (EscapedMetacharacters)
   my $method = Pagesmith::Utils::Documentor::Method->new( $name, $self->file, $self->name );
   push @{$self->{'methods'}}, $method;
   return $method;
@@ -246,6 +265,31 @@ sub methods {
     grep { $self->is_component && $_->name ne 'usage' && $_->name ne 'define_options' ||
            ! $self->is_component }
     @{$self->{'methods'}};
+}
+
+sub set_full_methods {
+#@params (self) (Pagesmith::Utils::Documentor::Method[] method objects) (hashref hidden status)
+#@return (self)
+  my( $self, $methods, $hidden ) = @_;
+  $self->{'full_methods'}   = $methods;
+  $self->{'hidden_methods'} = $hidden;
+  return $self;
+}
+
+sub full_methods {
+#@params (self)
+#@return (Pagesmith::Utils::Documentor::Method)+ Method objects
+## Return array of methods including those from ancestors
+  my $self = shift;
+  return @{$self->{'full_methods'}};
+}
+
+sub hidden_methods {
+#@params (self)
+#@return hashref status of methods
+## Return a hash reference of methods
+  my $self = shift;
+  return $self->{'hidden_methods'};
 }
 
 sub documented_methods {
