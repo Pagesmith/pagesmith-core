@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 
-## Retrieve documentation from file
+## Retrieve documentation for all perl files...
 
 ## Author         : js5
 ## Maintainer     : js5
@@ -43,6 +43,14 @@ use Pagesmith::HTML::Tabs;
 use Pagesmith::HTML::TwoCol;
 use Pagesmith::HTML::Table;
 
+my $site      = 'apps.sanger.ac.uk';
+my $html_path = 'docs/perl';
+
+GetOptions(
+  'site=s'  => \$site,
+  'path=s'  => \$html_path,
+);
+
 my $t_init = time;
 my $res = find_perl_dirs();
 my $files = {};
@@ -56,7 +64,7 @@ printf {*STDERR} "%-40s :      %7.3f\n", 'Got files', $t - $t_init;
 my $cc = 0;
 my $parsed_files = {};
 my $module_cache = {};
-my $root_docs = $ROOT_PATH.'/sites/apps.sanger.ac.uk/htdocs/docs/perl/';
+my $root_docs = $ROOT_PATH.'/sites/'.$site.'/htdocs/'.$html_path.q(/);
 foreach my $path ( sort keys %{$files} ) {
   my $c=0;
   ( my $root_file_name   = $res->{'map'}{$path} ) =~ s{/}{_}mxsg;
@@ -77,59 +85,236 @@ foreach my $path ( sort keys %{$files} ) {
 }
 printf {*STDERR} "%-40s : %4d %7.3f\n", 'Parsed', $cc, $t - $t_init;
 
-my @tree = (q(<ul id="navigation">));
+my ( $method_details, @packages ) = invert_lists();
+my @method_details = generate_method_lists();
 
-foreach my $path ( sort keys %{$files} ) {
-  my $c=0;
-  push @tree, sprintf q(<li class="branch coll"><span style="font-weight:bold">%s</span><ul>), $res->{'map'}{$path};
-  my @current_branch;
-  foreach my $module ( sort keys %{$files->{$path}} ) {
-    my $filename = $files->{$path}{$module};
-    my $package_obj = $parsed_files->{$filename};
-    write_docs_file( $root_docs.$package_obj->doc_filename, $package_obj );
-    my @this_branch = split m{::}mxs, $module;
-    if( $this_branch[0] eq 'Pagesmith' ) {
-      shift @this_branch;
-      unshift @this_branch, 'Pagesmith::'.shift @this_branch;
-    }
-    my @temp_branch = @this_branch;
-    my $previous_node = pop @current_branch;
-    my $node          = pop @temp_branch;
-    while( @temp_branch && @current_branch ) {
-      last if $current_branch[0] ne $temp_branch[0];
-      shift @current_branch;
-      shift @temp_branch;
-    }
-    foreach( @current_branch ) {
-      push @tree, q(</ul></li>);
-    }
-    foreach( @temp_branch ) {
-      push @tree, qq(<li class="branch coll"><span>$_</span><ul>);
-    }
-    push @tree, sprintf q(<li class="node"><a href="%s">%s</a></li>), $package_obj->doc_filename,$node;
-    @current_branch = @this_branch;
-    ## Now we have to push the entry into the tree!
-    $c++;
-  }
-  foreach ( @current_branch ) {
-    push @tree, q(</ul></li>);
-  }
-  my $t_last = time;
-  printf {*STDERR} "%-40s : %4d %7.3f\n", q(  ).$res->{'map'}{$path}, $c, $t_last - $t;
-  $t = $t_last;
-}
-push @tree, q(</ul>);
+my $tnow = time; printf {*STDERR} "%-40s :      %7.3f\n", 'Invered index', $tnow - $t; $t = $tnow;
+
+## Write front page module list file...
+open my $m_fh, q(>), "$root_docs/inc/module_list.inc"; ## no critic (RequireChecked)
+print {$m_fh} module_table( \@packages )->render; ## no critic (RequireChecked)
+close $m_fh;  ## no critic (RequireChecked)
+
+$tnow = time; printf {*STDERR} "%-40s :      %7.3f\n", 'Generated module page', $tnow - $t; $t = $tnow;
+
+## Write front page method list file...
+open $m_fh, q(>), "$root_docs/inc/method_list.inc"; ## no critic (RequireChecked)
+print {$m_fh} method_table( @method_details )->render; ## no critic (RequireChecked)
+close $m_fh;  ## no critic (RequireChecked)
+
+$tnow = time; printf {*STDERR} "%-40s :      %7.3f\n", 'Generated method page', $tnow - $t; $t = $tnow;
+
+
+## Generate the menu HTML...
+
 open my $fh, q(>), "$root_docs/inc/list.inc"; ## no critic (RequireChecked)
-print {$fh} join qq(\n), @tree,q();           ## no critic (RequireChecked)
+print {$fh} join qq(\n), generate_tree(), q();           ## no critic (RequireChecked)
 close $fh;                                    ## no critic (RequireChecked)
+
 my $t_last = time;
 printf {*STDERR} "%-40s :      %7.3f\n", 'Written', $t_last - $t;
 printf {*STDERR} "%-40s :      %7.3f\n", 'OVERALL', $t_last - $t_init;
+
 exit;
 
-#print Dumper( get_details_file( '/www/js5/www-dev/sites/canapps.sanger.ac.uk/lib/Pagesmith/Support/Cancer/Cltracking/Lims/Plate/Dna.pm' ) );
+sub generate_tree {
+  my @tree = (q(<ul id="navigation"><li class="node"><a href="index.html">Module/Method lists</a></li>));
+  foreach my $path ( sort keys %{$files} ) {
+    my $c=0;
+    push @tree, sprintf q(<li class="branch coll"><span style="font-weight:bold">%s</span><ul>), $res->{'map'}{$path};
+    my @current_branch;
+    foreach my $module ( sort keys %{$files->{$path}} ) {
+      my $filename = $files->{$path}{$module};
+      my $package_obj = $parsed_files->{$filename};
+      write_docs_file( $root_docs.$package_obj->doc_filename, $package_obj );
+      my @this_branch = split m{::}mxs, $module;
+      if( $this_branch[0] eq 'Pagesmith' ) {
+        shift @this_branch;
+        unshift @this_branch, 'Pagesmith::'.shift @this_branch;
+      }
+      my @temp_branch = @this_branch;
+      my $previous_node = pop @current_branch;
+      my $node          = pop @temp_branch;
+      while( @temp_branch && @current_branch ) {
+        last if $current_branch[0] ne $temp_branch[0];
+        shift @current_branch;
+        shift @temp_branch;
+      }
+      foreach( @current_branch ) {
+        push @tree, q(</ul></li>);
+      }
+      foreach( @temp_branch ) {
+        push @tree, qq(<li class="branch coll"><span>$_</span><ul>);
+      }
+      push @tree, sprintf q(<li class="node"><a href="%s">%s</a></li>), $package_obj->doc_filename,$node;
+      @current_branch = @this_branch;
+      ## Now we have to push the entry into the tree!
+      $c++;
+    }
+    foreach ( @current_branch ) {
+      push @tree, q(</ul></li>);
+    }
+    my $t_now = time;
+    printf {*STDERR} "%-40s : %4d %7.3f\n", q(  ).$res->{'map'}{$path}, $c, $t_now - $t;
+    $t = $t_now;
+  }
+  push @tree, q(</ul>);
+  return @tree;
+}
 
+sub generate_method_lists {
+  my @details;
+  foreach my $method_name ( sort keys %{$method_details} ) {
+     my $row = {
+      'name' => $method_name,
+      'modules'     => [
+        map   { $module_cache->{$_} }
+        grep  { $method_details->{$method_name}{$_} == 2 }
+        sort keys %{ $method_details->{$method_name}},
+      ],
+      'full_modules' => [
+        map   { $module_cache->{$_} }
+        sort keys %{$method_details->{$method_name}},
+      ],
+    };
+    push @details, $row;
+    open my $m_fh, q(>), "$root_docs/inc/method_links/$method_name.inc"; ## no critic (RequireChecked)
+    print {$m_fh} method_dump( $row ); ## no critic (RequireChecked)
+    close $m_fh;  ## no critic (RequireChecked)
+  }
+  return @details;
+}
+
+sub invert_lists {
+  my @pack;
+  my $meth_det;
+  foreach my $path ( sort keys %{$files} ) {
+    foreach my $module ( sort keys %{$files->{$path}} ) {
+      my $filename    = $files->{$path}{$module};
+      my $package_obj = $parsed_files->{$filename};
+      my @list_of_packages;
+      isa_list( $package_obj, \@list_of_packages ) if $package_obj->parents;
+      $package_obj->set_ancestors( @list_of_packages );
+      push @pack, $package_obj;
+      my @methods = $package_obj->methods;
+      my %seen_methods = map { ( $_->name => 1 ) } @methods;
+      $meth_det->{ $_->name }{ $package_obj->name } = 2 foreach @methods;
+      my $hidden = {};
+      foreach my $par ( $package_obj->ancestors ) {
+        next unless exists $module_cache->{$par};
+        foreach my $method_obj ( $module_cache->{$par}->methods ) {
+          $meth_det->{ $method_obj->name }{$package_obj->name}||=1;
+          if( $seen_methods{ $method_obj->name } ) {
+            $hidden->{$par}{$method_obj->name}=1;
+          } else {
+            $seen_methods{ $method_obj->name }=1;
+          }
+          push @methods, $method_obj;
+        }
+      }
+      $package_obj->set_full_methods( \@methods, $hidden );
+    }
+  }
+  return ( $meth_det, @pack );
+}
+
+sub method_dump {
+  my $details = shift;
+  my $n_mods = scalar @{$details->{'modules'}};
+  my $n_all  = scalar @{$details->{'full_modules'}};
+  ## no critic (LongChainsOfMethodCalls)
+  my $t_mods = Pagesmith::HTML::Table->new
+    ->make_sortable
+    ->add_class( 'before narrow-sorted' )
+    ->set_filter
+    ->set_export( [qw(txt csv xls)] )
+    ->set_pagination( [qw(10 20 50 100 all)], '20' )
+    ->add_columns(
+      { 'key' => q(#), },
+      { 'key' => 'name', 'label' => 'Package', 'link' => '[[h:doc_filename]]' },
+      { 'key' => 'root_directory',     'label' => 'Root dir',  'code_ref' => sub { return $res->{'map'}{$_[0]->root_directory}; } },
+      { 'key' => 'location',                    'label' => 'Location', 'code_ref' => sub {
+        my ($method_obj) = grep { $_->name eq $details->{'name'} } $_[0]->methods;
+        return sprintf '<a href="%s#line_%d">%d-%d</a>', $_[0]->doc_filename, $method_obj->start, $method_obj->start, $method_obj->end;
+        }, 'format' => 'r',
+      },
+    )
+    ->add_data( @{$details->{'modules'}} );
+
+  my $t_all = Pagesmith::HTML::Table->new
+    ->make_sortable
+    ->add_class( 'before narrow-sorted' )
+    ->set_filter
+    ->set_export( [qw(txt csv xls)] )
+    ->set_pagination( [qw(10 20 50 100 all)], '20' )
+    ->add_columns(
+      { 'key' => q(#), },
+      { 'key' => 'name', 'label' => 'Package', 'link' => '[[h:doc_filename]]' },
+      { 'key' => 'root_directory',     'label' => 'Root dir',  'code_ref' => sub { return $res->{'map'}{$_[0]->root_directory}; } },
+      { 'key' => 'location',                    'label' => 'Location', 'code_ref' => sub {
+        my ($method_obj) = grep { $_->name eq $details->{'name'} } $_[0]->methods;
+        return sprintf '<a href="%s#line_%d">%d-%d</a>', $_[0]->doc_filename, $method_obj->start, $method_obj->start, $method_obj->end;
+        }, 'format' => 'r',
+      },
+    )
+    ->add_data( @{$details->{'full_modules'}} );
+  ## use critic
+  ## no critic (ImplicitNewlines)
+  return sprintf '<h3>Method: %s</h3>
+  <ul class="tabs">
+    <li><a href="#method_package_list">Modules (%d)</a></li>
+    <li><a href="#method_package_all">All Modules (%d)</a></li>
+  </ul>
+  <div id="method_package_list"><h3>Modules</h3>
+    %s
+  </div>
+  <div id="method_package_all"><h3>All Modules</h3>
+    %s
+  </div>
+  ', $details->{'name'}, $n_mods, $n_all, $t_mods->render, $t_all->render;
+  ## use critic
+}
+
+sub module_table {
+  my $packages = shift;
+  return Pagesmith::HTML::Table->new
+    ->make_sortable
+    ->add_class( 'before narrow-sorted' )
+    ->set_filter
+    ->set_export( [qw(txt csv xls)] )
+    ->set_pagination( [qw(10 20 50 100 all)], '20' )
+    ->add_columns(
+      { 'key' => q(#), },
+      { 'key' => 'name',               'label' => 'Name',
+        'link' => '[[h:doc_filename]]' },
+      { 'key' => 'root_directory',     'label' => 'Root dir',  'code_ref' => sub { return $res->{'map'}{$_[0]->root_directory}; } },
+      { 'key' => 'methods',            'label' => '# Methods', 'format'=>'f', 'code_ref' => sub { return scalar ( $_[0]->methods ) } },
+      { 'key' => 'all_methods',        'label' => '# All',     'format'=>'f', 'code_ref' => sub { return scalar ( $_[0]->full_methods ) } },
+    )
+    ->add_data( @{$packages} );
+}
+
+sub method_table {
+  my @meth_details = @_;
+  return Pagesmith::HTML::Table->new
+    ->make_sortable
+    ->add_class( 'before narrow-sorted' )
+    ->set_filter
+    ->set_export( [qw(txt csv xls)] )
+    ->set_pagination( [qw(10 20 50 100 all)], '10' )
+    ->add_columns(
+      { 'key' => q(#), },
+      { 'key' => 'name',             'label' => 'Name', 'link' => 'class=method_list #[[h:name]]' },
+      { 'key' => 'packages',         'label' => '# Packages', 'format'=>'f', 'code_ref' => sub { return scalar @{$_[0]{'modules'}} }},
+      { 'key' => 'all_packages',     'label' => '# All',      'format'=>'f', 'code_ref' => sub { return scalar @{$_[0]{'full_modules'}} }},
+    )
+    ->add_data( @meth_details );
+}
 sub find_perl_dirs {
+#@params
+#@return (hashref paths)
+## hashref contains two elements an arrayref of paths and a hashref mapping these paths to a more human friendly form
+## * looks for a top level lib and utilities directory and then in every top level directory and directory in sites for lib/utilities/cgi/perl sub directories
   my $dir_root = $ROOT_PATH;
   my @lib_paths;
   my %dir_map;
@@ -170,6 +355,11 @@ sub find_perl_dirs {
 }
 
 sub get_perl_files {
+#@params (hashref{} files) (string current directory) (string prefix) (string root)
+#@return
+## Gets a list of all perl files in "root" directory
+## * files hash is a hashref of hashrefs keyed by root directory & "package name" i.e. path separated by "::"
+## * looks for all .pm/.pl files as well as files whose first lines starts #!/....perl
   my( $l_files, $path, $prefix, $root ) = @_;
   return unless -e $path && -d $path && -r $path;
   my $dh;
@@ -196,6 +386,12 @@ sub get_perl_files {
 
 ## no critic (ExcessComplexity)
 sub get_details_file {
+#@params (string file name) (string module name)
+#@return (Pagesmith::Utils::Documentor::Package) package object
+## Opens and parses the perl file
+## * Very complex (and in someways naive) method which opens the perl file as plain text, and looks line
+##   by line through the file for rcs keywords, other modules used, package variables & constants, and
+##   also for methods and their signatures
   my( $filename, $module_name ) = @_;
   my $file_object = Pagesmith::Utils::Documentor::File->new( $filename );
   my $package     = Pagesmith::Utils::Documentor::Package->new( $file_object );
@@ -205,7 +401,7 @@ sub get_details_file {
   my $start_block = 1;
   my $current_sub;
   my $flag;
-
+  my $raw_flag = 0;
   while( my $line = $file_object->next_line ) {
     ## no critic (CascadingIfElse ComplexRegexes)
     if( $line =~ m{\A[#]!}mxs ) {
@@ -222,7 +418,18 @@ sub get_details_file {
         $start_block = 0;
       }
     }
+    if( $line =~ m{\A[#]@raw}mxs ) {
+      $file_object->empty_line;
+      $raw_flag = 1;
+      next;
+    }
+    if( $line =~ m{\A[#]@endraw}mxs ) {
+      $file_object->empty_line;
+      $raw_flag = 0;
+      next;
+    }
     ## use critic
+    next if $raw_flag;
 
     if( $line =~ m{\A__(?:END|DATA)__}mxs ) {
       ## We now are at the end of the file - grab extra markup!
@@ -237,6 +444,7 @@ sub get_details_file {
       ## Start of sub
       $current_sub  = $package->new_method( $1 );
       $current_sub->set_start( $file_object->line_count );
+      $current_sub->set_end(   $file_object->line_count );
       $start_block  = 0;
       $flag         = 1;
       next;
@@ -318,6 +526,13 @@ sub get_details_file {
       $file_object->empty_line;
       next;
     }
+    if( $line =~ m{\A[#]@return\s*\Z}mxs ) {
+      $current_sub->set_documented;
+      $current_sub->set_return_type( '-none-' );
+      $current_sub->set_return_desc( '-none-' );
+      $file_object->empty_line;
+      next;
+    }
     if( $line =~ m{\A[#]{2}\s*(.*)}mxs && $flag ) {
       $current_sub->set_documented;
       my $note = $1;
@@ -358,23 +573,49 @@ sub get_details_file {
 }
 ## use critic
 
+sub isa_list {
+#@params (Pagesmith::Utils::Documentor::Package package object) (string[] ISA list)
+#@return
+## Updates the arrayref passed in as the second parameter with the full parent tree of the object
+## * returns in the order the tree is searched for methods if there is multiple inheritance
+## * used in two places - once to generate the full parent list on details page and also to get the list of methods in the "all methods" tab
+  my ( $package_obj, $isa_list ) = @_;
+  if( $package_obj->parents ) {
+    foreach my $pg ( $package_obj->parents ) {
+      next if any { $pg eq $_ } @{$isa_list};
+      push @{$isa_list}, $pg;
+      next unless exists $module_cache->{$pg};
+      isa_list( $module_cache->{$pg}, $isa_list );
+    }
+  }
+  return;
+}
+
 sub raw_dumper {
+#@params (hashref|arrayref object to dump) (string name of object)?
+#@return (string) compact sorted Data::Dumper output
   my( $data_to_dump, $name_of_data ) = @_;
   return Data::Dumper->new( [ $data_to_dump ], [ $name_of_data ] )->Sortkeys(1)->Indent(1)->Terse(1)->Dump();
 }
 
 sub write_docs_file {
+#@params (string filename - location for documentation file) (Pagesmith::Utils::Documentor::Package package object)
+#@return
+## Generate documentation file for package with information stored in package_obj...
   my( $filename, $package_obj ) = @_;
   my $tabs = Pagesmith::HTML::Tabs->new;
   $tabs->add_tab( 'details', 'Details',            generate_details( $package_obj ) );
   $tabs->add_tab( 'summary', 'Methods',            generate_summary( $package_obj ) );
   if( $package_obj->parents ) {
-    ( my $fn = $package_obj->doc_filename ) =~ s{[.]html\Z}{.inc}msx;
-    ( my $output_filename = $filename     ) =~ s{[^/]+\Z}{inc/methods/$fn}mxs;
-    $tabs->add_tab( 'summary_full', 'All methods', sprintf '<%% File -ajax /docs/perl/inc/methods/%s %%>', $fn );
-    open my $inc_fh, q(>), $output_filename;               ## no critic (RequireChecked)
-    print {$inc_fh} generate_summary_full( $package_obj ); ## no critic (RequireChecked)
-    close $inc_fh;                                         ## no critic (RequireChecked)
+    my $html = generate_summary_full( $package_obj );
+    if( $html ) {
+      ( my $fn = $package_obj->doc_filename ) =~ s{[.]html\Z}{.inc}msx;
+      ( my $output_filename = $filename     ) =~ s{[^/]+\Z}{inc/methods/$fn}mxs;
+      $tabs->add_tab( 'summary_full', 'All methods', sprintf '<%% File -ajax /docs/perl/inc/methods/%s %%>', $fn );
+      open my $inc_fh, q(>), $output_filename;  ## no critic (RequireChecked)
+      print {$inc_fh} $html;                    ## no critic (RequireChecked)
+      close $inc_fh;                            ## no critic (RequireChecked)
+    }
   }
   $tabs->add_tab( 'docs',    'Documented methods', generate_methods( $package_obj ) );
   $tabs->add_tab( 'general', 'General notes',      generate_notes(   $package_obj ) );
@@ -417,26 +658,21 @@ sub write_docs_file {
 }
 
 sub generate_source {
+#@params (Pagesmith::Utils::Documentor::Package package object)
+#@return (string) HTML
+## Generate component placeholder for full source code for file
+## * Note can't use -ajax in this case as we want to allow deep-linking into the source code
   my $package_obj = shift;
   my $short_filename = substr $package_obj->file->name, length $ROOT_PATH;
   return sprintf '<%% Markedup -format perl -number line %s %%>',
     $short_filename;
 }
 
-sub isa_list {
-  my ( $package_obj, $isa_list ) = @_;
-  if( $package_obj->parents ) {
-    foreach my $pg ( $package_obj->parents ) {
-      next if any { $pg eq $_ } @{$isa_list};
-      push @{$isa_list}, $pg;
-      next unless exists $module_cache->{$pg};
-      isa_list( $module_cache->{$pg}, $isa_list );
-    }
-  }
-  return;
-}
-
 sub generate_details {
+#@params (Pagesmith::Utils::Documentor::Package package object)
+#@return (string) HTML
+## Generate details tab
+## * Lists rcs details, parent packages, used packages, constants and package variables
   my $package_obj = shift;
   my $html = $package_obj->format_description;
   my $twocol = Pagesmith::HTML::TwoCol->new;
@@ -446,9 +682,8 @@ sub generate_details {
   }
   my $list_of_packages = [];
   if( $package_obj->parents ) {
-    isa_list( $package_obj, $list_of_packages );
     my %real_parents = map { ($_=>1) } $package_obj->parents;
-    foreach my $package ( @{$list_of_packages} ) {
+    foreach my $package ( $package_obj->ancestors ) {
       my $name = $package;
       $name = "<em>$package</em>" unless exists $real_parents{$package};
       if( exists $module_cache->{$package}) {
@@ -494,9 +729,13 @@ sub generate_details {
 }
 
 sub generate_summary {
+#@params (Pagesmith::Utils::Documentor::Package package object)
+#@return (string) HTML
+## Generate HTML for methods tab
   my $package_obj = shift;
   ## no critic (LongChainsOfMethodCalls)
   my @methods = $package_obj->methods;
+  return q(<p>No functions in this package</p>) unless @methods;
   my $table = Pagesmith::HTML::Table->new
     ->make_sortable
     ->add_class( 'before narrow-sorted' )
@@ -523,24 +762,16 @@ sub generate_summary {
 }
 
 sub generate_summary_full {
+#@params (Pagesmith::Utils::Documentor::Package package object)
+#@return (string) HTML
+## Generate HTML for full method list
+## * This includes all methods which are available from other Pagesmith packages
+
   my $package_obj = shift;
   ## no critic (LongChainsOfMethodCalls)
-  my @methods = $package_obj->methods;
-  my $list_of_packages = [];
-  my %seen_methods = map { ( $_->name => 1 ) } @methods;
-  isa_list( $package_obj, $list_of_packages );
-  my $hidden = {};
-  foreach my $par ( @{$list_of_packages} ) {
-    next unless exists $module_cache->{$par};
-    foreach my $method_obj ( $module_cache->{$par}->methods ) {
-      if( $seen_methods{ $method_obj->name } ) {
-        $hidden->{$par}{$method_obj->name}=1;
-      } else {
-        $seen_methods{ $method_obj->name }=1;
-      }
-      push @methods, $method_obj;
-    }
-  }
+  my @methods = $package_obj->full_methods;
+  return unless @methods;
+  my $hidden  = $package_obj->hidden_methods;
   my $table = Pagesmith::HTML::Table->new
     ->make_sortable
     ->add_class( 'before narrow-sorted' )
@@ -558,7 +789,7 @@ sub generate_summary_full {
       { 'key' => q(#), },
       { 'key' => 'name',                        'label' => 'Name',
         'link' => sub {
-           return q() unless $_[0]->is_documented;
+           return q() unless $_[0]->is_documented eq 'Y';
            return sprintf '%s#method_%s',
              $_[0]->package_name eq $package_obj->name ? q() : 'rel=external '.$module_cache->{$_[0]->package_name}->doc_filename,
              $_[0]->name;
@@ -576,7 +807,9 @@ sub generate_summary_full {
              $_[0]->start;
         },
         'template' => '[[d:start]]-[[d:end]]', 'align' => 'c' },
-      { 'key' => 'package',                     'label' => 'Package'                      },
+      { 'key' => 'package_name',               'label' => 'Package',
+        'template' => sub { return $_[0]->package_name eq $package_obj->name ? q(-) : $_[0]->package_name; },
+      },
     )
     ->add_data( @methods );
   ## use critic
@@ -584,6 +817,9 @@ sub generate_summary_full {
 }
 
 sub generate_methods {
+#@params (Pagesmith::Utils::Documentor::Package package object)
+#@return (string) HTML
+## Generate list of methods which have been documented - with "jDoc" style @params/@return comments
   my $package_obj = shift;
   my @methods = $package_obj->documented_methods;
   return '<p>No documented methods</p>' unless @methods;
@@ -612,6 +848,9 @@ sub generate_methods {
 }
 
 sub generate_notes {
+#@params (Pagesmith::Utils::Documentor::Package package object)
+#@return (string) HTML
+## Generate contents of notes tab
   my $package_obj = shift;
   return $package_obj->format_notes;
 }
