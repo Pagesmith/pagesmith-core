@@ -31,6 +31,7 @@ sub markdown_html {
   $html =~ s{<h([12])(.*?</h)\1>}{'<h'.($1+2).$2.($1+2).'>'}mxseg;
   $html =~ s{<h3}{<h3 class="keep"}mxsg;
   $html =~ s{\s+align="(right|left|center)"}{' class="'.(substr $1,0,1).'"'}mxseg;
+  $html = "<p>$html</p>" unless $html =~ m{\A<}mxsg;
   return $html;
 }
 
