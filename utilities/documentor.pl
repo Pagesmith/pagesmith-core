@@ -98,8 +98,10 @@ foreach my $path ( sort keys %{$files} ) {
 }
 dump_timer( 'Parsed', $cc );
 
-my ( $method_details, @packages ) = invert_lists();
-dump_timer( 'Generating inverted index' );
+my ( $method_details, $descendants, @packages ) = invert_lists();
+write_file( 'inc/descendants.inc', raw_dumper( $descendants ) );
+
+dump_timer( 'Generated inverted index' );
 
 my @method_details = generate_method_lists();
 
@@ -111,7 +113,7 @@ dump_timer( 'Generated module page' );
 ## Write front page method list file...
 write_file( 'inc/method_list.inc', method_table( @method_details )->render );
 dump_timer( 'Generated method page' );
-## Generate the menu HTML...
+## Generate the menu HTML and all the HTML pages...
 write_file( 'inc/list.inc', join qq(\n), generate_tree(), q(), sprintf
   '<dl class="twocol twothird"><dt>Time taken:</dt><dd>%0.3f seconds</dd><dt>Run at:</dt><dd>%s</dd><dt>Run on:</dt><dd>%s</dd></dl>',
   time-$t_init, time2str( '%H:%M %Z', time ),
@@ -214,6 +216,7 @@ sub generate_method_lists {
 sub invert_lists {
   my @pack;
   my $meth_det;
+  my $desc_list;
   foreach my $path ( sort keys %{$files} ) {
     foreach my $module ( sort keys %{$files->{$path}} ) {
       my $filename    = $files->{$path}{$module};
@@ -221,6 +224,8 @@ sub invert_lists {
       my @list_of_packages;
       isa_list( $package_obj, \@list_of_packages ) if $package_obj->parents;
       $package_obj->set_ancestors( @list_of_packages );
+      $desc_list->{$_}{$package_obj->name} = 1 foreach @list_of_packages;
+      $desc_list->{$_}{$package_obj->name} = 2 foreach $package_obj->parents;
       push @pack, $package_obj;
       my @methods = $package_obj->methods;
       my %seen_methods = map { ( $_->name => 1 ) } @methods;
@@ -241,7 +246,7 @@ sub invert_lists {
       $package_obj->set_full_methods( \@methods, $hidden );
     }
   }
-  return ( $meth_det, @pack );
+  return ( $meth_det, $desc_list, @pack );
 }
 
 sub method_dump {
@@ -631,6 +636,8 @@ sub write_docs_file {
   my( $filename, $package_obj ) = @_;
   my $tabs = Pagesmith::HTML::Tabs->new;
   $tabs->add_tab( 'details', 'Details',            generate_details( $package_obj ) );
+  $tabs->add_tab( 'child_tab', 'Children',         generate_children( $package_obj ) )
+    if exists $descendants->{$package_obj->name};
   $tabs->add_tab( 'summary', 'Methods',            generate_summary( $package_obj ) );
   if( $package_obj->parents ) {
     my $html = generate_summary_full( $package_obj );
@@ -690,6 +697,25 @@ sub generate_source {
     $short_filename;
 }
 
+sub generate_children {
+  my $package_obj = shift;
+  my $c = Pagesmith::HTML::TwoCol->new;
+  my $d = Pagesmith::HTML::TwoCol->new;
+  my $my_descendants = $descendants->{$package_obj->name};
+  foreach ( sort keys %{$my_descendants} ) {
+    my $name = $_;
+    $name = sprintf '<a href="%s">%s</a>', $module_cache->{$_}->doc_filename, $name
+      if exists $module_cache->{$_};
+    $c->add_entry( 'Children', $name ) if $my_descendants->{$_} == 2;
+    $d->add_entry( 'Descendants', $name );
+  }
+  return Pagesmith::HTML::Tabs->new({'fake'=>1,})->add_classes('second-tabs')
+    ->add_div_classes( 'hide-heading' )
+    ->add_tab( 'children', 'Children', $c->render )
+    ->add_tab( 'descendants', 'Descendants', $d->render )
+    ->render;
+}
+
 sub generate_details {
 #@params (Pagesmith::Utils::Documentor::Package package object)
 #@return (string) HTML
@@ -711,7 +737,7 @@ sub generate_details {
       if( exists $module_cache->{$package}) {
         $name = sprintf '<a href="%s">%s</a>', $module_cache->{$package}->doc_filename, $name;
       }
-      $twocol->add_entry( 'Parent(s)', $name )
+      $twocol->add_entry( 'Ancestor(s)', $name )
     }
   }
   my %used = $package_obj->used_packages;
