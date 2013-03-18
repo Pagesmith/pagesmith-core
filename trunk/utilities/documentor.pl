@@ -449,12 +449,12 @@ sub get_details_file {
         $start_block = 0;
       }
     }
-    if( $line =~ m{\A[#]@raw}mxs ) {
+    if( $line =~ m{\A[#][@]raw}mxs ) {
       $file_object->empty_line;
       $raw_flag = 1;
       next;
     }
-    if( $line =~ m{\A[#]@endraw}mxs ) {
+    if( $line =~ m{\A[#][@]endraw}mxs ) {
       $file_object->empty_line;
       $raw_flag = 0;
       next;
@@ -520,12 +520,12 @@ sub get_details_file {
       next;
       ## use critic
     }
-    if( $line =~ m{\A[#]@class\s*(\S+)}mxs ) {
+    if( $line =~ m{\A[#][@]class\s*(\S+)}mxs ) {
       $current_sub->set_class( $1 );
       $file_object->empty_line;
       next;
     }
-    if( $line =~ m{\A[#]@params\s*(.*)}mxs ) {
+    if( $line =~ m{\A[#][@]params\s*(.*)}mxs ) {
       $current_sub->set_documented;
       my $params = $1;
       while( $params =~ s{\A[(](\S+?)(?:\s+(.*?)\s*)?[)]([*+?]?)(\s.*|)\Z}{$4}mxs ) {
@@ -539,7 +539,7 @@ sub get_details_file {
       $file_object->empty_line;
       next;
     }
-    if( $line =~ m{\A[#]@param\s*[(](\S+?)[)]([*+?]?)(?:\s+(.*))?\Z}mxs ) {
+    if( $line =~ m{\A[#][@]param\s*[(](\S+?)[)]([*+?]?)(?:\s+(.*))?\Z}mxs ) {
       my( $description, $type, $optional, $name ) = (q(),$1,$2,$3);
       if( $name && $name =~ s{\s+-\s+($.*)\Z}{}mxs ) {
         $description = $1;
@@ -550,14 +550,14 @@ sub get_details_file {
       next;
     }
 
-    if( $line =~ m{\A[#]@return\s*[(](\S+?)[)](?:\s+(.*))?\Z}mxs ) {
+    if( $line =~ m{\A[#][@]return\s*[(](\S+?)[)](?:\s+(.*))?\Z}mxs ) {
       $current_sub->set_documented;
       $current_sub->set_return_type( $1 );
       $current_sub->set_return_desc( $2 );
       $file_object->empty_line;
       next;
     }
-    if( $line =~ m{\A[#]@return\s*\Z}mxs ) {
+    if( $line =~ m{\A[#][@]return\s*\Z}mxs ) {
       $current_sub->set_documented;
       $current_sub->set_return_type( '-none-' );
       $current_sub->set_return_desc( '-none-' );
@@ -581,7 +581,8 @@ sub get_details_file {
     $flag = 0;
 
     ## Now we don't have any parameters so look for the first "my" line!
-    if( !$current_sub->number_parameters && ($line =~ m{\A\s*my\s*[(]\s*(.*?)\s*[)]\s*=\s*@_}mxs) ) {
+    next if $current_sub->number_parameters;
+    if( $line =~ m{\A\s*my\s*[(]\s*(.*?)\s*[)]\s*=\s*[@]_}mxs ) {
       my @params = split m{\s*,\s*}mxs, $1;
       foreach ( @params ) {
         if( m{([\$%@])(\w+)}mxs ) {
@@ -592,10 +593,11 @@ sub get_details_file {
       }
       next;
     }
-    if( !$current_sub->number_parameters && ($line =~ m{\A\s*my\s+[\$](\w+)\s*=\s*shift}mxs) ) {
+    if( $line =~ m{\A\s*my\s+[\$](\w+)\s*=\s*shift}mxs ) {
       $current_sub->push_parameter( $1 eq 'self'|| $1 eq 'class' ? $1 : q(), q(), $1 );
+      next;
     }
-    if( !$current_sub->number_parameters && ($line =~ m{\A\s*return\s+shift->}mxs) ) {
+    if( $line =~ m{\A\s*return\s+shift->}mxs ) {
       $current_sub->push_parameter( 'self', q(), q(self) );
     }
   }
