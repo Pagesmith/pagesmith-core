@@ -1,0 +1,10 @@
+ul#navigation           { padding-left: 10px }
+#navigation li.branch,
+#navigation li.node
+  { line-height: 18px; list-style:none;padding:0;margin:0;white-space:nowrap;background-repeat:no-repeat;background-image:url(/core/gfx/jft.png); }
+#navigation li.branch   { background-position:-16px -296px;}
+#navigation li.node     { background-position:    0 -680px;}
+#navigation li.coll     { background-position:    0 -136px;}
+#navigation li ul { padding-left: 20px }
+#navigation li.coll ul  { display: none; }
+#navigation li a, #navigation li span { padding-left:20px; }
