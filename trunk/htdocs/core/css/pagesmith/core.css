@@ -20,6 +20,8 @@
 em  { font-style: italic; }
 strong { font-weight: bold; }
 p { padding: 0.5em 0 0 0; margin: 0 10px 0.5em 10px; }
+td p { padding: 0; margin: 0; }
+td p+p { margin-top: 0.5em }
 
 /* pre-formatted text */
 pre {

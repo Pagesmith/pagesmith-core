@@ -41,3 +41,6 @@ dl.twocol:after {
 #rhs .twocol dt { width: 19% }
 #rhs .twocol dd { width: 73% }
 
+#rhs .evenwidth dt, #rhs .evenwidth dd { width: 46% }
+#rhs .twothird dt { width: 30% }
+#rhs .twothird dd { width: 60% }
