@@ -59,7 +59,11 @@ $('.sorted-table').livequery(function () { // Make "sorted-table"s sortable
     }
     sizes = m[1].split('_');
     if (sizes.length === 1) {
-      form_el.append('<input type="hidden" class="pagesize" value="' + sizes[0].substr(1) + '" >');
+      size_value = sizes[0].substr(1);
+      if (size_value === 'all') {
+        size_value = 1000000;
+      }
+      form_el.append('<input type="hidden" class="pagesize" value="' + size_value+ '" >');
     } else {
       sel = '<select class="pagesize">';
       for (si = 0; si < sizes.length; si++) {
