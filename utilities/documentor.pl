@@ -115,7 +115,7 @@ dump_timer( 'Generated method page' );
 write_file( 'inc/list.inc', join qq(\n), generate_tree(), q(), sprintf
   '<dl class="twocol twothird"><dt>Time taken:</dt><dd>%0.3f seconds</dd><dt>Run at:</dt><dd>%s</dd><dt>Run on:</dt><dd>%s</dd></dl>',
   time-$t_init, time2str( '%H:%M %Z', time ),
-  time2str( '%A, %d %b %Y', time ),
+  time2str( '%A, %d %B %Y', time ),
 );
 
 dump_timer( 'Written' );
