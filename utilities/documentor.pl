@@ -17,14 +17,15 @@ use utf8;
 use version qw(qv); our $VERSION = qv('0.1.0');
 
 use Perl::Critic;
-use Data::Dumper qw(Dumper);
-use Getopt::Long qw(GetOptions);
-use Time::HiRes qw(time);
-use English qw(-no_match_vars $INPUT_RECORD_SEPARATOR $PROGRAM_NAME $EVAL_ERROR);
-use Date::Format qw(time2str);
-use File::Basename qw(dirname);
-use Cwd qw(abs_path);
-use HTML::Entities qw(encode_entities);
+use Data::Dumper    qw(Dumper);
+use Getopt::Long    qw(GetOptions);
+use Time::HiRes     qw(time);
+use English         qw(-no_match_vars $INPUT_RECORD_SEPARATOR $PROGRAM_NAME $EVAL_ERROR);
+use Date::Format    qw(time2str);
+use File::Path      qw(mkpath);
+use File::Basename  qw(dirname);
+use Cwd             qw(abs_path);
+use HTML::Entities  qw(encode_entities);
 use IO::File;
 use List::MoreUtils qw(any);
 
@@ -54,17 +55,31 @@ GetOptions(
 my $t_init = time;
 my $res = find_perl_dirs();
 my $files = {};
-foreach my $libpath (@{$res->{'paths'}}) {
-  get_perl_files( $files, $libpath, q(), $libpath );
-}
-#print raw_dumper( $files );exit;
 my $t = time;
-STDERR->autoflush(1); ## no critic (ExplicitInclusion)
-printf {*STDERR} "%-40s :      %7.3f\n", 'Got files', $t - $t_init;
 my $cc = 0;
 my $parsed_files = {};
 my $module_cache = {};
 my $root_docs = $ROOT_PATH.'/sites/'.$site.'/htdocs/'.$html_path.q(/);
+
+STDERR->autoflush(1); ## no critic (ExplicitInclusion)
+
+mkpath( "$root_docs/inc/methods" );
+mkpath( "$root_docs/inc/method_links" );
+mkpath( "$root_docs/js" );
+mkpath( "$root_docs/css" );
+
+write_file( 'index.html',         generate_index_file(), 1 );
+write_file( 'js/documentor.js',   generate_js_file(),    1 );
+write_file( 'css/documentor.css', generate_css_file(),   1 );
+dump_timer( 'Generated index file' );
+
+
+foreach my $libpath (@{$res->{'paths'}}) {
+  get_perl_files( $files, $libpath, q(), $libpath );
+}
+#print raw_dumper( $files );exit;
+dump_timer( 'Got file list' );
+
 foreach my $path ( sort keys %{$files} ) {
   my $c=0;
   ( my $root_file_name   = $res->{'map'}{$path} ) =~ s{/}{_}mxsg;
@@ -78,44 +93,55 @@ foreach my $path ( sort keys %{$files} ) {
     $module_cache->{$package_obj->name} = $package_obj;
     $c++;
   }
-  my $t_last = time;
-  printf {*STDERR} "%-40s : %4d %7.3f\n", q(  ).$res->{'map'}{$path}, $c, $t_last - $t;
-  $t = $t_last;
+  dump_timer( q(  ).$res->{'map'}{$path}, $c );
   $cc+=$c;
 }
-printf {*STDERR} "%-40s : %4d %7.3f\n", 'Parsed', $cc, $t - $t_init;
+dump_timer( 'Parsed', $cc );
 
 my ( $method_details, @packages ) = invert_lists();
+dump_timer( 'Generating inverted index' );
+
 my @method_details = generate_method_lists();
 
-my $tnow = time; printf {*STDERR} "%-40s :      %7.3f\n", 'Invered index', $tnow - $t; $t = $tnow;
+dump_timer( 'Generated method lists' );
 
 ## Write front page module list file...
-open my $m_fh, q(>), "$root_docs/inc/module_list.inc"; ## no critic (RequireChecked)
-print {$m_fh} module_table( \@packages )->render; ## no critic (RequireChecked)
-close $m_fh;  ## no critic (RequireChecked)
-
-$tnow = time; printf {*STDERR} "%-40s :      %7.3f\n", 'Generated module page', $tnow - $t; $t = $tnow;
-
+write_file( 'inc/module_list.inc', module_table( \@packages )->render );
+dump_timer( 'Generated module page' );
 ## Write front page method list file...
-open $m_fh, q(>), "$root_docs/inc/method_list.inc"; ## no critic (RequireChecked)
-print {$m_fh} method_table( @method_details )->render; ## no critic (RequireChecked)
-close $m_fh;  ## no critic (RequireChecked)
-
-$tnow = time; printf {*STDERR} "%-40s :      %7.3f\n", 'Generated method page', $tnow - $t; $t = $tnow;
-
-
+write_file( 'inc/method_list.inc', method_table( @method_details )->render );
+dump_timer( 'Generated method page' );
 ## Generate the menu HTML...
+write_file( 'inc/list.inc', join qq(\n), generate_tree(), q() );
 
-open my $fh, q(>), "$root_docs/inc/list.inc"; ## no critic (RequireChecked)
-print {$fh} join qq(\n), generate_tree(), q();           ## no critic (RequireChecked)
-close $fh;                                    ## no critic (RequireChecked)
-
-my $t_last = time;
-printf {*STDERR} "%-40s :      %7.3f\n", 'Written', $t_last - $t;
-printf {*STDERR} "%-40s :      %7.3f\n", 'OVERALL', $t_last - $t_init;
-
+dump_timer( 'Written' );
 exit;
+
+sub dump_timer {
+  my( $msg, $count ) = @_;
+  my $t_last = time;
+  if( defined $count ) {
+    printf {*STDERR} "%-40s : %5d %7.3f %7.3f\n", $msg, $count, $t_last - $t, $t_last - $t_init;
+  } else {
+    printf {*STDERR} "%-40s :       %7.3f %7.3f\n", $msg, $t_last - $t, $t_last - $t_init;
+  }
+  $t = $t_last;
+  return;
+}
+
+sub write_file {
+  my( $fn, $contents, $create_only ) = @_;
+  ## no critic (RequireChecked)
+  $fn = "$root_docs/$fn" unless $fn =~ m{\A/}mxs;
+  return 1 if $create_only && -e $fn;
+  if( open my $fh, q(>), $fn ) {
+    print {$fh} $contents;
+    close $fh;
+    return 1;
+  }
+  ## use critic
+  return;
+}
 
 sub generate_tree {
   my @tree = (q(<ul id="navigation"><li class="node"><a href="index.html">Module/Method lists</a></li>));
@@ -154,9 +180,7 @@ sub generate_tree {
     foreach ( @current_branch ) {
       push @tree, q(</ul></li>);
     }
-    my $t_now = time;
-    printf {*STDERR} "%-40s : %4d %7.3f\n", q(  ).$res->{'map'}{$path}, $c, $t_now - $t;
-    $t = $t_now;
+    dump_timer( q(  ).$res->{'map'}{$path}, $c );
   }
   push @tree, q(</ul>);
   return @tree;
@@ -178,9 +202,7 @@ sub generate_method_lists {
       ],
     };
     push @details, $row;
-    open my $m_fh, q(>), "$root_docs/inc/method_links/$method_name.inc"; ## no critic (RequireChecked)
-    print {$m_fh} method_dump( $row ); ## no critic (RequireChecked)
-    close $m_fh;  ## no critic (RequireChecked)
+    write_file( "inc/method_links/$method_name.inc", method_dump( $row ) );
   }
   return @details;
 }
@@ -612,9 +634,7 @@ sub write_docs_file {
       ( my $fn = $package_obj->doc_filename ) =~ s{[.]html\Z}{.inc}msx;
       ( my $output_filename = $filename     ) =~ s{[^/]+\Z}{inc/methods/$fn}mxs;
       $tabs->add_tab( 'summary_full', 'All methods', sprintf '<%% File -ajax /docs/perl/inc/methods/%s %%>', $fn );
-      open my $inc_fh, q(>), $output_filename;  ## no critic (RequireChecked)
-      print {$inc_fh} $html;                    ## no critic (RequireChecked)
-      close $inc_fh;                            ## no critic (RequireChecked)
+      write_file( $output_filename, $html );
     }
   }
   $tabs->add_tab( 'docs',    'Documented methods', generate_methods( $package_obj ) );
@@ -651,9 +671,7 @@ sub write_docs_file {
     $package_obj->name,
     $tabs->render;
   ## use critic
-  open my $fh, q(>), $filename; ## no critic (RequireChecked)
-  print {$fh} $markup;          ## no critic (RequireChecked)
-  close $fh;                    ## no critic (RequireChecked)
+  write_file( $filename, $markup );
   return;
 }
 
@@ -854,4 +872,93 @@ sub generate_notes {
   my $package_obj = shift;
   return $package_obj->format_notes;
 }
-__END__
+
+
+## no critic (ImplicitNewlines)
+sub generate_index_file {
+  return q(
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html>
+<head>
+  <title>Perl doc index...</title>
+<% CssFile /docs/perl/css/documentor.css /core/css/beta/nav.css %>
+<% JsFile /docs/perl/js/documentor.js /core/js/beta/nav.js %>
+</head>
+<body id="documentor">
+  <div id="main">
+    <div class="panel">
+      <h2>Perl modules</h2>
+      <ul class="tabs">
+        <li><a href="#tt_modules">Modules</a></li>
+        <li><a href="#tt_methods">Methods</a></li>
+      </ul>
+      <div id="tt_modules">
+        <h3>Modules</h3>
+        <% File inc/module_list.inc %>
+      </div>
+      <div id="tt_methods">
+        <h3>Methods</h3>
+        <% File inc/method_list.inc %>
+      </div>
+    </div>
+    <div class="panel">
+      <div id="method_links"><p>Select a method from the list above to see which modules the method exists in</p></div>
+    </div>
+  </div>
+  <div id="rhs">
+    <div class="panel">
+    <h3>Files</h3>
+    <% File inc/list.inc %>
+    </div>
+  </div>
+</body>
+</html>
+);
+}
+
+sub generate_css_file {
+  return q(
+#documentor #main { width: 67%; }
+#documentor #rhs  { width: 32%; }
+
+.parent td { font-style: italic }
+.struck { text-decoration: line-through }
+#rhsx { display: none }
+#mainx { width: 100% }
+.toggle-width { float: right; background-color: #ccc; color: #000; font-size: 50%; padding: 2px 2em; margin-left: 2em }
+);
+}
+
+## no critic (InterpolationOfMetachars)
+sub generate_js_file {
+  return q(
+$('#wrap').on('click','a[href^="#line_"]',function() {
+  $('a[href="#source"]').click();
+  return 1;
+});
+
+$('body')
+  .on('click','#main  .toggle-width',function() { $('#main').attr('id','mainx'); $('#rhs').attr('id','rhsx'); $(this).html('&gt;=&lt;');} )
+  .on('click','#mainx .toggle-width',function() { $('#mainx').attr('id','main'); $('#rhsx').attr('id','rhs'); $(this).html('&lt;=&gt;');} );
+
+var id_str = window.location.hash;
+if (id_str && id_str.match(/^#line_(\d+)$/)) {
+  $('a[href="#source"]').click();
+  window.location.hash = id_str;
+  if( $(id_str).get(0).scrollIntoView ) {
+    $(id_str).get(0).scrollIntoView();
+  }
+  // Now we have to achieve a scroll to!
+}
+
+$('#wrap').on('click','.method_list',function() {
+  console.log( "METHOD" );
+console.log( $(this) );
+  var name = $(this).prop('hash').substr(1);
+  console.log( name );
+  $('#method_links').html('<div class="ajax" title="/component/File?pars=-ajax%20%2Fdocs%2Fperl%2Finc%2Fmethod_links%2F'+name+'.inc"><p>Fetching lists</p></div>');
+});
+);
+}
+## use critic
