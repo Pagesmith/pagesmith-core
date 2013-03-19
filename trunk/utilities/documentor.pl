@@ -98,8 +98,8 @@ foreach my $path ( sort keys %{$files} ) {
 }
 dump_timer( 'Parsed', $cc );
 
-my ( $method_details, $descendants, @packages ) = invert_lists();
-write_file( 'inc/descendants.inc', raw_dumper( $descendants ) );
+my ( $used_by_packages, $method_details, $descendants, @packages ) = invert_lists();
+write_file( 'inc/used.inc', raw_dumper( $used_by_packages ) );
 
 dump_timer( 'Generated inverted index' );
 
@@ -217,24 +217,28 @@ sub invert_lists {
   my @pack;
   my $meth_det;
   my $desc_list;
+  my $used_by;
   foreach my $path ( sort keys %{$files} ) {
     foreach my $module ( sort keys %{$files->{$path}} ) {
       my $filename    = $files->{$path}{$module};
       my $package_obj = $parsed_files->{$filename};
       my @list_of_packages;
+      my $pname = $package_obj->name;
       isa_list( $package_obj, \@list_of_packages ) if $package_obj->parents;
       $package_obj->set_ancestors( @list_of_packages );
-      $desc_list->{$_}{$package_obj->name} = 1 foreach @list_of_packages;
-      $desc_list->{$_}{$package_obj->name} = 2 foreach $package_obj->parents;
+      $desc_list->{$_}{$pname} = 1 foreach @list_of_packages;
+      my %used = $package_obj->used_packages;
+      $used_by->{$_}{$pname}   = 1 foreach sort keys %used;
+      $desc_list->{$_}{$pname} = 2 foreach $package_obj->parents;
       push @pack, $package_obj;
       my @methods = $package_obj->methods;
       my %seen_methods = map { ( $_->name => 1 ) } @methods;
-      $meth_det->{ $_->name }{ $package_obj->name } = 2 foreach @methods;
+      $meth_det->{ $_->name }{ $pname } = 2 foreach @methods;
       my $hidden = {};
       foreach my $par ( $package_obj->ancestors ) {
         next unless exists $module_cache->{$par};
         foreach my $method_obj ( $module_cache->{$par}->methods ) {
-          $meth_det->{ $method_obj->name }{$package_obj->name}||=1;
+          $meth_det->{ $method_obj->name }{$pname}||=1;
           if( $seen_methods{ $method_obj->name } ) {
             $hidden->{$par}{$method_obj->name}=1;
           } else {
@@ -246,7 +250,7 @@ sub invert_lists {
       $package_obj->set_full_methods( \@methods, $hidden );
     }
   }
-  return ( $meth_det, $desc_list, @pack );
+  return ( $used_by, $meth_det, $desc_list, @pack );
 }
 
 sub method_dump {
@@ -640,6 +644,8 @@ sub write_docs_file {
   $tabs->add_tab( 'details', 'Details',            generate_details( $package_obj ) );
   $tabs->add_tab( 'child_tab', 'Children',         generate_children( $package_obj ) )
     if exists $descendants->{$package_obj->name};
+  $tabs->add_tab( 'used_by',   'Used by',          generate_used( $package_obj ) )
+    if exists $used_by_packages->{$package_obj->name};
   $tabs->add_tab( 'summary', 'Methods',            generate_summary( $package_obj ) );
   if( $package_obj->parents ) {
     my $html = generate_summary_full( $package_obj );
@@ -699,6 +705,19 @@ sub generate_source {
     $short_filename;
 }
 
+sub generate_used {
+  my $package_obj = shift;
+  my $c = Pagesmith::HTML::TwoCol->new;
+  my $my_modules = $used_by_packages->{$package_obj->name};
+  foreach ( sort keys %{$my_modules} ) {
+    my $name = $_;
+    $name = sprintf '<a href="%s">%s</a>', $module_cache->{$_}->doc_filename, $name
+      if exists $module_cache->{$_};
+    $c->add_entry( 'Used by', $name );
+  }
+  return $c->render;
+}
+
 sub generate_children {
   my $package_obj = shift;
   my $c = Pagesmith::HTML::TwoCol->new;
@@ -756,7 +775,7 @@ sub generate_details {
         $used->add_entry( $package, q(-) );
       }
     }
-    $twocol->add_entry( 'Used', $used->render );
+    $twocol->add_entry( 'Uses', $used->render );
   }
   my %const = $package_obj->constants;
   if( keys %const ) {
