@@ -17,8 +17,11 @@ var Cookie = {
       ' 00:00:00 GMT; path=/';
   },
   get: function (name) {
-    var cookie = document.cookie.match(new RegExp('(^|;)\\s*' + escape(name) + '=([^;\\s]*)'));
-    return cookie ? unescape(cookie[2]) : '';
+    if (typeof (document.cookie) !== 'undefined') {
+      var cookie = document.cookie.match(new RegExp('(^|;)\\s*' + escape(name) + '=([^;\\s]*)'));
+      return cookie ? unescape(cookie[2]) : '';
+    }
+    return '';
   }
 };
 
