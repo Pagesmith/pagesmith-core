@@ -3,6 +3,29 @@
  * Function closes down hidden tabs - and add's functionality to the tab
  * links to hide/show the appropriate link.
  */
+
+function pagesmith_tab_click(ev) {
+  if ($(this).closest('li').hasClass('disabled')) { // Only do something for enabled tabs!
+    return false;
+  }
+  // De-activate all other tabs.. and hide their associated content.
+  $(this).closest('li').addClass('active').siblings('li').each(function () {
+    $(this).removeClass('active');
+    $($(this).children('a').prop('hash')).addClass('tabc_hid');
+  });
+  if ($(this).closest('li').hasClass('action')) {
+    $(this).closest('li').removeClass('active');
+  }
+  // Show the content associated with this tab
+  // - note we have to do it this way round to stop bumping
+  $($(this).prop('hash')).removeClass('tabc_hid');
+//    $($(this).prop('hash')).parents('.tabc_hid').each(function () {
+//     var id_sel = ' a[href=#' + $(this).attr('id') + ']';
+//      $('.tabs' + id_sel + ', .fake-tabs' + id_sel).click();
+//    });
+  return false;
+}
+
 jQuery.fn.tabs = function (no_top_border) {
   /* Activate first tab, and for each of it's siblings hide the
      tab content..... */
@@ -16,27 +39,7 @@ jQuery.fn.tabs = function (no_top_border) {
   /* For each child in the list - add an on-click function which shows the
      relevant tab content - after first hiding the other tabs */
 
-  jQuery(this).children('li').children('a').click(function (ev) {
-    if ($(this).closest('li').hasClass('disabled')) { // Only do something for enabled tabs!
-      return false;
-    }
-    // De-activate all other tabs.. and hide their associated content.
-    $(this).closest('li').addClass('active').siblings('li').each(function () {
-      $(this).removeClass('active');
-      $($(this).children('a').prop('hash')).addClass('tabc_hid');
-    });
-    if ($(this).closest('li').hasClass('action')) {
-      $(this).closest('li').removeClass('active');
-    }
-    // Show the content associated with this tab
-    // - note we have to do it this way round to stop bumping
-    $($(this).prop('hash')).removeClass('tabc_hid');
-//    $($(this).prop('hash')).parents('.tabc_hid').each(function () {
- //     var id_sel = ' a[href=#' + $(this).attr('id') + ']';
-//      $('.tabs' + id_sel + ', .fake-tabs' + id_sel).click();
-//    });
-    return false;
-  });
+  jQuery(this).children('li').children('a').click(pagesmith_tab_click);
   // Activate the first tab
   var x = $(this).children('li.active'); //Find first enabled tab!
   if (!x.length) {
