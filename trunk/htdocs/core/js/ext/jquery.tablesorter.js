@@ -187,6 +187,7 @@
                         if (table.config.debug) {
                             parsersDebug += "column:" + i + " parser:" + p.id + "\n";
                         }
+if( p.id === 'none' ) { $($headers[i]).removeClass('header'); }
 
                         list.push(p);
                     }
@@ -478,7 +479,7 @@
             };
 
             function checkHeaderMetadata(cell) {
-                if (($.metadata) && ($(cell).metadata().sorter === false)) {
+                if (($.metadata) && ($(cell).metadata().sorter === "none")) {
                     return true;
                 };
                 return false;
@@ -714,7 +715,6 @@
                     // apply event handling to headers
                     // this is to big, perhaps break it out?
                     $headers.click(
-
                     function (e) {
                         var totalRows = ($this[0].tBodies[0] && $this[0].tBodies[0].rows.length) || 0;
                         if (!this.sortDisabled && totalRows > 0) {
@@ -892,7 +892,10 @@
             return $.trim(s.toLocaleLowerCase());
         }, type: "text"
     });
-
+    ts.addParser({
+      id: "none",
+      is: function (s,table) { return false; }, format: function (s) { return ""; }, type: "text"
+    });
     ts.addParser({
         id: "digit",
         is: function (s, table) {
