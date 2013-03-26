@@ -125,12 +125,13 @@ Raphael.fn.cs_init = function (pars) {
     margins:    { left: 20, right: 20, top: 20, bottom: 20 }, // Configuration setting for margins
     xaxis:      { label_style: '', minvalue: null, maxvalue: null, dir: '+', label: '', line: null,
                   scaling: 'linear', major: 1, minor: 1, axis_pos: 'below', labelsize: 14, size: 10,
-                  ticksize: 4, values: [], label_scale: 0, label_dp: 0, label_suffix: '', hide: 0
+                  ticksize: 4, values: [], label_scale: 0, label_dp: 0, label_suffix: '', hide: 0,
+                  precision: 3
                 }, // Configurat
     yaxis:      { label_style: '', minvalue: null, maxvalue: null, dir: '-', label: '', line: null,
                   scaling: 'linear', major: 1, minor: 1, axis_pos: 'left',  labelsize: 14, size: 10,
                   ticksize: 4, values: [], label_scale: 0, label_dp: 0, label_suffix: '', hide: 0,
-                  label_len: 6
+                  label_len: 6, precision: 3
                 },
     background: '#eee',
     title:      { text: undefined, position: 'above', size: 20, fill: '#000', offset: 5 },
@@ -802,7 +803,7 @@ Raphael.fn.cs_format = function (axis, v) {
     }
     return v;
   }
-  return parseFloat(v).toFixed(3);
+  return parseFloat(v).toFixed( axis.precision );
 };
 
 Raphael.fn.cs_add_line = function (pars) {
