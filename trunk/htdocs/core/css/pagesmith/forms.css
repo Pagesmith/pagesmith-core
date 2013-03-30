@@ -94,9 +94,9 @@ form div.disabled { display: none; }
 form dt.disabled { display: none; }
 form dd.disabled { display: none; }
 
-.ul_james { z-index: 200; padding: 0 0 0 1px; }
-#rhs .li_james, .li_james { background: white; border: 1px solid #999; border-width: 0 1px 1px 1px; padding: 2px; font-size: 80%; }
-#rhs .li_james .li_james_hovered, .li_james .li_james_hovered { background: #bcc5cc; }
+#rhs ul.ul_james, ul.ul_james { z-index: 200; padding: 0 0 0 1px; margin-top: 0}
+#rhs ul.ul_james li.li_james, ul.ul_james li.li_james { background: white; border: 1px solid #999; border-width: 0 1px 1px 1px; padding: 2px; font-size: 80%; }
+#rhs ul.ul_james a.li_james_hovered, ul.ul_james li.li_james_hovered { background: #bcc5cc; }
 
 .file-blob { float: left; width: 200px; }
 .file-image { float: left; width: 400px; }
