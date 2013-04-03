@@ -94,9 +94,10 @@ form div.disabled { display: none; }
 form dt.disabled { display: none; }
 form dd.disabled { display: none; }
 
-#rhs ul.ul_james, ul.ul_james { z-index: 200; padding: 0 0 0 1px; margin-top: 0}
-#rhs ul.ul_james li.li_james, ul.ul_james li.li_james { background: white; border: 1px solid #999; border-width: 0 1px 1px 1px; padding: 2px; font-size: 80%; }
-#rhs ul.ul_james a.li_james_hovered, ul.ul_james li.li_james_hovered { background: #bcc5cc; }
+.qdef { color: #999; }
+ul.ul_james, #rhs ul.ul_james { margin: 0; padding: 0; list-style-position: outside; list-style: none; z-index: 200 }
+ul li.li_james, #rhs ul li.li_james { background: white; cursor: pointer; background-color: #fff; border: 1px solid #bcc5cc; border-width: 0 1px 1px 1px; padding: 2px; font-size: 90%; }
+ul.ul_james li.li_james_hovered, #rhs ul.ul_james li.li_james_hovered { background-color: #bcc5cc; }
 
 .file-blob { float: left; width: 200px; }
 .file-image { float: left; width: 400px; }
@@ -111,4 +112,10 @@ form dd.disabled { display: none; }
 
 .chbarray { display: block; float: right; text-align: right; font-size: 80% }
 .chbarray span { background-color: #e0e4e7; font-weight: bold; padding: 2px 0.5em; margin: 0.5em; cursor: pointer }
+
+.close_box { border: 1px solid #ccc; background: url(/core/gfx/close.png) #eee top right no-repeat; padding: 2px 20px 2px 5px; border-radius: 4px; white-space: nowrap; margin-right: 5px }
+/* We need to tweak the line height slightly so that the "selected boxes" don't overlap with each other ... */
+/* We then need to reset the selected box part! */
+.multi_container { line-height: 2em }
+.multi_container ul.ul_james { line-height: 1.4em }
 
