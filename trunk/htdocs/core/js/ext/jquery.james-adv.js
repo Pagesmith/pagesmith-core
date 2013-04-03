@@ -82,8 +82,8 @@ jQuery.fn.james = function (url_to_call, options) {
     var offset = 0;
     ul_element.css({
       top:    input_offset.top + that.outerHeight(),
-      width:  that.outerWidth()+0.5,
-      left:   input_offset.left - 1,
+      width:  that.outerWidth(),
+      left:   input_offset.left,
       position:   "absolute"
     });
   };
