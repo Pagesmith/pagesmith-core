@@ -1,13 +1,100 @@
 /*
  * jQuery
  * version: 1.0 (2008/11/13)
- * @requires jQuery v1.2.6
+ * @requires: jQuery v1.2.6
+ * @uses: jQuery v1.9.1
  * @todo: Test it with previous jQuery versions
  * @author: sebastien rannou - http://www.aimxhaisse.com
+ * @modified: james smith - http://www.sanger.ac.uk/
+ *
+ * Heavily modified version of James to add extra functionality
+ *
+ * Can now deal with embedded data - or a single AJAX request to get all possible values!
+ *
+ * Has ability to store "multiple" values from the list in "facebook-stylee"...
  *
  * licensed under the MIT: http://www.opensource.org/licenses/mit-license.php
  *
- * Revision: 1
+ * Revision: 1.js5.0
+ *
+ ** User Documentation
+ ** ==================
+ **
+ ** Using javascript to configure:
+ **
+ ** HTML:
+ **
+ **     <input type="text" autocomplete="off" name="xx" id="xx" />
+ **
+ ** JavaScript:
+ **
+ **     $('#xx').james( '/autocomplete/URL', {} );
+ **
+ ** Using auto-configuration using $.metadata:
+ **
+ **     <input type="text" class="james {...} ..." autocomplete="off" name="xx" id="xx" />
+ **
+ ** Entries in the {} include:
+ **
+ ** * varname    - name of variable to pass in URL
+ ** * url        - ajax request URL [not in JavaScript version]
+ ** * params     - additional parameters
+ ** * minlength  - Minimum length of value before AJAX request is mande!
+ ** * filter     - If start/match then filter in Javascript - not if no source/data is set a single
+ **                Ajax request is made which retrieves all possible values..
+ ** * source     - string - ID of "UL" element containing values
+ ** * data       - []  - Array of possible values (rather than getting via ajax)
+ ** * multiple   - 0/1 - Allows mul
+ ** * restricted - 0/1 - Only entries in the drop down list are allowed!
+ ** * keydelay   - Length in delay between pressing key and sending ajax request (in milliseconds)
+ **
+ ** Pagesmith forms and auto-complete... (IE7 issues!)
+ ** ==================================================
+ **
+ ** The CSS for the form code uses dl/dt/dd's to represent the form elements - in IE we had to mess
+ ** around with margins to get this work (double margin bug in IE) so you will always need to put
+ ** a "div" inside the <dd></dd> to get the auto-complete to work...
+ **
+ **     <dd><div><input ...></div></dd>
+ **
+ ** Multiple values...
+ ** ==================
+ **
+ ** If you enable multiple values the input element must be embedded in a div of class
+ ** "multi_container"
+ **
+ ** This is so the "facebook" like creation of "buttons" needs to have a specifc class
+ **
+ ** To pre-populate the form with multiple values you can manually add these "buttons" with
+ ** the markup:
+ **
+ **     <span title="Click to remove" class="close_box">Value<input name=".." value=".." type="hidden" /></span>
+ **
+ ** within the "multi_container" div..
+ **
+ **     <div class="multi_container">
+ **       <input type="text" class="james.... />
+ **       <span title="Click to remove" class="close_box">XX<input name=".." value=".." type="hidden" /></span>
+ **       <span title="Click to remove" class="close_box">XX<input name=".." value=".." type="hidden" /></span>
+ **       <span title="Click to remove" class="close_box">XX<input name=".." value=".." type="hidden" /></span>
+ **     </div>
+ **
+ ** Supplying data for javascript "filtering"
+ ** =========================================
+ **
+ ** Data for javascript filtering can be pushed in three ways:
+ **
+ ** * "url" - retrieving via AJAX (no parameter is passed to ajax call)
+ ** * "data" - embedded in options hash (either using metadata or via javascript) - good for "shortish" lists
+ ** * "source" - embedded in a hidden "ul"
+ **
+ ** AJAX request set up!
+ ** ====================
+ **
+ ** AJAX returns either an array of strings of an array of hashes
+ **
+ **     {text:"..",json:{}}
+ **
  */
 
 jQuery.fn.james = function (url_to_call, options) {
@@ -34,6 +121,8 @@ jQuery.fn.james = function (url_to_call, options) {
         that.attr("value",'');
       }
     },
+    source:       false, // Source element (entries encoded in hidden embedded ul)
+    data:         false, // List of all entries in drop-down!
     keydelay:     300,
     blurdelay:    2000,
     max_entries:  10,
@@ -45,11 +134,10 @@ jQuery.fn.james = function (url_to_call, options) {
     params:       ''
   }, options || {});
 
-  /*
-   * This method performs DOM initialization
-   * Creates a UL with an Unique ID and push it to DOM
-   * It's called only once
-   */
+
+  // This method performs DOM initialization
+  // Creates a UL with an Unique ID and push it to DOM
+  // ** It's called only once
   (function initDOM() {
     var ul_id = false;
     var ul_node = document.createElement("ul");
@@ -65,18 +153,15 @@ jQuery.fn.james = function (url_to_call, options) {
 
     jQuery(ul_node).attr("id", ul_id).addClass("ul_james");
     that.after(ul_node);
-    // Creating a shortcut
-    ul_element = jQuery("#" + ul_id);
+    ul_element = jQuery("#" + ul_id); // Creating a shortcut
     ul_element.hide();
   })();
 
-  /*
-   * This method performs CSS initialization
-   * It sets position's <ul> (especially for IE6)
-   * And sets result's width to input's width
-   * Because offset can be changed, it's called each time
-   * the dom is modified
-   */
+  // This method performs CSS initialization
+  // It sets position's <ul> (especially for IE6) and sets result's width to input's width
+  // Because offset can be changed, it's called each time
+  // the dom is modified
+
   var initCSS = function initCSS() {
     var input_offset = that.position();
     var offset = 0;
@@ -88,11 +173,9 @@ jQuery.fn.james = function (url_to_call, options) {
     });
   };
 
-  /*
-   * This is used to avoid form to be submit
-   * when the user press Enter to make his choice
-   * @TODO: When user has already made his choice, submit it
-   */
+  // This is used to avoid form to be submit when the user press Enter to make his choice
+  // @TODO: When user has already made his choice, submit it
+
   that.keydown(function (event) {
     var l = ul_element.find(':visible').length;
     if( event.keyCode === 13 || event.keyCode === 9 ) {
@@ -103,13 +186,10 @@ jQuery.fn.james = function (url_to_call, options) {
     }
   });
 
-  /*
-   * This method performs Keyboard Events
-   * @TODO: Build actions for more key events (CTRL? ALT?)
-   * or recognize ASCII codes?
-   */
-  //Timer's ID of next AJAX call
-  var keyevent_current_timer = false;
+  // This method performs Keyboard Events
+  // @TODO: Build actions for more key events (CTRL? ALT?) or recognize ASCII codes?
+
+  var keyevent_current_timer = false;  // Timer's ID of next AJAX call
   var blur_current_timer = false;
 
   that.mouseenter(function(event) {
@@ -126,12 +206,10 @@ jQuery.fn.james = function (url_to_call, options) {
   });
 
   that.keyup(function(event) {
-    var is_specific_action = false;
+    var is_specific_action = false, value_to_send;
     // Check if a specific action is linked to the keycode
-    for (var i = 0; keyEvents[i]; i++)
-    {
-      if (event.keyCode === keyEvents[i].keycode)
-      {
+    for (var i = 0; keyEvents[i]; i++) {
+      if (event.keyCode === keyEvents[i].keycode) {
         is_specific_action = true;
         if( keyEvents[i].action() ) {
           event.preventDefault();
@@ -140,42 +218,97 @@ jQuery.fn.james = function (url_to_call, options) {
       }
     }
     // If it's not a specific action
-    if (is_specific_action === false)
-    {
+    if (is_specific_action === false) {
       // Unset last timeout if it was defined
-      if (keyevent_current_timer !== false)
-      {
+      if (keyevent_current_timer !== false) {
         window.clearTimeout(keyevent_current_timer);
         keyevent_current_timer = false;
       }
-      // Set a now timeout with an AJAX call inside
-      keyevent_current_timer = window.setTimeout(function () {
-        ajaxUpdate();
-      }, o.keydelay);
+      if(o.filter && (o.source || o.data) ) {
+        results_set = [];
+        value_to_send = that.prop("value").toLowerCase();
+        if( current_hovered_rank <= 0 ) {
+          current_hovered_rank = 0;
+        }
+        if( value_to_send.length > 0 ) {
+          if( o.data ) {
+            $.each( o.data, function(i,v) {
+              if( o.filter === 'start' && (v.toLowerCase().indexOf( value_to_send ) === 0) ||
+                  o.filter !== 'start' && (v.toLowerCase().indexOf( value_to_send ) > -1) ) {
+                results_set.push({text:v,json:{}});
+              }
+            });
+          } else { // Data in "source" ul - grab values - store in .data blow away ul. - now
+                   // will go into above if block next time a key is pressed!
+            o.data = [];
+            $.each( $('#'+o.source+' li'), function(i,v) {
+              var val = $(v).text();
+              o.data.push(val);
+              if( o.filter === 'start' && (val.toLowerCase().indexOf( value_to_send ) === 0) ||
+                  o.filter !== 'start' && (val.toLowerCase().indexOf( value_to_send ) > -1) ) {
+                results_set.push({text:val,json:{}});
+              }
+            });
+            $('#'+o.source).remove();
+          }
+          updateDom();
+        } else {
+          cleanResults();
+        }
+      } else {
+        // Set a now timeout with an AJAX call inside
+        keyevent_current_timer = window.setTimeout(function () {
+          ajaxUpdate();
+        }, o.keydelay);
+      }
     }
   });
 
-  /*
-   * This method performs AJAX calls
-   */
+  // This method performs AJAX calls
   var ajaxUpdate = function () {
     var value_to_send = that.prop("value");
     // Check length of input's value
     if( value_to_send.length > 0 && (o.minlength === false || value_to_send.length >= o.minlength)) {
+      var qs = ($.isFunction(o.params)?o.params():o.params);
+      if( !o.filter ) {
+        qs = o.varname + "=" + value_to_send + "&" + qs;
+      }
       $.ajax({
         type:     o.method,
-        data:     o.varname + "=" + value_to_send + "&" + ($.isFunction(o.params)?o.params():o.params),
+        data:     qs,
         url:      url_to_call,
         dataType:   "json",
         success:  function (data) {
-          var arr = o.onKeystroke(data);
+          var arr = o.onKeystroke(data),_json,_txt;
           results_set = [];
-          for (var i in arr) {
-            if (arr[i] !== null) {
-              if (typeof(arr[i].json) === "undefined") {
-                results_set.push({text: arr[i], json: {}});
-              } else {
-                results_set.push({text: arr[i].text, json: arr[i].json});
+          if( o.filter ) { // Parse response - grab values - store in .data - now
+                           // will go into o.data block above on next key press
+            value_to_send = value_to_send.toLowerCase();
+            o.data = [];
+            for (var i in arr) {
+              if (arr[i] !== null) {
+                if (typeof(arr[i].json) === "undefined") {
+                  _json = {};
+                  _txt  = arr[i];
+                } else {
+                  _json = arr[i].json;
+                  _txt  = arr[i].text;
+                }
+                o.data.push( _txt );
+                if( o.filter === 'start' && (_txt.toLowerCase().indexOf( value_to_send ) === 0) ||
+                    o.filter !== 'start' && (_txt.toLowerCase().indexOf( value_to_send ) > -1) ) {
+                  results_set.push({text: _txt, json: _json});
+                }
+              }
+            }
+          } else {
+            for (var ii in arr) {
+              if (arr[ii] !== null) {
+                if (typeof(arr[ii].json) === "undefined") {
+                  results_set.push({text: arr[ii], json: {}});
+                } else {
+                  results_set.push({text: arr[ii].text, json: arr[ii].json});
+                }
               }
             }
           }
