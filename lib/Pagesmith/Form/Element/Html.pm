@@ -15,9 +15,9 @@ use utf8;
 
 use version qw(qv); our $VERSION = qv('0.1.0');
 
-use Readonly qw(Readonly);
-Readonly my $DEFAULT_ROWS => 20;
-Readonly my $DEFAULT_COLS => 80;
+use Const::Fast qw(const);
+const my $DEFAULT_ROWS => 20;
+const my $DEFAULT_COLS => 80;
 
 use base qw( Pagesmith::Form::Element::Text );
 

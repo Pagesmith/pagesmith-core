@@ -15,11 +15,11 @@ use utf8;
 
 use version qw(qv); our $VERSION = qv('0.1.0');
 
-use Readonly qw(Readonly);
-Readonly my $DEFAULT_ROWS => 10;
-Readonly my $DEFAULT_COLS => 60;
-Readonly my $MAX_SEQ_TO_LIST => 10;
-Readonly my $MAX_SEQ_LENGTH_TO_SHOW => 200;
+use Const::Fast qw(const);
+const my $DEFAULT_ROWS => 10;
+const my $DEFAULT_COLS => 60;
+const my $MAX_SEQ_TO_LIST => 10;
+const my $MAX_SEQ_LENGTH_TO_SHOW => 200;
 
 
 my $units = { map { $_ => 1 } qw(ids characters words) };

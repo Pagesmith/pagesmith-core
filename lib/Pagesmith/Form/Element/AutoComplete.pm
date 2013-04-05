@@ -15,9 +15,9 @@ use utf8;
 
 use version qw(qv); our $VERSION = qv('0.1.0');
 use HTML::Entities qw(encode_entities);
-use Readonly qw(Readonly);
+use Const::Fast qw(const);
 
-Readonly my $DEFAULT_QUERY  => 'query';
+const my $DEFAULT_QUERY  => 'query';
 
 
 use base qw( Pagesmith::Form::Element::String );

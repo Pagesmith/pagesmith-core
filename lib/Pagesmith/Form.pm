@@ -442,9 +442,9 @@ sub add_raw_section {
   return $self->current_section;
 }
 
-sub add_readonly_section {
+sub add_cons_section {
   my( $self, @section_data )  = @_;
-  $self->current_stage->add_readonly_section( @section_data );
+  $self->current_stage->add_cons_section( @section_data );
   return $self->current_section;
 }
 
@@ -730,14 +730,14 @@ sub render_email {
   return join q(), map { $_->render_email($self) } $self->stages;
 }
 
-sub render_readonly {
+sub render_cons {
 #@param ($self)
 #@param (boolean) $flag
 #@return Read only version of form (with or without the wrapping form element)
   my ( $self, $flag ) = @_;
   my $res = q();
      $res .= $self->render_form_start if $flag;
-     $res .= join q(), $self->render_messages, map { $_->render_readonly($self) } $self->stages;
+     $res .= join q(), $self->render_messages, map { $_->render_cons($self) } $self->stages;
      $res .= $self->render_form_end if $flag;
   return $res;
 }

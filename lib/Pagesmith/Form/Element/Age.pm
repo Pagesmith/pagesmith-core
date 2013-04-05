@@ -15,8 +15,8 @@ use utf8;
 
 use version qw(qv); our $VERSION = qv('0.1.0');
 
-use Readonly qw(Readonly);
-Readonly my $MAX_AGE => 150;
+use Const::Fast qw(const);
+const my $MAX_AGE => 150;
 
 use base qw( Pagesmith::Form::Element::String);
 

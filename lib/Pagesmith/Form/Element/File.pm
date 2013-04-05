@@ -19,8 +19,8 @@ use base qw( Pagesmith::Form::Element );
 use List::MoreUtils qw(any);
 use HTML::Entities qw(encode_entities);
 
-use Readonly qw(Readonly);
-Readonly my $K                    => 1024;
+use Const::Fast qw(const);
+const my $K                    => 1024;
 
 my %extn_to_type = qw(
   PDF    application/pdf

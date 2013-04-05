@@ -15,8 +15,8 @@ use utf8;
 
 use version qw(qv); our $VERSION = qv('0.1.0');
 
-use Readonly qw(Readonly);
-Readonly my $DEFAULT_SIZE => 20;
+use Const::Fast qw(const);
+const my $DEFAULT_SIZE => 20;
 
 use base qw( Pagesmith::Form::Element );
 
