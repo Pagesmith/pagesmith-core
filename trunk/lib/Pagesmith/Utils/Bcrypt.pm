@@ -22,16 +22,16 @@ use English '-no_match_vars';
 
 use version qw(qv); our $VERSION = qv('0.1.0');
 
-use Readonly qw( Readonly );
-Readonly my $SECONDS_PER_DAY   => 86_400_000; # 60*60*24      * 1000
-Readonly my $LOCAL_EPOCH_START => 15.455;   # 2012 April 25 / 1000
-Readonly my $MAX_USERNAME      => 60; # later we will take shasum of username, not store username
+use Const::Fast qw(const);
+const my $SECONDS_PER_DAY   => 86_400_000; # 60*60*24      * 1000
+const my $LOCAL_EPOCH_START => 15.455;   # 2012 April 25 / 1000
+const my $MAX_USERNAME      => 60; # later we will take shasum of username, not store username
 
-Readonly my $KEY_NUL           => 1; # Truth value: whether to append a NUL to the password before using it as a key. The algorithm as originally devised does not do this, but it was later modified to do it. The version that does append NUL is to be preferred; not doing so is supported only for backward compatibility.
-Readonly my $COST              => 13; # Non-negative integer controlling the cost of the hash function. The number of operations is proportional to 2^cost.
-Readonly my $SALT_LENGTH       => 16; # 16 random octets
-Readonly my $MAX_BCRYPT_PASSWORD => 72; # bcrypt will probably ignore anything longer than 72 'octets'.
-Readonly my $MESSAGE_COLUMN => 3; # the third column contains salt + hash
+const my $KEY_NUL           => 1; # Truth value: whether to append a NUL to the password before using it as a key. The algorithm as originally devised does not do this, but it was later modified to do it. The version that does append NUL is to be preferred; not doing so is supported only for backward compatibility.
+const my $COST              => 13; # Non-negative integer controlling the cost of the hash function. The number of operations is proportional to 2^cost.
+const my $SALT_LENGTH       => 16; # 16 random octets
+const my $MAX_BCRYPT_PASSWORD => 72; # bcrypt will probably ignore anything longer than 72 'octets'.
+const my $MESSAGE_COLUMN => 3; # the third column contains salt + hash
 
 use MIME::Base64 qw(encode_base64 decode_base64);
 use Digest::SHA qw(sha512_base64);

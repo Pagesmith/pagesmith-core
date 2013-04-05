@@ -16,10 +16,10 @@ use utf8;
 use version qw(qv); our $VERSION = qv('0.1.0');
 use feature qw(switch);
 
-use Readonly qw(Readonly);
-Readonly my $TIMEOUT      => 30;
-Readonly my $SSL_VERSION  => 3;
-Readonly my $CONN_TIMEOUT => 5;
+use Const::Fast qw(const);
+const my $TIMEOUT      => 30;
+const my $SSL_VERSION  => 3;
+const my $CONN_TIMEOUT => 5;
 
 use Time::HiRes qw(time);
 use WWW::Curl::Easy;

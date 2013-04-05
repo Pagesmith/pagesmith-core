@@ -15,9 +15,9 @@ use utf8;
 
 use version qw(qv); our $VERSION = qv('0.1.0');
 
-use Readonly qw(Readonly);
+use Const::Fast qw(const);
 
-Readonly my $MAX_SIZE => 1 << 30;
+const my $MAX_SIZE => 1 << 30;
 #-------------------------------------------------------------------------------
 ## Class to store response from a Curl request
 ## Two functions "add_head" and "add_body" parse the response and

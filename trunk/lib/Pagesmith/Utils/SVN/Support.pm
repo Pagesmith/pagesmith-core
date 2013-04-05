@@ -15,13 +15,13 @@ use utf8;
 
 use version qw(qv); our $VERSION = qv('0.1.0');
 
-use Readonly qw(Readonly);
+use Const::Fast qw(const);
 
-Readonly my $SPACER    => q(=) x 78;
-Readonly my $LINE      => q(-) x 78;
-Readonly my $ONEBYTE   => 8;
-Readonly my $MASK      => 127;
-Readonly my $CORE_DUMP => 128;
+const my $SPACER    => q(=) x 78;
+const my $LINE      => q(-) x 78;
+const my $ONEBYTE   => 8;
+const my $MASK      => 127;
+const my $CORE_DUMP => 128;
 
 use Time::HiRes qw(time);
 

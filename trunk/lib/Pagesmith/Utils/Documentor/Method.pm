@@ -224,12 +224,21 @@ sub return_type {
   return $self->{'return_type'};
 }
 
+sub return_flag {
+#@params (self)
+#@return (string) "?","+","*" to indicate optional, 1+ values, 0+ values
+  my $self = shift;
+  return $self->{'return_flag'};
+}
+
 sub set_return_type {
-#@params (self) (string type)
+#@params (self) (string type) (string flag)?
 #@return (self)
 ## Set return type
-  my( $self, $type ) = @_;
-  return $self->{'return_type'} = $type;
+  my( $self, $type, $flag ) = @_;
+  $self->{'return_type'} = $type;
+  $self->{'return_flag'} = $flag||q();
+  return $self;
 }
 
 sub return_desc {
@@ -243,7 +252,7 @@ sub set_return_desc {
 #@params (self) (string description)
 #@return (self)
 ## Set return description
-  my( $self, $desc ) = @_;
+  my( $self, $desc) = @_;
   return $self->{'return_desc'} = $desc;
 }
 
@@ -256,7 +265,10 @@ sub format_return {
   my $self = shift;
   if( $self->{'return_type'}||q() ) {
     return '<strong>self</strong>' if $self->{'return_type'} eq 'self';
-    return sprintf '%s (%s)', $self->{'return_type'}, encode_entities($self->{'return_desc'}||q(-));
+    return sprintf '(%s)%s %s',
+      encode_entities($self->{'return_desc'}||q(- unknown -)),
+      $self->{'return_flag'}||q(),
+      $self->{'return_type'};
   }
   return encode_entities( $self->{'return_desc'}||q(-) );
 }

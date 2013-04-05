@@ -15,7 +15,7 @@ use utf8;
 
 use version qw(qv); our $VERSION = qv('0.1.0');
 
-use Readonly qw(Readonly);
+use Const::Fast qw(const);
 
 
 use English qw(-no_match_vars $CHILD_ERROR $PROGRAM_NAME $INPUT_RECORD_SEPARATOR $ERRNO $EVAL_ERROR);

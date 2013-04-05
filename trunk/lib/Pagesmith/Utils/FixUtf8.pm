@@ -18,19 +18,19 @@ use version qw(qv); our $VERSION = qv('0.1.0');
 
 
 
-use Readonly qw(Readonly);
+use Const::Fast qw(const);
 
-Readonly my $HI_ASCII     => 128;
-Readonly my $USES_2_BYTES => 192;
-Readonly my $USES_3_BYTES => 224;
-Readonly my $USES_4_BYTES => 240;
-Readonly my $USES_5_BYTES => 248;
-Readonly my $USES_6_BYTES => 252;
-Readonly my $USES_7_BYTES => 254;
-Readonly my $BYTE         => 256;
-Readonly my $BITS         => 8;
-Readonly my $SIX          => 6;
-Readonly my $MAX_UTF      => 1_114_111;
+const my $HI_ASCII     => 128;
+const my $USES_2_BYTES => 192;
+const my $USES_3_BYTES => 224;
+const my $USES_4_BYTES => 240;
+const my $USES_5_BYTES => 248;
+const my $USES_6_BYTES => 252;
+const my $USES_7_BYTES => 254;
+const my $BYTE         => 256;
+const my $BITS         => 8;
+const my $SIX          => 6;
+const my $MAX_UTF      => 1_114_111;
 
 my $SYMBOL_MAP = {qw(
    160 nbsp

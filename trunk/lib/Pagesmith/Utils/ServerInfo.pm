@@ -16,12 +16,12 @@ use version qw(qv); our $VERSION = qv('0.1.0');
 use feature qw(switch);
 
 use POSIX qw(floor);
-use Readonly qw(Readonly);
+use Const::Fast qw(const);
 use Sys::Hostname qw(hostname);
 
-Readonly my $K => 1024;
-Readonly my $DAY           => 24;
-Readonly my $MIN           => 60;
+const my $K => 1024;
+const my $DAY           => 24;
+const my $MIN           => 60;
 
 my %mem_keys = qw(
   MemTotal  mem
@@ -296,3 +296,116 @@ sub process_ipconfig {
 }
 
 1;
+
+__END__
+Shell script
+------------
+
+The following is the shell scripts whose output is parsed!
+
+    #!/usr/local/bin/bash
+
+    dir_orig=`dirname $SSH_ORIGINAL_COMMAND`
+    dir_this=`dirname $0`
+    if [ $SSH_ORIGINAL_COMMAND != $0 ] && [ -f $SSH_ORIGINAL_COMMAND ] && [ $dir_orig == $dir_this ]; then
+      exec $SSH_ORIGINAL_COMMAND
+    fi
+
+    echo =X=meminfo
+
+    cat /proc/meminfo 2>&1
+
+    echo =X=cpuinfo
+
+    cat /proc/cpuinfo 2>&1
+
+    echo =X=disk
+
+    df -k 2>&1
+
+    echo =X=perl
+
+    perl -e 'print $^V,"\n"' 2>/dev/null
+
+    echo =X=php
+
+    if [ "`which php`" != "" ]; then
+      php -r 'echo phpversion(),"\n";' 2>/dev/null
+    else
+      echo -
+    fi
+    echo =X=mysql
+
+    if [ "`locate */mysqld`" != "" ]; then
+      `locate */mysqld` -V 2>&1
+    else
+      echo -
+    fi
+
+    echo =X=info
+
+    cat /proc/uptime 2>&1
+    cat /proc/loadavg 2>&1
+    cat /proc/version 2>&1
+    lsb_release -a 2>&1
+
+    echo =X=ipconfig
+
+    /sbin/ifconfig `/sbin/ifconfig -s | cut -d ' ' -f 1 | grep -v lo | grep -v Iface | head -1`
+
+    echo =X=apache
+
+    if [ -f /usr/sbin/apache2 ]; then
+      /usr/sbin/apache2 -V | grep version 2>&1
+    else
+      echo -
+    fi
+
+    echo =X=apt
+
+    # Check to see which files need updating
+    if [ -f /usr/bin/timeout ]; then
+      if [ -f /usr/lib/update-notifier/apt-check ]; then
+        /usr/bin/timeout 10 /usr/lib/update-notifier/apt-check 2>&1
+        echo
+        /usr/bin/timeout 10 /usr/lib/update-notifier/apt-check -p 2>&1
+        echo
+      else
+        echo '-;-'
+        echo -
+      fi
+    else
+      if [ -f /usr/lib/update-notifier/apt-check ]; then
+        /usr/lib/update-notifier/apt-check 2>&1
+        echo
+        /usr/lib/update-notifier/apt-check -p 2>&1
+        echo
+      else
+        echo '-;-'
+        echo -
+      fi
+    fi
+
+    echo =X=upgrade
+
+    if [ -f /usr/lib/update-manager/check-new-release ]; then
+      /usr/lib/update-manager/check-new-release -q 2>&1
+      echo
+    else
+      echo -
+    fi
+    ##
+
+    echo =X=reboot
+
+    ## Check to see if a reboot is required
+    if [ -f /usr/lib/update-manager/check-new-release ]; then
+      if [ -f /var/run/reboot-required ]; then
+        cat /var/run/reboot-required
+        sort -u /var/run/reboot-required.pkgs
+      else
+        echo '--- No reboot required ---'
+      fi
+    else
+      echo -
+    fi

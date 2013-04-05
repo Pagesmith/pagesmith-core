@@ -17,8 +17,8 @@ use version qw(qv); our $VERSION = qv('0.1.0');
 
 use English qw(-no_match_vars $UID $EVAL_ERROR);
 use Carp qw(carp);
-use Readonly qw(Readonly);
-Readonly my $LINE_LENGTH => 130;
+use Const::Fast qw(const);
+const my $LINE_LENGTH => 130;
 
 use HTML::Tidy;
 use Encode::Unicode;
