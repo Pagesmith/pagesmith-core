@@ -16,12 +16,12 @@ use utf8;
 
 use version qw(qv); our $VERSION = qv('0.1.0');
 
-use Readonly qw(Readonly);
+use Const::Fast qw(const);
 
-Readonly my $DEFAULT_RANDOM_LENGTH => 4;
-Readonly my $UUID64_LENGTH         => 22;
-Readonly my $MAX_VIS_LENGTH        => 80;
-Readonly my $DOFF                  => 1_900;
+const my $DEFAULT_RANDOM_LENGTH => 4;
+const my $UUID64_LENGTH         => 22;
+const my $MAX_VIS_LENGTH        => 80;
+const my $DOFF                  => 1_900;
 
 use Carp qw(cluck carp);
 use Data::Dumper;
@@ -37,7 +37,12 @@ use MIME::Base64 qw(decode_base64 encode_base64);
 use Pagesmith::Config;
 use Pagesmith::Adaptor;
 
+my $failed_modules;
+
 sub init_events {
+#@params (self)
+#@return (self)
+## Flush the list of events and set the start time to now..
   my $self = shift;
   $self->{'_events'} = [];
   $self->{'_start'}  = time;
@@ -45,6 +50,9 @@ sub init_events {
 }
 
 sub push_event {
+#@params (self) (string caption) (int level)?
+#@return (self)
+## Push an event onto the stack, with given message and "level"
   my ( $self, $caption, $level ) = @_;
   $level ||= 0;
   push @{$self->{'_events'}}, {( 'caption' => $caption, 'level' => $level, 'time' => time - $self->{'_start'} )};
@@ -52,6 +60,9 @@ sub push_event {
 }
 
 sub dump_events {
+#@params (self)
+#@return (string) formatted text
+## Dump list of events, duration of each event and cumulative time
   my $self = shift;
   $self->push_event( 'DUMP' );
   my $merged_txt = q();
@@ -64,15 +75,18 @@ sub dump_events {
 }
 
 sub config {
-  my( $self, $file, $config, $override ) = @_;
+#@params (self) (string|{} config file name) (string flag) (string override)
+#@return (Pagesmith::Config) configuration object
+## Helper function to create a config object
+## * Configuration is either a hashref - which is passed straight to the constructor of the Pagesmith::Config object
+## * or the triple of file, config, override which are passed to the construtor of the Pagesmith::Config object
+  my( $self, $file, $location, $override ) = @_;
   return Pagesmith::Config->new( $file ) if ref $file eq 'HASH';
 
-  $config   ||= 'site';
+  $location ||= 'site';
   $override ||= 0;
-  return Pagesmith::Config->new( { 'file' => $file, 'location' => $config, 'override' => $override } );
+  return Pagesmith::Config->new( { 'file' => $file, 'location' => $location, 'override' => $override } );
 }
-
-my $failed_modules;
 
 ## empty constructor!
 
@@ -117,7 +131,7 @@ sub strip_html {
 }
 
 sub encode {
-#@param ($self)
+#@param (self)
 #@param (string) $value - string to be encoded
 #@return (string) HTML entity encoded version of $value;
   my ( $self, $value ) = @_;
@@ -125,7 +139,7 @@ sub encode {
 }
 
 sub csv_handler {
-#@param ($self)
+#@param (self)
 #@return (Text::CSV_XS)
 ## Lazy load CSV creation object
   my $self = shift;
@@ -135,7 +149,7 @@ sub csv_handler {
 }
 
 sub json_handler {
-#@param ($self)
+#@param (self)
 #@return (JSON::XS)
 ## Lazy load JSON creation object
   my $self = shift;
@@ -200,6 +214,26 @@ sub random_code {
   return join q(), map { $chars[ floor(@chars * rand) ] } (1 .. $length);
 }
 
+sub rebless {
+  my( $self, $sub_class ) = @_;
+
+  return 'Invalid subclass name' unless $sub_class =~ m{\A\w+(::\w+)*\Z}mxs;
+  my $my_name   = ref $self;
+  return 0 if $my_name =~ m{::$sub_class\Z}mxs; ## We are already in the sub_class so don't need to rebless...
+
+  my $module_name = $my_name.q(::).$sub_class;
+  if( $self->dynamic_use( $module_name ) ) {        ## Use the sub-class code...
+    bless $self, $module_name;                      ## If valid - re-bless the object
+    return;
+  }
+  my $msg = $self->dynamic_use_failure( $module_name ); ## Failed - so get error message!
+  ( my $mod = $module_name ) =~ s{::}{/}mxsg;
+
+  return $msg =~ m{\ACan't\slocate\s$mod.pm\s}mxs
+       ? 'Unknown sub-class module name'
+       : "Unable to create sub-class module $module_name - $msg"
+       ;
+}
 sub dynamic_use {
 
 #@param (self)
@@ -215,7 +249,6 @@ sub dynamic_use {
     return 0;
   }
   if ( exists $failed_modules->{$classname} ) {
-
     #warn "Pagesmith::Root: tried to use $classname again - this has already failed $failed_modules->{$classname}";
     return 0;
   }
@@ -380,12 +413,14 @@ sub flush_cache {
 }
 
 sub set_base_url {
+#@class set
   my( $self, $base_url ) = @_;
   $self->{'_base_url'} = $base_url;
   return $self;
 }
 
 sub base_url {
+#@class get
   my $self = shift;
   return $self->{'_base_url'} || q(/);
 }
