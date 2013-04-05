@@ -16,9 +16,9 @@ use utf8;
 use version qw(qv); our $VERSION = qv('0.1.0');
 
 use base qw(Pagesmith::Action::Ensembl);
-use Readonly qw(Readonly);
+use Const::Fast qw(const);
 
-Readonly my $DEFAULT_FAMILY_SIZE => 5;
+const my $DEFAULT_FAMILY_SIZE => 5;
 
 sub cache_key {
   my $self = shift;

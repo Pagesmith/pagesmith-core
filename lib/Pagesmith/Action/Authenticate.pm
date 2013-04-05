@@ -56,14 +56,14 @@ sub run {
         if( my @T = $real_username =~ m{\A$pattern\Z}mxs ) {
           $authenticator ||= $module->new( $m_conf );
           my $details = $authenticator->authenticate( $real_username, $real_password, \@T );
-          return $self->send_response( $cipher, $method, $details ) if $details->{'id'};
+          return $self->send_response( $cipher, $method, $details, $m_conf ) if $details->{'id'};
           return $self->no_content if exists $m_conf->{'last'} && $m_conf->{'last'};
         }
       }
     } else {
       $authenticator ||= $module->new( $m_conf );
       my $details = $authenticator->authenticate( $real_username, $real_password, $m_conf, [] );
-      return $self->send_response( $cipher, $method, $details ) if $details->{'id'};
+      return $self->send_response( $cipher, $method, $details, $m_conf ) if $details->{'id'};
     }
   }
 
@@ -71,8 +71,10 @@ sub run {
 }
 
 sub send_response {
-  my( $self, $cipher, $method, $details ) = @_;
-  $details->{'method'} = $method;
+  my( $self, $cipher, $method, $details, $m_conf ) = @_;
+  $details->{'method'}  = $method;
+  $details->{'subtype'} = $m_conf->{'subtype'} if exists $m_conf->{'subtype'};
+  $self->dumper( $m_conf );
   my $response = safe_base64_encode( $cipher->encrypt( $self->json_encode( $details ) ) );
   return $self->text->set_length( length $response )->print( $response )->ok;
 }

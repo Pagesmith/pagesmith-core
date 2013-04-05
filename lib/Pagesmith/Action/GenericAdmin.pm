@@ -13,10 +13,10 @@ use warnings;
 use utf8;
 
 use version qw(qv); our $VERSION = qv('0.1.0');
-use Readonly qw(Readonly);
+use Const::Fast qw(const);
 use base qw(Pagesmith::Action);
 
-Readonly my $DEFAULT_PAGE => 10;
+const my $DEFAULT_PAGE => 10;
 
 sub configuration {
   return;
