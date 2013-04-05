@@ -15,13 +15,13 @@ use utf8;
 
 use version qw(qv); our $VERSION = qv('0.1.0');
 
-use Readonly qw(Readonly);
-Readonly my $FUTURE     => 0x7fffffff;
-Readonly my $ONE_YEAR   => 31_622_400;
-Readonly my $ONE_WEEK   =>    604_800;
-Readonly my $ONE_DAY    =>     86_400;
-Readonly my $ONE_HOUR   =>      3_600;
-Readonly my $ONE_MINUTE =>         60;
+use Const::Fast qw(const);
+const my $FUTURE     => 0x7fffffff;
+const my $ONE_YEAR   => 31_622_400;
+const my $ONE_WEEK   =>    604_800;
+const my $ONE_DAY    =>     86_400;
+const my $ONE_HOUR   =>      3_600;
+const my $ONE_MINUTE =>         60;
 
 use base qw(Pagesmith::Support);
 
@@ -43,6 +43,14 @@ use Pagesmith::HTML::Table;
 use Pagesmith::HTML::Tabs;
 use Pagesmith::HTML::TwoCol;
 use Pagesmith::Utils::FormObjectCreator;
+
+sub type {
+  my $self = shift;
+  unless( exists $self->{'_action_type'} ) {
+    ( $self->{'_action_type'} = ref $self ) =~ s{\APagesmith::Action::}{}mxs;
+  }
+  return $self->{'_action_type'};
+}
 
 sub user {
   my $self = shift;
@@ -189,7 +197,7 @@ sub csv_string {
 sub tsv_print {
   my( $self, @display_data ) = @_;
   my $str = join "\n", map { $self->tsv_string( $_ ) } @display_data;
-  return $self->csv->print( $str )->set_length( length $str )->ok;
+  return $self->tsv->print( $str )->set_length( length $str )->ok;
 }
 
 sub tsv_string {
@@ -387,6 +395,19 @@ sub print {
   my ( $self, @vals ) = @_;
   push @{$self->{'_content'}}, @vals if @vals && $self->caching;
   $self->r->print(grep { defined $_ } @vals) if @vals;
+  return $self;
+}
+
+sub say {
+#@param (self)
+#@param (string+) @vals - list of strings to interpolate into template
+#@return ($self) so can be chained!
+
+## Does "print" on the Apache output handle!
+  my ( $self, @vals ) = @_;
+  push @{$self->{'_content'}}, @vals if @vals && $self->caching;
+  $self->r->print(grep { defined $_ } @vals) if @vals;
+  $self->r->print("\n");
   return $self;
 }
 
