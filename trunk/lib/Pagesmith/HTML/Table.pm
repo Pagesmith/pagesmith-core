@@ -19,17 +19,17 @@ use base qw(Pagesmith::Support);
 
 use HTML::Entities qw(encode_entities);
 use Date::Format qw(time2str);
-use Readonly qw(Readonly);
+use Const::Fast qw(const);
 use POSIX qw(floor);
 use Scalar::Util qw(blessed);
 use URI::Escape qw(uri_escape_utf8);
 
-Readonly my $TIME_FORMAT => '%H:%M';
-Readonly my $DATE_FORMAT => '%a, %d %b %Y';
-Readonly my $DOFF        => 1_900;
-Readonly my $CENT        => 100;
-Readonly my $K           => 1_024;
-Readonly my $SIZE_R      => 2; ## Numbers up to $K*$SIZE_R are shown in previous size...
+const my $TIME_FORMAT => '%H:%M';
+const my $DATE_FORMAT => '%a, %d %b %Y';
+const my $DOFF        => 1_900;
+const my $CENT        => 100;
+const my $K           => 1_024;
+const my $SIZE_R      => 2; ## Numbers up to $K*$SIZE_R are shown in previous size...
 
 sub new {
   my( $class, $r, $options, $columns, $row_data ) = @_;
@@ -505,6 +505,7 @@ sub other_options {
          qw(id title);
 }
 
+## no critic (ExcessComplexity)
 sub render {
   my $self = shift;
   my @html = (
@@ -525,6 +526,7 @@ sub render {
         if( exists $_->{'filter_values'} ) {
           $meta_data->{'filter'} = $_->{'filter_values'};
         }
+        $meta_data->{'sorter'} = 'none' if exists $_->{'no-sort'};
         my @class;
         push @class, $self->encode($self->json_encode($meta_data)) if keys %{$meta_data};
         push @class, 'rotated_cell' if $_->{'rotate'};
@@ -552,6 +554,7 @@ sub render {
   }
   return join qq(\n), @html;
 }
+## use critic
 
 sub reset_totals {
   my( $self, $type ) = @_; ## Type is level - 1 is block, 0 is total; - this allows for easy working with sub-blocks if required later...

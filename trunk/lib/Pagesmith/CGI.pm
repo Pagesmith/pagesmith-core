@@ -24,9 +24,9 @@ use HTML::Entities qw(encode_entities);
 use JSON::XS;
 use MIME::Base64 qw(encode_base64);
 
-use Readonly qw(Readonly);
-Readonly my $ERROR_WIDTH         => 160;
-Readonly my $STACKTRACE_MAXDEPTH => 10;
+use Const::Fast qw(const);
+const my $ERROR_WIDTH         => 160;
+const my $STACKTRACE_MAXDEPTH => 10;
 
 use Pagesmith::Message;
 

@@ -15,12 +15,12 @@ use utf8;
 
 use version qw(qv); our $VERSION = qv('0.1.0');
 
-use Readonly qw(Readonly);
-Readonly my $ONE_MONTH => 31;
-Readonly my $ONE_WEEK  => 7;
-Readonly my $ONE_DAY   => 86_400;
-Readonly my $YR_OFFSET => 1_900;
-Readonly my $DEFAULT_MAX_AUTHORS => 1_000_000;
+use Const::Fast qw(const);
+const my $ONE_MONTH => 31;
+const my $ONE_WEEK  => 7;
+const my $ONE_DAY   => 86_400;
+const my $YR_OFFSET => 1_900;
+const my $DEFAULT_MAX_AUTHORS => 1_000_000;
 
 use Encode::Unicode;
 use HTML::Entities qw(encode_entities);

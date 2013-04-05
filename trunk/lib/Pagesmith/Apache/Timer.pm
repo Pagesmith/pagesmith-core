@@ -15,10 +15,10 @@ use utf8;
 
 use version qw(qv); our $VERSION = qv('0.1.0');
 
-use Readonly qw(Readonly);
-Readonly my $VERY_LARGE_TIME => 1_000_000;
-Readonly my $CENT            => 100;
-Readonly my $LEVEL           => 'normal'; # (quiet,normal,noisy)
+use Const::Fast qw(const);
+const my $VERY_LARGE_TIME => 1_000_000;
+const my $CENT            => 100;
+const my $LEVEL           => 'normal'; # (quiet,normal,noisy)
 
 use Apache2::Const qw(OK DECLINED);
 use Apache2::SizeLimit;

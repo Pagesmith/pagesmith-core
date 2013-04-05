@@ -16,9 +16,9 @@ use utf8;
 
 use version qw(qv); our $VERSION = qv('0.1.0');
 
-use Readonly qw(Readonly);
+use Const::Fast qw(const);
 
-Readonly my $FIRST_YEAR => 2011;
+const my $FIRST_YEAR => 2011;
 
 use base qw(Pagesmith::MyForm);
 

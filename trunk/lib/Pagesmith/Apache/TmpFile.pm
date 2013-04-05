@@ -15,9 +15,9 @@ use utf8;
 
 use version qw(qv); our $VERSION = qv('0.1.0');
 
-use Readonly qw(Readonly);
-Readonly my $ONE_MONTH => 2_592_000;
-Readonly my $ONE_YEAR => 31_622_400;
+use Const::Fast qw(const);
+const my $ONE_MONTH => 2_592_000;
+const my $ONE_YEAR => 31_622_400;
 
 use Apache2::Const qw(OK FORBIDDEN DECLINED HTTP_METHOD_NOT_ALLOWED NOT_FOUND M_OPTIONS M_GET);
 use Apache2::RequestIO;

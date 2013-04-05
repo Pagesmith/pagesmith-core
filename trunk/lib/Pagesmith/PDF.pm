@@ -19,16 +19,16 @@ use base qw(Pagesmith::Support);
 use PDF::API2;
 use PDF::API2::Util qw(page_size);
 
-use Readonly qw(Readonly);
-Readonly my $DEFAULT_LINEWIDTH  => 0.1;
-Readonly my $DEFAULT_SIZE       => 10;
-Readonly my $DEFAULT_LINEHEIGHT => 12;
-Readonly my $A4_HEIGHT          => 842;
-Readonly my $A4_WIDTH           => 595;
-Readonly my $DEFAULT_MARGIN     => 40;
-Readonly my $LARGE_SIZE         => 12;
-Readonly my $DEFAULT_TAB_SIZE   => 0.2;
-Readonly my $PERC               => 100;
+use Const::Fast qw(const);
+const my $DEFAULT_LINEWIDTH  => 0.1;
+const my $DEFAULT_SIZE       => 10;
+const my $DEFAULT_LINEHEIGHT => 12;
+const my $A4_HEIGHT          => 842;
+const my $A4_WIDTH           => 595;
+const my $DEFAULT_MARGIN     => 40;
+const my $LARGE_SIZE         => 12;
+const my $DEFAULT_TAB_SIZE   => 0.2;
+const my $PERC               => 100;
 
 sub new {
   my( $class, $filename ) = @_;

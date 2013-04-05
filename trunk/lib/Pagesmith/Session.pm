@@ -15,18 +15,18 @@ use utf8;
 
 use version qw(qv); our $VERSION = qv('0.1.0');
 
-use Readonly qw(Readonly);
+use Const::Fast qw(const);
 
-Readonly my $MINUTE      => 60;
-Readonly my $HOUR        => 60 * $MINUTE;
-Readonly my $DAY         => 24 * $HOUR;
-Readonly my $WEEK        =>  7 * $DAY;
-Readonly my $FRACTION    =>  7;
+const my $MINUTE      => 60;
+const my $HOUR        => 60 * $MINUTE;
+const my $DAY         => 24 * $HOUR;
+const my $WEEK        =>  7 * $DAY;
+const my $FRACTION    =>  7;
 
-Readonly my $END_OF_TIME => (1<<31)-1;
+const my $END_OF_TIME => (1<<31)-1;
 
-Readonly my $DEFAULT_EXPIRY  => 2;
-Readonly my $DEFAULT_TIMEOUT => 10;
+const my $DEFAULT_EXPIRY  => 2;
+const my $DEFAULT_TIMEOUT => 10;
 
 use Carp qw(carp);
 use Crypt::CBC;
@@ -149,6 +149,7 @@ sub session_cache {
 
 sub store {
   my $self = shift;
+  return unless $self->session_cache;
   $self->session_cache->set( $self->encrypt( $self->data, 1 ), $self->expiry_time );
   return $self;
 }
@@ -217,6 +218,7 @@ sub fetch {
   if( $force || ! keys %{$self->{'data'}} ) {
     my $val = $self->session_cache->get;
     $self->{'data'} = $self->decrypt( $val, 1 );
+    $self->rebless( $self->{'data'}{'subtype'} ) if exists $self->{'data'}{'subtype'} && $self->{'data'}{'subtype'};
   }
   return $self->{'data'};
 }
@@ -227,6 +229,7 @@ sub initialize {
   $self->{'uuid'}      = $self->safe_uuid unless defined $self->{'uuid'};
   $self->{'cache'}     = Pagesmith::Cache->new( 'session', "$self->{'type'}|$self->{'uuid'}" ) unless $self->{'cache'};
   $self->touch;
+  $self->rebless( $params->{'subtype'} )  if exists $params->{'subtype'} && $params->{'subtype'};
   $self->_initialize( $params );
   return $self;
 }

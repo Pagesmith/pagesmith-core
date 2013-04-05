@@ -15,12 +15,12 @@ use utf8;
 
 use version qw(qv); our $VERSION = qv('0.1.0');
 
-use Readonly qw(Readonly);
+use Const::Fast qw(const);
 
-Readonly my $ERROR_WIDTH         => 160;
-Readonly my $STACKTRACE_MAXDEPTH => 10;
-Readonly my $PERCENT             => 100;
-Readonly my $DEFAULT_ZOOM        => 'n';
+const my $ERROR_WIDTH         => 160;
+const my $STACKTRACE_MAXDEPTH => 10;
+const my $PERCENT             => 100;
+const my $DEFAULT_ZOOM        => 'n';
 
 use base qw(Pagesmith::Support);
 
@@ -213,6 +213,7 @@ sub merge_cssjs {
     } @files_to_include;
   }
   ## Part 2 - in this case we will do the merging!
+  my @urls;
   foreach ( @files_to_include ) {
     if( ref $_ ) {
       ##no critic (ImplicitNewlines)
@@ -229,6 +230,11 @@ sub merge_cssjs {
       ## use critic
       next;
     }
+    if( m{\Ahttps?://}mxs ) {
+      push @urls, $_;
+      next;
+    }
+
     my $fn = qq($dir$_);
     if ( -e $fn && -f $fn ) { ## no critic (Filetest_f) - has to be a physical file!
       local $INPUT_RECORD_SEPARATOR = undef;    ## Stop mod_perl seg faulting!
@@ -307,10 +313,9 @@ sub merge_cssjs {
       $ch->set( join q(), map { $_->[1] } @html );    ## Didn't compress
     }
   }
-  my $URL = get_config('TmpUrl') . q(cssjs/) . $uri . q(.) . ( $flag eq 'minified' || $flag eq 'advanced' ? $stored_type : 'u' ) . q(.) . $type;
-  return sprintf
-    $type eq 'js' ?'<script type="text/javascript" src="%s"></script>' :  '<link rel="stylesheet" type="text/css" href="%s" />',
-    $URL;
+  push @urls, get_config('TmpUrl') . q(cssjs/) . $uri . q(.) . ( $flag eq 'minified' || $flag eq 'advanced' ? $stored_type : 'u' ) . q(.) . $type;
+  return join q(), map { sprintf '<script type="text/javascript" src="%s"></script>',   $_ } @urls if $type eq 'js';
+  return join q(), map { sprintf '<link rel="stylesheet" type="text/css" href="%s" />', $_ } @urls;
 }
 ## use critic
 

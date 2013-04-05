@@ -19,15 +19,15 @@ use base qw(Pagesmith::Support);
 
 use HTML::Entities qw(encode_entities);
 use Date::Format qw(time2str);
-use Readonly qw(Readonly);
+use Const::Fast qw(const);
 use POSIX qw(mktime);
 use URI::Escape qw(uri_escape_utf8);
 use List::MoreUtils qw(uniq);
 
-Readonly my $TIME_FORMAT => '%H:%M';
-Readonly my $DATE_FORMAT => '%a, %d %b %Y';
-Readonly my $DOFF        => 1900;
-Readonly my $CENT        => 100;
+const my $TIME_FORMAT => '%H:%M';
+const my $DATE_FORMAT => '%a, %d %b %Y';
+const my $DOFF        => 1900;
+const my $CENT        => 100;
 
 sub new {
   my( $class, $options ) = @_;
