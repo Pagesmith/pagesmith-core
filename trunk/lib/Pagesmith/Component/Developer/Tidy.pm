@@ -22,8 +22,8 @@ use HTML::Entities qw(encode_entities);    ## HTML entity escaping
 use English qw($EVAL_ERROR $INPUT_RECORD_SEPARATOR -no_match_vars);
 use Apache2::RequestUtil;
 
-use Readonly qw(Readonly);
-Readonly my $ACCESS_LEVEL => 1;
+use Const::Fast qw(const);
+const my $ACCESS_LEVEL => 1;
 
 
 sub execute {

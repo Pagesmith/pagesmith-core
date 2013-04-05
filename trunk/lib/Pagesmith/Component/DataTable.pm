@@ -15,8 +15,8 @@ use utf8;
 
 use version qw(qv); our $VERSION = qv('0.1.0');
 
-use Readonly qw(Readonly);
-Readonly my $PAGINATE_SIZE => 3;
+use Const::Fast qw(const);
+const my $PAGINATE_SIZE => 3;
 
 use base qw(Pagesmith::Component);
 

@@ -15,9 +15,9 @@ use utf8;
 
 use version qw(qv); our $VERSION = qv('0.1.0');
 
-use Readonly qw(Readonly);
+use Const::Fast qw(const);
 use Net::LDAP;
-Readonly my $PARAMS_PER_THESES => 4;
+const my $PARAMS_PER_THESES => 4;
 
 use base qw(Pagesmith::Component);
 

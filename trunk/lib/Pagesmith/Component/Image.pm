@@ -15,22 +15,22 @@ use utf8;
 
 use version qw(qv); our $VERSION = qv('0.1.0');
 
-use Readonly qw(Readonly);
-Readonly my $MAX_SIZE_TO_SCALE   => 1000;
-Readonly my $DEFAULT_WIDTH       => 100;
-Readonly my $DEFAULT_HEIGHT      => 100;
-Readonly my $DEFAULT_QUALITY     => 65;
-Readonly my $DEFAULT_QUALITY_PNG => 75;
-Readonly my $DEFAULT_PADDING     => 10;
-Readonly my $DEFAULT_BOX_WIDTH   => 240;
-Readonly my $DEFAULT_BOX_EXTRA_WIDTH   => 20;
-Readonly my $DEFAULT_BOX_EXTRA_HEIGHT  => 80;
-Readonly my $SCALE_FACTOR => 3;
-Readonly my $BLUR_JPG => 0.5;
-Readonly my $BLUR_PNG => 0.25;
-Readonly my $BLUR     => 0.1;
-Readonly my $ERROR_EXPIRY => -20;
-Readonly my $LINK_SIZE => 40;
+use Const::Fast qw(const);
+const my $MAX_SIZE_TO_SCALE   => 1000;
+const my $DEFAULT_WIDTH       => 100;
+const my $DEFAULT_HEIGHT      => 100;
+const my $DEFAULT_QUALITY     => 65;
+const my $DEFAULT_QUALITY_PNG => 75;
+const my $DEFAULT_PADDING     => 10;
+const my $DEFAULT_BOX_WIDTH   => 240;
+const my $DEFAULT_BOX_EXTRA_WIDTH   => 20;
+const my $DEFAULT_BOX_EXTRA_HEIGHT  => 80;
+const my $SCALE_FACTOR => 3;
+const my $BLUR_JPG => 0.5;
+const my $BLUR_PNG => 0.25;
+const my $BLUR     => 0.1;
+const my $ERROR_EXPIRY => -20;
+const my $LINK_SIZE => 40;
 
 use base qw(Pagesmith::Component::File);
 

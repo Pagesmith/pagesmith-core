@@ -18,14 +18,14 @@ use version qw(qv); our $VERSION = qv('0.1.0');
 use base qw(Pagesmith::Component::Email);
 
 use HTML::Entities qw(encode_entities);
-use Readonly qw(Readonly);
+use Const::Fast qw(const);
 use Time::HiRes qw(time);
 use utf8;
 
 use Pagesmith::Adaptor::Reference;
 use Pagesmith::Object::Reference;
 
-Readonly my $DEFAULT_RENDERER => 'ul';
+const my $DEFAULT_RENDERER => 'ul';
 
 ##no critic (ExcessComplexity)
 

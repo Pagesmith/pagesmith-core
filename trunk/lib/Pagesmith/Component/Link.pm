@@ -15,8 +15,8 @@ use utf8;
 
 use version qw(qv); our $VERSION = qv('0.1.0');
 
-use Readonly qw(Readonly);
-Readonly my $TIMEOUT => 2;
+use Const::Fast qw(const);
+const my $TIMEOUT => 2;
 
 use Pagesmith::ConfigHash qw(get_config);
 

@@ -17,8 +17,8 @@ use version qw(qv); our $VERSION = qv('0.1.0');
 
 use base qw(Pagesmith::Component::Navigation);
 
-use Readonly qw(Readonly);
-Readonly my $URL_PARTS_SUB => 4;
+use Const::Fast qw(const);
+const my $URL_PARTS_SUB => 4;
 
 sub usage {
   my $self = shift;

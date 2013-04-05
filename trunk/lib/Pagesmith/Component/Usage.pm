@@ -44,6 +44,9 @@ sub expand_usage {
   my( $self, $comp_obj ) = @_;
   my @options    = $comp_obj->can( 'define_options' ) ? $comp_obj->define_options : ();
   my $usage_hash = $comp_obj->can( 'usage' )          ? $comp_obj->usage : {};
+  if( exists $usage_hash->{'notes'} && ! ref $usage_hash->{'notes'}) {
+    $usage_hash->{'notes'} = [$usage_hash->{'notes'}];
+  }
   ## no critic (ImplicitNewlines)
   my $html = sprintf '
   <p>%s</p>
@@ -97,6 +100,8 @@ sub execute {
     return sprintf '<h3>Component: %s</h3>%s',
       $self->encode( $component ),
       $self->expand_usage( $comp_obj );
+  } else {
+    warn $self->dynamic_use_failure( $module ); ## no critic (Carping)
   }
   return '<h3>Unknown component</h3>';
 }

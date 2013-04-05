@@ -15,9 +15,9 @@ use utf8;
 
 use version qw(qv); our $VERSION = qv('0.1.0');
 
-use Readonly qw(Readonly);
+use Const::Fast qw(const);
 
-Readonly my $DEFAULT_WHAT   => 'words';
+const my $DEFAULT_WHAT   => 'words';
 
 use Carp qw(carp);
 use English qw(-no_match_vars $EVAL_ERROR);
