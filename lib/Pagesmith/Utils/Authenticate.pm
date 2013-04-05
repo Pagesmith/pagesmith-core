@@ -33,9 +33,9 @@ use Crypt::CBC; # qw decrypt encrypt
 use LWP::UserAgent;
 use HTTP::Request;
 
-use Readonly qw(Readonly);
+use Const::Fast qw(const);
 
-Readonly my $DEFAULT_TIMEOUT => 3;
+const my $DEFAULT_TIMEOUT => 3;
 
 use Pagesmith::Core qw(safe_base64_decode safe_base64_encode safe_md5 );
 use Pagesmith::ConfigHash qw(get_config);

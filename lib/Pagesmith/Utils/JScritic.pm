@@ -21,10 +21,10 @@ use XML::Parser;
 use English qw($EVAL_ERROR $INPUT_RECORD_SEPARATOR -no_match_vars);
 use Pagesmith::Core qw(fullescape);
 
-use Readonly qw(Readonly);
-Readonly my $JSL_COMMAND       => '/www/utilities/jsl -conf /www/utilities/jsl.conf -process';
-Readonly my $ERROR_BLOCK_LINES => 4;
-Readonly my $ERROR_BLOCK_PARTS => 4;
+use Const::Fast qw(const);
+const my $JSL_COMMAND       => '/www/utilities/jsl -conf /www/utilities/jsl.conf -process';
+const my $ERROR_BLOCK_LINES => 4;
+const my $ERROR_BLOCK_PARTS => 4;
 
 use base qw(Pagesmith::Support);
 
