@@ -15,10 +15,10 @@ use utf8;
 
 use version qw(qv); our $VERSION = qv('0.1.0');
 
-use Readonly qw(Readonly);
-Readonly my $MAX_SIZE => 5e6;
-Readonly my $MAX_SLEEP   => 0.02;
-Readonly my $MICRO_SLEEP => 0.001;
+use Const::Fast qw(const);
+const my $MAX_SIZE => 5e6;
+const my $MAX_SLEEP   => 0.02;
+const my $MICRO_SLEEP => 0.001;
 
 use DBIx::Connector;
 use POSIX qw(ceil);

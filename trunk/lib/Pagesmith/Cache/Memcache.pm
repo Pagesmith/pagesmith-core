@@ -15,15 +15,15 @@ use utf8;
 
 use version qw(qv); our $VERSION = qv('0.1.0');
 
-use Readonly qw(Readonly);
-Readonly my $MAX_SIZE => 1e6;
+use Const::Fast qw(const);
+const my $MAX_SIZE => 1e6;
 use Time::HiRes qw(time);
 use Cache::Memcached::Tags;
 use POSIX qw(ceil);
 
-use Readonly qw(Readonly);
-Readonly my $MAX_SLEEP   => 0.02;
-Readonly my $MICRO_SLEEP => 0.001;
+use Const::Fast qw(const);
+const my $MAX_SLEEP   => 0.02;
+const my $MICRO_SLEEP => 0.001;
 use Pagesmith::Cache::Base qw(expires columns);
 
 my $memd_config = { 'servers' => [], 'debug' => 'off' };
