@@ -15,14 +15,14 @@ use utf8;
 
 use version qw(qv); our $VERSION = qv('0.1.0');
 
-use Readonly qw(Readonly);
-Readonly my $BUFFER_SIZE => 8192;
-Readonly my $MINUTE      => 60;
-Readonly my $HOUR        => 60*60;
-Readonly my $DAY         => 24*$HOUR;
-Readonly my $DOW         => {qw(Mo 1 Tu 2 We 3 Th 4 Fr 5 Sa 6 Su 0)};
-Readonly my $WEEK        => 30;
-Readonly my $MONTHS      => 12;
+use Const::Fast qw(const);
+const my $BUFFER_SIZE => 8192;
+const my $MINUTE      => 60;
+const my $HOUR        => 60*60;
+const my $DAY         => 24*$HOUR;
+const my $DOW         => {qw(Mo 1 Tu 2 We 3 Th 4 Fr 5 Sa 6 Su 0)};
+const my $WEEK        => 30;
+const my $MONTHS      => 12;
 
 use base qw(Apache2::Filter);
 

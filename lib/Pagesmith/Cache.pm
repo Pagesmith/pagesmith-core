@@ -33,10 +33,10 @@ use Pagesmith::Cache::File;
 use Pagesmith::ConfigHash qw(site_key get_config);
 
 use Data::UUID;
-use Readonly qw(Readonly);
-Readonly my $UUID64_LENGTH         => 22;
-Readonly my $MICRO_SLEEP           =>  0.001;
-Readonly my $MAX_SLEEP             =>  5;
+use Const::Fast qw(const);
+const my $UUID64_LENGTH         => 22;
+const my $MICRO_SLEEP           =>  0.001;
+const my $MAX_SLEEP             =>  5;
 
 #= Usage
 

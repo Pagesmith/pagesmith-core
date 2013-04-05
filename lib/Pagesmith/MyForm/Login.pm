@@ -15,9 +15,9 @@ use utf8;
 
 use version qw(qv); our $VERSION = qv('0.1.0');
 
-use Readonly qw(Readonly);
-Readonly my $MAX_FAILURES  => 3;
-Readonly my $SLEEP_FACTOR  => 10;
+use Const::Fast qw(const);
+const my $MAX_FAILURES  => 3;
+const my $SLEEP_FACTOR  => 10;
 
 use base qw(Pagesmith::MyForm);
 use Pagesmith::Utils::Authenticate;

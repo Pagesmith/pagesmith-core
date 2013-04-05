@@ -20,16 +20,16 @@ use English qw(-no_match_vars $INPUT_RECORD_SEPARATOR $EVAL_ERROR);
 use File::Spec;
 use File::Basename qw(dirname);
 use Hash::Merge qw(merge);
-use Readonly qw(Readonly);
+use Const::Fast qw(const);
 use YAML::Loader;
 
 use base qw(Pagesmith::Root);
 use Pagesmith::Cache;
 use Pagesmith::ConfigHash qw(site_key set_site_key get_config can_cache docroot server_root);
 
-Readonly my $DEFAULT_KEY      => 'dev';
-Readonly my $DEFAULT_LOCATION => 'site';
-Readonly my $DEFAULT_FILE     => 'config';
+const my $DEFAULT_KEY      => 'dev';
+const my $DEFAULT_LOCATION => 'site';
+const my $DEFAULT_FILE     => 'config';
 
 sub new {
   my( $class, $params ) = @_;

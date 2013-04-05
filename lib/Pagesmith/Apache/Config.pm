@@ -27,8 +27,8 @@ use Pagesmith::Cache::File;
 use Pagesmith::Cache::Memcache;
 use Pagesmith::ConfigHash qw(set_r set_site_key data init_data set_key_root set_proxy_url set_proxy_noproxy);
 
-use Readonly qw(Readonly);
-Readonly my $BITS => 15;
+use Const::Fast qw(const);
+const my $BITS => 15;
 
 sub child_init_handler {
   ##no critic (CallsToUnexportedSubs)

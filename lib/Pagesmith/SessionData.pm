@@ -15,8 +15,8 @@ use utf8;
 
 use version qw(qv); our $VERSION = qv('0.1.0');
 
-use Readonly qw(Readonly);
-Readonly my $CHK_LENGTH => 4;
+use Const::Fast qw(const);
+const my $CHK_LENGTH => 4;
 
 use Digest::MD5 qw(md5_hex);
 

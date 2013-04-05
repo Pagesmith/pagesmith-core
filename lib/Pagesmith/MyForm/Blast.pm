@@ -20,8 +20,8 @@ use version qw(qv); our $VERSION = qv('0.1.0');
 use Carp qw(croak);
 use LWP::UserAgent;
 
-use Readonly qw(Readonly);
-Readonly my $MAXLEN => 100;
+use Const::Fast qw(const);
+const my $MAXLEN => 100;
 
 use base qw(Pagesmith::MyForm);
 

@@ -15,10 +15,10 @@ use utf8;
 
 use version qw(qv); our $VERSION = qv('0.1.0');
 
-use Readonly qw(Readonly);
-Readonly my $ERROR_WIDTH         => 160;
-Readonly my $STACKTRACE_MAXDEPTH => 10;
-Readonly my $STACKTRACE_LEVEL    => 'warn';
+use Const::Fast qw(const);
+const my $ERROR_WIDTH         => 160;
+const my $STACKTRACE_MAXDEPTH => 10;
+const my $STACKTRACE_LEVEL    => 'warn';
 
 use Apache2::Const qw(OK DECLINED);
 use English qw(-no_match_vars $PID);
