@@ -17,8 +17,8 @@ use version qw(qv); our $VERSION = qv('0.1.0');
 
 use base qw(Pagesmith::Action);
 use English qw(-no_match_vars $INPUT_RECORD_SEPARATOR);
-use Readonly qw(Readonly);
-Readonly my $ONE_DAY => 86_400;
+use Const::Fast qw(const);
+const my $ONE_DAY => 86_400;
 
 use Pagesmith::Cache;
 use Pagesmith::ConfigHash qw(get_config);
