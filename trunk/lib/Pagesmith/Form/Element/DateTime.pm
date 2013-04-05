@@ -15,12 +15,12 @@ use utf8;
 
 use version qw(qv); our $VERSION = qv('0.1.0');
 
-use Readonly qw(Readonly);
-Readonly my $YEAR_OFFSET    => 1900;
-Readonly my $DAYS_IN_MONTH  => 31;
-Readonly my $MONTHS_IN_YEAR => 12;
-Readonly my $HOURS_IN_DAY   => 24;
-Readonly my $SIXTY          => 60;
+use Const::Fast qw(const);
+const my $YEAR_OFFSET    => 1900;
+const my $DAYS_IN_MONTH  => 31;
+const my $MONTHS_IN_YEAR => 12;
+const my $HOURS_IN_DAY   => 24;
+const my $SIXTY          => 60;
 
 use base qw( Pagesmith::Form::Element );
 

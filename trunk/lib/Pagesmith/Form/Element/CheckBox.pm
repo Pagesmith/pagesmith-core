@@ -15,9 +15,9 @@ use utf8;
 
 use version qw(qv); our $VERSION = qv('0.1.0');
 
-use Readonly qw(Readonly);
-Readonly my $DEFAULT_ON_VALUE  => 'yes';
-Readonly my $DEFAULT_OFF_VALUE => 'no';
+use Const::Fast qw(const);
+const my $DEFAULT_ON_VALUE  => 'yes';
+const my $DEFAULT_OFF_VALUE => 'no';
 
 use base qw( Pagesmith::Form::Element );
 

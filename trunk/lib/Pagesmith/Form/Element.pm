@@ -25,11 +25,11 @@ use Pagesmith::ConfigHash qw(get_config);
 use Text::Wrap qw(wrap $columns $huge);
 use Encode qw(encode_utf8);
 use Data::Dumper;
-use Readonly qw(Readonly);
+use Const::Fast qw(const);
 
-Readonly my $LONG_LINE_LENGTH  => 72;
-Readonly my $SHORT_LINE_LENGTH => 40;
-Readonly my $CAPTION_WIDTH     => 26;
+const my $LONG_LINE_LENGTH  => 72;
+const my $SHORT_LINE_LENGTH => 40;
+const my $CAPTION_WIDTH     => 26;
 
 sub init {
   my $self = shift;

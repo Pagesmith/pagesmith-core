@@ -15,10 +15,10 @@ use utf8;
 
 use version qw(qv); our $VERSION = qv('0.1.0');
 
-use Readonly qw(Readonly);
-Readonly my $DEFAULT_ROWS => 10;
-Readonly my $DEFAULT_COLS => 60;
-Readonly my $DEFAULT_UNIT => 60;
+use Const::Fast qw(const);
+const my $DEFAULT_ROWS => 10;
+const my $DEFAULT_COLS => 60;
+const my $DEFAULT_UNIT => 60;
 
 my $units = { map { $_ => 1 } qw(ids characters words) };
 use base qw( Pagesmith::Form::Element );

@@ -16,15 +16,15 @@ use version qw(qv); our $VERSION = qv('0.1.0');
 
 use Image::Size qw(imgsize);
 use Image::Magick;
-use Readonly qw(Readonly);
+use Const::Fast qw(const);
 use HTML::Entities qw(encode_entities);
 use MIME::Base64 qw(encode_base64);
-Readonly my $OPTIMIZE             => 1;
-Readonly my $BLUR_JPG             => 0.5;
-Readonly my $BLUR_PNG             => 0.25;
-Readonly my $DEFAULT_QUALITY      => 65;
-Readonly my $DEFAULT_QUALITY_PNG  => 75;
-Readonly my $K                    => 1024;
+const my $OPTIMIZE             => 1;
+const my $BLUR_JPG             => 0.5;
+const my $BLUR_PNG             => 0.25;
+const my $DEFAULT_QUALITY      => 65;
+const my $DEFAULT_QUALITY_PNG  => 75;
+const my $K                    => 1024;
 
 my %viewable_bitmap = map { ($_=>1) } qw(png gif jpg);
 

@@ -16,16 +16,16 @@ use version qw(qv); our $VERSION = qv('0.1.0');
 
 use Image::Size qw(imgsize);
 use Image::Magick;
-use Readonly qw(Readonly);
+use Const::Fast qw(const);
 use List::Util qw(sum min max);
 use HTML::Entities qw(encode_entities);
 
-Readonly my $MAX_SEQ_TO_LIST        => 5;
-Readonly my $MAX_SEQ_LENGTH_TO_SHOW => 200;
-Readonly my $WEIGHT_2BP             => 0.1;
-Readonly my $WEIGHT_3BP             => 0.01;
-Readonly my $WEIGHT_NOBP            => 3;
-Readonly my $WEIGHT_2AA             => 0.1;
+const my $MAX_SEQ_TO_LIST        => 5;
+const my $MAX_SEQ_LENGTH_TO_SHOW => 200;
+const my $WEIGHT_2BP             => 0.1;
+const my $WEIGHT_3BP             => 0.01;
+const my $WEIGHT_NOBP            => 3;
+const my $WEIGHT_2AA             => 0.1;
 use English qw(-no_match_vars);
 
 use base qw( Pagesmith::Form::Element::File );

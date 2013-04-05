@@ -15,13 +15,13 @@ use utf8;
 
 use version qw(qv); our $VERSION = qv('0.1.0');
 
-use Readonly qw(Readonly);
+use Const::Fast qw(const);
 use base qw(Pagesmith::Support);
 
 ## Used by the "logic code"
 
-Readonly my $DEFAULT_TYPE   => 'all';
-Readonly my $DEFAULT_ACTION => 'enable';
+const my $DEFAULT_TYPE   => 'all';
+const my $DEFAULT_ACTION => 'enable';
 my %actions = map { ($_=>1) } qw(disable enable required optional);
 my %types   = map { ($_=>1) } qw(all any not_all none);
 
