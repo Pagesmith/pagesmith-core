@@ -47,6 +47,9 @@ form dd.eighty20 { width: 17%; }
 form dd.fifty50  input { margin-left: -23%; }
 form dd.eighty20 input { margin-left: 0; }
 
+form dd div textarea, form dd div input { margin-left: 0 }
+form dd ul { margin: 0; margin-left: -23% }
+form dd div ul { margin: 0; margin-left: 0 }
 dl.evenwidth dt { width:45% !important}
 
 /*form div.button-other, form  div.button-default { border:1px solid red; }*/
