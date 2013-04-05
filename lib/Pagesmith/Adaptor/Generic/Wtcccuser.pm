@@ -18,8 +18,8 @@ use version qw(qv); our $VERSION = qv('0.1.0');
 use base qw(Pagesmith::Adaptor::Generic);
 use Pagesmith::Object::Wtcccuser;
 
-use Readonly qw(Readonly);
-Readonly my $DEFAULT_AUTHMETHOD = 999;
+use Const::Fast qw(const);
+const my $DEFAULT_AUTHMETHOD = 999;
 
 sub new {
   my( $class, $db_info, $r ) = @_;

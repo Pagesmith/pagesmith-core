@@ -23,9 +23,9 @@ use Encode::Unicode;
 use HTML::Entities qw(encode_entities decode_entities);
 use LWP::Simple qw($ua get);
 use Time::HiRes q(time);
-use Readonly qw(Readonly);
+use Const::Fast qw(const);
 
-Readonly my $BATCH_SIZE => 200;
+const my $BATCH_SIZE => 200;
 
 use Pagesmith::ConfigHash qw(get_config);
 

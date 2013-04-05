@@ -26,13 +26,13 @@ use Sys::Hostname qw(hostname);
 use English qw(-no_match_vars $PROGRAM_NAME);
 use Scalar::Util qw(blessed weaken isweak);
 
-use Readonly qw(Readonly);
+use Const::Fast qw(const);
 
-Readonly my $DEFAULT_PORT => 3306;
-Readonly my $DEFAULT_HOST => 'localhost';
-Readonly my $DEFAULT_NAME => 'test';
-Readonly my $DEFAULT_TYPE => 'mysql';
-Readonly my $ONE_MEG      => 1<<20;
+const my $DEFAULT_PORT => 3306;
+const my $DEFAULT_HOST => 'localhost';
+const my $DEFAULT_NAME => 'test';
+const my $DEFAULT_TYPE => 'mysql';
+const my $ONE_MEG      => 1<<20;
 
 use Pagesmith::Config;
 use Pagesmith::Core qw(user_info);
@@ -51,7 +51,7 @@ sub new {
   my $self;
   if( blessed $db_info ) { ## DB info is an adaptor!
     $self = { map { ( $_ => $db_info->{$_} ) } qw(_conn _dsn _dbuser _dbpass _r _user _version _sub_class pool) };
-    $self->{'_dbopts'} ||= {%{$db_info->{'_dbopts'}}};
+    $self->{'_dbopts'} ||= {%{$db_info->{'_dbopts'}||{}}};
     bless $self, $class;
   } else { ## It is either "undefined" - so use connection_pars, scalar or hashref!
     $self = {
@@ -74,20 +74,9 @@ sub new {
 
   my $sub_class = $self->sub_class;
   if( $sub_class ) {                                    ## If we have a sub class defined - we may need to subclass
-    my $my_name   = ref $self;
-    if( $my_name !~ m{::$sub_class\Z}mxs ) {            ## We aren't in the sub_class module - so we need to use & bless into it!
-      my $module_name = $my_name.q(::).$sub_class;
-      if( $self->dynamic_use( $module_name ) ) {        ## Use the sub-class code...
-        bless $self, $module_name;                      ## If valid - re-bless the object
-      } else {
-        my $msg = $self->dynamic_use_failure( $module_name ); ## Failed - so get error message!
-        ( my $mod = $module_name ) =~ s{::}{/}mxsg;
-        ## no critic (RequireCarping)
-        warn "UNABLE TO CREATE SUBCLASS $module_name - $msg"
-          unless $msg =~ m{\ACan't\slocate\s$mod.pm\s}mxsg;
-        ## use critic
-      }
-    }
+    my $msg = $self->rebless( $sub_class );
+    ## no critic (RequireCarping)
+    warn "UNABLE TO CREATE SUBCLASS - $msg" if $msg;
   }
 
   $self->init;   ## Run any additional code which is needed to set up the adaptor!
@@ -98,11 +87,7 @@ sub new {
 ## Stub functions to be overridden in subclass
 sub connection_pars {
   my $self = shift;
-  return $self->_connection_pars;
-}
-
-sub _connection_pars {
-  return ();
+  return $self->connection_pars;
 }
 
 sub init {
@@ -198,6 +183,7 @@ sub dbh {
 #@param (self);
 #@return (DBI) database handle
   my $self = shift;
+  return unless $self->{'_conn'};
   return $self->{'_conn'}->dbh;
 }
 

@@ -17,10 +17,10 @@ use version qw(qv); our $VERSION = qv('0.1.0');
 
 use base qw(Pagesmith::Adaptor);
 
-use Readonly qw(Readonly);
+use Const::Fast qw(const);
 
-Readonly my $MAX_TRIES => 10;
-Readonly my $CODE_LEN  =>  8;
+const my $MAX_TRIES => 10;
+const my $CODE_LEN  =>  8;
 
 use Pagesmith::Object::Qr;
 use Pagesmith::Config;
@@ -68,11 +68,11 @@ sub store {
 }
 
 sub create {
-
 #@param (self)
 #@param (hashref)? Optional hashref of attributes
-#@return (Pagesmith::Object::Generic)
-## Create a new generic object
+#@return Pagesmith::Object::Qr
+## Create a new QRcode objec
+
   my( $self, @pars ) = @_;
   return Pagesmith::Object::Qr->new( $self, @pars );
 }
@@ -80,14 +80,16 @@ sub create {
 sub get_by_url {
 #@param (self)
 #@param (string) URL of page
-#@return (Pagesmith::Object::Generic[])
-## Return an array of generic objects for the given page
+#@return (Pagesmith::Object::Qr)?
+## Return the Qr code object related to this URL (if one exists)
+
   my ( $self, $url ) = @_;
   ##no critic (ImplicitNewlines)
   my $hashref = $self->row_hash(
     'select code, url, created_at, created_by, updated_at, prime
        from qr
-      where url = ? order by prime desc',
+      where url = ? order by prime desc
+      limit 1',
     $url,
   );
   return unless $hashref;
@@ -97,9 +99,10 @@ sub get_by_url {
 
 sub get_by_code {
 #@param (self)
-#@param (string) URL of page
-#@return (Pagesmith::Object::Generic[])
-## Return an array of generic objects for the given page
+#@param (string) code
+#@return (Pagesmith::Object::Qr)?
+## Return the Qr code object related to the given "qr code"...
+
   my ( $self, $code ) = @_;
   ##no critic (ImplicitNewlines)
   my $hashref = $self->row_hash(
@@ -122,6 +125,10 @@ sub get_by_code {
 }
 
 sub turl_dbh {
+#@param (self)
+#@return DBI object
+## Return the DBI object relating to the "old" turl database (note connects if not already connected)
+
   my $self = shift;
   unless( exists $self->{'_turl_dbh'} ) {
     my $pch = Pagesmith::Config->new( { 'file' => 'databases', 'location' => 'site' } );
@@ -131,5 +138,6 @@ sub turl_dbh {
   }
   return $self->{'_turl_dbh'}||q();
 }
+
 1;
 
