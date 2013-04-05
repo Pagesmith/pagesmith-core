@@ -17,10 +17,10 @@ use version qw(qv); our $VERSION = qv('0.1.0');
 
 use base qw(Pagesmith::Adaptor);
 use Carp qw(cluck);
-use Readonly qw(Readonly);
+use Const::Fast qw(const);
 
-Readonly my $MAX_SIZE   => 1<<30;
-Readonly my $PROTO_SIZE => 10;
+const my $MAX_SIZE   => 1<<30;
+const my $PROTO_SIZE => 10;
 
 use English qw(-no_match_vars $PROGRAM_NAME);
 use Pagesmith::Object::Generic;

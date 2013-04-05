@@ -17,10 +17,10 @@ use version qw(qv); our $VERSION = qv('0.1.0');
 
 use base qw(Pagesmith::Adaptor);
 
-use Readonly qw(Readonly);
+use Const::Fast qw(const);
 
-Readonly my $MAX_TRIES => 10;
-Readonly my $CODE_LEN  =>  8;
+const my $MAX_TRIES => 10;
+const my $CODE_LEN  =>  8;
 
 use Pagesmith::Object::Users::Group;
 use Pagesmith::Object::Users::User;
