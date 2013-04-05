@@ -48,6 +48,14 @@ sub define_options {
   return;
 }
 
+sub type {
+  my $self = shift;
+  unless( exists $self->{'_component_type'} ) {
+    ( $self->{'_component_type'} = ref $self ) =~ s{\APagesmith::Component::}{}mxs;
+  }
+  return $self->{'_component_type'};
+}
+
 sub ajax_option {
   return { 'code' => 'ajax', 'description' => 'Load component with AJAX if available' };
 }

@@ -17,13 +17,13 @@ use version qw(qv); our $VERSION = qv('0.1.0');
 
 use Data::Dumper qw(Dumper);
 use HTML::Entities qw(encode_entities);
-use Readonly qw(Readonly);
+use Const::Fast qw(const);
 
 use base qw(Pagesmith::Component);
 
 use Pagesmith::Adaptor;
 
-Readonly my $DEFAULT_PAGE => 25;
+const my $DEFAULT_PAGE => 25;
 
 sub usage {
   return {

@@ -63,32 +63,23 @@ sub execute {
 1;
 __END__
 
-h3. Syntax
-
-<% CssFile
-   -embed
-   -ie=s
-   (files)+
-%>
-
-h3. Purpose
+Purpose
+-------
 
 Embed or link to multiple CSS files - embedding can improve performance for small amounts
 of CSS which occur on a single page, e.g. home page, as it minimizes requests
 
-h3. Options
-
-* embed (opt default false) - whether to link to files or embed them
-
-h3. Notes
-
-* Extends normal File component - which does access checks etc
-
-h3. See Also
+See Also
+--------
 
 * Directive: JsFile
+* Module:    Pagesmith::Page
 
-h3. Developer Notes
+Developer Notes
+---------------
 
-* consider how to do compression efficiently (possibly using auto compressed versions of CSS)
+* Extends normal File component - which does access checks etc;
+* Embeds content into page - to be picked up by the decorate in Pagesmith::Page;
+* The code push entries into the pnotes( 'css_files' ) array;
+* embed flag updates pnotes( 'embed_css' ).
 

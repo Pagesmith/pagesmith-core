@@ -31,10 +31,10 @@ sub usage {
 sub execute {
   my $self = shift;
   ## no critic (ImplicitNewlines)
-  return q(<style type="text/css" id="acj">/*<![CDATA[*/
+  return q(<!-- OK --><style type="text/css" id="acj">/*<![CDATA[*/
   body{display:none !important;}
 /*]]>*/</style>
-<script type="text/javascript">// <![CDATA[
+<!-- OK --><script type="text/javascript">// <![CDATA[
   if (self === top) {
     var acj_obj = document.getElementById("acj");
     acj_obj.parentNode.removeChild(acj_obj);

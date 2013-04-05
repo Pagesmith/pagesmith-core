@@ -28,11 +28,11 @@ sub usage {
 1;
 
 __END__
-use Readonly qw(Readonly);
-Readonly my $MAX_FEEDS    => 5;
-Readonly my $EXPIRY       => 300;
-Readonly my $FEED_TIMEOUT => 10;
-Readonly my $DEF_CODE     => 999;
+use Const::Fast qw(const);
+const my $MAX_FEEDS    => 5;
+const my $EXPIRY       => 300;
+const my $FEED_TIMEOUT => 10;
+const my $DEF_CODE     => 999;
 
 use base qw(Pagesmith::Component);
 
