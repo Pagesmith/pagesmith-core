@@ -17,6 +17,7 @@ use version qw(qv); our $VERSION = qv('0.1.0');
 
 foreach my $key (sort @ARGV) {
 ## no critic (ImplicitNewlines InterpolationOfMetachars)
+#@raw
   printf q(
 sub %1$s {
 #@getter
@@ -38,6 +39,7 @@ sub set_%1$s {
   return $self;
 }
 ), $key;
+#@endraw
 ## use critic
 
 }

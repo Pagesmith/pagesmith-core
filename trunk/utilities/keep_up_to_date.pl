@@ -22,7 +22,6 @@ use Time::HiRes qw(time);
 use English qw(-no_match_vars $UID $PROGRAM_NAME $EVAL_ERROR $OUTPUT_AUTOFLUSH);
 use Date::Format qw(time2str);
 use File::Basename qw(dirname);
-use Sys::Hostname::Long qw(hostname_long);
 use Cwd qw(abs_path);
 use Data::Dumper qw(Dumper);
 use Readonly qw(Readonly);
@@ -30,6 +29,7 @@ use Getopt::Long qw(GetOptions);
 use Sys::Hostname qw(hostname);
 use List::MoreUtils qw(uniq);
 use IO::Handle;
+use Socket qw(inet_ntoa);
 
 Readonly my $TO_MERGE       => 10;
 Readonly my $UPDATE_NO      => 50;
@@ -85,7 +85,10 @@ set_site_key( 'no-site' ); ## This is so we get the dev pubqueue!
 my $adap    = Pagesmith::Adaptor::PubQueue->new;
 my $support = Pagesmith::Utils::SVN::Support->new;
 
-my $checkout_id = $adap->set_checkout( hostname_long, $ROOT_PATH );
+my $host = hostname() || 'localhost';
+   $host = inet_ntoa( scalar gethostbyname $host );
+
+my $checkout_id = $adap->set_checkout( $host, $ROOT_PATH );
 
 my $run_number = 1;
 

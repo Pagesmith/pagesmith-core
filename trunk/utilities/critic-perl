@@ -73,7 +73,7 @@ sub _init {
   die 'You must specify a site or out path to generate the HTML into' unless $site || $html_path; ## no critic (RequireCarping)
   $dir_root  ||= $ROOT_PATH;
 
-  $html_path ||= "$dir_root/sites/$site/htdocs/developer/critic";
+  $html_path ||= "$dir_root/sites/$site/htdocs/docs/critic";
   $cache_filename = $dir_root.'/tmp/packed/critic-perl';
   if( @lib_paths ) {
     %dir_map = map { ($_ => $_) } @lib_paths;
@@ -378,7 +378,7 @@ sub _generate_module_html {
 <head>
   <title>Perl::Critic: %s</title>
   <meta http-equiv="X-Pagesmith-NoSpell" content="2" /><!-- Do not include the source in the page -->
-  <link rel="stylesheet" type="text/css" href="/core/css/developer/critic.css" />
+  <%% CssFile /core/css/developer/critic.css %%>
 </head>
 <body id="faculty">
 <div id="main">
@@ -467,9 +467,6 @@ sub _generate_module_html {
   <div id="source">
     <%% Markedup -format perl -number line -ajax %s %%>
   </div>
-  <div id="docs">
-    <%% Developer_Documentation -ajax %s %s %%>
-  </div>
 </div>
 </div>
 <div id="rhs">
@@ -555,11 +552,11 @@ sub _generate_module_html {
   q(
 </div>
 <div class="col2">
-  <% File /developer/critic/inc/perl-configuration.inc %>
-  <% File /developer/critic/inc/perl-modules.inc %>
+  <% File /docs/critic/inc/perl-configuration.inc %>
+  <% File /docs/critic/inc/perl-modules.inc %>
 </div>
 </div>
-<script type="text/javascript" src="/core/js/developer/critic.js"></script>
+<% JsFile /core/js/developer/critic.js %>
 </body>
 </html>);
   ## use critic
@@ -578,7 +575,7 @@ sub _generate_index_html {
 <head>
   <title>Perl::Critic</title>
   <meta http-equiv="X-Pagesmith-NoSpell" content="2" /><!-- Do not include the source in the page -->
-  <link rel="stylesheet" type="text/css" href="/core/css/developer/critic.css" />
+  <% CssFile /core/css/developer/critic.css %>
 </head>
 <body id="faculty">
 <div id="main">
@@ -648,15 +645,15 @@ sub _generate_index_html {
 </div>
 <div id="rhs">
 <div class="col1">
-  <% File /developer/critic/inc/links.inc %>
-  <% File /developer/inc/main-links.inc %>
-  <% File /developer/critic/inc/perl-configuration-index.inc %>
+  <% File /docs/critic/inc/links.inc %>
+  <% File /docs/inc/main-links.inc %>
+  <% File /docs/critic/inc/perl-configuration-index.inc %>
 </div>
 <div class="col2">
-  <% File /developer/critic/inc/perl-modules.inc %>
+  <% File /docs/critic/inc/perl-modules.inc %>
 </div>
 </div>
-<script type="text/javascript" src="/core/js/developer/critic.js"></script>
+<% JsFile /core/js/developer/critic.js %>
 </body>
 </html>';
   ##use critic
@@ -710,7 +707,7 @@ sub _generate_inc_file {
 
     ( my $safe_module = $module ) =~ s{::}{__}mxsg;
     ( my $safe_root   = $dir_map{$root} ) =~ s{/}{__}mxsg;
-    $summary .= sprintf qq(\n          <li%s><span><span>%d</span><span class="ig">%d</span><span class="fo">%d</span></span><a href="/developer/critic/perl/%s--%s.html">%s</a></li>),
+    $summary .= sprintf qq(\n          <li%s><span><span>%d</span><span class="ig">%d</span><span class="fo">%d</span></span><a href="/docs/critic/perl/%s--%s.html">%s</a></li>),
       $class eq q() ? q() : qq( class="$class"),
       $t->{'totals'}{$root}{$module}{'vis'},
       $t->{'totals'}{$root}{$module}{'all'}-
@@ -740,7 +737,7 @@ sub _generate_inc_file {
   printf {$inc_fh} q(
   <div class="panel">
     <h3>Modules</h3>
-    <p><a href="/developer/critic/perl/">Summary</a></p>
+    <p><a href="/docs/critic/perl/">Summary</a></p>
     <ul class="indexboxes">
       <li><span><span>%d</span><span class="ig">%d</span><span class="fo">%d</span></span><strong>Total</strong></li>
       %s

@@ -554,10 +554,11 @@ sub get_details_file {
       next;
     }
 
-    if( $line =~ m{\A[#][@]return\s*[(](\S+?)[)](?:\s+(.*))?\Z}mxs ) {
+    if( $line =~ m{\A[#][@]return\s*[(](\S+?)[)]([*+?]?)(?:\s+(.*))?\Z}mxs ) {
+      my( $type, $optional, $description ) = ($1,$2,$3);
       $current_sub->set_documented;
-      $current_sub->set_return_type( $1 );
-      $current_sub->set_return_desc( $2 );
+      $current_sub->set_return_type( $type, $optional );
+      $current_sub->set_return_desc( $description );
       $file_object->empty_line;
       next;
     }
@@ -1013,3 +1014,81 @@ console.log( $(this) );
 );
 }
 ## use critic
+
+__END__
+
+Script Usage
+============
+
+    utilities/documentor.pl [--site|-s {sitename}] [--path|-p {path}]
+
+Command line options
+====================
+
+|Option|Description|Flag|Default|
+|-----:|-----------|:--:|-------|
+|--site|Site to generate documentation into|optional|apps.sanger.ac.uk|
+|--path|Directory to generate documentation into|optional|docs/perl|
+
+Description
+===========
+
+Looks through all top-level (lib/utilities & {xx}/lib & {xx}/utilities) and
+site specific perl folders (sites/{xx}/lib, sites/{xx}/cgi, sites/{xx}/perl,
+sites/{xx}/utilities) to generate documenation for them.
+
+Output is generated in folder sites/{sitename}/htdocs/{path}
+
+Documentation style
+===================
+
+All modules/scripts should have the following boiler plate at the start:
+
+    ## Retrieve documentation for all perl files...
+
+    ## Author         : js5
+    ## Maintainer     : js5
+    ## Created        : 2012-11-19
+    ## Last commit by : $Author$
+    ## Last modified  : $Date$
+    ## Revision       : $Revision$
+    ## Repository URL : $HeadURL$
+
+Function documentation is in the form of #@/## comments just after the "sub name {" line
+
+* #@params (type name - description)[?+*]
+    * e.g.
+        + #@params (self) (Pagesmith::Adaptor DB adaptor) (int user id - User's ID from session cookie)?
+    * type - type of variable
+        + pipe separated if can take multiple types
+        + hashref of a given type can be written as type{}
+        + arrayref of a given type can be written as type[]
+        + hashref/arrayref used for more general data-structures
+    * name - string to describe variable - keep it short
+    * description - optional - longer description of variable/notes
+    * flag - ?, +, * - optional / multi-valued flag
+* #@param (type)[?+*] name - description
+    * Note one line per parameter
+    * e.g.
+        + #@param (self)
+        + #@param (Pagesmith::Adaptor) DB adaptor
+        + #@param (int)? user id - User's ID from session cookie
+    * as above
+* #@return (type)[?+*] name - description
+    * value returned - notes as @param
+* #@class (type)
+    * description of method as either Getter, Setter or Accessor
+* ## - general documentation - note this is split into a single paragraph description - followed by futher notes
+    * uses [MultiMarkdown][]
+    * See [MultiMarkdown user guide][]
+
+Additional documentation can be included after an "\_\_END\_\_" line - again using MultiMarkdown
+
+Notes
+=====
+
+* Index, CSS and JavaScript files are generated only if they don't already
+  exist
+
+[MultiMarkdown]: http://fletcherpenney.net/multimarkdown/
+[MultiMarkdown user guide]: http://fletcher.github.com/peg-multimarkdown/mmd-manual.pdf
