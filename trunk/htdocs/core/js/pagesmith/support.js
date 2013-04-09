@@ -228,11 +228,10 @@ PageSmith.Tabs.prototype = {
     return a.join(' ');
   },
   add_classes: function () {
-    var i;
-    arguments.reverse();
-    for (i = arguments.length; i; i) {
+    var i, l = arguments.length;
+    for (i = l; i; i) {
+      this.classes.push(arguments[l-i]);
       i--;
-      this.classes.push(arguments[i]);
     }
     return this;
   },
