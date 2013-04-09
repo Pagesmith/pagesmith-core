@@ -105,7 +105,6 @@
       },
 
       renderTable: function (table, rows) {
-        console.log( "render table "+c.page+" of size "+c.size+" from "+c.totalPages );
         var c = table.config, l = rows.length, s, e, i, l2, j, tableBody, o;
         $.tablesorter.clearTableBody(table);
 
