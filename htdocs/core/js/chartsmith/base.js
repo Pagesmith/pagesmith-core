@@ -126,12 +126,12 @@ Raphael.fn.cs_init = function (pars) {
     xaxis:      { label_style: '', minvalue: null, maxvalue: null, dir: '+', label: '', line: null,
                   scaling: 'linear', major: 1, minor: 1, axis_pos: 'below', labelsize: 14, size: 10,
                   ticksize: 4, values: [], label_scale: 0, label_dp: 0, label_suffix: '', hide: 0,
-                  precision: 3
+                  precision: 3, colour: '#000'
                 }, // Configurat
     yaxis:      { label_style: '', minvalue: null, maxvalue: null, dir: '-', label: '', line: null,
                   scaling: 'linear', major: 1, minor: 1, axis_pos: 'left',  labelsize: 14, size: 10,
                   ticksize: 4, values: [], label_scale: 0, label_dp: 0, label_suffix: '', hide: 0,
-                  label_len: 6, precision: 3
+                  label_len: 6, precision: 3, colour: '#000'
                 },
     background: '#eee',
     title:      { text: undefined, position: 'above', size: 20, fill: '#000', offset: 5 },
@@ -142,7 +142,7 @@ Raphael.fn.cs_init = function (pars) {
 // Default margin = 20px
   this.cs.width  = $('#' + pars.object).width();
   this.cs.height = $('#' + pars.object).height();
-  this.setSize(this.cs.width, this.cs.height);
+  this.setSize( this.cs.width, this.cs.height );
 //  Left margin needs to be expanded IF
 //   * the y-axis has a label
   if (this.cs.yaxis.label) {
@@ -220,6 +220,23 @@ Initializer - actually initialize object
  * Configure and render the background
  * Configure and render the axes
 */
+Raphael.fn.cs_max_length = function ( txts, fs ) {
+  var self = this,max_len=0;
+  fs = typeof( fs ) !== 'undefined' ? fs : 0;
+  $.each(txts,function(i,txt){
+    var t = self.text(0,0, txt.toString()),w;
+    if( fs ) {
+      t.attr('font-size',fs);
+    }
+    w = t.getBBox().width;
+    t.remove();
+    if( w > max_len ) {
+      max_len = w;
+    }
+  });
+  return max_len;
+};
+
 Raphael.fn.cs_draw_canvas = function () {
   var o = this, x_ticks, y_ticks, i, tck, t, x, v, mu, x2, v2, mnu, o2, val, B, bw, tb1, BB1, BB2, tb2, BB3, tb3, mb, A, ma, AA, mult, ticksize, text_pos;
 /*
@@ -273,7 +290,7 @@ Configure the axes
   y_ticks = this.cs_get_ticks(this.cs.yaxis);
   mult     = this.cs.xaxis.axis_pos === 'above' ? -1 : 1;
   ticksize = mult * this.cs.xaxis.ticksize;
-  text_pos = this.cs.xaxis.pos + ticksize + mult * (this.cs.xaxis.size / 2 + 8);
+  text_pos = this.cs.xaxis.pos + ticksize + mult * (this.cs.xaxis.size / 2 + 2);
   if (!this.cs.xaxis.hide) {
     for (i = x_ticks.length; i; i--) {
       tck = x_ticks[i - 1];
@@ -286,7 +303,7 @@ Configure the axes
       }
       this.cs_add_line({
         raw: 1,
-        stroke: '#000',
+        stroke: this.cs.xaxis.colour,
         pts: [ tck.pos, this.cs.xaxis.pos, tck.pos, this.cs.xaxis.pos + ticksize ]
       });
       if (typeof (tck.label) !== 'undefined') {
@@ -297,12 +314,12 @@ Configure the axes
           bw = 0;
           BB1 = 0;
           if (mb[3]) {
-            tb1 = this.cs_add_text({ raw: 1, x: tck.pos, y: text_pos, t: mb[2], opts: { fill: '#000', 'font-size': this.cs.xaxis.size + 'pt' } });
+            tb1 = this.cs_add_text({ raw: 1, x: tck.pos, y: text_pos, t: mb[2], opts: { fill: this.cs.xaxis.colour, 'font-size': this.cs.xaxis.size } });
             BB1 = tb1.getBBox().width / 2;
           }
-          tb2 = this.cs_add_text({ raw: 1, x: tck.pos, y: text_pos - 3, t: mb[1], opts: { fill: '#000', 'font-size': this.cs.xaxis.size * 0.6 + 'pt' } });
+          tb2 = this.cs_add_text({ raw: 1, x: tck.pos, y: text_pos - 3, t: mb[1], opts: { fill: this.cs.xaxis.colour, 'font-size': this.cs.xaxis.size * 0.6 } });
           BB2 = tb2.getBBox().width / 2;
-          tb3 = this.cs_add_text({ raw: 1, x: tck.pos, y: text_pos, t: '10', opts: { fill: '#000', 'font-size': this.cs.xaxis.size + 'pt' } });
+          tb3 = this.cs_add_text({ raw: 1, x: tck.pos, y: text_pos, t: '10', opts: { fill: this.cs.xaxis.colour, 'font-size': this.cs.xaxis.size } });
           BB3 = tb3.getBBox().width / 2;
           if (tb1) {
             tb1.translate(BB2 + BB3, 0);
@@ -310,13 +327,13 @@ Configure the axes
           tb2.translate(BB3 - BB1, 0);
           tb3.translate(-BB1 - BB2, 0);
         } else {
-          this.cs_add_text({ raw: 1, x: tck.pos, y: text_pos, t: tck.label, opts: { fill: '#000', 'font-size': this.cs.xaxis.size + 'pt' } });
+          this.cs_add_text({ raw: 1, x: tck.pos, y: text_pos, t: tck.label, opts: { fill: this.cs.xaxis.colour, 'font-size': this.cs.xaxis.size } });
         }
       }
     }
     this.cs_add_line({
       raw: 1,
-      stroke: '#000',
+      stroke: this.cs.xaxis.colour,
       pts: [ this.cs.xaxis.start, this.cs.xaxis.pos, this.cs.xaxis.end, this.cs.xaxis.pos ]
     });
   }
@@ -332,29 +349,29 @@ Configure the axes
       }
       this.cs_add_line({
         raw: 1,
-        stroke: '#000',
+        stroke: this.cs.yaxis.colour,
         pts: [ this.cs.yaxis.pos, tck.pos, this.cs.yaxis.pos - this.cs.yaxis.ticksize, tck.pos ]
       });
       if (typeof (tck.label) !== 'undefined') {
         A = tck.label.toString();
         ma = A.match(/^10\^(-?\d+)(\w*)$/);
+        AA = this.cs.yaxis.pos - this.cs.yaxis.ticksize - 5;
         if (ma) {
-          AA = this.cs.yaxis.pos - this.cs.yaxis.ticksize - 5;
           if (ma[2]) {
-            t = this.cs_add_text({ align: 'right', raw: 1, x: AA, y: tck.pos, t: ma[2], opts: { fill: '#000', 'font-size': this.cs.yaxis.size + 'pt' } });
+            t = this.cs_add_text({ align: 'right', raw: 1, x: AA, y: tck.pos, t: ma[2], opts: { fill: this.cs.yaxis.colour, 'font-size': this.cs.yaxis.size } });
             AA -= t.getBBox().width;
           }
-          t = this.cs_add_text({ align: 'right', raw: 1, x: AA, y: tck.pos - 3, t: ma[1], opts: { fill: '#000', 'font-size': this.cs.yaxis.size * 0.6 + 'pt' } });
+          t = this.cs_add_text({ align: 'right', raw: 1, x: AA, y: tck.pos - 3, t: ma[1], opts: { fill: this.cs.yaxis.colour, 'font-size': this.cs.yaxis.size * 0.6 } });
           AA -= t.getBBox().width;
-          t = this.cs_add_text({ align: 'right', raw: 1, x: AA, y: tck.pos, t: '10', opts: { fill: '#000', 'font-size': this.cs.yaxis.size + 'pt' } });
+          t = this.cs_add_text({ align: 'right', raw: 1, x: AA, y: tck.pos, t: '10', opts: { fill: this.cs.yaxis.colour, 'font-size': this.cs.yaxis.size } });
         } else {
-          t = this.cs_add_text({ align: 'right', raw: 1, x: this.cs.yaxis.pos - this.cs.yaxis.ticksize - 5, y: tck.pos, t: tck.label, opts: { fill: '#000', 'font-size': this.cs.yaxis.size + 'pt' } });
+          t = this.cs_add_text({ align: 'right', raw: 1, x: AA, y: tck.pos, t: tck.label, opts: { fill: this.cs.yaxis.colour, 'font-size': this.cs.yaxis.size } });
         }
       }
     }
     this.cs_add_line({
       raw: 1,
-      stroke: '#000',
+      stroke: this.cs.yaxis.colour,
       pts: [ this.cs.yaxis.pos, this.cs.yaxis.start, this.cs.yaxis.pos, this.cs.yaxis.end ]
     });
   }
@@ -364,7 +381,7 @@ Configure the axes
       x: this.cs.yaxis.labelsize / 2 + 5,
       y: this.cs.yaxis.start + this.cs.yaxis.length / 2,
       t: this.cs.yaxis.label,
-      opts: {fill: '#000', font: this.cs.yaxis.labelsize + 'px Arial', 'font-weight': 'bold'}
+      opts: {fill: this.cs.yaxis.colour, font: this.cs.yaxis.labelsize + 'px Arial', 'font-weight': 'bold'}
     });
     t.rotate(-90);
   }
@@ -427,12 +444,11 @@ Raphael.fn.cs_get_ticks = function (axis) {
       lab2 = x;
       if (axis.label_scale) {
         lab2 /= axis.label_scale;
-        if (axis.label_style === 'scientific' || (axis.label_style === 'best_scientific' && Math.abs(x) > 3)) {
-          lab2 = parseFloat(lab2).toExponential(axis.label_dp) + axis.label_suffix;
-        } else {
-          lab2 = parseFloat(lab2).toFixed(axis.label_dp) + axis.label_suffix;
-        }
-
+      }
+      if (axis.label_style === 'scientific' || (axis.label_style === 'best_scientific' && Math.abs(x) > 3)) {
+        lab2 = parseFloat(lab2).toExponential(axis.label_dp) + axis.label_suffix;
+      } else {
+        lab2 = parseFloat(lab2).toFixed(axis.label_dp) + axis.label_suffix;
       }
       ticks.push({pos: mu, label: lab2, line: axis.line });
     }
@@ -705,7 +721,7 @@ Raphael.fn.cs_add_image = function (pars) {
 };
 
 Raphael.fn.cs_add_text = function (pars) {
-  var t;
+  var pad, t;
   if (pars.raw) {
     t = this.text(pars.x, pars.y, pars.t.toString());
   } else {
@@ -714,23 +730,57 @@ Raphael.fn.cs_add_text = function (pars) {
   if (pars.opts) {
     t.attr(pars.opts);
   }
+  pad = pars.pad ? pars.pad : 0;
   if (pars.align === 'right') {
-    t.translate(-t.getBBox().width / 2, 0);
+    t.translate(-t.getBBox().width / 2-pad, 0);
   }
   if (pars.align === 'left') {
-    t.translate(t.getBBox().width / 2, 0);
+    t.translate(t.getBBox().width / 2+pad, 0);
   }
   if (pars.valign === 'top') {
-    t.translate(0, t.getBBox().height / 2);
+    t.translate(0, t.getBBox().height+pad / 2);
   }
   if (pars.valign === 'bottom') {
-    t.translate(0, -t.getBBox().height / 2);
+    t.translate(0, -t.getBBox().height-pad / 2);
   }
 /*    if (pars.rot) {
     t.rotate(pars.rot);
   } */
   return t;
 };
+
+Raphael.fn.cs_contrast = function (col) {
+  var c = this.raphael.getRGB(col);
+  return  (c.r * c.r * 241 + c.g * c.g * 691 + c.b * c.b * 68) > 16900000 ? '#000' : '#fff';
+};
+
+Raphael.fn.cs_try_text = function (pars) {
+  var pad,wid,tel=false,that=this;
+  if (pars.raw) {
+    wid = pars.wid ? pars.wid : (pars.end - pars.start);
+  } else {
+    wid = this.cs_scale_x(pars.end)-this.cs_scale_x(pars.start);
+  }
+  pad = pars.pad ? pars.pad : 0;
+  wid -= 2*pad;
+  $.each( pars.txts, function( i, txt ) {
+    var t,w;
+    if (pars.raw) {
+      t = that.text(pars.x, pars.y, txt.toString());
+    } else {
+      t = that.text(that.cs_scale_x(pars.x), that.cs_scale_y(pars.y), txt.toString());
+    }
+    w = t.getBBox().width;
+    t.remove();
+    if( w < wid ) {
+      pars.t = txt;
+      tel = that.cs_add_text( pars );
+      return false;
+    }
+  });
+  return tel;
+};
+
 Raphael.fn.cs_lolight = function (line) {
   line.attr('stroke-width', 1);
   line.attrs.handles.hide();
@@ -747,7 +797,7 @@ Raphael.fn.cs_lolight = function (line) {
 Raphael.fn.cs_hilight = function (line) {
   var dp = line.attrs.data_pts, rot = 30, mx = Math.cos(rot * Math.PI / 180), n  = dp.length, my = Math.sin(rot * Math.PI / 180), i, t, txt, tn, w, dy, dx, ofx, ofy, ro, tx, ty;
   if (this.cs.line) {
-    this.cs.lolight(this.cs.line);
+    this.cs_lolight(this.cs.line);
   }
   if (line.attrs.legend) {
     line.attrs.legend.attr('stroke-width', 4);
@@ -781,7 +831,7 @@ Raphael.fn.cs_hilight = function (line) {
     tn.rotate(ro, false);
     tn.translate(ofx, ofy);
     line.attrs.handles.push(tn);
-    line.attrs.handles.push(this.text(t.xp + ofx, t.yp + ofy, txt).rotate(ro, false).attr({fill: '#000', 'stroke-width': 0.1, stroke: '#000'}));
+    line.attrs.handles.push(this.text(t.xp, t.yp, txt).rotate(ro, false).translate(ofx,ofy).attr({fill: '#000', 'stroke-width': 0.1, stroke: '#000'}));
   }
   tx = (line.attrs.data_pts[Math.floor(n / 2)].xp + line.attrs.data_pts[Math.ceil(n / 2)].xp) / 2;
   ty = (line.attrs.data_pts[Math.floor(n / 2)].yp + line.attrs.data_pts[Math.ceil(n / 2)].yp) / 2;
@@ -837,7 +887,7 @@ Raphael.fn.cs_add_line = function (pars) {
     t.attrs.colour      = pars.stroke;  /* Store the colour of the line */
 
     t.attrs.handles.hide();
-    t.mouseover(function () { o.cs.hilight(this); });
+    t.mouseover(function () { o.cs_hilight(this); });
   }
   return t; // Returns the line itself...
 };
