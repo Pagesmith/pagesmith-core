@@ -30,7 +30,7 @@ sub authenticate {
     my $res = $self->run_cmd( ['groups', $details->{'ldap_id'}] );
     ( my $groups = $res->{'stdout'}[0] ) =~ s{\A.*?:\s+}{}mxs;
     my %groups = map { ($_=>1) } split m{\s+}mxs, $groups;
-    $groups{ [getgrgid [getpwnam]->[$GROUP_INDEX]]->[0] }=1;
+    $groups{ [getgrgid [getpwnam $details->{'ldap_id'}]->[$GROUP_INDEX]]->[0] }=1;
     push @{$details->{'groups'}}, map { "unix:$_" } sort keys %groups;
   }
   return $details;
