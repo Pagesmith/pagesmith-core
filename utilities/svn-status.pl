@@ -40,6 +40,7 @@ BEGIN {
 use lib "$ROOT_PATH/lib";
 
 use Pagesmith::Root;
+use Pagesmith::Core qw(user_info);
 use Pagesmith::ConfigHash qw(set_site_key);
 
 my $DEBUG          = 0;
@@ -64,7 +65,22 @@ foreach my $repos    ( keys %{$repositories} ) {
   }
 }
 
+if( $DEBUG ) {
+  print "FILES:\n",
+    map { sprintf "\t%-40s - %s\n", @{$_}[1,0]; }
+    sort { $a->[1] cmp $b->[1] }
+    @files;
+}
+
 my $s = Pagesmith::Root->new;
+my $user = user_info;
+
+my @svn_command = (
+  '/usr/bin/svn',
+  '--config-option',
+  "config:tunnels:ssh=ssh -i $user->{'home'}/.ssh/pagesmith/svn-ssh",
+);
+
 foreach (@files) {
   (my $fn = $_->[0]) =~ s{/}{-}mxsg;
   $fn = "$ROOT_PATH/tmp/svn/$fn.";
@@ -76,6 +92,9 @@ foreach (@files) {
     [ 'publish',  [qw(/www/utilities/publish -d)] ],
   );
   foreach my $cmd (@commands) {
+    if( $DEBUG ) {
+      print ">\t@{$cmd->[1]} $path\n";
+    }
     my $r = $s->run_cmd( [@{$cmd->[1]}, $path] );
     my $contents = join "\n", @{$r->{'stdout'}}, qw();
     if( length $contents &&
@@ -117,6 +136,9 @@ foreach (@files) {
       }
     }
     unlink "$fn$cmd->[0]" if -e "$fn$cmd->[0]";
+    if( $DEBUG ) {
+      print "<\t@{$cmd->[1]} $path\n";
+    }
   }
 }
 
@@ -137,7 +159,7 @@ sub _find_repositories {
           open my $fh, q(<), "$path/$dir/.svn/entries" ) {
         while( my $line = <$fh> ) {
           chomp $line;
-          if( $line =~ m{\Asvn[+]ssh://[^/]+/repos/svn/([^/]+)/(trunk|live|staging)(.*)\Z}mxs ) {
+          if( $line =~ m{\Asvn[+]ssh://[^/]+/repos/svn/([^/]+(?:/[^/]+)?)/(trunk|live|staging)(.*)\Z}mxs ) {
             push @{ $repos{ $1 }{ $2 } }, { 'path' => $3, 'directory' => $paths{$path}.$dir };
             last;
           }

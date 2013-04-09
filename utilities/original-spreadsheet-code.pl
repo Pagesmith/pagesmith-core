@@ -21,7 +21,7 @@ Readonly my $MAX_VALUE => 10;
 use DBI;
 use Data::Dumper;
 
-my $dbh = DBI->connect('dbi:mysql:homo_sapiens_lite_16_33','ensro');
+my $dbh = DBI->connect('dbi:mysql:homo_sapiens_lite_16_33:ensembldb.ensembl.org:3306','anonymous');
 sub FORMAT_BOLD       { return 'format' => sub { return "<b>$_[0]</b>" } }
 sub FORMAT_ITALIC     { return 'format' => sub { return "<i>$_[0]</i>" } }
 sub FORMAT_BOLDITALIC { return 'format' => sub { return "<b><i>$_[0]</i></b>" } }
@@ -39,7 +39,7 @@ sub FORMAT_2DP        { return 'align' => 'right', 'format' => FORMAT_NDP(2) }
 
 print "Content-type: text/html\n\n";
 
-print '<html><head><style> th { background-color: #ffdf27; } .c1 td { background-color: #ffffcc } .c2 td { background-color: #ffffe8 }</style></head><body>';
+print '<html><head><!-- OK --><style> th { background-color: #ffdf27; } .c1 td { background-color: #ffffcc } .c2 td { background-color: #ffffe8 }</style></head><body>';
 my $i;
 print produce_table(
   [
