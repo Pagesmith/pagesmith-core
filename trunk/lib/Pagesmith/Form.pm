@@ -442,9 +442,9 @@ sub add_raw_section {
   return $self->current_section;
 }
 
-sub add_cons_section {
+sub add_readonly_section {
   my( $self, @section_data )  = @_;
-  $self->current_stage->add_cons_section( @section_data );
+  $self->current_stage->add_readonly_section( @section_data );
   return $self->current_section;
 }
 
