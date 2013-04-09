@@ -70,7 +70,7 @@ sub _init {
     'lib=s'   => \@lib_paths,
   );
 
-  die 'You must specify a site or out path to generate the HTML into' unless $site || $html_path; ## no critic (RequireCarping)
+  die "You must specify a site or out path to generate the HTML into\n" unless $site || $html_path;
   $dir_root  ||= $ROOT_PATH;
 
   $html_path ||= "$dir_root/sites/$site/htdocs/docs/critic";
@@ -80,7 +80,7 @@ sub _init {
   } else {
     @lib_paths = ( "$dir_root/lib", "$dir_root/utilities" );
     %dir_map   = ("$dir_root/lib" => 'lib', "$dir_root/utilities" => 'utilities' );
-## Will need to add new-lib & utility directories
+
     my $dh;
     my @dirs;
     if( opendir $dh, "$dir_root/sites" ) {
@@ -298,7 +298,7 @@ sub _parse_file_for_exceptions {
     $line ++;
     my( $prefix, $flag, $critic ) = split m{\#\#\s*(no|use)\s+critic\s*}mxs;
     next unless $flag;
-    my @modules = $critic =~ m{[(]([^)]+)[)]}mxs ? split m{\s+}mxs, $1 : ('************');
+    my @modules = $critic =~ m{[(]([^)]+)[)]}mxs ? split m{\s+}mxs, $1 : (q(************));
     push @exceptions, map {
       { 'postfix' => $prefix =~ m{\S}mxs ? 1 : 0, 'flag' => $flag, 'module' => $_, 'line' => $line }
     } @modules;
@@ -313,8 +313,9 @@ sub _get_files {
   return unless opendir $dh, $path;
   while ( defined (my $file = readdir $dh) ) {
     my $new_path = "$path/$file";
-    next if $file =~ m{^[.]}mxs;
-    next if $file =~ m{([.]b[ac]k|~)$}mxs;
+    next if $file =~ m{\A[.]}mxs;
+    next if $file =~ m{[.]b[ac]k\Z}mxs;
+    next if $file =~ m{~\Z}mxs;
     if( -f $new_path ) { ## no critic (Filetest_f)
       if( $file =~ m{^(.*)[.]p[ml]$}mxs ) { ## .pl || .pm files
         $l_files->{$root}{ "$prefix$1" } = $new_path;
