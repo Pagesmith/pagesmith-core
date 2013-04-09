@@ -97,15 +97,15 @@
           }
           table_data.body.unshift(r);
         }
-        $('#table_json').val(JSON.stringify(table_data));
+        $('#table_json'   ).val(JSON.stringify(table_data));
         $('#table_summary').val($(table).attr('summary'));
-        $('#table_filter').val(c.filter_value);
+        $('#table_filter' ).val(c.filter_value);
         $('#export_json_table').attr({target: '_blank', action: '/action/ExportJsonTable/' + format}).submit();
         return;
       },
 
       renderTable: function (table, rows) {
-
+        console.log( "render table "+c.page+" of size "+c.size+" from "+c.totalPages );
         var c = table.config, l = rows.length, s, e, i, l2, j, tableBody, o;
         $.tablesorter.clearTableBody(table);
 

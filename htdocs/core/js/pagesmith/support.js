@@ -229,6 +229,7 @@ PageSmith.Tabs.prototype = {
   },
   add_classes: function () {
     var i;
+    arguments.reverse();
     for (i = arguments.length; i; i) {
       i--;
       this.classes.push(arguments[i]);
