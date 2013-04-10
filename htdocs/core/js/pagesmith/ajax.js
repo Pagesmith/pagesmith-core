@@ -77,7 +77,7 @@ PageSmith.ajax = {
               $(n).replaceWith('<p class="r countdown" >Reloading in <span class="timer">' + s + '</span> seconds'+pause_html+'</p>');
             }, 1000);
           }
-          
+
           reloadto = window.setTimeout(function () {
             var n = $(p).find('.countdown').last();
             $(n).replaceWith('<p class="r countdown" >Reloading now</p>');
@@ -126,3 +126,6 @@ PageSmith.ajax = {
 };
 
 PageSmith.ajax.init();
+$('h3').livequery(function(){ console.log( '>>'+$(this).html() ); });
+$('h3:visible').livequery(function(){ console.log( $(this).html() ); });
+$('.ajax').livequery(function(){ console.log( '>>>'+$(this).attr('title')+' '+$(this).html() ); });
