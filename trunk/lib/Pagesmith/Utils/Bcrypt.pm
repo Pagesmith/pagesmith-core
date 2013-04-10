@@ -42,6 +42,7 @@ sub new {
   my ($package,$args) = @_;
   my $self = bless {}, $package;
   if ($args) {
+    # NB: Returns nothing if username or password not provided
     $self->{'username'} = $args->{'username'} || return;
     $self->{'password'} = $args->{'password'} || return;
   }
