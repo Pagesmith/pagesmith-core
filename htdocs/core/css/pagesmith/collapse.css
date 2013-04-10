@@ -26,7 +26,7 @@
   .collapsed h4.keep      img,
   .collapsed p.head       img { background-position: -32px -1380px; }
 
-.collapsed div.ajaxx, div.ajax, .collapsed div.coll, .collapsed ul, .collapsed .searchhit, .collapsed table, .collapsed pre, .collapsed h4, .collapsed p, .collapsed dl, .collapsed ul, .collapsed ol { display: none; }
+.collapsed div.ajax, .collapsed div.coll, .collapsed ul, .collapsed .searchhit, .collapsed table, .collapsed pre, .collapsed h4, .collapsed p, .collapsed dl, .collapsed ul, .collapsed ol { display: none; }
 
 .collapsed h4.keep { display: block; }
 
