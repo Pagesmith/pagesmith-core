@@ -126,6 +126,3 @@ PageSmith.ajax = {
 };
 
 PageSmith.ajax.init();
-$('h3').livequery(function(){ console.log( '>>'+$(this).html() ); });
-$('h3:visible').livequery(function(){ console.log( $(this).html() ); });
-$('.ajax').livequery(function(){ console.log( '>>>'+$(this).attr('title')+' '+$(this).html() ); });
