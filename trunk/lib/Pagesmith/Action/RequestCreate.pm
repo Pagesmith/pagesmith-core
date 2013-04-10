@@ -27,6 +27,7 @@ sub run {
   my $password = $self->param('password') || q();
 ##no critic (ImplicitNewlines)
   my $string = qq(
+  <p>Warn: This code is broken as P:U:NewAccount requests a new account but doesn't use the correct request structure</p>
 <form action='/action/RequestCreate/' method='post'>
   <label>username</label><input type='text' name='user' value='$user' />
   <label>password</label><input type='text' name='password' value='$password' />
