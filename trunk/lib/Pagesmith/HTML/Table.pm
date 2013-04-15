@@ -44,6 +44,7 @@ sub new {
       'class'     => $options->{'block_class'},
       'row_class' => $options->{'row_class'},
       'row_id'    => $options->{'row_id'},
+      'spanning'  => 0,
       'data'      => $row_data ? $row_data: [],
     } ],
   };
@@ -223,9 +224,22 @@ sub set_current_row_class {
   $self->{'blocks'}[ $self->{'current_block'} ]{'row_class'} = $class;
   return $self;
 }
+
 sub set_current_row_id {
   my( $self, $id ) = @_;
   $self->{'blocks'}[ $self->{'current_block'} ]{'row_id'}    = $id;
+  return $self;
+}
+
+sub make_current_spanning {
+  my $self = shift;
+  $self->{'blocks'}[ $self->{'current_block'} ]{'spanning'}  = 1;
+  return $self;
+}
+
+sub clear_current_spanning {
+  my $self = shift;
+  $self->{'blocks'}[ $self->{'current_block'} ]{'spanning'}  = 0;
   return $self;
 }
 
@@ -431,7 +445,7 @@ sub expand_template {
 ## no critic (ExcessComplexity)
 sub _expand_template {
   my( $self, $template, $row ) = @_;
-  return $self->_expand_template( eval { &{$template}( $row, $self ); }, $row ) if     'CODE'  eq ref $template; ## no critic (CheckingReturnValueOfEval)
+  return $self->_expand_template( eval { &{$template}( $row, $self ); }, $row ) if 'CODE'  eq ref $template; ## no critic (CheckingReturnValueOfEval)
   return $template                             unless 'ARRAY' eq ref $template;
 
   foreach my $template_ref ( @{$template} ) {
@@ -572,12 +586,23 @@ sub render_totals {
   return $self;
 }
 
+## no critic (ExcessComplexity)
 sub render_block {
   my( $self, $block ) = @_;
   # skip block if no data!
   return [] unless @{ $block->{'data'} };
   my @html;
   push @html, $block->{'class'} ? qq(    <tbody class="$block->{'class'}">) : q(    <tbody>);
+  if( $block->{'spanning'} ) {
+    my $row_extra  = q();
+    my $row_class  = $block->{'row_class'};
+       $row_extra .= sprintf ' class="%s"', $row_class if $row_class;
+    my $row_id     = $block->{'row_id'};
+       $row_extra .= sprintf ' id="%s"',    $row_id    if $row_id;
+    push @html, sprintf '<tr%s><td colspan="%d">%s</td></tr>', $row_extra,  scalar $self->columns, $block->{'row'}[0];
+    push @html, q(</tbody>);
+    return \@html;
+  }
   foreach my $row ( @{ $block->{'data'} } ) {
     my $row_extra = q();
     my $row_class = $block->{'row_class'} ? $self->expand_template( $block->{'row_class'}, $row ) : q();
@@ -609,5 +634,5 @@ sub render_block {
   push @html, q(    </tbody>);
   return \@html;
 }
-
+## use critic
 1;
