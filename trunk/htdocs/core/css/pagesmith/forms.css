@@ -95,9 +95,9 @@ form dt.disabled { display: none; }
 form dd.disabled { display: none; }
 
 .qdef { color: #999; }
-ul.ul_james, #rhs ul.ul_james { margin: 0; padding: 0; list-style-position: outside; list-style: none; z-index: 200 }
-ul li.li_james, #rhs ul li.li_james { background: white; cursor: pointer; background-color: #fff; border: 1px solid #bcc5cc; border-width: 0 1px 1px 1px; padding: 2px; font-size: 90%; }
-ul.ul_james li.li_james_hovered, #rhs ul.ul_james li.li_james_hovered { background-color: #bcc5cc; }
+ul.ul_james, #rhs ul.ul_james { margin: 0; padding: 0; list-style-position: outside; list-style: none; z-index: 200; text-align: left }
+ul li.li_james, #rhs ul li.li_james { background: white; cursor: pointer; background-color: #fff; border: 1px solid #bcc5cc; border-width: 0 1px 1px 1px; padding: 2px; font-size: 90%; text-align: left }
+ul.ul_james li.li_james_hovered, #rhs ul.ul_james li.li_james_hovered { background-color: #bcc5cc; text-align: left }
 
 .file-blob { float: left; width: 200px; }
 .file-image { float: left; width: 400px; }
