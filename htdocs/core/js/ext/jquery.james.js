@@ -17,90 +17,12 @@
  *
  * Revision: 1.js5.0
  *
- ** User Documentation
- ** ==================
- **
- ** Using javascript to configure:
- **
- ** HTML:
- **
- **     <input type="text" autocomplete="off" name="xx" id="xx" />
- **
- ** JavaScript:
- **
- **     $('#xx').james( '/autocomplete/URL', {} );
- **
- ** Using auto-configuration using $.metadata:
- **
- **     <input type="text" class="james {...} ..." autocomplete="off" name="xx" id="xx" />
- **
- ** Entries in the {} include:
- **
- ** * varname    - name of variable to pass in URL
- ** * url        - ajax request URL [not in JavaScript version]
- ** * params     - additional parameters
- ** * minlength  - Minimum length of value before AJAX request is mande!
- ** * filter     - If start/match then filter in Javascript - not if no source/data is set a single
- **                Ajax request is made which retrieves all possible values..
- ** * source     - string - ID of "UL" element containing values
- ** * data       - []  - Array of possible values (rather than getting via ajax)
- ** * multiple   - 0/1 - Allows mul
- ** * restricted - 0/1 - Only entries in the drop down list are allowed!
- ** * keydelay   - Length in delay between pressing key and sending ajax request (in milliseconds)
- **
- ** Pagesmith forms and auto-complete... (IE7 issues!)
- ** ==================================================
- **
- ** The CSS for the form code uses dl/dt/dd's to represent the form elements - in IE we had to mess
- ** around with margins to get this work (double margin bug in IE) so you will always need to put
- ** a "div" inside the <dd></dd> to get the auto-complete to work...
- **
- **     <dd><div><input ...></div></dd>
- **
- ** Multiple values...
- ** ==================
- **
- ** If you enable multiple values the input element must be embedded in a div of class
- ** "multi_container"
- **
- ** This is so the "facebook" like creation of "buttons" needs to have a specifc class
- **
- ** To pre-populate the form with multiple values you can manually add these "buttons" with
- ** the markup:
- **
- **     <span title="Click to remove" class="close_box">Value<input name=".." value=".." type="hidden" /></span>
- **
- ** within the "multi_container" div..
- **
- **     <div class="multi_container">
- **       <input type="text" class="james.... />
- **       <span title="Click to remove" class="close_box">XX<input name=".." value=".." type="hidden" /></span>
- **       <span title="Click to remove" class="close_box">XX<input name=".." value=".." type="hidden" /></span>
- **       <span title="Click to remove" class="close_box">XX<input name=".." value=".." type="hidden" /></span>
- **     </div>
- **
- ** Supplying data for javascript "filtering"
- ** =========================================
- **
- ** Data for javascript filtering can be pushed in three ways:
- **
- ** * "url" - retrieving via AJAX (no parameter is passed to ajax call)
- ** * "data" - embedded in options hash (either using metadata or via javascript) - good for "shortish" lists
- ** * "source" - embedded in a hidden "ul"
- **
- ** AJAX request set up!
- ** ====================
- **
- ** AJAX returns either an array of strings of an array of hashes
- **
- **     {text:"..",json:{}}
- **
- */
+*/
 
 jQuery.fn.james = function (url_to_call, options) {
   var that = jQuery(this),
   results_set = [],
-  current_hovered_rank = 0,
+  current_hovered_rank = -1,
   no_of_entries = 0,
   keyEvents = [
     {keycode: 38, action: function () { keyEventKeyUp();   }}, // Up key
@@ -118,7 +40,7 @@ jQuery.fn.james = function (url_to_call, options) {
       dom_value = $.trim(dom_value);
       if( dom_value && ! that.parent().find('span.close_box').filter(function(){ return $(this).text() === dom_value; }).length ) {
         that.parent().append(' <span title="Click to remove" class="close_box">'+dom_value+'<input name="'+that.attr('name')+'" value="'+dom_value+'" type="hidden" /></span>');
-        that.attr("value",'');
+        return '';
       }
     },
     source:       false, // Source element (entries encoded in hidden embedded ul)
@@ -227,8 +149,8 @@ jQuery.fn.james = function (url_to_call, options) {
       if(o.filter && (o.source || o.data) ) {
         results_set = [];
         value_to_send = that.prop("value").toLowerCase();
-        if( current_hovered_rank <= 0 ) {
-          current_hovered_rank = 0;
+        if( current_hovered_rank < 0 ) {
+          current_hovered_rank = o.restricted ? 0 : -1;
         }
         if( value_to_send.length > 0 ) {
           if( o.data ) {
@@ -312,8 +234,8 @@ jQuery.fn.james = function (url_to_call, options) {
               }
             }
           }
-          if( current_hovered_rank <= 0 ) {
-            current_hovered_rank = 0;
+          if( current_hovered_rank < 0 ) {
+            current_hovered_rank = o.restricted ? 0 : -1;
           }
           updateDom();
         }
@@ -376,7 +298,7 @@ jQuery.fn.james = function (url_to_call, options) {
       current_hovered_rank = i;
     }, function() {
       jQuery(elem).removeClass("li_james_hovered");
-      current_hovered_rank = 0;
+      current_hovered_rank = -1;
     });
     jQuery(elem).click(function() {
       keyEventEnter(); // Treat this as a click event on the element!
@@ -390,7 +312,7 @@ jQuery.fn.james = function (url_to_call, options) {
     jQuery(ul_element).empty();
     jQuery(ul_element).hide();
     results_set = [];
-    current_hovered_rank = 0;
+    current_hovered_rank = -1;
   };
 
   /*
@@ -421,16 +343,16 @@ jQuery.fn.james = function (url_to_call, options) {
   var keyEventEnter = function () {
     if (results_set.length > 0 && current_hovered_rank >= 0 ) {
       if( o.multiple ) {
-        that.attr("value", o.onSelectMultiple( results_set[current_hovered_rank].text, results_set[current_hovered_rank].json, that ) );
+        that.prop("value", o.onSelectMultiple( results_set[current_hovered_rank].text, results_set[current_hovered_rank].json, that ) );
       } else {
-        that.attr("value", o.onSelect(         results_set[current_hovered_rank].text, results_set[current_hovered_rank].json, that ) );
+        that.prop("value", o.onSelect(         results_set[current_hovered_rank].text, results_set[current_hovered_rank].json, that ) );
       }
     } else { // What to do when we are in the input element itself!
       if( !o.restricted ) {
         if( o.multiple ) {
-          that.attr("value", o.onSelectMultiple( that.attr("value"), {}, that ) );
+          that.prop("value", o.onSelectMultiple( that.prop("value"), {}, that ) );
         } else {
-          that.attr("value", o.onSelect(         that.attr("value"), {}, that ) );
+          that.prop("value", o.onSelect(         that.prop("value"), {}, that ) );
         }
       }
     }
@@ -442,18 +364,18 @@ jQuery.fn.james = function (url_to_call, options) {
     var return_value = 0;
     if (results_set.length > 0 && current_hovered_rank >= 0 ) {
       if( o.multiple ) {
-        that.attr("value", o.onSelectMultiple( results_set[current_hovered_rank].text, results_set[current_hovered_rank].json, that ) );
+        that.prop("value", o.onSelectMultiple( results_set[current_hovered_rank].text, results_set[current_hovered_rank].json, that ) );
       } else {
-        that.attr("value", o.onSelect(         results_set[current_hovered_rank].text, results_set[current_hovered_rank].json, that ) );
+        that.prop("value", o.onSelect(         results_set[current_hovered_rank].text, results_set[current_hovered_rank].json, that ) );
       }
       return_value = 1;
     } else { // What to do when we are in the input element itself!
       if( !o.restricted ) {
         if( o.multiple ) {
-          that.attr("value", o.onSelectMultiple( that.attr("value"), {}, that ) );
+          that.prop("value", o.onSelectMultiple( that.prop("value"), {}, that ) );
           return_value = 1;
         } else {
-          that.attr("value", o.onSelect(         that.attr("value"), {}, that ) );
+          that.prop("value", o.onSelect(         that.prop("value"), {}, that ) );
           return_value = 0;
         }
       } else {
@@ -466,7 +388,7 @@ jQuery.fn.james = function (url_to_call, options) {
 
   // Removing results set
   var keyEventEsc = function () {
-    that.attr("value", "");
+    that.prop("value", "");
     cleanResults();
   };
 };
@@ -479,3 +401,84 @@ if($.metadata){
 /* Multi-select... */
 $('body').on('click','.close_box',function() { $(this).remove(); });
 
+/***********************************************************************************************************************
+**
+** User Documentation
+** ---------------------------------------------------------------------------------------------------------------------
+**
+** Using javascript to configure:
+**
+** HTML:
+**
+**     <input type="text" autocomplete="off" name="xx" id="xx" />
+**
+** JavaScript:
+**
+**     $('#xx').james( '/autocomplete/URL', {} );
+**
+** Using auto-configuration using $.metadata:
+**
+**     <input type="text" class="james {...} ..." autocomplete="off" name="xx" id="xx" />
+**
+** Entries in the {} include:
+**
+** * varname    - name of variable to pass in URL
+** * url        - ajax request URL [not in JavaScript version]
+** * params     - additional parameters
+** * minlength  - Minimum length of value before AJAX request is mande!
+** * filter     - If start/match then filter in Javascript - not if no source/data is set a single
+**                Ajax request is made which retrieves all possible values..
+** * source     - string - ID of "UL" element containing values
+** * data       - []  - Array of possible values (rather than getting via ajax)
+** * multiple   - 0/1 - Allows mul
+** * restricted - 0/1 - Only entries in the drop down list are allowed!
+** * keydelay   - Length in delay between pressing key and sending ajax request (in milliseconds)
+**
+** Pagesmith forms and auto-complete... (IE7 issues!)
+** ---------------------------------------------------------------------------------------------------------------------
+**
+** The CSS for the form code uses dl/dt/dd's to represent the form elements - in IE we had to mess
+** around with margins to get this work (double margin bug in IE) so you will always need to put
+** a "div" inside the <dd></dd> to get the auto-complete to work...
+**
+**     <dd><div><input ...></div></dd>
+**
+** Multiple values...
+** ---------------------------------------------------------------------------------------------------------------------
+**
+** If you enable multiple values the input element must be embedded in a div of class
+** "multi_container"
+**
+** This is so the "facebook" like creation of "buttons" needs to have a specifc class
+**
+** To pre-populate the form with multiple values you can manually add these "buttons" with
+** the markup:
+**
+**     <span title="Click to remove" class="close_box">Value<input name=".." value=".." type="hidden" /></span>
+**
+** within the "multi_container" div..
+**
+**     <div class="multi_container">
+**       <input type="text" class="james.... />
+**       <span title="Click to remove" class="close_box">XX<input name=".." value=".." type="hidden" /></span>
+**       <span title="Click to remove" class="close_box">XX<input name=".." value=".." type="hidden" /></span>
+**       <span title="Click to remove" class="close_box">XX<input name=".." value=".." type="hidden" /></span>
+**     </div>
+**
+** Supplying data for javascript "filtering"
+** ---------------------------------------------------------------------------------------------------------------------
+**
+** Data for javascript filtering can be pushed in three ways:
+**
+** * "url" - retrieving via AJAX (no parameter is passed to ajax call)
+** * "data" - embedded in options hash (either using metadata or via javascript) - good for "shortish" lists
+** * "source" - embedded in a hidden "ul"
+**
+** AJAX request set up!
+** ---------------------------------------------------------------------------------------------------------------------
+**
+** AJAX returns either an array of strings of an array of hashes
+**
+**     {text:"..",json:{}}
+**
+***********************************************************************************************************************/
