@@ -316,7 +316,7 @@ sub expand_link {
       $extra .= sprintf ' %s="%s"', encode_entities($_), encode_entities( join q( ), sort @{$attrs{$_}} );
     }
   }
-  return sprintf '<a %s href="%s">%s</a>', $extra, $url, $text;
+  return sprintf '<a%s href="%s">%s</a>', $extra, $url, $text;
 }
 
 ## no critic (ExcessComplexity)
@@ -476,7 +476,7 @@ sub format_value {
                                   : $self->expand_format(   $col->{'format'}||'h', $val )
                                   ;
   $result = $self->expand_link( $col->{'link'}, $val, $row, $result ) if $col->{'link'} && $result ne q();
-  return '&nbsp;' if !defined $result || $result eq q();
+  return $col->{'default'}||q(&nbsp;) if !defined $result || $result eq q();
   return $result;
 }
 
@@ -502,7 +502,7 @@ sub extra_value {
   }
   if( $col->{'sort_index'} ) {
     my $sv = $self->format_sort( $val, $col, $row );
-    push @class, sprintf '{sortValue:%f}', $sv||0;# if defined $sv && $sv ne q();
+    push @class, sprintf '{sv:%s}', $sv||0;# if defined $sv && $sv ne q();
   }
   $extra .= sprintf q( class="%s"), join q( ), @class if @class;
   if( exists $col->{'title'} ) {
@@ -536,7 +536,10 @@ sub render {
         push @html, sprintf q(        <th>%s</th>), encode_entities( $_->{'label'}||q(#) );
       } else {
         my $meta_data = exists $_->{'meta_data'} ? $_->{'meta_data'} : {};
-        $meta_data->{'sorter'} = 'metadata' if exists $_->{'sort_index'};
+        if( exists $_->{'sort_index'} ) {
+          $meta_data->{'sorter'} = 'metadata';
+          $meta_data->{'parserMetadataName'} = 'sv';
+        }
         if( exists $_->{'filter_values'} ) {
           $meta_data->{'filter'} = $_->{'filter_values'};
         }
@@ -566,6 +569,7 @@ sub render {
     unshift @html, '<div class="scrollable">';
     push @html, '</div>';
   }
+  return join q(), map { $_=~m{\A\s*(.*)\Z}mxs ? $1 : $_ } @html if( $self->option('compact') );
   return join qq(\n), @html;
 }
 ## use critic
