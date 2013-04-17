@@ -225,7 +225,6 @@ var FormValidator = {
     }
     max = el.prop('className').match(/\bmax_(\d+)\b/);
     if( this.validators[cl] ) {
-      console.log( "VAL>>>" );
       return this.validators[cl](this,s);
     } else {
       switch (cl) {
@@ -396,9 +395,7 @@ var FormValidator = {
       ) {
         value = 1; // 'we have an attached file!'
       }
-      if( input.hasClass('_checkbox') &&
-          input.prop('checked') !== 'checked'
-      ) {
+      if( input.hasClass('_checkbox') && !input.prop('checked') ) {
         value = '';
       }
 /*jsl:end*/
