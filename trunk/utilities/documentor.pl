@@ -569,7 +569,7 @@ sub get_details_file {
       $file_object->empty_line;
       next;
     }
-    if( $line =~ m{\A[#]{2}\s*(.*)}mxs && $flag ) {
+    if( $line =~ m{\A[#]{2}\s?(.*)}mxs && $flag ) {
       $current_sub->set_documented;
       my $note = $1;
       if( $note !~ m{\A\w}mxs ) {
