@@ -31,6 +31,7 @@ const my $CENT        => 100;
 sub new {
   my( $class, $options ) = @_;
   $options ||= {};
+  $options->{'hide_duplicate_keys'} = 1 unless exists $options->{'hide_duplicate_keys'};
   my $self = {
     'options'       => $options,
     'entries'       => [],
@@ -67,7 +68,7 @@ sub add_entry {
   my $options = {};
   $options = shift @entries if @entries && ref $entries[0] eq 'HASH';
 
-  if( @{$self->{'entries'}} && (
+  if( $self->option('hide_duplicate_keys') && @{$self->{'entries'}} && (
     $self->{'entries'}[-1]{'caption'} eq $caption || ! defined $caption
   ) ) {
     push @{ $self->{'entries'}[-1]{'values'} }, @entries if @{$self->{'entries'}};
