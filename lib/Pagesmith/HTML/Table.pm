@@ -519,60 +519,74 @@ sub other_options {
          qw(id title);
 }
 
-## no critic (ExcessComplexity)
-sub render {
+sub render_thead {
   my $self = shift;
-  my @html = (
-    sprintf q(  <table class="%s" summary="%s"%s>),
+  my @html = ( q(    <thead>), q(        <tr>) );
+  foreach( $self->columns ) {
+    if( $_->{'key'} eq q(#) ) {
+      push @html, sprintf q(        <th>%s</th>), encode_entities( $_->{'label'}||q(#) );
+    } else {
+      my $meta_data = exists $_->{'meta_data'} ? $_->{'meta_data'} : {};
+      if( exists $_->{'sort_index'} ) {
+        $meta_data->{'sorter'} = 'metadata';
+        $meta_data->{'parserMetadataName'} = 'sv';
+      }
+      if( exists $_->{'filter_values'} ) {
+        $meta_data->{'filter'} = $_->{'filter_values'};
+      }
+      $meta_data->{'sorter'} = 'none' if exists $_->{'no-sort'};
+      my @class;
+      push @class, $self->encode($self->json_encode($meta_data)) if keys %{$meta_data};
+      push @class, 'rotated_cell' if $_->{'rotate'};
+      push @class, $_->{'header_class'} if $_->{'header_class'};
+      my $extra_attributes = q();
+         $extra_attributes .= sprintf q( class="%s"), join q( ), @class if @class;
+         $extra_attributes .= sprintf q( style="min-width: %s"), $_->{'min-width'} if exists $_->{'min-width'};
+         $extra_attributes .= sprintf q( title="%s"), encode_entities( $_->{'long_label'} ) if exists $_->{'long_label'};
+      my $value = encode_entities( exists $_->{'label'} ? $_->{'label'} : $_->{'key'} );
+      push @html, sprintf q(        <th%s>%s</th>), $extra_attributes, defined $value ? $value : q();
+    }
+  }
+  push @html, q(      </tr>),q(    </thead>);
+  return @html;
+}
+
+sub wrap_table {
+  my $self = shift;
+
+  my @start = (
+    sprintf '  <table class="%s" summary="%s"%s>',
       $self->classes_string,
       $self->option( 'summary' )  ? encode_entities( $self->option( 'summary' ) ) : 'Automatically generated table data',
       $self->other_options(),
   );
+  my @end   = ( '  </table>' );
 
-  unless( $self->option( 'no-header' ) ) {
-    push @html, q(    <thead>), q(        <tr>);
-    foreach( $self->columns ) {
-      if( $_->{'key'} eq q(#) ) {
-        push @html, sprintf q(        <th>%s</th>), encode_entities( $_->{'label'}||q(#) );
-      } else {
-        my $meta_data = exists $_->{'meta_data'} ? $_->{'meta_data'} : {};
-        if( exists $_->{'sort_index'} ) {
-          $meta_data->{'sorter'} = 'metadata';
-          $meta_data->{'parserMetadataName'} = 'sv';
-        }
-        if( exists $_->{'filter_values'} ) {
-          $meta_data->{'filter'} = $_->{'filter_values'};
-        }
-        $meta_data->{'sorter'} = 'none' if exists $_->{'no-sort'};
-        my @class;
-        push @class, $self->encode($self->json_encode($meta_data)) if keys %{$meta_data};
-        push @class, 'rotated_cell' if $_->{'rotate'};
-        push @class, $_->{'header_class'} if $_->{'header_class'};
-        my $extra_attributes = q();
-           $extra_attributes .= sprintf q( class="%s"), join q( ), @class if @class;
-           $extra_attributes .= sprintf q( style="min-width: %s"), $_->{'min-width'} if exists $_->{'min-width'};
-           $extra_attributes .= sprintf q( title="%s"), encode_entities( $_->{'long_label'} ) if exists $_->{'long_label'};
-        my $value = encode_entities( exists $_->{'label'} ? $_->{'label'} : $_->{'key'} );
-        push @html, sprintf q(        <th%s>%s</th>), $extra_attributes, defined $value ? $value : q();
-      }
-    }
-    push @html, q(      </tr>),q(    </thead>);
+  if( $self->option('scrollable') ) {
+    unshift @start, '<div class="scrollable">';
+    push @end,      '</div>';
   }
+
   $self->{'row_count'}  = 1;
-  foreach( $self->blocks ) {
-    push @html, @{ $self->render_block( $_ ) };
-  }
+  return ( \@start, \@end );
+}
+
+sub render {
+  my $self = shift;
+
+  ## Initialize render and get head and foot html chunks!
+  my( $start, $end ) = $self->wrap_table;
+  my   @html = @{$start};
+  ## thead part!
+  push @html, $self->render_thead     unless  $self->option( 'no-header' );
+  ## tbody part!
+  push @html, map { $self->render_block($_) } $self->blocks;
+  push @html, @{$end};
   #push @html, @{ $self->render_totals } if $self->option( 'summary' );
 
-  push @html, q(  </table>);
-  if( $self->option('scrollable') ) {
-    unshift @html, '<div class="scrollable">';
-    push @html, '</div>';
-  }
-  return join q(), map { $_=~m{\A\s*(.*)\Z}mxs ? $1 : $_ } @html if( $self->option('compact') );
-  return join qq(\n), @html;
+  return join qq(\n), @html unless $self->option('compact');
+  return join q(), map { $_=~m{\A\s*(.*)\Z}mxs ? $1 : $_ } @html;
 }
-## use critic
 
 sub reset_totals {
   my( $self, $type ) = @_; ## Type is level - 1 is block, 0 is total; - this allows for easy working with sub-blocks if required later...
@@ -590,30 +604,32 @@ sub render_totals {
   return $self;
 }
 
-## no critic (ExcessComplexity)
+sub row_attributes {
+  my( $self, $block, $row ) = @_;
+  my $row_extra = q();
+  my $row_class = $block->{'row_class'} ? $self->expand_template( $block->{'row_class'}, $row ) : q();
+  $row_extra .= sprintf ' class="%s"', $row_class if $row_class;
+  my $row_id    = $block->{'row_id'}    ? $self->expand_template( $block->{'row_id'},    $row ) : q();
+  $row_extra .= sprintf ' id="%s"',    $row_id    if $row_id;
+  return $row_extra;
+}
+
 sub render_block {
   my( $self, $block ) = @_;
   # skip block if no data!
   return [] unless @{ $block->{'data'} };
   my @html;
   push @html, $block->{'class'} ? qq(    <tbody class="$block->{'class'}">) : q(    <tbody>);
-  if( $block->{'spanning'} ) {
-    my $row_extra  = q();
-    my $row_class  = $block->{'row_class'};
-       $row_extra .= sprintf ' class="%s"', $row_class if $row_class;
-    my $row_id     = $block->{'row_id'};
-       $row_extra .= sprintf ' id="%s"',    $row_id    if $row_id;
-    push @html, sprintf '<tr%s><td colspan="%d">%s</td></tr>', $row_extra,  scalar $self->columns, $block->{'row'}[0];
-    push @html, q(</tbody>);
-    return \@html;
+  if( $block->{'spanning'} ) { ## A spanning block only has one row!
+    push @html, sprintf q(      <tr%s>), $self->row_attributes( $block, $block->{'data'}[0] );
+    push @html, sprintf q(        <td colspan="%d">%s</td>),
+                           scalar $self->columns, $block->{'data'}[0];
+    push @html, q(      </tr>),
+                q(    </tbody>);
+    return @html;
   }
   foreach my $row ( @{ $block->{'data'} } ) {
-    my $row_extra = q();
-    my $row_class = $block->{'row_class'} ? $self->expand_template( $block->{'row_class'}, $row ) : q();
-    $row_extra .= sprintf ' class="%s"', $row_class if $row_class;
-    my $row_id    = $block->{'row_id'}    ? $self->expand_template( $block->{'row_id'},    $row ) : q();
-    $row_extra .= sprintf ' id="%s"',    $row_id    if $row_id;
-    push @html, qq(      <tr$row_extra>);
+    push @html, sprintf q(      <tr%s>), $self->row_attributes( $block, $row );
     my $c_id = 0;
     foreach my $col ( $self->columns ) {
       my $property = $col->{'key'}||q();
@@ -636,7 +652,7 @@ sub render_block {
     push @html, q(      </tr>);
   }
   push @html, q(    </tbody>);
-  return \@html;
+  return @html;
 }
-## use critic
+
 1;
