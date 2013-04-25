@@ -234,13 +234,10 @@ sub last_modified {
 }
 
 sub _trim {
-  my $self = shift;
-  my $x = shift;
-  return unless defined $x;
-  $x =~ s{\s+}{ }mxgs;
-  $x =~ s{\A\s+}{}mxs;
-  $x =~ s{\s+\Z}{}mxs;
-  return $x;
+  my( $self, $str ) = @_;
+  return unless defined $str;
+  $str =~ s{\s+}{ }mxgs;
+  return scalar reverse unpack 'A*',reverse unpack 'A*',$str;
 }
 
 sub content {

@@ -23,7 +23,7 @@ use File::Basename qw(dirname basename);
 use File::Spec;
 use HTML::Entities qw(encode_entities);
 use Syntax::Highlight::HTML;
-use Syntax::Highlight::Perl::Improved;
+use Pagesmith::Utils::PerlHighlighter;
 
 use Pagesmith::ConfigHash qw(server_root);
 
@@ -108,7 +108,6 @@ sub execute {
   my $self = shift;
 
   my $format = $self->option('format') || 'perl';
-
   my ($fn) = $self->pars;
 
   my $err = $self->check_file($fn);
@@ -129,36 +128,7 @@ sub execute {
     $html =~ s{\A<pre>\s+}{}mxs;
     $html =~ s{\s+</pre>\Z}{}mxs;
   } elsif ( $format eq 'perl' ) {
-    my $x  = Syntax::Highlight::Perl::Improved->new;
-    my %ct = (
-      'Variable_Scalar'   => 'p-sc', # '080',
-      'Variable_Array'    => 'p-ar', #'f70',
-      'Variable_Hash'     => 'p-hs', #'80f',
-      'Variable_Typeglob' => 'p-tg', #'f03',
-      'Subroutine'        => 'p-sb', #'980',
-      'Quote'             => 'p-qu', #'00a;background-color:white',
-      'String'            => 'p-st', #00a;background-color:white',
-      'Bareword'          => 'p-bw', #f00;font-weight: bold',
-      'Package'           => 'p-pa', #900',
-      'Number'            => 'p-nu', #f0f',
-      'Operator'          => 'p-op', #900;font-weight:bold;',
-      'Symbol'            => 'p-sy', #000',
-      'Keyword'           => 'p-kw', #000',
-      'Builtin_Operator'  => 'p-bo', #300',
-      'Builtin_Function'  => 'p-bf', #001',
-      'Character'         => 'p-ch', #800',
-      'Directive'         => 'p-di', #399',
-      'Label'             => 'p-la', #939',
-      'Line'              => 'p-li', #000',
-      'Comment_Normal'    => 'p-cn', #069;background-color:#ffc',
-      'Comment_POD'       => 'p-cp', #069;background-color:#ffc',
-    );
-    $x->define_substitution(qw(< &lt; > &gt; & &amp;));    # HTML escapes.
-    # install the formats set up above
-    foreach ( keys %ct ) {
-      $x->set_format( $_, [qq(<span class="$ct{$_}">), '</span>'] );
-    }
-    $html =  $x->format_string($html);
+    $html = Pagesmith::Utils::PerlHighlighter->new->format_string($html);
   }
   $html =~ s{<span[^>]*></span>}{}mxgs;
   if( $html =~ m{<body>(.*)</body>}mxs ) {
