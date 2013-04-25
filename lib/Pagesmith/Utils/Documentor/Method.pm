@@ -16,11 +16,10 @@ use utf8;
 use version qw(qv); our $VERSION = qv('0.1.0');
 
 use base qw(Pagesmith::Utils::Documentor);
-
 use Pagesmith::HTML::TwoCol;
 use Const::Fast qw(const);
 use HTML::Entities qw(encode_entities);
-use Syntax::Highlight::Perl::Improved;
+use Pagesmith::Utils::PerlHighlighter;
 
 const my $OPT_MAP    => { q(?) => ' (optional)', q(+) => ' (multiple)', q(*) => ' (multiple optional)' };
 const my $CLASSES    => { qw(set Set get Get setter Set getter Get getsetter Acc accessor Acc acc Acc) };
@@ -36,8 +35,7 @@ sub new {
     'end'         => undef,
     'file'        => $file,
     'description' => [],
-    'return_type' => undef,
-    'return_desc' => undef,
+    'returns'     => [],
     'parameters'  => [],
     'documented'  => 0,
     'notes'       => [],
@@ -170,132 +168,101 @@ sub set_end {
   return $self->{'end'} = $end;
 }
 
-sub code {
-  my $self = shift;
-  my @lines = grep {$_} @{$self->file->line_slice( $self->start, $self->end )||[]};
-  my $html  = q();
-  my @nos;
-  foreach ( @lines ) {
-    if( m{\A\s*(\d+):\s(.*)\Z}mxs ) {
-      push @nos, $1;
-      $html .= $2;
-    }
-  }
-  my $x  = Syntax::Highlight::Perl::Improved->new;
-  my %ct = (
-    'Variable_Scalar'   => 'p-sc', # '080',
-    'Variable_Array'    => 'p-ar', #'f70',
-    'Variable_Hash'     => 'p-hs', #'80f',
-    'Variable_Typeglob' => 'p-tg', #'f03',
-    'Subroutine'        => 'p-sb', #'980',
-    'Quote'             => 'p-qu', #'00a;background-color:white',
-    'String'            => 'p-st', #00a;background-color:white',
-    'Bareword'          => 'p-bw', #f00;font-weight: bold',
-    'Package'           => 'p-pa', #900',
-    'Number'            => 'p-nu', #f0f',
-    'Operator'          => 'p-op', #900;font-weight:bold;',
-    'Symbol'            => 'p-sy', #000',
-    'Keyword'           => 'p-kw', #000',
-    'Builtin_Operator'  => 'p-bo', #300',
-    'Builtin_Function'  => 'p-bf', #001',
-    'Character'         => 'p-ch', #800',
-    'Directive'         => 'p-di', #399',
-    'Label'             => 'p-la', #939',
-    'Line'              => 'p-li', #000',
-    'Comment_Normal'    => 'p-cn', #069;background-color:#ffc',
-    'Comment_POD'       => 'p-cp', #069;background-color:#ffc',
-  );
-  $x->define_substitution(qw(< &lt; > &gt; & &amp;));    # HTML escapes.
-  # install the formats set up above
-  foreach ( keys %ct ) {
-    $x->set_format( $_, [qq(<span class="$ct{$_}">), '</span>'] );
-  }
-  $html =  $x->format_string($html);
-  $html =~ s{<span[^>]*></span>}{}mxgs;
-  $html = join q(), map { sprintf qq(<span class="linenumber">%5d:</span> %s\n), shift @nos, $_ }
-    split m{\r?\n}mxs, $html;
-  return $html;
+sub _trim {
+#@params (self) (string str)
+#@return (string)
+## Returns string with trailing and leading white space removed
+  my( $self, $str ) = @_;
+  return q() unless $str;
+  return scalar reverse unpack 'A*',reverse unpack 'A*',$str; # Perl goo! Don't ask but it does what is says on the tin!
 }
 
-sub return_type {
-#@params (self)
-#@return (string) return type
-  my $self = shift;
-  return $self->{'return_type'};
-}
+## * Push method attributes parameters/return onto object
 
-sub return_flag {
-#@params (self)
-#@return (string) "?","+","*" to indicate optional, 1+ values, 0+ values
-  my $self = shift;
-  return $self->{'return_flag'};
-}
-
-sub set_return_type {
-#@params (self) (string type) (string flag)?
+sub push_return {
+#@params (self) (string object type) (string optional state - ?*+)? (string description)?
 #@return (self)
-## Set return type
-  my( $self, $type, $flag ) = @_;
-  $self->{'return_type'} = $type;
-  $self->{'return_flag'} = $flag||q();
-  return $self;
-}
-
-sub return_desc {
-#@params (self)
-#@return (string) return description
-  my $self = shift;
-  return $self->{'return_desc'};
-}
-
-sub set_return_desc {
-#@params (self) (string description)
-#@return (self)
-## Set return description
-  my( $self, $desc) = @_;
-  return $self->{'return_desc'} = $desc;
-}
-
-sub format_return_short {
-  my $self = shift;
-  return $self->{'return_type'}||q(?);
-}
-
-sub format_return {
-  my $self = shift;
-  if( $self->{'return_type'}||q() ) {
-    return '<strong>self</strong>' if $self->{'return_type'} eq 'self';
-    return sprintf '(%s)%s %s',
-      encode_entities($self->{'return_desc'}||q(- unknown -)),
-      $self->{'return_flag'}||q(),
-      $self->{'return_type'};
-  }
-  return encode_entities( $self->{'return_desc'}||q(-) );
-}
-
-sub push_parameter {
-#@params (self) (string object type) (string optional state ?*+)? (string description)?
-#@return (self)
-  my( $self, $type, $optional, $name, $description ) = @_;
-  $type        =~ s{\A\s*(.*?)\s*\Z}{$1}mxs if $type;
-  $optional    =~ s{\A\s*(.*?)\s*\Z}{$1}mxs if $optional;
-  $name        =~ s{\A\s*(.*?)\s*\Z}{$1}mxs if $name;
-  $description =~ s{\A\s*(.*?)\s*\Z}{$1}mxs if $description;
-  push @{$self->{'parameters'}}, {
-    'type'        => $type        || q(),
-    'optional'    => $optional    || q(),
-    'name'        => $name        || q(),
-    'description' => $description || q(),
+## Pushes a new "return" object onto the method
+  my( $self, $type, $optional, $description ) = @_;
+  push @{$self->{'returns'}}, {
+    'type'        => $self->_trim($type),
+    'optional'    => $self->_trim($optional),
+    'description' => $self->_trim($description),
   };
   return $self;
 }
 
+sub push_parameter {
+#@params (self) (string object type) (string name)? (string optional state - either ?*+)? (string description)?
+#@return (self)
+## Pushes a new "parameter" onto the method
+  my( $self, $type, $name, $optional, $description ) = @_;
+  push @{$self->{'parameters'}}, {
+    'type'        => $self->_trim($type),
+    'optional'    => $self->_trim($optional),
+    'name'        => $self->_trim($name),
+    'description' => $self->_trim($description),
+  };
+  return $self;
+}
+
+sub push_description {
+#@params (self) (string line)
+#@return (self)
+## Pushes line of description
+  my( $self, $line ) = @_;
+  push @{$self->{'description'}}, $line;
+  return $self;
+}
+
+sub push_notes {
+#@params (self) (string line)
+#@return (self)
+## Pushes line of notes section
+  my( $self, $line ) = @_;
+  push @{$self->{'notes'}}, $line;
+  return $self;
+}
+
+## * Getting and formatting parameters/return...
+
 sub number_parameters {
+#@params (self)
+#@return (int) Number of parameters for method
   my $self = shift;
   return scalar @{$self->{'parameters'}};
 }
 
+sub format_return_short {
+#@params (self)
+#@return (html)
+## Produces a "1-liner" list of return values to be squirted into a table cell
+  my $self = shift;
+  return q(?) unless @{$self->{'returns'}};
+  return join q(, ), map { "$_->{'type'}$_->{'optional'}" } @{ $self->{'returns'}};
+}
+
+sub format_return {
+#@params (self)
+#@return (html)
+## Renders returns of method in a two col format
+  my $self = shift;
+  return q(-) unless @{$self->{'returns'}};
+
+  my $return = Pagesmith::HTML::TwoCol->new({'class'=>'twothird','hide_duplicate_keys'=>0});
+  foreach (@{$self->{'returns'}}) {
+    $return->add_entry( $_->{'type'},
+      ($_->{'description'}||q()).
+      (exists $OPT_MAP->{$_->{'optional'}} ? $OPT_MAP->{$_->{'optional'}} : q()),
+    );
+  }
+  return $return->render;
+}
+
 sub format_parameters_short {
+#@params (self)
+#@return (html)
+## Produces a "1-liner" list of parameters to be squirted into a table cell
   my $self = shift;
   my $markup = join q(; ),
     map { $_->[0] ? sprintf '<span title="%s">%s</span>', $_->[0], $_->[1] : $_->[1] }
@@ -306,52 +273,65 @@ sub format_parameters_short {
 }
 
 sub format_parameters {
+#@params (self)
+#@return (html)
+## Renders parameters of method in a two col format
   my $self = shift;
   return q(<p>- no parameters -</p>) unless @{$self->{'parameters'}};
 
-  my $return = Pagesmith::HTML::TwoCol->new({'class'=>'twothird'});
+  my $return = Pagesmith::HTML::TwoCol->new({'class'=>'twothird','hide_duplicate_keys'=>0});
+
   foreach (@{$self->{'parameters'}}) {
     next if $_->{'type'} eq 'self' || $_->{'type'} eq 'class';
-    $return->add_entry( $_->{'type'},
-      ($_->{'name'}||q()).
+    $return->add_entry(
+      $_->{'type'}||q(-),
+      ("$_->{'name'}"||$_->{'type'}||q(-)).
       (exists $OPT_MAP->{$_->{'optional'}} ? $OPT_MAP->{$_->{'optional'}} : q()),
     );
+    $return->add_entry( q(&nbsp;), $_->{'description'} ) if $_->{'description'};
   }
   return $return->render;
 }
 
-sub push_description {
-#@params (self)
-#@return (string) description line
-  my( $self, $line ) = @_;
-  push @{$self->{'description'}}, $line;
-  return $self;
-}
-
 sub format_description {
 #@params (self)
-#@return (string)
+#@return (html)
 ## Return marked up paragraph for description
   my $self = shift;
   return q() unless @{$self->{'description'}};
   return $self->markdown_html( $self->{'description'} );
 }
 
-sub push_notes {
-#@params (self)
-#@return (string) notes line
-  my( $self, $line ) = @_;
-  push @{$self->{'notes'}}, $line;
-  return $self;
-}
 
 sub format_notes {
 #@params (self)
-#@return (string)
+#@return (html)
 ## Return marked up div for notes!
   my $self = shift;
   return q() unless @{$self->{'notes'}};
   return $self->markdown_html( $self->{'notes'} );
 }
+
+sub code {
+#@params (self)
+#@return (html)
+## Return syntax highlighted copy of code for method (without documenation lines)
+  my $self = shift;
+  my @lines = grep {$_} @{$self->file->line_slice( $self->start, $self->end )||[]};
+  my $html  = q();
+  my @nos;
+  foreach ( @lines ) {
+    if( m{\A\s*(\d+):\s(.*)\Z}mxs ) {
+      push @nos, $1;
+      $html .= $2;
+    }
+  }
+  $html = Pagesmith::Utils::PerlHighlighter->new->format_string($html);
+  $html =~ s{<span[^>]*></span>}{}mxgs;
+  $html = join q(), map { sprintf qq(<span class="linenumber">%5d:</span> %s\n), shift @nos, $_ }
+    split m{\r?\n}mxs, $html;
+  return $html;
+}
+
 
 1;

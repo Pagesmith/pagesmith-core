@@ -121,6 +121,16 @@ sub is_type {
 
 ## Now the connection code!
 
+sub get_options {
+  my( $self, $opts ) = @_;
+  $opts||={};
+  my $options                        = {( 'RaiseError' => 0, 'LongReadLen' => $ONE_MEG)};
+     $options->{'mysql_enable_utf8'} = 1         if $self->is_type( 'mysql'  );
+     $options->{'FetchHashKeyName'}  = 'NAME_lc' if $self->is_type( 'oracle' );
+     $options->{$_} = $opts->{$_} foreach keys %{$opts};
+  return $options;
+}
+
 sub get_connection {
   my( $self, $db_details ) = @_;
 
@@ -146,7 +156,7 @@ sub get_connection {
   $self->{'_version'}   = $db_details->{'version'};
   $self->{'_dbpass'}    = $db_details->{'pass'};
   $self->{'_sub_class'} = $db_details->{'subclass'} || q();
-  $self->{'_dbopts'}    = $db_details->{'opts'}     || {( 'RaiseError' => 0, 'LongReadLen' => $ONE_MEG )};
+  $self->{'_dbopts'}    = $self->get_options( $db_details->{'opts'} );
   return $self;
 }
 

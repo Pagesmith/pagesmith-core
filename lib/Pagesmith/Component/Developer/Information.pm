@@ -63,6 +63,7 @@ my $LIST_T = "\n    <li>%s</li>";
       <li><a href="#t_notes">Notes</a></li>
       <li><a href="#t_inc">Include path</a></li>
       <li><a href="#t_modules">Modules</a></li>
+      <li><a href="#t_user">User</a></li>
     </ul>
     <div class="clear" style="height:700px;overflow:scroll">
 
@@ -275,10 +276,33 @@ my $LIST_T = "\n    <li>%s</li>";
   <ul>%s
   </ul>
 </div>
-
-    </div>
-  </div>',
+',
     $self->modules(q(::));
+
+  my $user = $self->user;
+  if( $user->logged_in ) {
+    my $t = $self->twocol;
+    $t->add_entry( 'Username', $user->username );
+    $t->add_entry( 'Name',     $user->name );
+    $t->add_entry( 'Ldap ID',  $user->ldap_id || q(-) );
+    $t->add_entry( 'Method',   $user->auth_method );
+    $t->add_entry( 'Groups',   sprintf '<ul>%s</ul>', join q(), map { "<li>$_</li>" } $user->groups ) if $user->groups;
+    my $d = $user->data;
+    my $d_filtered = { map { $d->{$_} } grep { $_ ne 'name' && $_ ne 'id' && $_ ne 'ldap_id' && $_ ne 'method' && $_ ne 'groups' } keys %{$d} };
+    if( keys %{$d_filtered} ) {
+      $t->add_entry( 'Data', $self->pre_dumper( $d_filtered ) );
+    }
+    $html .= sprintf  '
+<div id="t_user">
+  <h3 class="keep">User details</h3>
+  %s
+</div>', $t->render;
+  } else {
+    $html .= '<div id="t_user"><h3 class="keep">User details</h3><p>User not logged in</p></div>';
+  }
+  $html .= '
+  </div>
+  </div>';
 
   #-- Close the two containing divs...
   return $html;

@@ -25,11 +25,14 @@ sub markdown_html {
 ## this is modified to format nicely with Pagesmith - including fixing heading levels (so == => h3 & -- => h4)
 
   my( $self, $lines ) = @_;
+  my $t    = join q(),@{$lines};
+  return unless $t;
   my $m    = Text::MultiMarkdown->new( 'heading_ids' => 0, 'img_ids' => 0 );
-  my $html = $m->markdown( join q(),@{$lines} );
+  my $html = $m->markdown( $t );
 
   $html =~ s{<h([12])(.*?</h)\1>}{'<h'.($1+2).$2.($1+2).'>'}mxseg;
   $html =~ s{<h3}{<h3 class="keep"}mxsg;
+  $html =~ s{<table}{<table class="zebra-table"}mxsg;
   $html =~ s{\s+align="(right|left|center)"}{' class="'.(substr $1,0,1).'"'}mxseg;
   $html = "<p>$html</p>" unless $html =~ m{\A<}mxsg;
   return $html;
