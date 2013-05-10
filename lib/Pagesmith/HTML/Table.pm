@@ -617,7 +617,7 @@ sub row_attributes {
 sub render_block {
   my( $self, $block ) = @_;
   # skip block if no data!
-  return [] unless @{ $block->{'data'} };
+  return unless @{ $block->{'data'} };
   my @html;
   push @html, $block->{'class'} ? qq(    <tbody class="$block->{'class'}">) : q(    <tbody>);
   if( $block->{'spanning'} ) { ## A spanning block only has one row!
