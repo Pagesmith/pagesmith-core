@@ -529,12 +529,17 @@ sub get_details_file {
       $file_object->empty_line;
       next;
     }
+    # Format of #@params line is (TYPE NAME? - DESC?)OPT? {repeated foreach parameter
+    #  - TYPE is a non-white space string { can be postfixed with [] or {} to indicate an arrayref/hashref
+    #  - NAME is a string (optional)
+    #  - DESC is a string - not containing a ')' (optional)
+    #  - OPT  is a flag (*+?) to represent 0+, 1+ or 0/1 respectively
     if( $line =~ m{\A[#][@]params\s*(.*)}mxs ) {
       $current_sub->set_documented;
       my $params = $1;
       while( $params =~ s{\A[(](\S+?)(?:\s+(.*?)\s*)?[)]([*+?]?)(\s.*|)\Z}{$4}mxs ) {
         my( $description, $type, $optional, $name ) = (q(),$1,$3,$2);
-        if( $name && $name =~ s{\s+-\s+($.*)\Z}{}mxs ) {
+        if( $name && $name =~ s{\s+-\s+(.*)\Z}{}mxs ) {
           $description = $1;
         }
         $current_sub->push_parameter( $type, $name, $optional, $description );
@@ -543,9 +548,14 @@ sub get_details_file {
       $file_object->empty_line;
       next;
     }
+    # Format of #@param line is (TYPE)OPT? NAME? - DESC?
+    #  - TYPE is a non-white space string { can be postfixed with [] or {} to indicate an arrayref/hashref
+    #  - NAME is a string (optional)
+    #  - DESC is a string (optional)
+    #  - OPT  is a flag (*+?) to represent 0+, 1+ or 0/1 respectively
     if( $line =~ m{\A[#][@]param\s*[(](\S+?)[)]([*+?]?)(?:\s+(.*))?\Z}mxs ) {
       my( $description, $type, $optional, $name ) = (q(),$1,$2,$3);
-      if( $name && $name =~ s{\s+-\s+($.*)\Z}{}mxs ) {
+      if( $name && $name =~ s{\s+-\s+(.*)\Z}{}mxs ) {
         $description = $1;
       }
       $current_sub->set_documented;
@@ -554,24 +564,41 @@ sub get_details_file {
       next;
     }
 
+    # Format of #@returns line is (TYPE DESC?)OPT? {repeated foreach parameter
+    #  - TYPE is a non-white space string { can be postfixed with [] or {} to indicate an arrayref/hashref
+    #  - DESC is a string - not containing a '(' (optional) - and cannot be set if name isn't set
+    #  - OPT  is a flag (*+?) to represent 0+, 1+ or 0/1 respectively
+    if( $line =~ m{\A[#][@]returns\s*(.*)}mxs ) {
+      $current_sub->set_documented;
+      my $params = $1;
+      while( $params =~ s{\A[(](\S+?)(?:\s+(.*?)\s*)?[)]([*+?]?)(\s.*|)\Z}{$4}mxs ) {
+        my( $type, $optional, $description ) = (q(),$1,$3,$2);
+        $current_sub->push_return( $type, $optional, $description );
+        $params =~ s{\A\s+}{}mxs;
+      }
+      $file_object->empty_line;
+      next;
+    }
+    # Format of #@return line is (TYPE)OPT? DESC 
+    #  - TYPE is a non-white space string { can be postfixed with [] or {} to indicate an arrayref/hashref
+    #  - DESC is a string (optional)
+    #  - OPT  is a flag (*+?) to represent 0+, 1+ or 0/1 respectively
     if( $line =~ m{\A[#][@]return\s*[(](\S+?)[)]([*+?]?)(?:\s+(.*))?\Z}mxs ) {
       my( $type, $optional, $description ) = ($1,$2,$3);
       $current_sub->set_documented;
-      $current_sub->set_return_type( $type, $optional );
-      $current_sub->set_return_desc( $description );
+      $current_sub->push_return( $type, $optional, $description );
       $file_object->empty_line;
       next;
     }
     if( $line =~ m{\A[#][@]return\s*\Z}mxs ) {
       $current_sub->set_documented;
-      $current_sub->set_return_type( '-none-' );
-      $current_sub->set_return_desc( '-none-' );
+      $current_sub->push_return( '-none-', q(), '-none-' );
       $file_object->empty_line;
       next;
     }
     if( $line =~ m{\A[#]{2}\s?(.*)}mxs && $flag ) {
       $current_sub->set_documented;
-      my $note = $1;
+      my $note = $1||qq(\n);
       if( $note !~ m{\A\w}mxs ) {
         $flag = 2;
       }
@@ -1074,8 +1101,15 @@ Function documentation is in the form of #@/## comments just after the "sub name
         + #@param (Pagesmith::Adaptor) DB adaptor
         + #@param (int)? user id - User's ID from session cookie
     * as above
-* #@return (type)[?+*] name - description
-    * value returned - notes as @param
+* #@returns (type description)[?+*] 
+    * Value/object returned
+    * e.g.
+        + #@returns (Pagesmith::Adaptor DB adaptor) (int User's ID from session cookie)
+    * see notes for @params - note doesn't have name in definition
+* #@return (type)[?+*] description
+    * Note one line per value/object
+    * Value/object returned
+    * see notes for @params - note doesn't have name in definition
 * #@class (type)
     * description of method as either Getter, Setter or Accessor
 * ## - general documentation - note this is split into a single paragraph description - followed by futher notes
