@@ -2,7 +2,7 @@ $('.branch span').on( 'click', function(){ $(this).parent().toggleClass('coll');
 
 $(document).ready(function() {
   // to show it in an alert window
-  var link_node = $('a[href="'+window.location.pathname+'"]');
+  var link_node = $('a[href="'+window.location.pathname+'"], a[href="'+window.location.pathname.replace(/^.*\/([^\/]+)$/,'$1')+'"]');
   link_node.parents('.coll').toggleClass('coll');
 });
 
