@@ -120,7 +120,7 @@ sub add_head {
   my ( $self, $chunk ) = @_;
   chomp $chunk;
   $chunk =~ s{\s+\Z}{}mxs;    ## Remove trailing whitespace.
-  if ( $chunk =~ m{\AHTTP/(\d[.]d)\s*(\d+)\s*(.*)}mxs ) {    ## Handle the HTTP line
+  if ( $chunk =~ m{\AHTTP/(\d[.]\d)\s*(\d+)\s*(.*)}mxs ) {    ## Handle the HTTP line
     $self->{'http_version'} = $1;
     $self->{'code'}         = $2;
     $self->{'text'}         = $3;
