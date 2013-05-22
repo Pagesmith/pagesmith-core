@@ -26,12 +26,12 @@ use File::Basename qw(dirname);
 use Sys::Hostname::Long qw(hostname_long);
 use Cwd qw(abs_path);
 use Data::Dumper qw(Dumper);
-use Readonly qw(Readonly);
+use Const::Fast qw(const);
 use Getopt::Long qw(GetOptions);
 
-Readonly my $TO_MERGE       => 10;
-Readonly my $UPDATE_NO      => 50;
-Readonly my $DEF_SLEEP_TIME => 5;
+const my $TO_MERGE       => 10;
+const my $UPDATE_NO      => 50;
+const my $DEF_SLEEP_TIME => 5;
 
 my $ROOT_PATH;
 BEGIN {

@@ -15,9 +15,9 @@ use utf8;
 
 use version qw(qv); our $VERSION = qv('0.1.0');
 
-use Readonly qw(Readonly);
+use Const::Fast qw(const);
 
-Readonly my $MAX_VALUE => 10;
+const my $MAX_VALUE => 10;
 use DBI;
 use Data::Dumper;
 
