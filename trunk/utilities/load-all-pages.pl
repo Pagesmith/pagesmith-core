@@ -22,17 +22,17 @@ use HTML::Entities qw(encode_entities);
 use English qw(-no_match_vars $PROGRAM_NAME $EVAL_ERROR);
 use File::Basename qw(dirname basename);
 use Cwd qw(abs_path);
-use Readonly qw(Readonly);
+use Const::Fast qw(const);
 use Getopt::Long qw(GetOptions);
 use Time::HiRes qw(time sleep);
 
 # Define constants and data-structures
 
-Readonly my $URL_MAX_LENGTH => 120;
-Readonly my $SLEEP_PERIOD   => 0.001;
-Readonly my $RATE           => 5;
-Readonly my $TIME_OUT       => 60;
-Readonly my $MAX_TRIES      => 5;
+const my $URL_MAX_LENGTH => 120;
+const my $SLEEP_PERIOD   => 0.001;
+const my $RATE           => 5;
+const my $TIME_OUT       => 60;
+const my $MAX_TRIES      => 5;
 
 my $ROOT_PATH;
 BEGIN { $ROOT_PATH = dirname(dirname(abs_path($PROGRAM_NAME))); }
