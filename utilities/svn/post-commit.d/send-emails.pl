@@ -15,10 +15,10 @@ use utf8;
 
 use version qw(qv); our $VERSION = qv('0.1.0');
 
-use Readonly qw(Readonly);
+use Const::Fast qw(const);
 
-Readonly my $WRAP_COLUMNS  => 72;
-Readonly my $DEFAULT_EMAIL => 'microsite-commits@sanger.ac.uk';
+const my $WRAP_COLUMNS  => 72;
+const my $DEFAULT_EMAIL => 'microsite-commits@sanger.ac.uk';
 
 use Carp qw(croak);
 use Cwd qw(abs_path);

@@ -17,10 +17,10 @@ use utf8;
 
 use version qw(qv); our $VERSION = qv('0.1.0');
 
-use Readonly qw(Readonly);
+use Const::Fast qw(const);
 
-Readonly my $MIN_LENGTH => 12;
-Readonly my $MIN_WORDS  => 2;
+const my $MIN_LENGTH => 12;
+const my $MIN_WORDS  => 2;
 
 use Cwd            qw(abs_path);
 use English        qw(-no_match_vars $PROGRAM_NAME);

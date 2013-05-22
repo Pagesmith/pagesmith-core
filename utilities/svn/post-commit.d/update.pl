@@ -18,7 +18,7 @@ use version qw(qv); our $VERSION = qv('0.1.0');
 use Cwd qw(abs_path);
 use English qw(-no_match_vars $PROGRAM_NAME);
 use File::Basename qw(dirname);
-use Readonly qw(Readonly);
+use Const::Fast qw(const);
 
 my $ROOT_PATH;
 BEGIN {
@@ -26,7 +26,7 @@ BEGIN {
 }
 use lib "$ROOT_PATH/lib";
 
-Readonly my $AT_A_TIME => 10;
+const my $AT_A_TIME => 10;
 
 use Pagesmith::Utils::SVN::Support;
 use Pagesmith::Utils::SVN::Config;
