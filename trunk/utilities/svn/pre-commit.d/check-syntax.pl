@@ -15,11 +15,11 @@ use utf8;
 
 use version qw(qv); our $VERSION = qv('0.1.0');
 
-use Readonly          qw(Readonly);
+use Const::Fast       qw(const);
 
-Readonly my $SELF_FILE => oct 700;
-Readonly my $SPACER => "------------------------------------------------------------------------------\n";
-Readonly my $WRAP_COLUMNS => 72;
+const my $SELF_FILE => oct 700;
+const my $SPACER => "------------------------------------------------------------------------------\n";
+const my $WRAP_COLUMNS => 72;
 use Carp              qw(croak);
 use Config::IniFiles;
 use Cwd               qw(abs_path);
