@@ -62,11 +62,10 @@ sub create {
                        : (any { !exists $h_types{$_->{'code'}} } @unique_cols) ? 0
                        :                                                       1
                        ;
-
     my $method_name     = $by eq q(!) ? "get_one_$type_ky"
                         : $by eq q(_) ? "get_all_$type_ky"
                         : $by eq q(.) ? "get_$type_ky"
-                        :               "get_${type_ky}_by_$by"
+                        :               "get_${type_ky}_by_".join q(_), map { $self->ky( $_ ) } split m{_}mxs, $by
                         ;
 
     my $extra_pars     = join q(),   map { sprintf ', $%s', $self->ky($_) } @types; ## no critic (InterpolationOfMetachars)
@@ -85,7 +84,7 @@ sub create {
       my $alias = $self->ky($obj_ref->{'alias'});
       if( exists $h_types{$obj_ref->{'alias'}} ) {
         ## Object used in filter
-        $param_doc_string .= sprintf qq(\n#\@param (Pagesmith::Adaptor::%s::%s|integer %s)), $self->namespace, $obj_ref->{'type'}, $alias;
+        $param_doc_string .= sprintf qq(\n#\@param (Pagesmith::Adaptor::%s::%s|integer) %s), $self->namespace, $obj_ref->{'type'}, $alias;
         $sql_pars   .= sprintf ",\n    ref \$%1\$s ? \$%1\$s->id : \$%1\$s", $alias;
         $sql_pars_x .= sprintf ",\n    \$%s->id",   $alias;
         my $cols    =  sprintf '? as %s_id', $alias;
@@ -104,7 +103,7 @@ sub create {
       }
     }
     foreach my $col_ref (grep { exists $h_types{$_->{'code'}} } @unique_cols ) {
-      $param_doc_string .= sprintf qq(\n#\@param (scalar %s)), $col_ref->{'code'};
+      $param_doc_string .= sprintf qq(\n#\@param (scalar) %s), $col_ref->{'code'};
       $sql_pars_x .= sprintf ",\n    \$%s", $col_ref->{'code'};
     }
     my $object_cols = join ",\n           ", @object_cols;
@@ -118,8 +117,7 @@ sub %1$s {
 ## Fetch %10$s from database
   my( $self%2$s )  = @_;
   my $sql = '
-    select %3$s'.
-    $self->data_cols.'
+    select %3$s'.$DATA_COLUMNS.'
       from %4$s%5$s';
   return $self->%6$s( $sql%7$s )%8$s;
 }
@@ -169,7 +167,7 @@ sub update {
   my( $self, $pars ) = @_;
 
   my $sql = '
-    update elastic_net
+    update %1$s
        set %5$s
      where %6$s';
 
@@ -191,12 +189,10 @@ sub update {
 %3$s
 use base qw(Pagesmith::Adaptor::%1$s);
 
+use Const::Fast qw(const);
 ## no critic (ImplicitNewlines)
 
-sub data_cols {
-  my $self = shift;
-  return q(%4$s);
-}
+const my $DATA_COLUMNS => q(%4$s);
 
 ## ----------------------------------------------------------------------
 ## Store and update methods

@@ -16,7 +16,7 @@ use utf8;
 
 use version qw(qv); our $VERSION = qv('0.1.0');
 
-use base qw(Pagesmith::Utils::CodeWriter::Base);
+use base qw(Pagesmith::Utils::CodeWriter);
 
 sub base_class {
   my $self = shift;
@@ -57,6 +57,15 @@ sub admin {
     \$self->add_section( 'Administration of $type objects' );
     \$self->set_next_text( 'Create' );";
   }
+  my $populate_object_code = q();
+  my $update_object_code   = q();
+  my $create_object_code   = q();
+  my $max_prop_length      = 0;
+  foreach my $prop ( @{$conf->{'properties'}} ) {
+    next unless exists $prop->{'colname'};
+    $max_prop_length = length $prop->{'colname'} if length $prop->{'colname'} > $max_prop_length;
+  }
+  $max_prop_length = - $max_prop_length - 2;
   foreach my $prop ( @{$conf->{'properties'}} ) {
     $init_form_elements .= "\n";
     if( $prop->{'type'} eq 'section' ) {
@@ -67,9 +76,11 @@ sub admin {
       $init_form_elements .= sprintf q(
     $self->add_section( '%s' )), $prop->{'code'};
       $init_form_elements .= sprintf q(
-      ->set_next( '%s' )) if exists $prop->{'next'};
+      ->set_next( '%s' )), $self->addslash($prop->{'next'}) if exists $prop->{'next'};
       $init_form_elements .= sprintf q(
-      ->set_caption( '%s' )),$prop->{'caption'} if exists $prop->{'caption'};
+      ->set_caption( '%s' )), $self->addslash($prop->{'caption'}) if exists $prop->{'caption'};
+      $init_form_elements .= sprintf q(
+      ->set_notes( '%s' )), $self->addslash($prop->{'notes'}) if exists $prop->{'notes'};
       $init_form_elements .= q(;);
       next;
     }
@@ -79,12 +90,45 @@ sub admin {
          ->set_optional;), $prop->{'colname'}||$prop->{'code'};
       next;
     }
+    if( $prop->{'multiple'} ) {
+      $populate_object_code .= sprintf q(
+  $self->element( '%*s )->set_obj_data( [$self->object->get_%*s );),
+        $max_prop_length, "$prop->{'colname'}'",
+        $max_prop_length, "$prop->{'colname'}s]",
+        ;
+      $update_object_code   .= sprintf q[
+  $self->object->set_%*s $self->element( '%*s )->multi_values );],
+        $max_prop_length, "$prop->{'colname'}s(",
+        $max_prop_length, "$prop->{'colname'}'",
+        ;
+      $create_object_code   .= sprintf q[
+  $new_obj->set_%*s $self->element( '%*s )->multi_values );],
+        $max_prop_length, "$prop->{'colname'}s(",
+        $max_prop_length, "$prop->{'colname'}'",
+        ;
+    } else {
+      $populate_object_code .= sprintf q(
+  $self->element( '%*s )->set_obj_data( [$self->object->get_%*s );),
+        $max_prop_length, "$prop->{'colname'}'",
+        $max_prop_length, "$prop->{'colname'}]",
+        ;
+      $update_object_code   .= sprintf q[
+  $self->object->set_%*s $self->element( '%*s )->scalar_value );],
+        $max_prop_length, "$prop->{'colname'}(",
+        $max_prop_length, "$prop->{'colname'}'",
+        ;
+      $create_object_code   .= sprintf q[
+  $new_obj->set_%*s $self->element( '%*s )->scalar_value );],
+        $max_prop_length, "$prop->{'colname'}(",
+        $max_prop_length, "$prop->{'colname'}'",
+        ;
+    }
     $init_form_elements .= sprintf q(
       $self->add('%s','%s')
         ->set_caption( '%s' )),
       $prop->{'type'},
       $prop->{'colname'}||$prop->{'code'},
-      $prop->{'caption'}||$self->hr( $prop->{'colname'}||$prop->{'code'});
+      $self->addslash( $prop->{'caption'}||$self->hr( $prop->{'colname'}||$prop->{'code'}) );
     if( exists $prop->{'multiple'} && $prop->{'multiple'} ) {
       $init_form_elements .= q(
         ->set_multiple);
@@ -100,6 +144,9 @@ sub admin {
       $init_form_elements .= sprintf q(
         ->set_optional);
     }
+    $init_form_elements .= sprintf q(
+        ->set_notes( '%s' )), $self->addslash($prop->{'notes'}) if exists $prop->{'notes'};
+
     if( $prop->{'type'} eq 'DropDown' ) {
       if( exists $prop->{'multiple'}  && $prop->{'multiple'} ||
           exists $prop->{'firstline'} && $prop->{'firstline'} ||
@@ -120,7 +167,6 @@ sub admin {
     }
     $init_form_elements .= q(;);
   }
-
   my $perl = sprintf q(package Pagesmith::MyForm::%1$s::Admin::%2$s;
 
 ## Admininstration form for objects of type %2$s
@@ -133,23 +179,22 @@ use Pagesmith::Object::%1$s::%2$s;
 
 sub fetch_object {
   my $self = shift;##
-  my $db_obj        = $self->adaptor( '%2$s' )->fetch( $self->{'uid'} );
+  my $db_obj        = $self->adaptor( '%2$s' )->fetch_%8$s( $self->{'object_id'} );
   $self->{'object'} = $db_obj if $db_obj;
   return $db_obj;
 }
 
 sub populate_object_values {
   my $self = shift;
-  return $self unless $self->object;
-  ## Copy values from object into form...
-  %4$s
+  return $self unless $self->object && ref $self->object;
+%4$s
   return $self;
 }
 
 sub update_object {
   my $self = shift;
   ## Copy form values back to object...
-  %5$s
+%5$s
   $self->object->store;
   return 1;
 }
@@ -158,7 +203,7 @@ sub create_object {
   my $self = shift;
   ## Creates new object with values from form...
   my $new_obj = $self->adaptor( '%2$s' )->create;
-  %6$s
+%6$s
   return unless $new_obj->store();
   $self->set_object( $new_obj )->set_object_id( $new_obj->uid );
   return 1;
@@ -217,10 +262,11 @@ sub initialize_form {
     $self->namespace,           ## %1$s
     $type,                      ## %2$s
     $self->boilerplate,         ## %3$s
-    q(## populate object code), ## %4$s
-    q(## update_object code),   ## %5$s
-    q(## create_object code),   ## %6$s
+    $populate_object_code,      ## %4$s
+    $update_object_code,        ## %5$s
+    $create_object_code,        ## %6$s
     $init_form_elements,        ## %7$s
+    $self->ky($type),           ## %8$s
     ;
 #@endraw
 ## use critic

@@ -66,6 +66,7 @@ sub run {
 #@params (self)
 ## Display tabs containing ajax containers for each of the components...
   my $self = shift;
+  return $self->login_required unless $self->user->logged_in;
 
   ## no critic (LongChainsOfMethodCalls)
   my $tabs = $self->tabs
@@ -105,6 +106,9 @@ sub run {
 #@params (self)
 ## Display admin for table for %2$s in %1$s
   my $self = shift;
+  return $self->login_required unless $self->user->logged_in;
+
+  $self->attach_user;
 
   ## Display tags for a search box!
 %4$s

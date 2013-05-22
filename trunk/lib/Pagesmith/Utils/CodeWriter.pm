@@ -24,6 +24,7 @@ use English qw(-no_match_vars $INPUT_RECORD_SEPARATOR);
 use Date::Format qw(time2str);
 use File::Basename qw(dirname);
 use File::Path qw(make_path);
+use List::MoreUtils qw(any);
 
 my %formats = qw(
   PosInt    d
@@ -44,6 +45,11 @@ sub new {
   };
   bless $self, $class;
   return $self;
+}
+
+sub user_audit_is_id {
+  my $self = shift;
+  return exists $self->{'conf'}{'users'}{'audit'} && $self->{'conf'}{'users'}{'audit'} eq 'id';
 }
 
 sub root {
@@ -97,10 +103,10 @@ sub boilerplate {
 ## Author         : %1$s <%2$s>
 ## Maintainer     : %1$s <%2$s>
 ## Created        : %3$s
-## Last commit by : $Author$
-## Last modified  : $Date$
-## Revision       : $Revision$
-## Repository URL : $HeadURL$
+## Last commit by : $Author:).q( $
+## Last modified  : $Date:).q( $
+## Revision       : $Revision:).q( $
+## Repository URL : $HeadURL:).q( $
 
 use strict;
 use warnings;
@@ -207,23 +213,29 @@ sub admin_table {
   my( $self, $type ) = @_;
   my $conf = $self->conf('objects',$type);
 ## no critic (InterpolationOfMetachars ImplicitNewlines)
+  my @prop = grep { $_->{'type'} ne 'section' } @{$conf->{'properties'}};
+  my $fetch = $self->ky( $type ).'s';
+  my @table_columns = grep { $_->{'tables'} && any { $_ eq 'admin' } @{$_->{'tables'}} } @prop;
+  $fetch = "partial_admin_$fetch" if @table_columns;
+  @table_columns = @prop unless @table_columns;
   my $column_defs = join qq(\n),
-    map { sprintf q(      { 'key' => '%s', 'label' => '%s', 'format' => '%s' },),
-          $_->{'colname'}||$_->{'code'},
+    map { sprintf q(      { 'key' => 'get_%s', 'label' => '%s', 'format' => '%s' },),
+          $_->{'colname'}.($_->{'multiple'}?'_string':q()),
           $_->{'caption'}||$self->hr( $_->{'colname'}||$_->{'code'}),
           exists $formats{ $_->{'type'} } ? $formats{ $_->{'type'} } : 'h',
     }
     grep { !exists $_->{'table'} || $_->{'table'} }
-    @{$conf->{'properties'}||[]};
+    @table_columns;
 
   return sprintf q(
   my $table = $self->my_table
     ->add_columns(
 %1$s
-      { 'key' => 'action', 'label' => 'Edit?', 'template' => 'Edit', 'link' => '/form/%2$s_Admin_%3$s?uid=[[h:uid]]' },
+      { 'key' => 'action', 'label' => 'Edit?', 'template' => 'Edit', 'link' => '/form/%2$s_Admin_%3$s/[[h:uid]]' },
     )
-    ->add_data( @{$self->adaptor( '%4$s' )->fetch_%5$ss||[]} );
-), $column_defs, $self->ns_comp, $self->comp( $type ), $type, $self->ky( $type );
+    ->add_data( @{$self->adaptor( '%4$s' )->fetch_%5$s||[]} );
+), $column_defs, $self->ns_comp, $self->comp( $type ), $type, $fetch;
+
 ## use critic
 }
 
@@ -239,4 +251,9 @@ sub relationships {
   return @rels;
 }
 
+sub no_audit {
+  my $self = shift;
+  return 1 if exists $self->{'conf'}{'skip_audit'} && $self->{'conf'}{'skip_audit'};
+  return;
+}
 1;
