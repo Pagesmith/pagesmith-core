@@ -24,18 +24,18 @@ use Date::Format qw(time2str);
 use File::Basename qw(dirname);
 use Cwd qw(abs_path);
 use Data::Dumper qw(Dumper);
-use Readonly qw(Readonly);
+use Const::Fast qw(const);
 use Getopt::Long qw(GetOptions);
 use Sys::Hostname qw(hostname);
 use List::MoreUtils qw(uniq);
 use IO::Handle;
 use Socket qw(inet_ntoa);
 
-Readonly my $TO_MERGE       => 10;
-Readonly my $UPDATE_NO      => 50;
-Readonly my $DEF_SLEEP_TIME => 5;
-Readonly my $DEF_CHECK_RUNS => 100;
-Readonly my $MAX_BLOCK_MULT => 30;
+const my $TO_MERGE       => 10;
+const my $UPDATE_NO      => 50;
+const my $DEF_SLEEP_TIME => 5;
+const my $DEF_CHECK_RUNS => 100;
+const my $MAX_BLOCK_MULT => 30;
 
 my $ROOT_PATH;
 BEGIN {

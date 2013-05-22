@@ -19,7 +19,6 @@ use version qw(qv); our $VERSION = qv('0.1.0');
 use File::Basename qw(dirname basename);
 use English qw(-no_match_vars $PROGRAM_NAME);
 use Cwd qw(abs_path);
-use Readonly qw(Readonly);
 use Getopt::Long qw(GetOptions);
 use Time::HiRes qw(time);
 
