@@ -22,7 +22,7 @@ use File::Basename qw(dirname basename);
 use Cwd qw(abs_path);
 use Data::Dumper;
 use Carp qw(croak);
-use Readonly qw(Readonly);
+use Const::Fast qw(const);
 use Getopt::Long qw(GetOptions);
 
 # Define constants and data-structures
