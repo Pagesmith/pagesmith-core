@@ -284,9 +284,9 @@ sub format_parameters {
   foreach (@{$self->{'parameters'}}) {
     next if $_->{'type'} eq 'self' || $_->{'type'} eq 'class';
     $return->add_entry(
-      $_->{'type'}||q(-),
       ("$_->{'name'}"||$_->{'type'}||q(-)).
       (exists $OPT_MAP->{$_->{'optional'}} ? $OPT_MAP->{$_->{'optional'}} : q()),
+      $_->{'type'}||q(-),
     );
     $return->add_entry( q(&nbsp;), $_->{'description'} ) if $_->{'description'};
   }
