@@ -29,14 +29,36 @@ use Pagesmith::Utils::CodeWriter::Schema;
 use Pagesmith::Utils::CodeWriter::Support;
 
 my $defn_map = {
-  'PosInt'    => { 'sql' => 'int unsigned', },
-  'NonNegInt' => { 'sql' => 'int unsigned', },
-  'Int'       => { 'sql' => 'int',          },
-  'Float'     => { 'sql' => 'double',       },
-  'Date'      => { 'sql' => 'date',         },
-  'DateTime'  => { 'sql' => 'datetime',     },
-  'String'    => { 'sql' => 'text',         },
+  'PosInt'       => { 'flag' => 'no', 'sql' => 'int unsigned', 'default' => 1, },
+  'NonNegInt'    => { 'flag' => 'no', 'sql' => 'int unsigned', 'default' => 0, },
+  'Int'          => { 'flag' => 'no', 'sql' => 'int',          'default' => 0, },
+  'Float'        => { 'flag' => 'no', 'sql' => 'double',       'default' => 0 },
+  'Date'         => { 'flag' => 'st', 'sql' => 'date',         'default' => '0000-00-00' },
+  'DateTime'     => { 'flag' => 'st', 'sql' => 'datetime',     'default' => '0000-00-00 00:00:00' },
+  'String'       => { 'flag' => 'st', 'sql' => 'varchar',      'default' => q() },
+  'AutoComplete' => { 'flag' => 'st', 'sql' => 'varchar',      'default' => q() },
+  'Text'         => { 'flag' => 'st', 'sql' => 'text',         'default' => q() },
+  'DropDown'     => { 'flag' => 'st', 'sql' => 'enum',         'default' => q() },
+  'YesNo'        => { 'flag' => 'st', 'sql' => 'enum',         'default' => q(No), 'values' => [qw(Yes No)] },
 };
+
+
+sub comp {
+  my ($self,$string) = @_;
+  $string =~ s{::}{_}mxsg;
+  return $string;
+}
+
+sub ky {
+  my ($self,$string) = @_;
+  $string =~ s{([[:lower:]\d])([[:upper:]])}{$1_$2}mxsg;
+  return lc $self->comp( $string );
+}
+
+sub id {
+  my ($self,$string) = @_;
+  return $self->ky($string).'_id';
+}
 
 sub new {
 #@params (self) (string root) path to root of filesystem to write files.
@@ -94,7 +116,17 @@ sub load_config {
   }
   foreach my $type ($self->objecttypes) {
     my ($uid_property) = grep { $_->{'unique'} && $_->{'unique'} eq 'uid' } @{$self->conf('objects',$type,'properties')||[]};
-    $self->{'conf'}{'objects'}{$type}{'uid_property'} = $uid_property || { ('code' => 'id', 'type' => 'PosInt', 'colname' => $self->id( $type )) };
+
+    unless( $uid_property ) {
+      $uid_property = { ('code' => $self->id( $type ), 'type' => 'PosInt', 'unique' => 'uid',  'function' => 'id') };
+      $self->{'conf'}{'objects'}{$type}{'properties'}||=[];
+      unshift @{$self->{'conf'}{'objects'}{$type}{'properties'}}, $uid_property;
+    }
+    $self->{'conf'}{'objects'}{$type}{'uid_property'} = $uid_property;
+
+    foreach ( @{$self->{'conf'}{'objects'}{$type}{'properties'}||[]} ) {
+      $_->{'colname'}||=$_->{'code'} unless $_->{'type'} eq 'section';
+    }
   }
   return $self->{'conf'};
 }
@@ -186,6 +218,7 @@ sub conf {
 }
 
 ## Reporting code...
+
 sub msg {
   my ($self,@entries) = @_;
   print "@entries\n"; ## no critic (RequireChecked);
