@@ -23,7 +23,7 @@ sub init {    # Stub class that does nothing!
 
 sub new {
   my ( $class, $adpt, @pars ) = @_;
-  my $self = { '_adpt' => $adpt, 'ip' => undef, 'useragent' => undef };
+  my $self = { '_adpt' => $adpt, 'ip' => undef, 'useragent' => undef, 'partial' => 0 };
   bless $self, $class;
   $self->init(@pars);
   return $self;
@@ -169,4 +169,22 @@ sub set_ip_and_useragent {
   $self->adaptor->set_ip_and_useragent( $self );
   return $self;
 }
+
+sub flag_as_partial {
+  my $self = shift;
+  $self->{'is_partial'} = 1;
+  return $self;
+}
+
+sub flag_as_full {
+  my $self = shift;
+  $self->{'is_partial'} = 0;
+  return $self;
+}
+
+sub is_partial {
+  my $self = shift;
+  return $self->{'is_partial'};
+}
+
 1;
