@@ -292,6 +292,14 @@ sub option_arrayref {
   return [$ret];                                      ## Scalar so wrap it in array ref!
 }
 
+sub par_part {
+  my( $self, $idx ) = @_;
+  return if $idx >= @{ $self->{'_pars'} };
+  my $par  = $self->{'_pars'}[$idx];
+  return $par->{'value'} if ref $par;
+  return $par;
+}
+
 sub next_par {
 #@param (self)
 #return (scalar) first parameter
