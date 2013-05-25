@@ -24,6 +24,7 @@ var XHTMLValidator = {
   },
 
   trim: function (s) {
+    s+='';
     return s.replace(/\s+/g, ' ').replace(/^\s+/, '').replace(/\s+$/, '');
   },
 
