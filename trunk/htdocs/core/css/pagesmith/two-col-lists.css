@@ -5,7 +5,7 @@
 
 .twocol dt a       { color: #663300; text-decoration: underline; font-weight: bold; }
 .twocol dt a:hover { color:#ff7c0d; }
-.twocol dd         { float:right; width:77%; color:#000; padding:0 5px; margin: 1px 0 0.5em 0; clear: right}
+.twocol dd         { float:right; width:76%; color:#000; padding:0 5px; margin: 1px 0 0.5em 0; clear: right}
 
 dl.twocol { margin-top: 0.5em; }
 dl.twocol dl.twocol { margin: 0; }
