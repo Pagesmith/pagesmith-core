@@ -1,4 +1,4 @@
-$('.branch span').on( 'click', function(){ $(this).parent().toggleClass('coll');return false; } );
+$('.branch > span').on( 'click', function(){ $(this).parent().toggleClass('coll');return false; } );
 
 $(document).ready(function() {
   // to show it in an alert window
