@@ -15,7 +15,10 @@ PageSmith.ajax = {
     return PageSmith.flags.a === 'e';
   },
   autoload: function (x) {
-    var url = x.attr('title'), m, d;
+    var m, d,
+        url       = x.attr('title'),
+        ajax_pars = {type:'GET',url:url,data:'',dataType:'text'};
+
     if (x.hasClass('nocache')) {
       d = new Date();
       url += (url.match(/\?/) ? ';' : '?') + '__=' + d.getTime();
@@ -26,19 +29,22 @@ PageSmith.ajax = {
       /*jslint regexp: false */
       if (m) {
       // Length is long! and can be split into URL & querystring
-        $.post(m[1], m[2], function (data, status) {
-          x.replaceWith(data).attr('title', 'Additional content loaded');
-        });
-      } else {
-        $.get(url, '', function (data, status) {
-          x.replaceWith(data).attr('title', 'Additional content loaded');
-        });
+        ajax_pars.type = 'POST';
+        ajax_pars.url  = m[1];
+        ajax_pars.data = m[2];
       }
-    } else {
-      $.get(url, '', function (data, status) {
-        x.replaceWith(data).attr('title', 'Additional content loaded');
-      });
     }
+    ajax_pars.success = function(data,status) {
+      x.replaceWith(data);
+    };
+    ajax_pars.error = function(xhr,status,message) {
+      x.replaceWith('<p>Unable to load content</p>').prop('title',message);
+    };
+    $.ajax(ajax_pars).done( function(dt,st,xh) {
+      x.replaceWith(dt);
+    } ).fail( function(xh,st,ms) {
+      x.replaceWith('<p>Unable to load content</p>').prop('title',ms);
+    });
     x.attr('title', 'Loading additional content').removeClass('ajax');
     return 0;
   },
