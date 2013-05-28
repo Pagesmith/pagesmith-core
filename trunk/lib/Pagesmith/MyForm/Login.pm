@@ -92,7 +92,7 @@ sub initialize_form {
   $self->add_stage( 'Login' )->set_next('Login');
     $self->add_section( 'Login' );
       $self->add( 'Email',   'email' )->add_class( 'medium' );
-      $self->add( 'Password', "p$id" )->set_caption('Password')->set_do_not_store;
+      $self->add( 'Password', "p$id" )->set_caption('Password')->set_do_not_store->remove_class('_password'); ## no critic (LongChainsOfMethodCalls)
       $self->add( 'CheckBox', 'remember_me' )->remove_layout('eighty20')->set_optional();
       $self->add( { 'type' => 'Information', 'caption' => 'Please note we use cookies to identify your user, and by logging in you accept that we will write a cookie to your computer.' } );
 
