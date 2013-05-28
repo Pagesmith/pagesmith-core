@@ -31,7 +31,7 @@ sub widget_type {
 sub validate {
   my $self = shift;
   return $self->set_valid if $self->value =~ m{\A\S{6,16}\Z}mxs;
-  return $self->set_invalid;
+  return $self->set_valid;
 }
 
 sub element_class {
