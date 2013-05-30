@@ -122,7 +122,7 @@ sub run {
 
   my $user_info = eval { $resp->is_success ? $self->json_decode( $resp->content ) : undef; };
   return $self->error( 'connection failed', $form ) unless $user_info && ref $user_info eq 'HASH';
-
+  $user_info = $user_info->{'Profile'} if exists $user_info->{'Profile'};
   ## Create user session and write cookie...
   return $self->create_session( $user_info, $system_key )->redirect( $form->destroy_object->attribute('ref') );
 }
@@ -130,20 +130,20 @@ sub run {
 
 sub create_session {
   my ( $self, $user_info, $system_key ) = @_;
-  ## no critic (LongChainsOfMethodCalls)
-  my $email = exists $user_info->{'email'}  ? $user_info->{'email'}
-            : exists $user_info->{'emails'} ? $user_info->{'emails'}{'account'}
-            :                                 undef
-            ;
-  return $self unless $email;
-  Pagesmith::Session::User->new( $self->r )->initialize({
-    'username' => $email,
-    'name'     => $user_info->{'name'},
-    'oauth_id' => $user_info->{'id'},
-    'method'   => 'OAuth2::'.$system_key,
-  })->store->write_cookie;
-  ## use critic
+  my $user_details = {
+    'method' => 'OAuth2::'.$system_key,
+    'email'  => exists $user_info->{'email'}         ? $user_info->{'email'}
+              : exists $user_info->{'PrimaryEmail'}  ? $user_info->{'PrimaryEmail'}
+              : exists $user_info->{'emails'}        ? $user_info->{'emails'}{'account'}
+              :                                        undef,
+    'name'   => exists $user_info->{'name'}          ? $user_info->{'name'}
+              : exists $user_info->{'Name'}          ? $user_info->{'Name'}
+              :                                        undef,
+    'id'     => exists $user_info->{'id'}            ? $user_info->{'id'}
+              : exists $user_info->{'CustomerId'}    ? $user_info->{'CustomerId'}
+              :                                        undef,
+  };
+  Pagesmith::Session::User->new( $self->r )->initialize($user_details)->store->write_cookie if $user_details->{'email'};
   return $self;
-
 }
 1;
