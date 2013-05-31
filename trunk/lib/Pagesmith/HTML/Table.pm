@@ -18,7 +18,6 @@ use version qw(qv); our $VERSION = qv('0.1.0');
 use base qw(Pagesmith::Support);
 
 use HTML::Entities qw(encode_entities);
-use Date::Format qw(time2str);
 use Const::Fast qw(const);
 use POSIX qw(floor);
 use Scalar::Util qw(blessed);
@@ -292,12 +291,6 @@ sub columns {
   return @{ $self->{'columns'} };
 }
 
-sub _time_str {
-  my( $self, $format, $val ) = @_;
-  return q() unless $val;
-  return time2str( $format, $val );
-}
-
 sub expand_link {
   my( $self, $href_template, $val, $row, $text ) = @_;
   return q() if $text eq q();
@@ -350,24 +343,24 @@ sub expand_format {
   }
   $f ||= 'h';
   return $f eq 'r'                    ?                                                $val         # pass through raw!
-       : $f eq 'y'                    ?                                  $val ? 'yes' : 'no'        # render as yes no!
+       : $f eq 'y'                    ?                                  ($val ? 'yes' : 'no')      # render as yes no!
        : $f eq 'h'                    ? encode_entities(                               $val )       # html encode
        : $f eq 'u'                    ? uri_escape_utf8(                               $val )       # url escape
        : $f eq 'hf'                   ? $self->full_encode(                            $val )       # full html encode
        : $f eq 'uf'                   ? $self->full_escape(                            $val )       # full url escape
-       : $f eq 'email'                ? $self->safe_email(                            $val )       # <a>email</a>
-       : $f =~ m{\Aurl(\d*)\Z}mxs     ? $self->safe_link(                             $val, $1 )   # <a>url</a>
-       : $f eq 'date'                 ? $self->_time_str( $DATE_FORMAT,                $self->munge_date_time( $val ) )
-       : $f eq 'datetime'             ? $self->_time_str( "$DATE_FORMAT $TIME_FORMAT", $self->munge_date_time( $val ) )
-       : $f eq 'time'                 ? $self->_time_str( $TIME_FORMAT,                $self->munge_date_time( $val ) )
-       : $f =~ m{\Adatetime(.+)\Z}mxs ? $self->_time_str( $1,                          $self->munge_date_time( $val ) )
+       : $f eq 'email'                ? $self->safe_email(                             $val )       # <a>email</a>
+       : $f =~ m{\Aurl(\d*)\Z}mxs     ? $self->safe_link(                              $val, $1 )   # <a>url</a>
+       : $f eq 'date'                 ? $self->time_str( $DATE_FORMAT,                 $self->munge_date_time( $val ) )
+       : $f eq 'datetime'             ? $self->time_str( "$DATE_FORMAT $TIME_FORMAT",  $self->munge_date_time( $val ) )
+       : $f eq 'time'                 ? $self->time_str( $TIME_FORMAT,                 $self->munge_date_time( $val ) )
+       : $f =~ m{\Adatetime(.+)\Z}mxs ? $self->time_str( $1,                           $self->munge_date_time( $val ) )
        : $f eq 'currency'             ? sprintf( q(&pound;%0.2f),                      $val||0 )       # &pound;0.00
        : $f eq 't'                    ? $self->commify(                                $val )       # n,nnn,nnn,nnn
        : $f eq 'z'                    ? $self->format_size(                            $val, 0  )   # nnnn K/M/G/...
        : $f =~ m{\Az(\d+)\Z}mxs       ? $self->format_size(                            $val, $1 )   # nnnn.mm K/M/G/...
        : $f eq 'k'                    ? $self->format_fixed(                           $val, 'k', 0 ) # nnnn K
        : $f eq 'm'                    ? $self->format_fixed(                           $val, 'm', 0 ) # nnnn M
-       : $f =~ m{\A([k|m])(\d+)\Z}mxs       ? $self->format_fixed(                     $val, $1, $2 ) # nnnn.mm K/M
+       : $f =~ m{\A([k|m])(\d+)\Z}mxs ? $self->format_fixed(                           $val, $1, $2 ) # nnnn.mm K/M
        : $f =~ m{\At(\d+)\Z}mxs       ? $self->commify( sprintf qq(%0.$1f),            $val||0 )      # n,nnn,nnn,nnn.mm
        : $f =~ m{\Af(\d+)\Z}mxs       ? sprintf( qq(%0.$1f),                           $val||0 )       # Fixed decimal
        : $f =~ m{\Apm(\d+)\Z}mxs      ? sprintf( qq(%s%0.$1f),                         $val||0>0?q(+):q(), $val||0 )       # Fixed decimal (with +/-)
