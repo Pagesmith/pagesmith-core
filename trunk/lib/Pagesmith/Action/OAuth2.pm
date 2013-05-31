@@ -83,11 +83,18 @@ sub run {
 
   my $state = $self->param('state');
 
+  ## First time through this script there will be no state parameter
+  ## So we need to redirect to create a state token and redirect to
+  ## the oauth2 providers "get_code" url - the state is taken from
+  ## the 2nd URL path parameter (which is the key to an active form
+  ## object. The state is the code of the form object...
   return $self->send_to_oauth2_provider( $redirect_url, $client_id, $conf ) unless $state;
 
+  ## Get the form object - and die if the form doesn't exist
   my $form = Pagesmith::Utils::FormObjectCreator->new( $self->r, $self->apr )->form_from_code( $state );
   return $self->error( 'Unable to authenticate user, erroneous URL' ) unless $form;
 
+  ## We have not been redirected with a code response so again fail!
   my $code  = $self->param('code')||q();
   return  $self->error( 'Unable to authenticate user', $form ) unless $code;
 
