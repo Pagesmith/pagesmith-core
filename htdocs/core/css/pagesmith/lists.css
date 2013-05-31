@@ -14,6 +14,7 @@ ul li, #rhs ul.bullet li { list-style-type:none; background: url(/core/gfx/icons
 ul ol li { background: none; }
 ol li { list-style: decimal; padding-left: 0; margin-left: 3em; }
 ol li ul li { list-style:none; padding-left: 30px; margin-left: 0; }
+ol.lower-alpha > li {list-style-type:lower-alpha}
 
 ul.col_2, ul.col_3, ul.col_4, ul.col_5, ul.boxes, #rhs ul { padding: 0 10px 0 0; }
 #rhs ul ul { padding: 0; }
