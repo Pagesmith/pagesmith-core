@@ -26,6 +26,7 @@ const my $DOFF                  => 1_900;
 use Carp qw(cluck carp);
 use Data::Dumper;
 use Data::UUID;
+use Date::Format qw(time2str);
 use English qw(-no_match_vars $EVAL_ERROR $CHILD_ERROR);
 use HTML::Entities qw(encode_entities);
 use IPC::Run3 qw(run3);
@@ -38,6 +39,12 @@ use Pagesmith::Config;
 use Pagesmith::Adaptor;
 
 my $failed_modules;
+
+sub time_str {
+  my( $self, $format, $val ) = @_;
+  return q() unless $val;
+  return time2str( $format, $val );
+}
 
 sub init_events {
 #@params (self)
