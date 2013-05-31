@@ -60,8 +60,9 @@ sub run {
     my $cache_key = $component->cache_key;
     if ( $cache_key && can_cache('components') ) {
       ## We cache the contents of the response...
-      my $ch = Pagesmith::Cache->new( 'component', "$action|$cache_key" );
-      $return = $ch->get();
+      (my $action_key = $action)=~s{\W}{_}mxsg;
+      my $ch = Pagesmith::Cache->new( 'component', "$action_key|$cache_key" );
+      $return = $self->flush_cache('component') ? undef : $ch->get();
       unless ($return) {
         $return = eval { $component->execute; };
         if ($EVAL_ERROR) {
