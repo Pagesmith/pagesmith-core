@@ -88,14 +88,14 @@ sub lwp_get {
   my ( $self,$encoded_request ) = @_;
 
   my $res = eval {
-    my $req = HTTP::Request->new('GET' => $self->{'server'}.$self->{'action'}.$self->{'api_key'}.q(/).$encoded_request);
+    my $req = HTTP::Request->new('GET' => $self->{'server'}.q(/).$self->{'action'}.q(/).$self->{'api_key'}.q(/).$encoded_request);
        $req->content_type('application/x-www-form-urlencoded');
        $req->content();
     return LWP::UserAgent->new( '-agent'   => $AGENT_NAME.$VERSION,
-                                '-timeout' => $DEFAULT_TIMEOUT,
+                                '-timeout' => $self->{'AuthTimeout'} || $DEFAULT_TIMEOUT,
                                )->request( $req );
   } || q();
-  # print {*STDERR} "LWP GET CALLED: $api_key/$encoded_request\n";
+  # print {*STDERR} "LWP GET CALLED: $self->{'api_key'}/$encoded_request\n";
   print {*STDERR} $EVAL_ERROR if $EVAL_ERROR; ##no critic (checkedsyscalls)
   # print {*STDERR} Dumper($res);
   return $res;
