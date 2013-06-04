@@ -17,11 +17,15 @@ use version qw(qv); our $VERSION = qv('0.1.0');
 
 use base qw(Exporter);
 
-use Apache2::Const qw(SERVER_ERROR OK NOT_FOUND);
+use Apache2::Const qw(SERVER_ERROR OK NOT_FOUND HTTP_OK);
 use APR::URI;
 use English qw(-no_match_vars $EVAL_ERROR);
+use Const::Fast qw(const);
+
+const my %WRAPPABLE_STATUSES => map { ($_=>1) } qw(0 200 400 401 403 404 405 500 501 502 503);
 
 use Pagesmith::ConfigHash qw(can_cache can_name_space);
+use Pagesmith::Apache::Decorate;
 use Pagesmith::Action;
 use Pagesmith::Cache;
 use Pagesmith::Support;
@@ -41,21 +45,20 @@ sub handler {
   my $r = shift;
   return my_handler(
     sub {
-      my( $apache_r, $rpath, $path_info ) = @_;
-      if ( $rpath =~ m{\A/(\w+)}mxs ) {
-        unshift @{$path_info}, $1 unless $1 eq 'action';
-      }
+      my( $apache_r, $path_info ) = @_;
+      shift @{$path_info} if @{$path_info} && $path_info->[0] eq 'action';
       return;
     },
     $r,
   );
 }
 
+## no critic (ExcessComplexity)
 sub my_handler {
   my( $path_munger, $r ) = @_;
   my $t = Pagesmith::Support->new()->set_r( $r );
 
-  my @t         = split m{(/)}mxs, $r->path_info;
+  my @t         = split m{(/)}mxs, $r->uri;
   my @path_info;
   my $y;
   while (@t) {
@@ -73,7 +76,7 @@ sub my_handler {
   ## which is stored so that it can be retrieved by the action
   ## component later
 
-  my $extra = &{$path_munger}( $r, $parsed->rpath, \@path_info );
+  my $extra = &{$path_munger}( $r, \@path_info );
 
   my $module_name = $t->safe_module_name( shift @path_info );
   ## Check namespace ...
@@ -109,14 +112,19 @@ sub my_handler {
   $obj_action->enable_caching;
   ## Look up value in cache
   $module_name =~ s{::}{__}mxgs;
-  my $ch = Pagesmith::Cache->new( 'action', "$module_name|$cache_key" );
-  $r->headers_out->set( 'X-Pagesmith-Cache', "$module_name|$cache_key" );
+  my $ch = Pagesmith::Cache->new( 'action',   "$module_name|$cache_key" );
   unless( $t->flush_cache('action') ) {
     my $c = $ch->get;
     if( $c ) {
       $r->content_type( $c->{'content_type'} ) if $c->{'content_type'};
+      if( $c->{'content_type'} =~ m{html}mxs ) {
+        $r->add_output_filter( \&Pagesmith::Apache::Decorate::handler ); ## no critic (CallsToUnexportedSubs)
+        $r->headers_out->set( 'X-Pagesmith-Decor', 'runtime' );
+      }
       $r->print( $c->{'content'} );
+      $r->set_content_length( length $c->{'content'} );
       $r->headers_out->set( 'X-Pagesmith-CacheFlag', 'Hit' );
+      $c->{'response_code'} = OK if $c->{'response_code'} eq HTTP_OK;
       return $c->{'response_code'};
     }
     $r->headers_out->set( 'X-Pagesmith-CacheFlag', 'Miss' );
@@ -128,12 +136,21 @@ sub my_handler {
     warn "ACTION: $class failed to execute: $EVAL_ERROR\n";
     return SERVER_ERROR;
   }
-  $ch->set( {
-    'content_type'  => $r->content_type,
-    'content'       => $obj_action->content,
-    'response_code' => $status,
-  }, $obj_action->cache_expiry );
+  if( $r->content_type =~ m{\A(?:text/html|application/xhtml[+]xml)\b}mxs &&
+      $r->headers_out->get('X-Pagesmith-Template')||q() ne 'No' &&
+      exists $WRAPPABLE_STATUSES{$status}
+  ) {
+    $r->headers_out->set('X-Pagesmith-Action', "$module_name|$cache_key" );
+    $r->headers_out->set('X-Pagesmith-Expiry', $obj_action->cache_expiry );
+  } else {
+    $ch->set( {
+      'content_type'  => $r->content_type,
+      'content'       => $obj_action->content,
+      'response_code' => $status,
+    }, $obj_action->cache_expiry );
+  }
   return $status;
 }
+## use critic
 
 1;
