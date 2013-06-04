@@ -30,26 +30,30 @@ use Date::Format qw(time2str);
 use Time::HiRes qw(time);
 
 use Pagesmith::ConfigHash qw(get_config site_key);
-use Pagesmith::Apache::Decorate;
+use Pagesmith::Apache::Action;
 use Pagesmith::Cache;
 
 sub handler {
   my $r       = shift;
   my $t       = time;
   my $tmp_url = q(^) . quotemeta( get_config('TmpUrl') || '/t/' ) . '(.*?)/(.*?)$';
-  if ( $r->uri =~ m{$tmp_url}mxs ) {
+  my $uri     = $r->uri;
+  if ( $uri =~ m{$tmp_url}mxs ) {
     ## push the handler...
     $r->handler('modperl');
     $r->notes->set( 'filename' => "$1|$2" );
     $r->filename( $tmp_url );
     $r->push_handlers( 'PerlResponseHandler' => \&send_content );
     return OK;
-  } elsif ( $r->uri =~ m{(?:/[.]svn/|/CVS/)}mxs ) {
+  } elsif ( $uri =~ m{(?:/[.]svn/|/CVS/)}mxs ) {
     return FORBIDDEN;
-  } else {
-    $r->add_output_filter( \&Pagesmith::Apache::Decorate::handler ); ##no critic (CallsToUnexportedSubs)
-    return DECLINED;
+  } elsif ( $uri =~ m{\A/(?:action|form|go|qr|error|login|logout|component)/}mxs ||
+            $uri =~ m{\A/(?:action|go|qr|error|login|logout|component)\Z}mxs ) {
+    $r->handler('modperl');
+    $r->push_handlers( 'PerlResponseHanlder'     => \&Pagesmith::Apache::Action::handler ); ## no critic (CallsToUnexportedSubs)
+    $r->push_handlers( 'PerlMapToStorageHandler' => sub { return OK; } );
   }
+  return DECLINED;
 }
 
 sub send_content {
@@ -60,7 +64,7 @@ sub send_content {
   my $r = shift;
   my $t = time;
   ## Look for things we don't do!
-  return DECLINED if $r->method_number == M_OPTIONS;
+  return DECLINED                if $r->method_number == M_OPTIONS;
   return HTTP_METHOD_NOT_ALLOWED if $r->method_number != M_GET;
 ## We are going to serve static content from memcached if is there!
   ( my $filename = $r->notes->get('filename') ) =~ s{[^-|\w.]}{}mxgs;
@@ -85,10 +89,9 @@ sub send_content {
         : 'text/html' );
       $r->headers_out->set( 'Content-Length', length $content );
       $r->headers_out->set( 'Last-Modified',  Apache2::Util::ht_time( $r->pool, time - $ONE_MONTH ) ); ## no critic(CallsToUnexportedSubs)
-      $r->headers_out->set( 'Expires',        Apache2::Util::ht_time( $r->pool, time + $ONE_YEAR ) ); ## no critic(CallsToUnexportedSubs)
+      $r->headers_out->set( 'Expires',        Apache2::Util::ht_time( $r->pool, time + $ONE_YEAR  ) ); ## no critic(CallsToUnexportedSubs)
       $r->headers_out->set( 'Cache-Control',  "max-age=$ONE_YEAR,public" );
       $r->print($content);
-
       return OK;
     }
   }

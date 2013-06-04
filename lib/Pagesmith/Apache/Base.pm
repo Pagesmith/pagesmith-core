@@ -27,6 +27,7 @@ use Date::Format qw(time2str);
 use HTML::Entities qw(encode_entities);
 use Time::HiRes qw(time);
 
+use Pagesmith::Apache::Decorate;
 use Pagesmith::Cache;
 use Pagesmith::ConfigHash qw(can_cache get_config);
 use Pagesmith::Core qw(safe_md5 parse_cookie clean_template_type);
@@ -102,6 +103,7 @@ sub my_handler {
         ## and print the HTML.
         $r->print($l_html);
         $r ->headers_out->set( 'X-Pagesmith-CacheFlag', 'hit' );
+        $r->add_output_filter( \&Pagesmith::Apache::Decorate::handler ); ## no critic (CallsToUnexportedSubs)
         return OK;
       } else {
         $r->headers_out->set( 'X-Pagesmith-CacheFlag', 'miss' );
@@ -128,6 +130,7 @@ sub my_handler {
   ##   content length
   $r->content_type(     'text/html' );
   $r->headers_out->set( 'Content-Length', length ${$html} );
+  $r->add_output_filter( \&Pagesmith::Apache::Decorate::handler ); ## no critic (CallsToUnexportedSubs)
   $r->print(${$html});
   return OK;
 }

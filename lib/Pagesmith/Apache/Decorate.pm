@@ -83,6 +83,7 @@ sub handler : FilterRequestHandler {
   }
 
 
+
   my $ctx = context($filter);
   ## Initialize if first request
   $ctx->{'html'} ||= q() unless $ctx->{'state'};
@@ -98,8 +99,6 @@ sub handler : FilterRequestHandler {
   }
 
   $ctx->{'state'}++;
-
-  my $X = $r->err_headers_out;
 
   ## If last request output HTML...
   my $header = q();
@@ -178,6 +177,15 @@ sub handler : FilterRequestHandler {
         #$renderer->minify_html( \$html );
         my $expiry = $pars->{'expiry_time'} || $r->headers_out->get('X-Pagesmith-Expiry') || 0;
         Pagesmith::Cache->new( 'page', $key )->set($html, expiry_evaluate( $expiry ) );
+      } else {
+        $key = $r->headers_out->get('X-Pagesmith-Action');
+        if( $key ) {
+          Pagesmith::Cache->new( 'action', $key )->set({
+            'content_type'  => $r->content_type,
+            'response_code' => $r->status,
+            'content'       => $html,
+          }, $r->headers_out->get('X-Pagesmith-Expiry')||0 );
+        }
       }
       unless( exists $pars->{'template_flag'} && $pars->{'template_flag'} eq 'no' ) {
         ## Check to see if we have to Cache the rendered page - before we
