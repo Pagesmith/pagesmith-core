@@ -42,6 +42,7 @@ sub new {
     'server'       => $config->{'AuthServer'} || get_config( 'AuthServer' ) ,
     'action'       => $config->{'action'},
     'AuthTimeout'  => $config->{'AuthTimeout'},
+    'http_request' => $config->{'http_request'}, # for POST requests.
   };
   bless $self, $class;
   return $self;
@@ -88,14 +89,20 @@ sub lwp_get {
   my ( $self,$encoded_request ) = @_;
 
   my $res = eval {
-    my $req = HTTP::Request->new('GET' => $self->{'server'}.q(/).$self->{'action'}.q(/).$self->{'api_key'}.q(/).$encoded_request);
-       $req->content_type('application/x-www-form-urlencoded');
-       $req->content();
+    if ( $self->{'http_request'} && $self->{'http_request'} =~ /^POST/ixms ) {
+      # print {*STDERR} " HERE WE DID A POST \n";
+      $req = HTTP::Request->new('POST' => $self->{'server'}.q(/).$self->{'action'}.q(/), [ 'data' => $self->{'api_key'}.q(/).$encoded_request ]) ;
+    } else {
+      # print {*STDERR} " HERE WE DID A GET \n";
+      $req = HTTP::Request->new('GET' => $self->{'server'}.q(/).$self->{'action'}.q(/).$self->{'api_key'}.q(/).$encoded_request);
+    }
+    $req->content_type('application/x-www-form-urlencoded');
+    $req->content();
     return LWP::UserAgent->new( '-agent'   => $AGENT_NAME.$VERSION,
                                 '-timeout' => $self->{'AuthTimeout'} || $DEFAULT_TIMEOUT,
                                )->request( $req );
   } || q();
-  # print {*STDERR} "LWP GET CALLED: $self->{'api_key'}/$encoded_request\n";
+  # print {*STDERR} "LWP GET/POST CALLED: ".$self->{'server'}.q(/).$self->{'action'}.q(/).$self->{'api_key'}."/$encoded_request\n";
   print {*STDERR} $EVAL_ERROR if $EVAL_ERROR; ##no critic (checkedsyscalls)
   # print {*STDERR} Dumper($res);
   return $res;
