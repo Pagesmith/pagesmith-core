@@ -36,13 +36,20 @@ use Encode ();
 use Spreadsheet::WriteExcel;
 
 use Pagesmith::Message;
-use Pagesmith::Session::User;
 use Pagesmith::ConfigHash qw(can_cache get_config);
+use Pagesmith::Core qw(parse_cookie);
 
+use Pagesmith::Apache::Decorate;
 use Pagesmith::HTML::Table;
 use Pagesmith::HTML::Tabs;
 use Pagesmith::HTML::TwoCol;
 use Pagesmith::Utils::FormObjectCreator;
+
+sub can_ajax {
+  my $self = shift;
+  my $flags = parse_cookie($self->r)||{};
+  return exists $flags->{'a'} && $flags->{'a'} eq 'e';
+}
 
 sub type {
   my $self = shift;
@@ -349,6 +356,8 @@ sub pdf {
 
 sub html {
   my $self = shift;
+  ## This is where we can attach the filter!
+  $self->r->add_output_filter( \&Pagesmith::Apache::Decorate::handler ); ## no critic (CallsToUnexportedSubs)
   return $self->content_type('text/html; charset=utf-8');
 }
 
