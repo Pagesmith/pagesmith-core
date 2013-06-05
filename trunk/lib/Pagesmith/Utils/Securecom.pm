@@ -89,6 +89,7 @@ sub lwp_get {
   my ( $self,$encoded_request ) = @_;
 
   my $res = eval {
+    my $req;
     if ( $self->{'http_request'} && $self->{'http_request'} =~ /^POST/ixms ) {
       # print {*STDERR} " HERE WE DID A POST \n";
       $req = HTTP::Request->new('POST' => $self->{'server'}.q(/).$self->{'action'}.q(/), [ 'data' => $self->{'api_key'}.q(/).$encoded_request ]) ;
