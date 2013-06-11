@@ -44,12 +44,24 @@ body.s-p, #r-p { font-size: 180%; line-height: 1em; }
 #access { float: right; margin: 0.5em 0.5em 1px 0.5em; font-size: 80%; }
 #access span { float: left; height: 14px; width: 12px; overflow:hidden; padding:0; margin: 0 1px; border:1px solid #bcc5cc; background-color: #e0e4e7; text-align:center; cursor: pointer; }
 
-ul#skip { display: none; }#footer { font-size: 0.8em; color: #5c5150; position: relative; float:left; margin-left: 20px; }
+ul#skip { display: none; }
+#footer { font-size: 0.8em; color: #5c5150; position: relative; float:left; margin-left: 20px; width: 95%;}
 #lnx { color: #fff; text-align: center; clear: both; margin: 1em 0; font-size: 0.8em; }
 #lnx a { color: #14559f; text-decoration: none; }
 ul#footer_links { float:left; margin: 0 0 0 -5px; padding: 0; }
 #footer_links li { text-align:left; background: none; padding: 0 0.6em; display: inline; }
 #footer_links a { text-decoration: none; font-weight: bold; }
+#footer .charity {width: 80%; float: left;}
+/* footer social media styling */
+.social {float: right; text-align: bottom; margin:0; width: 235px; padding: 0;}
+.social ul { height: 20px; float: right; margin: -5px -15px 0 0;}
+.social li { text-decoration: none; display: inline-block; list-style-type: none; width: 20px; height: 20px; padding: 0 0 0 4px; margin:0;}
+.social .connect { width: 120px; color: #5c5150; vertical-align: top; line-height:10pt; background: none; text-align: right;}
+.social .facebook { background: url(/i/icons/facebook-icon.png); background-repeat: no-repeat; background-position: center;}
+.social .twitter { background: url(/i/icons/twitter-icon.png);  background-repeat: no-repeat; background-position: center;}
+.social .email { background: url(/i/icons/email-icon.png);  background-repeat: no-repeat; background-position: center;}
+
+
 #footer_print, #footer p { display: none; }
 #footer:after {
   content:"."; display:block; height:0; clear:both; visibility:hidden; }
