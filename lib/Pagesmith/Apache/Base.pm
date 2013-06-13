@@ -101,9 +101,9 @@ sub my_handler {
         $r->headers_out->set( 'X-Pagesmith-Decor', 'runtime' );
         $r->headers_out->set( 'Content-Length', length $l_html );
         ## and print the HTML.
-        $r->print($l_html);
-        $r ->headers_out->set( 'X-Pagesmith-CacheFlag', 'hit' );
+        $r->headers_out->set( 'X-Pagesmith-CacheFlag', 'hit' );
         $r->add_output_filter( \&Pagesmith::Apache::Decorate::handler ); ## no critic (CallsToUnexportedSubs)
+        $r->print($l_html);
         return OK;
       } else {
         $r->headers_out->set( 'X-Pagesmith-CacheFlag', 'miss' );
