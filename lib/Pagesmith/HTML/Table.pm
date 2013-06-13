@@ -522,7 +522,6 @@ sub render_thead {
       my $meta_data = exists $_->{'meta_data'} ? $_->{'meta_data'} : {};
       if( exists $_->{'sort_index'} ) {
         $meta_data->{'sorter'} = 'metadata';
-        $meta_data->{'parserMetadataName'} = 'sv';
       }
       if( exists $_->{'filter_values'} ) {
         $meta_data->{'filter'} = $_->{'filter_values'};
