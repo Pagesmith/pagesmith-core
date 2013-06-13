@@ -16,7 +16,7 @@ $('body').first().append('<form action="/action/ExportJsonTable" method="post" i
 
 $('.sorted-table').livequery(function () { // Make "sorted-table"s sortable
   // console.log( $(this).html().substr(0,200) ); // useful to debug errors!
-  $(this).tablesorter({ widgets: ['zebra']});
+  $(this).tablesorter({ parserMetadataName:'sv', widgets: ['zebra']});
   table_counter++;
   var class_string = $(this).attr('class'),
     table_key = 'table_' + table_counter,
