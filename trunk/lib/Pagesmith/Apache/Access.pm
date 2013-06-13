@@ -16,10 +16,10 @@ use utf8;
 
 use version qw(qv); our $VERSION = qv('0.1.0');
 
-use Apache2::Const qw(FORBIDDEN OK);
+use Apache2::Const qw(FORBIDDEN OK DECLINED);
 use base qw(Exporter);
 
-our @EXPORT_OK = qw(my_handler);
+our @EXPORT_OK = qw(_handler);
 our %EXPORT_TAGS = ('ALL' => \@EXPORT_OK);
 use Pagesmith::Support;         ## To give access to user
 
@@ -29,15 +29,16 @@ use Pagesmith::Support;         ## To give access to user
 use File::Spec;                 ## To correctly concatenate index.html onto file
 use APR::Finfo ();              ## To set info about file..
 use APR::Const qw(FINFO_NORM);  ## -- "" --
+use Pagesmith::Apache::PushDir; ## To get "wrapper"...
 use Pagesmith::Apache::HTML;    ## To get "wrapper"...
 
 
 sub handler {
   my $r = shift;
-  return my_handler( sub { my( $apache_r, $user ) = @_; return 1; }, $r );
+  return _handler( sub { my( $apache_r, $user ) = @_; return 1; }, $r );
 }
 
-sub my_handler {
+sub _handler {
   my( $permission_callback, $r ) = @_;
   my $root = Pagesmith::Support->new;
   my $user = $root->user( $r );
@@ -54,10 +55,15 @@ sub my_handler {
     return FORBIDDEN;
   }
   if( -d $r->filename && -f File::Spec->catfile($r->filename,'index.html') ) { ## no critic (Filetest_f)
-    $r->filename( File::Spec->catfile( $r->filename,'index.html' ) );
-    $r->finfo(APR::Finfo::stat($r->filename, APR::Const::FINFO_NORM, $r->pool));               ##no critic (CallsToUnexportedSubs)
-    $r->push_handlers( 'PerlResponseHandler', sub { Pagesmith::Apache::HTML::handler($r); } ); ##no critic (CallsToUnexportedSubs)
+    if( $r->filename =~ m{/\Z}mxs ) {
+      $r->filename( File::Spec->catfile( $r->filename,'index.html' ) );
+      $r->finfo(APR::Finfo::stat($r->filename, APR::Const::FINFO_NORM, $r->pool));               ##no critic (CallsToUnexportedSubs)
+      $r->push_handlers( 'PerlResponseHandler', sub { Pagesmith::Apache::HTML::handler($r); } ); ##no critic (CallsToUnexportedSubs)
+    } else {
+      $r->push_handlers( 'PerlResponseHandler', Pagesmith::Apache::PushDir::handler($r) );       ##no critic (CallsToUnexportedSubs)
+    }
   }
+
   return OK;
 }
 
