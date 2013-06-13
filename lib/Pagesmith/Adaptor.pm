@@ -386,4 +386,35 @@ sub get_adaptor_from_pool {
   return $self->{'pool'}{$key};
 }
 
+sub get_iterator {
+#@params (self) (string sql) (string params)*
+#@return (self)
+## Gets a new "iterator" statement handle for SQL statement (and parameters) provided
+##
+## Clears previous iterator if one exists to keep things tidy (should never need to!)
+  my( $self, $key, $sql, @params ) = @_;
+
+  if( exists $self->{'iterators'}{$key} ) { ## Remove any previous iterator!
+    $self->{'_iterator'}{$key}->finish;
+    delete $self->{'_iterator'}{$key};
+  }
+
+  my $sth = $self->dbh->prepare( $sql ); ## Prepare and execute SQL and store iterator!
+  return $self unless $sth;
+  $sth->execute( @params );
+  $self->{'iterator'}{$key} = $sth;
+  return $self;
+}
+
+sub get_next_row {
+  my ( $self, $key ) = @_;
+  return unless exists $self->{'iterators'}{$key} && $self->{'iterators'}{$key};
+  my $row = $self->{'iterators'}{$key}->fetchrow_hashref;
+  unless( $row ) {
+    $self->{'iterators'}{$key}->finish;
+    delete $self->{'iterators'}{$key};
+    return;
+  }
+  return $row;
+}
 1;
