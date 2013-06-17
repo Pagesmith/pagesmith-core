@@ -19,12 +19,14 @@ use version qw(qv); our $VERSION = qv('0.1.0');
 
 use HTML::Entities qw(encode_entities);
 
-use English qw(-no_match_vars $PROGRAM_NAME $EVAL_ERROR);
+use English qw(-no_match_vars $PROGRAM_NAME $EVAL_ERROR $INPUT_RECORD_SEPARATOR);
 use File::Basename qw(dirname basename);
 use Cwd qw(abs_path);
 use Readonly qw(Readonly);
 use Getopt::Long qw(GetOptions);
 use Time::HiRes qw(time sleep);
+use YAML::Loader;
+use Data::Dumper qw(Dumper);
 
 # Define constants and data-structures
 
@@ -49,6 +51,9 @@ my $time_out   = $TIME_OUT;
 my $max_tries  = $MAX_TRIES;
 my $xhtml      = 0;
 my $verbose    = 0;
+my $local      = 0;
+my $dev        = 0;
+my $staging    = 0;
 
 my @headers;
 my @cookies;
@@ -62,7 +67,16 @@ GetOptions(
   'maxtries=i'    => \$max_tries,
   'verbose+'      => \$verbose,
   'xhtml'         => \$xhtml,
+  'local'         => \$local,
+  'dev'           => \$dev,
+  'staging'       => \$staging,
 );
+
+my $type_to_test = $staging ? 'staging'
+                 : $dev     ? 'dev'
+                 : $local   ? 'local'
+                 :            'live'
+                 ;
 
 _docs() if $help;
 
@@ -81,6 +95,8 @@ if( opendir my $dh, "$ROOT_PATH/sites" ) {
   die "Unable to open sites directory...\n";
 }
 
+_munge_urls( $type_to_test, \@urls, \%return_vals ) unless $type_to_test eq 'live';
+
 my $start_time = time;
 
 _fetch( {
@@ -96,6 +112,59 @@ printf '
 Total: %10.3f
 --------------------------------------
 ', time-$start_time if $verbose > 1;
+## use critic
+
+## no critic (DeepNests ExcessComplexity)
+sub _munge_urls {
+  my( $type, $urls, $ret_vals ) = @_;
+  my $local_sites = {};
+  $local_sites = get_yaml( "$ROOT_PATH/my-sites.yaml" ) if $type eq 'local';
+  my $apache = get_apache_sites( "$ROOT_PATH/apache2/sites-enabled" );
+  my $mapper = {};
+  my @new_urls;
+  foreach my $url (@{$urls}) {
+    if( $url =~m{\A(https?)://([^/]+)(/.*)}mxs ) {
+      my( $protocol, $site, $rest ) = ($1,$2,$3);
+      unless( exists $mapper->{$site} ) {
+        if( $type eq 'local' ) {
+          foreach my $local ( sort keys $local_sites ) {
+            if( exists $apache->{$local} && $apache->{$local}[1] eq $site ) {
+              $mapper->{$site} = $local;
+              last;
+            } else {
+              ( my $munged = $local ) =~ s{\A\w+-}{*-}mxs;
+              if( exists $apache->{$munged} && $apache->{$munged}[1] eq $site ) {
+                $mapper->{$site} = $local;
+                last;
+              }
+            }
+          }
+        } else {
+          foreach my $s (sort keys %{$apache}) {
+            next unless index $s, q(*);
+            my $reg = '\A(?:\w+[.])?'.$type.'[.]';
+            if( $s =~ m{$reg}mxs && $apache->{$s}[1] eq $site ) {
+              $mapper->{$site} = $s;
+              last;
+            }
+          }
+        }
+      }
+      $mapper->{$site}||=q();
+      unless( $mapper->{$site} ) {
+        printf "-skip:            : %s\n", $url if $verbose > 1;
+        next;
+      }
+      my $new_url = "$protocol://$mapper->{$site}$rest";
+      push @new_urls, $new_url;
+      next if $new_url eq $url;
+      $ret_vals->{$new_url} = $ret_vals->{$url};
+      delete $ret_vals->{$url};
+    }
+  }
+  @{$urls} = @new_urls;
+  return;
+}
 ## use critic
 
 sub _get_urls {
@@ -159,7 +228,7 @@ sub _fetch {
         ->init->url;
     next if $verbose <= 1;
     $start->{$url} = time;
-    printf "-----:           : %s\n", $url;
+    printf "-----:            : %s\n", $url;
   }
 
   my $out = 0;
@@ -175,7 +244,7 @@ sub _fetch {
         delete $failed_urls->{ $req->url };
         if( $exp_rc == $rc ) {
           (my $content = $req->response->body) =~ s{\s+}{ }mxsg;
-          my $extra = $verbose > 1 ? sprintf '%10.3f :', time-$start->{$req->url} : q();
+          my $extra = $verbose > 1 ? sprintf ' %10.3f :', time-$start->{$req->url} : q();
           printf "Match:%s %s\n", $extra, $req->url if $verbose;
           foreach my $exp ( @exp_content ) {
             if( 0 <= index $content, $exp ) {
@@ -185,7 +254,7 @@ sub _fetch {
             }
           }
         } else {
-          my $extra = $verbose > 1 ? sprintf '%10.3f :', time-$start->{$req->url} : q();
+          my $extra = $verbose > 1 ? sprintf ' %10.3f :', time-$start->{$req->url} : q();
           printf "Error:%s %s [ %d != %d ]\n", $extra, $req->url, $rc, $exp_rc;
         }
       } else {
@@ -201,14 +270,14 @@ sub _fetch {
           ->set_timeouts( $params->{'timeout'} )
           ->init->url;
       if( $verbose > 1 ) {
-        printf "-----:           : %s\n", $url;
+        printf "-----:            : %s\n", $url;
         $start->{$url} = time;
       }
       sleep $SLEEP_PERIOD;
     }
   }
   foreach ( sort keys %{$failed_urls} ) {
-    printf "Fatal: $_\n";
+    printf "Fatal:            : $_\n";
   }
   return;
 }
@@ -240,4 +309,62 @@ Options:
   exit;
 }
 ## use critic
+
+sub get_yaml {
+  my $filename = shift;
+  if( open my $fh, '<', $filename ) {
+    local $INPUT_RECORD_SEPARATOR = undef;
+    my $contents = <$fh>;
+    close $fh; ## no critic (RequireChecked)
+    my $yl   = YAML::Loader->new;
+    my $hash = eval { $yl->load( $contents ); };
+    if( $EVAL_ERROR ) {
+      warn "YAML error $filename - $EVAL_ERROR\n";
+      return;
+    }
+    return $hash;
+  }
+  warn "Unable to open config file\n";
+  return;
+}
+
+sub get_apache_sites {
+  my $apache_sites_dir = shift;
+  my $dh;
+  opendir $dh, $apache_sites_dir;
+  return unless $dh;
+  my @conf_files = grep { ! m{\A[.]}mxs && ! -d "$apache_sites_dir/$_" } readdir $dh;
+  closedir $dh;
+  my $domains = {};
+  foreach my $fn ( @conf_files ) {
+    ## no critic (BriefOpen)
+    if( open my $fh, q(<), "$apache_sites_dir/$fn" ) {
+      my $server_name;
+      my $server_aliases = [];
+      my $docroot     = q();
+      while(<$fh>) {
+        if( m{</VirtualHost>}mxs) {
+          if( $server_name ) {
+            $domains->{$_} = [ $docroot, $server_name  ] foreach (@{$server_aliases},$server_name);
+          }
+          $server_name    = undef;
+          $server_aliases = [];
+          $docroot        = q();
+        } elsif( m{\A\s*Server(Name|Alias)\s+(.*?)\s+\Z}mxs ) {
+          my ($type,$list) = ($1,$2);
+          if( $type eq 'Name' ) {
+            $server_name = $list;
+          } else {
+            push @{$server_aliases}, $_ foreach split m{\s+}mxs, $list;
+          }
+        } elsif( m{\A\s*DocumentRoot\s*\$[{]PAGESMITH_SERVER_PATH[}]/(\S+)}mxs ) {
+          $docroot = $1;
+        }
+      }
+      close $fh; ##no critic (RequireChecked)
+    }
+    ## use critic
+  }
+  return $domains;
+}
 
