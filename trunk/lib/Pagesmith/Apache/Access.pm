@@ -19,7 +19,7 @@ use version qw(qv); our $VERSION = qv('0.1.0');
 use Apache2::Const qw(FORBIDDEN OK DECLINED);
 use base qw(Exporter);
 
-our @EXPORT_OK = qw(_handler);
+our @EXPORT_OK = qw(my_handler);
 our %EXPORT_TAGS = ('ALL' => \@EXPORT_OK);
 use Pagesmith::Support;         ## To give access to user
 
@@ -35,10 +35,10 @@ use Pagesmith::Apache::HTML;    ## To get "wrapper"...
 
 sub handler {
   my $r = shift;
-  return _handler( sub { my( $apache_r, $user ) = @_; return 1; }, $r );
+  return my_handler( sub { my( $apache_r, $user ) = @_; return 1; }, $r );
 }
 
-sub _handler {
+sub my_handler {
   my( $permission_callback, $r ) = @_;
   my $root = Pagesmith::Support->new;
   my $user = $root->user( $r );
