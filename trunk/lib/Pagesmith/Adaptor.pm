@@ -321,6 +321,10 @@ sub now {
   return $self->sv( 'select now()' );
 }
 
+sub quote {
+  my( $self, $str ) = @_;
+  return $self->dbh->quote( $str );
+}
 sub realise_sql {
   my ( $self, $sql, @pars ) = @_;
   my @parts = split m{[?]}mxs, $sql, - 1;
@@ -395,14 +399,14 @@ sub get_iterator {
   my( $self, $key, $sql, @params ) = @_;
 
   if( exists $self->{'iterators'}{$key} ) { ## Remove any previous iterator!
-    $self->{'_iterator'}{$key}->finish;
-    delete $self->{'_iterator'}{$key};
+    $self->{'iterators'}{$key}->finish;
+    delete $self->{'iterators'}{$key};
   }
 
   my $sth = $self->dbh->prepare( $sql ); ## Prepare and execute SQL and store iterator!
   return $self unless $sth;
   $sth->execute( @params );
-  $self->{'iterator'}{$key} = $sth;
+  $self->{'iterators'}{$key} = $sth;
   return $self;
 }
 
@@ -417,4 +421,19 @@ sub get_next_row {
   }
   return $row;
 }
+
+sub dsn {
+  my $self = shift;
+  return $self->{'_dsn'};
+}
+sub dbuser {
+  my $self = shift;
+  return $self->{'_dbuser'};
+}
+sub dbpass {
+  my $self = shift;
+  return $self->{'_dbpass'};
+}
+
 1;
+
