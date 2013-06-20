@@ -68,35 +68,39 @@ sub authenticate {
     (sprintf '%s=%s,%s', $self->id, $uid, $self->base ),
     'password' => $pass,
   );
-
+  return {} unless $msg->code == 0;
+  my $e = $self->_get_ldap_entry( \$uid );
   return {(
     'id'      => $username,
     'ldap_id' => $uid,
     'name'    => $self->realname( $uid ),
     'groups'  => $self->user_groups( $uid ),
-  )} if $msg->code == 0;
-  return {};
+  )};
 }
 
 sub _get_ldap_entry {
-  my( $self, $uid ) = @_;
-  unless( exists $self->{'ldap_entries'}{$uid} ) {
+  my( $self, $uid_ref ) = @_;
+  unless( exists $self->{'ldap_entries'}{${$uid_ref}} ) {
     # if no realname is present, we can fetch it from LDAP
     my $result = $self->ldap->search(
       'base'   => $self->base,
-      'filter' => $self->id.q(=).$uid,
+      'filter' => $self->id.q(=).${$uid_ref},
     );
     if($result) {
       my @e = $result->entries();
-      $self->{'ldap_entries'}{$uid} = @e ? { 'raw' => $e[0] } : undef;
+      if( @e ) {
+        my ($t_uid) = $e[0]->get_value($self->id);
+        ${$uid_ref} = $t_uid if ${$uid_ref};
+        $self->{'ldap_entries'}{${$uid_ref}} = { 'raw' => $e[0] };
+      }
     }
   }
-  return $self->{'ldap_entries'}{$uid};
+  return $self->{'ldap_entries'}{${$uid_ref}};
 }
 
 sub realname {
   my( $self, $uid ) = @_;
-  my $e = $self->_get_ldap_entry( $uid );
+  my $e = $self->_get_ldap_entry( \$uid );
   return q() unless $e;
   return $e->{'real_name'} if exists $e->{'real_name'};
 
