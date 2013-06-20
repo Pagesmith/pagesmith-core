@@ -43,6 +43,7 @@ use Pagesmith::Apache::Decorate;
 use Pagesmith::HTML::Table;
 use Pagesmith::HTML::Tabs;
 use Pagesmith::HTML::TwoCol;
+use Pagesmith::Form::Stub;
 use Pagesmith::Utils::FormObjectCreator;
 
 sub can_ajax {
@@ -80,6 +81,11 @@ sub no_spell_at_all {
   my( $self, @pars ) = @_;
   $self->r->headers_out->set( 'X-Pagesmith-NoSpell', 2 );
   return $self;
+}
+
+sub stub_form {
+  my( $self, $pars ) = @_;
+  return Pagesmith::Form::Stub->new( {( %{$pars||{}}, 'r' => $self->r, 'apr' => $self->apr )} );
 }
 
 sub form {
