@@ -832,7 +832,7 @@ sub action_url {
   if( $self->{'code'} ) {
     $url .= "/-$self->{'code'}";
   } else {
-    ( my $type = $self->{'type'} ) =~ s{::}{_}mxs;
+    ( my $type = $self->{'type'}||q() ) =~ s{::}{_}mxs;
     $url .= "/$type";
     $url .= q(/).$self->object_id if $self->object_id;
     $parameters->{'__ref'} = $self->attribute( 'ref' )||q();
