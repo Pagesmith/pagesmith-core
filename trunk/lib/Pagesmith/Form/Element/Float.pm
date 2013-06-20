@@ -19,7 +19,7 @@ use base qw( Pagesmith::Form::Element::String );
 
 sub init {
   my $self = shift;
-  $self->style = 'short';
+  $self->add_class( 'short' );
   return;
 }
 
