@@ -119,3 +119,9 @@ ul.ul_james li.li_james_hovered, #rhs ul.ul_james li.li_james_hovered { backgrou
 .multi_container { line-height: 2em }
 .multi_container ul.ul_james { line-height: 1.4em }
 
+.login-button { height: 24px; width: 24px; background: url(/core/gfx/oauth2-buttons.png) #fff no-repeat 0 -100px; vertical-align: middle; margin: 2px 0.5em 2px 2px }
+.login-amazon   { background-position: 0 0 }
+.login-google   { background-position: 0 -25px }
+.login-facebook { background-position: 0 -50px }
+.login-live     { background-position: 0 -75px }
+.login-shib     { background-position: 0 -125px }
