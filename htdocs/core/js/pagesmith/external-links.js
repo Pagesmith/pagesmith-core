@@ -47,9 +47,14 @@ function link_track(x_type, x_obj) {
 }
 
 $('a').livequery(function () {
-  var T = $(this), H = $(this).attr('href'), msg = 'This link opens in a new window', link_class, m1, m2;
+  var T   = $(this),
+      H   = $(this).attr('href'),
+      msg = 'This link opens in a new window',
+      link_class,
+      m1,
+      m2;
   if (H && T.attr('target') !== '_blank' && T.attr('rel') !== 'no-external') {
-    if (T.parents('h1,h2,h3,h4').length) {
+    if (T.parents('h1,h2,h3,h4,.no-ext-images').length) {
       T.addClass('no-img');
     }
     if (H.match(/\.pdf$/) || $(this).hasClass('pdf-link')) {
