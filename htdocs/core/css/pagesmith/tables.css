@@ -17,6 +17,7 @@ table {
 /**
   thead/tfoot styles
 **/
+table.wide { width: 99% }
 table thead tr th {
   font-weight: bold; background-color: #bcc5cc; color: #3d3d3d; border: 2px solid #fff; padding: 2px 0.5em;   text-align: center
 }
@@ -69,3 +70,4 @@ table .vertical { white-space: nowrap; }
 
 table.lightgrey tbody td { background-color: #fafafa}
 
+input.colfilter, select.colfilter { font-size: 90% }
