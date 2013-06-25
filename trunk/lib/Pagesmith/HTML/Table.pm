@@ -526,6 +526,9 @@ sub render_thead {
       if( exists $_->{'filter_values'} ) {
         $meta_data->{'filter'} = $_->{'filter_values'};
       }
+      if( exists $_->{'no_filter'} ) {
+        $meta_data->{'no_filter'} = 1;
+      }
       $meta_data->{'sorter'} = 'none' if exists $_->{'no-sort'};
       my @class;
       push @class, $self->encode($self->json_encode($meta_data)) if keys %{$meta_data};
