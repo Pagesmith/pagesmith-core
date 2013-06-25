@@ -40,11 +40,7 @@ PageSmith.ajax = {
     ajax_pars.error = function(xhr,status,message) {
       x.replaceWith('<p>Unable to load content</p>').prop('title',message);
     };
-    $.ajax(ajax_pars).done( function(dt,st,xh) {
-      x.replaceWith(dt);
-    } ).fail( function(xh,st,ms) {
-      x.replaceWith('<p>Unable to load content</p>').prop('title',ms);
-    });
+    $.ajax(ajax_pars);
     x.attr('title', 'Loading additional content').removeClass('ajax');
     return 0;
   },
