@@ -106,8 +106,44 @@
 
       renderTable: function (table, rows) {
         var c = table.config, l = rows.length, s, e, i, l2, j, tableBody, o;
+        if( c.refresh_url ) {
+          var URL = c.refresh_url+(c.refresh_url.match(/\?/)?'&':'?')+'pars='+JSON.stringify({
+            page:        c.page,
+            size:        c.size,
+            sort_list:   c.sortList,
+            col_filters: $.grep($.map(c.col_filters,function(v,i){return [[i,v.val]];}),function(el) { return el[1] !== ''; })
+          }).replace(/\\/g,'\\\\').replace(/'/g,"\\\'").replace(/"/g,'\\"');
+          if( c.human_inter ) {
+            if( URL !== c.latest_url ) {
+              //debug console.log( URL+' '+c.latest_url );
+              c.latest_url = URL;
+              $.ajax({type:'GET',url:URL,data:'',dataType:'text',success:function(dt,st) {
+                var m = dt.match(/^<span.*?>(\d+)<\/span>\s*(.*)$/);
+                if( m ) {
+                  c.entries = m[1];
+                  var old_rows = c.totalRowsRaw;
+                  c.totalRowsRaw = c.entries;
+                  c.totalRows    = c.entries;
+                  c.totalPages   = Math.ceil(c.totalRows / c.size);
+                  if( old_rows ) {
+                    $.tablesorter.clearTableBody(table);
+                  }
+                  if( c.entries ) {
+                    $(table).find('thead').last().after( m[2] );
+                    var tableBody = $(table.tBodies[0]);
+                    $.tablesorterPager.fixPosition(table, tableBody);
+                    $(table).trigger("applyWidgets");
+                  }
+                  $.tablesorterPager.updatePageDisplay(c, table);
+                }
+              }});
+            }
+            return;
+          } else {
+            c.latest_url = URL;
+          }
+        }
         $.tablesorter.clearTableBody(table);
-
         if (l > 0) {
           if (c.page < 0) {
             c.page = 0;
@@ -134,9 +170,7 @@
           }
         }
         $.tablesorterPager.fixPosition(table, tableBody);
-
         $(table).trigger("applyWidgets");
-
         $.tablesorterPager.updatePageDisplay(c, table);
       },
 
@@ -242,6 +276,10 @@
         c.totalRowsRaw = rows.length;
 
         $.tablesorterPager.filterRows(c);
+        if( c.entries ) {
+          c.totalRowsRaw = c.entries;
+          c.totalRows    = c.entries;
+        }
         c.totalPages   = Math.ceil(c.totalRows / c.size);
 
         $.tablesorterPager.renderTable(table, c.rowsCopy);
@@ -250,6 +288,10 @@
         size: 10000000,
         filter_value: '',
         col_filters: [],
+        refresh_url: '',
+        entries: 0,
+        latest_url: '',
+        human_inter: 0,
         offset: 0,
         page: 0,
         showCount: 1,
@@ -275,12 +317,15 @@
       construct: function (settings) {
         return this.each(function () {
           $.tablesorterPager.defaults.appender = $.tablesorterPager.appender;
-          var config = $.extend(this.config, $.tablesorterPager.defaults,  settings), table = this, pager = config.container, new_size;
+          var config = $.extend(this.config, $.tablesorterPager.defaults, settings), table = this, pager = config.container, new_size;
           $(this).trigger("appendCache");
           new_size = $(".pagesize", pager).length ? parseInt($(".pagesize", pager).val(), 10) : 0;
           if (new_size !== config.size && new_size !== 0) {
             $.tablesorterPager.setPageSize(table,  new_size);
           }
+          config.human_inter = 1;
+          /* We have now set up the page appropriately ... now if we are doing on page updates this is
+             where we need to start hacking! */
           $(config.cssDump, pager).click(function () {
             $.tablesorterPager.get_json(table, $(this).html());
             return false;
