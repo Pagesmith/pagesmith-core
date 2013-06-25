@@ -38,7 +38,16 @@ $('.sorted-table').livequery(function () { // Make "sorted-table"s sortable
     filter_values,
     s,
     j,
+    md = $.metadata && $(this).metadata() ? $(this).metadata() : {},
+    refresh_url = '',
+    entries = '',
     my_cells;
+  if( md && md.refresh ) {
+    refresh_url = md.refresh;
+  }
+  if( md && md.entries ) {
+    entries = md.entries;
+  }
   if ($(this).hasClass('before')) {
     $(this).before('<div id="' + table_key + '" class="pager"><form></form></div>');
   } else {
@@ -134,13 +143,19 @@ $('.sorted-table').livequery(function () { // Make "sorted-table"s sortable
           s+'</option></select></td>';
           t_array.unshift( s );
         }
+      } else if( $.metadata && my_cells.eq(j).metadata() && my_cells.eq(j).metadata().no_filter ) {
+        t_array.unshift( '<td class="c"><input class="colfilter" type="hidden" />&nbsp;</td>' );
       } else {
         t_array.unshift( '<td class="c"><input style="width:95%; margin: 2px 0" class="colfilter" type="text" /></td>' );
       }
     }
     q.first().append('<tr>' + t_array.join('') + '</tr>');
   }
-  $(this).tablesorterPager({container: $('#' + table_key) });
+  $(this).tablesorterPager({
+    container: $('#' + table_key),
+    refresh_url:    refresh_url,
+    entries:        entries
+  });
 });
 
 jQuery.fn.zebra = function () {
