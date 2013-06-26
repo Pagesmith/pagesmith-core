@@ -83,6 +83,18 @@ sub classes_string {
     my $val = $self->option( $_ );
     push @classes, $_.( $val ? "_$val" : q() ) if defined $val;
   }
+  my $count = $self->option('count');
+  my $url   = $self->option('refresh_url');
+  my $x_url = $self->option('export_url');
+  my %meta_data;
+  if( defined $url && defined $count ) {
+    $meta_data{'refresh'} = $url;
+    $meta_data{'entries'} = $count;
+    $meta_data{'export'}  = $x_url if defined $x_url;
+  }
+
+  push @classes, encode_entities( $self->json_encode( \%meta_data ) ) if keys %meta_data;
+
   return join q( ), sort @classes;
 }
 
@@ -107,6 +119,7 @@ sub set_option {
 sub set_pagination {
   my( $self, $sizes, $default ) = @_;
   $default = $sizes->[0] unless defined $default;
+  $self->set_option( 'default',  $default );
   $self->set_option( 'paginate', join q(_), map { $default eq $_ ? "x$_" : $_ } @{$sizes} );
   return $self;
 }
@@ -163,6 +176,57 @@ sub clear_colfilter {
   my $self = shift;
   $self->clear_option( 'colfilter' );
   return $self;
+}
+
+sub set_count {
+  my( $self, $count ) = @_;
+  $self->set_option( 'count', $count );
+  return $self;
+}
+
+sub clear_count {
+  my $self = shift;
+  $self->clear_option( 'count' );
+  return $self;
+}
+
+sub count {
+  my $self = shift;
+  return $self->option( 'count' );
+}
+
+sub set_refresh_url {
+  my( $self, $refresh_url ) = @_;
+  $self->set_option( 'refresh_url', $refresh_url );
+  return $self;
+}
+
+sub clear_refresh_url {
+  my $self = shift;
+  $self->clear_option( 'refresh_url');
+  return $self;
+}
+
+sub refresh_url {
+  my $self = shift;
+  return $self->option( 'refresh_url' );
+}
+
+sub set_export_url {
+  my( $self, $export_url ) = @_;
+  $self->set_option( 'export_url', $export_url );
+  return $self;
+}
+
+sub clear_export_url {
+  my $self = shift;
+  $self->clear_option( 'export_url');
+  return $self;
+}
+
+sub export_url {
+  my $self = shift;
+  return $self->option( 'export_url' );
 }
 
 sub set_export {
@@ -423,7 +487,7 @@ sub _get_val {
 
 sub cond_eval {
   my( $self, $str, $row ) = @_;
-  return $str unless q([) eq substr $_, 0, 1;
+  return $str unless q([) eq substr $str, 0, 1;
   return $self->expand_template( $str, $row );
 }
 
@@ -583,6 +647,15 @@ sub render {
   return join q(), map { $_=~m{\A\s*(.*)\Z}mxs ? $1 : $_ } @html;
 }
 
+sub render_first_block {
+  my $self = shift;
+  my $count = $self->count;
+  my ($body) = $self->blocks;
+  my $prefix = defined $count ? qq(<span class="hidden">$count</span>) : q();
+  return $prefix unless $body;
+  return $prefix.join q(),$self->render_block( $body );
+}
+
 sub reset_totals {
   my( $self, $type ) = @_; ## Type is level - 1 is block, 0 is total; - this allows for easy working with sub-blocks if required later...
   $self->{'totals'}[$type] = undef;
@@ -650,4 +723,16 @@ sub render_block {
   return @html;
 }
 
+sub parse_structure {
+  my( $self, $struct ) = @_;
+  my @keys = map { $_->{'key'} } $self->columns;
+  return {(
+    'filter'    => [ map { [ $keys[$_->[0]], $_->[1] ] } @{$struct->{'col_filters'}||[]}],
+    'sort_list' => [ map { [ $keys[$_->[0]], $_->[1] ] } @{$struct->{'sort_list'}  ||[]}],
+    'page'      => $struct->{'page'}||0,
+    'size'      => $struct->{'size'}||$self->option('default'),
+  )};
+}
+
 1;
+
