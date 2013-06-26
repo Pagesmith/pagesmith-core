@@ -24,7 +24,7 @@ sub new {
   return $self;
 }
 
-sub get_next {
+sub get {
   my $self = shift;
   my $row = $self->{'sth'}->fetchrow_hashref;
   return $row if $row;
