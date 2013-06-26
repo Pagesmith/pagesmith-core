@@ -34,6 +34,7 @@ const my $DEFAULT_NAME => 'test';
 const my $DEFAULT_TYPE => 'mysql';
 const my $ONE_MEG      => 1<<20;
 
+use Pagesmith::Iterator;
 use Pagesmith::Config;
 use Pagesmith::Core qw(user_info);
 use base qw(Pagesmith::Support);
@@ -396,30 +397,12 @@ sub get_iterator {
 ## Gets a new "iterator" statement handle for SQL statement (and parameters) provided
 ##
 ## Clears previous iterator if one exists to keep things tidy (should never need to!)
-  my( $self, $key, $sql, @params ) = @_;
-
-  if( exists $self->{'iterators'}{$key} ) { ## Remove any previous iterator!
-    $self->{'iterators'}{$key}->finish;
-    delete $self->{'iterators'}{$key};
-  }
+  my( $self, $sql, @params ) = @_;
 
   my $sth = $self->dbh->prepare( $sql ); ## Prepare and execute SQL and store iterator!
-  return $self unless $sth;
+  return unless $sth;
   $sth->execute( @params );
-  $self->{'iterators'}{$key} = $sth;
-  return $self;
-}
-
-sub get_next_row {
-  my ( $self, $key ) = @_;
-  return unless exists $self->{'iterators'}{$key} && $self->{'iterators'}{$key};
-  my $row = $self->{'iterators'}{$key}->fetchrow_hashref;
-  unless( $row ) {
-    $self->{'iterators'}{$key}->finish;
-    delete $self->{'iterators'}{$key};
-    return;
-  }
-  return $row;
+  return Pagesmith::Iterator->new( $sth );
 }
 
 sub dsn {
