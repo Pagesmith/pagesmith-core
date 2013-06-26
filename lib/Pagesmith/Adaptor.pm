@@ -25,7 +25,7 @@ use Socket qw(inet_ntoa);
 use Sys::Hostname qw(hostname);
 use English qw(-no_match_vars $PROGRAM_NAME);
 use Scalar::Util qw(blessed weaken isweak);
-
+use POSIX qw(floor);
 use Const::Fast qw(const);
 
 const my $DEFAULT_PORT => 3306;
@@ -434,6 +434,60 @@ sub dbpass {
   my $self = shift;
   return $self->{'_dbpass'};
 }
+
+sub get_col_filters {
+  my( $self, $filters, $col_defs, $params ) = @_;
+  my $from_where_sql = q();
+  foreach my $col ( @{$filters||[]} ) {
+    ## Looking at filters - we have to handle the tech & state ones differently as they
+    ## cannot be used in count as the aliased names! - the alternate SQL is in the COL_DEFS
+    ## hash above!
+    my $exp = exists $col_defs->{$col->[0]} ? $col_defs->{$col->[0]} : $col->[0];
+
+    if( $col->[1] =~ m{\A([<>]|[!<>]?=)\s*(.*)\Z}mxs ) {
+      $from_where_sql .= "\n      and $exp $1 ?";
+      push @{$params}, $2;
+    } elsif( $col->[1] =~ m{\A!\s*(.*)\Z}mxs ) {
+      $from_where_sql .= "\n      and $exp not like ?";
+      push @{$params}, "%$1%";
+    } else {
+      $from_where_sql .= "\n      and $exp like ?";
+      push @{$params}, "%$col->[1]%";
+    }
+  }
+  return $from_where_sql;
+}
+
+sub get_order_by {
+  my( $self, $sort_list ) = @_;
+  return q() unless @{$sort_list||[]};
+  return "\n     order by". join q(, ),
+    map { sprintf ' %s %s', $_->[0], $_->[1]>0 ? 'desc' :'asc' }
+    @{$sort_list};
+}
+
+sub count_and_hash {
+#@params (self, hashref details)
+#@returns ( Int, hashref[] ) total count of rows, slice or rows...
+## details has five (or 6) entries in it..
+## * string c_sql  - Count SQL
+## * string sql    - Real SQL
+## * int    size   - Size of slice to return
+## * int    start  - First row to return
+## * string[] pars - parameters to pass to slice SQL (and count if c_pars isn't defined)
+## * string[] c_pars (optional) - parameters to pass to count SQL
+
+  my ($self, $details) = @_;
+  my $count   = $self->sv( $details->{'c_sql'}, @{ exists $details->{'c_pars'}  ? $details->{'c_pars'} :  $details->{'pars'}} );
+
+  $details->{'start'} = $details->{'size'} * floor( $count/$details->{'size'} ) if $details->{'start'} > $count;
+
+  my $rows = $self->all_hash( "$details->{'sql'} limit $details->{'start'}, $details->{'size'}",
+    @{$details->{'pars'}} );
+
+  return ( $count, $rows );
+}
+
 
 1;
 
