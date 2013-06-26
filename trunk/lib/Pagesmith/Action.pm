@@ -419,6 +419,7 @@ sub say {
   my ( $self, @vals ) = @_;
   push @{$self->{'_content'}}, @vals if @vals && $self->caching;
   $self->r->print(grep { defined $_ } @vals) if @vals;
+  push @{$self->{'_content'}},"\n";
   $self->r->print("\n");
   return $self;
 }
