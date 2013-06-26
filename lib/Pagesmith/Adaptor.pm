@@ -427,15 +427,22 @@ sub get_col_filters {
     ## hash above!
     my $exp = exists $col_defs->{$col->[0]} ? $col_defs->{$col->[0]} : $col->[0];
 
-    if( $col->[1] =~ m{\A([<>]|[!<>]?=)\s*(.*)\Z}mxs ) {
-      $from_where_sql .= "\n      and $exp $1 ?";
-      push @{$params}, $2;
-    } elsif( $col->[1] =~ m{\A!\s*(.*)\Z}mxs ) {
-      $from_where_sql .= "\n      and $exp not like ?";
-      push @{$params}, "%$1%";
+    if( 'CODE' eq ref $exp ) {
+      my ($sql, @pars) = &{$exp}($self, $col->[1]);
+      return unless $sql;
+      $from_where_sql .= "\n      and $sql";
+      push @{$params}, @pars;
     } else {
-      $from_where_sql .= "\n      and $exp like ?";
-      push @{$params}, "%$col->[1]%";
+      if( $col->[1] =~ m{\A([<>]|[!<>]?=)\s*(.*)\Z}mxs ) {
+        $from_where_sql .= "\n      and $exp $1 ?";
+        push @{$params}, $2;
+      } elsif( $col->[1] =~ m{\A!\s*(.*)\Z}mxs ) {
+        $from_where_sql .= "\n      and $exp not like ?";
+        push @{$params}, "%$1%";
+      } else {
+        $from_where_sql .= "\n      and $exp like ?";
+        push @{$params}, "%$col->[1]%";
+      }
     }
   }
   return $from_where_sql;
