@@ -103,40 +103,52 @@
         $('#export_json_table').attr({target: '_blank', action: '/action/ExportJsonTable/' + format}).submit();
         return;
       },
-
+      ajaxUpdate: function (table) {
+        var c = table.config;
+        c.ajax_timer = false;
+        c.ajax_obj = $.ajax({type:'GET',url:c.latest_url,data:'',dataType:'text',success:function(dt,st) {
+          var m = dt.match(/^<span.*?>(\d+)<\/span>\s*(.*)$/);
+          if( m ) {
+            c.ajax_obj = false;
+            c.entries = m[1];
+            var old_rows = c.totalRowsRaw;
+            c.totalRowsRaw = c.entries;
+            c.totalRows    = c.entries;
+            c.totalPages   = Math.ceil(c.totalRows / c.size);
+            if( old_rows ) {
+              $.tablesorter.clearTableBody(table);
+            }
+            if( c.entries ) {
+              $(table).find('thead').last().after( m[2] );
+              var tableBody = $(table.tBodies[0]);
+              $.tablesorterPager.fixPosition(table, tableBody);
+              $(table).trigger("applyWidgets");
+            }
+            $.tablesorterPager.updatePageDisplay(c, table);
+          }
+        }});
+      },
       renderTable: function (table, rows) {
         var c = table.config, l = rows.length, s, e, i, l2, j, tableBody, o;
         if( c.refresh_url ) {
-          var URL = c.refresh_url+(c.refresh_url.match(/\?/)?'&':'?')+'pars='+JSON.stringify({
+          // This is the really nasty bit of code which re-requests the TABLE!!
+          var json_string = JSON.stringify({
             page:        c.page,
             size:        c.size,
             sort_list:   c.sortList,
             col_filters: $.grep($.map(c.col_filters,function(v,i){return [[i,v.val]];}),function(el) { return el[1] !== ''; })
           }).replace(/\\/g,'\\\\').replace(/'/g,"\\\'").replace(/"/g,'\\"');
+          var URL = c.refresh_url.match(/[&?]pars=/) ? c.refresh_url+'+'+json_string : ( c.refresh_url+(c.refresh_url.match(/\?/)?'&':'?')+'pars='+json_string );
           if( c.human_inter ) {
             if( URL !== c.latest_url ) {
-              //debug console.log( URL+' '+c.latest_url );
+              if( c.ajax_obj !== false ) {
+                c.ajax_obj.abort();
+              }
+              if( c.ajax_timer !== false ) {
+                window.clearTimeout(c.ajax_timer);
+              }
               c.latest_url = URL;
-              $.ajax({type:'GET',url:URL,data:'',dataType:'text',success:function(dt,st) {
-                var m = dt.match(/^<span.*?>(\d+)<\/span>\s*(.*)$/);
-                if( m ) {
-                  c.entries = m[1];
-                  var old_rows = c.totalRowsRaw;
-                  c.totalRowsRaw = c.entries;
-                  c.totalRows    = c.entries;
-                  c.totalPages   = Math.ceil(c.totalRows / c.size);
-                  if( old_rows ) {
-                    $.tablesorter.clearTableBody(table);
-                  }
-                  if( c.entries ) {
-                    $(table).find('thead').last().after( m[2] );
-                    var tableBody = $(table.tBodies[0]);
-                    $.tablesorterPager.fixPosition(table, tableBody);
-                    $(table).trigger("applyWidgets");
-                  }
-                  $.tablesorterPager.updatePageDisplay(c, table);
-                }
-              }});
+              c.ajax_timer = window.setTimeout( function() { $.tablesorterPager.ajaxUpdate(table); }, c.ajax_key_delay );
             }
             return;
           } else {
@@ -206,7 +218,11 @@
       },
       filterRows: function (c) {
         var values = c.col_filters, value = c.filter_value, val_filtering = value !== '', col_filtering = values.join('') !== '', i, x, row, flag, j, col_val, filter, k;
-        if (!val_filtering && !col_filtering) {
+        if( c.refresh_url ) {
+          c.rowsCopy = c.rowsCopyRaw;
+          return;
+        }
+        if ( !val_filtering && !col_filtering) {
           c.rowsCopy = c.rowsCopyRaw;
         } else {
           c.rowsCopy = [];
@@ -310,6 +326,9 @@
         seperator: "/",
         positionFixed: false,
         appender: this.appender,
+        ajax_key_delay: 200,
+        ajax_timer: false,
+        ajax_obj: false,
         n_end: 1,
         n_pad: 2
       },
