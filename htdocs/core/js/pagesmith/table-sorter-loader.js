@@ -40,14 +40,22 @@ $('.sorted-table').livequery(function () { // Make "sorted-table"s sortable
     j,
     md = $.metadata && $(this).metadata() ? $(this).metadata() : {},
     refresh_url = '',
+    export_url = '',
     entries = '',
     my_cells;
-  if( md && md.refresh ) {
-    refresh_url = md.refresh;
+
+  if( md ) {
+    if( md.refresh ) {
+      refresh_url = md.refresh;
+    }
+    if( md.entries ) {
+      entries = md.entries;
+    }
+    if( md['export'] ) {
+      export_url = md['export'];
+    }
   }
-  if( md && md.entries ) {
-    entries = md.entries;
-  }
+
   if ($(this).hasClass('before')) {
     $(this).before('<div id="' + table_key + '" class="pager"><form></form></div>');
   } else {
@@ -154,7 +162,8 @@ $('.sorted-table').livequery(function () { // Make "sorted-table"s sortable
   $(this).tablesorterPager({
     container: $('#' + table_key),
     refresh_url:    refresh_url,
-    entries:        entries
+    entries:        entries,
+    export_url:     export_url
   });
 });
 

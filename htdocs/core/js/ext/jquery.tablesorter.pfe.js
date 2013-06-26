@@ -305,6 +305,7 @@
         filter_value: '',
         col_filters: [],
         refresh_url: '',
+        export_url:  '',
         entries: 0,
         latest_url: '',
         human_inter: 0,
@@ -346,8 +347,20 @@
           /* We have now set up the page appropriately ... now if we are doing on page updates this is
              where we need to start hacking! */
           $(config.cssDump, pager).click(function () {
-            $.tablesorterPager.get_json(table, $(this).html());
-            return false;
+            if( config.export_url ) {
+              var json_string = JSON.stringify({
+                page:        config.page,
+                size:        config.size,
+                sort_list:   config.sortList,
+                col_filters: $.grep($.map(config.col_filters,function(v,i){return [[i,v.val]];}),function(el) { return el[1] !== ''; })
+              });
+              var URL = config.export_url+(config.export_url.match(/\?/)?'&':'?')+'config='+escape(json_string);
+              document.location.href = URL;
+              return false;
+            } else {
+              $.tablesorterPager.get_json(table, $(this).html());
+              return false;
+            }
           });
           $(config.cssFilter, pager).keyup(function () {
             $.tablesorterPager.changeFilter(table, $(this).val());
