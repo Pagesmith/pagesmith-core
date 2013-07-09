@@ -615,7 +615,7 @@ $(function () {
       return FormValidator.update_count($(this));
     }
   ).on(// and strings - with max length
-    'change keyup',
+    'change keyup blur',
     'form.check :input',
     function () {
       return FormValidator.check($(this));
@@ -686,6 +686,11 @@ $(function () {
   $('form.check :input').livequery(function () { return FormValidator.check($(this)); });
   $('label').livequery(function () { return FormValidator.push_label($(this)); });
 });
-$('form.logic').livequery(function () { return FormValidator.check_logic($(this)); });
-$('form.check :input').livequery(function () { return FormValidator.check($(this)); });
-$('label').livequery(function () { return FormValidator.push_label($(this)); });
+
+$(window).on('load',function() {
+  window.setTimeout(function(){
+    $('form.check :input').each(function () {
+      FormValidator.check($(this));
+    });
+  },100 );
+});
