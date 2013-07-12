@@ -3,6 +3,7 @@
  * and converts them into a simple carousel - with both mouse and
  * keyboard control ..
  * And now with a simple transition
+ * mw6:This needs writing as a state machine
  *
  * @author:   js5 (James Smith)
  * @version:  $Id$
@@ -16,7 +17,7 @@
   var settings = $.metadata && $('.carousel').metadata() ? $('.carousel').metadata() : {};
 
   // Length of time a slide is displayed for:
-  var SLIDE_INTERVAL      = settings['slide_interval']      || 900; // 4 seconds
+  var SLIDE_INTERVAL      = settings['slide_interval']      || 6000; // 6 seconds
   var DELAY_START         = settings['delay_start']         || 200;
   var TRANSITION_INTERVAL = settings['transition_interval'] || 250; // 1/4 second between slides.
   TRANSITION_INTERVAL *= 1;
