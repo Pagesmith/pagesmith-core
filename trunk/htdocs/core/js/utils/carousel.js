@@ -43,10 +43,10 @@
      // console.log( 'not animating transition from self to self');
       return;
       }
-    if ( active ) { 
+    if ( active ) {
      // console.log( 'not animating because already animating' );
       return;
-    } else { 
+    } else {
       active = true;
     }
     //console.log( active );
@@ -58,7 +58,7 @@
     // console.log( t );
     x.animate( x_final, { 'duration': t, 'complete': f_preshid } );
 
-    a.css( a_start ).removeClass('preshid').show().animate( a_final, 
+    a.css( a_start ).removeClass('preshid').show().animate( a_final,
       { 'duration': t, 'complete': f_finishsettitle }
       );
 
@@ -127,8 +127,8 @@
   };
 
   $.fn.pres_set_title = function () {
-    var n = $(this).children('img:visible').prevAll('img').length + 1, 
-        t = 'Slide ' + n, 
+    var n = $(this).children('img:visible').prevAll('img').length + 1,
+        t = 'Slide ' + n,
        tt = $(this).children('img:visible').first().attr('title');
     if (tt) {
       t += ': ' + tt;
@@ -268,6 +268,6 @@
     $('.carousel div').width( DIMENSION_X );
     $('.carousel img').addClass('absolute').css('left','0').not(':visible').width( '0px' ).height( DIMENSION_Y );
   };
- 
+
   $(document).ready( begin );
 }(jQuery));
