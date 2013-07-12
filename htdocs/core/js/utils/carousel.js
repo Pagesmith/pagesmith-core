@@ -28,24 +28,6 @@
 
 // auto_advance_temporary_pause = Prevent a transition from happening when anyone manually starts anything (click or type)
 
-$.extend($.easing,
-  {
-   outCubic: function (x, t, b, c, d) {
-
-  var ts=(t/=d)*t;
-  var tc=ts*t;
-  return b+c*(tc + -3*ts + 3*t);
-
-//  var ts=(t/=d)*t;
-//  var tc=ts*t;
-//  return b+c*(33*tc*ts + -106*ts*ts + 126*tc + -67*ts + 15*t);  
-
-//        return c*(t/=d)*t + b;
-    }
-
-  }
-);
-
   var active = false; // Prevent anything from happening once a transition has started
 
   var f_preshid = function(){$(this).hide().addClass('preshid');};
@@ -73,10 +55,10 @@ $.extend($.easing,
       //console.log( active );
       };
     // console.log( t );
-    x.animate( x_final, { 'duration': t, 'complete': f_preshid,        'easing': 'outCubic' } );
+    x.animate( x_final, { 'duration': t, 'complete': f_preshid } );
 
     a.css( a_start ).removeClass('preshid').show().animate( a_final, 
-      { 'duration': t, 'complete': f_finishsettitle, 'easing': 'outCubic' }
+      { 'duration': t, 'complete': f_finishsettitle }
       );
 
   };
