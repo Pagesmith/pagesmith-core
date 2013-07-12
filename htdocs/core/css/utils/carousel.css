@@ -1,0 +1,5 @@
+@charset "UTF-8";
+.carousel { text-align: center;  position: relative;  margin-left:auto; margin-right:auto; }
+  .preshid { display: none; }
+  .active { font-weight: bold; background: #aaa; }
+  .absolute { position: absolute; }
