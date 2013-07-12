@@ -1,6 +1,6 @@
 /**
  * Simple image based presentation viewer. Takes a The images in a div,
- * and converts them into a simple presentation - with both mouse and
+ * and converts them into a simple carousel - with both mouse and
  * keyboard control ..
  * And now with a simple transition
  *
@@ -13,7 +13,7 @@
 
 (function ($) {
 
-  var settings = $.metadata && $('.presentation').metadata() ? $('.presentation').metadata() : {};
+  var settings = $.metadata && $('.carousel').metadata() ? $('.carousel').metadata() : {};
 
   // Length of time a slide is displayed for:
   var SLIDE_INTERVAL      = settings['slide_interval']      || 900; // 4 seconds
@@ -68,7 +68,7 @@ $.extend($.easing,
     }
     //console.log( active );
     var f_finishsettitle = function() {
-      a.closest('.presentation').pres_set_title();
+      a.closest('.carousel').pres_set_title();
       active = false;
       //console.log( active );
       };
@@ -93,7 +93,7 @@ $.extend($.easing,
 
   // Thing to do after the time mentioned above:
   var st = function() {
-    $('body .presentation div span').eq(0).slide_next();
+    $('body .carousel div span').eq(0).slide_next();
   };
 
   // Interval management.
@@ -131,7 +131,7 @@ $.extend($.easing,
 
    // console.log( 'Pausing animation while keyboard animation happens' );
 
-    if ( $('.presentation .pause:visible').length ) {
+    if ( $('.carousel .pause:visible').length ) {
 
       var success = pause_timer();
      // console.log( 'Pausing timer returned ' + success );
@@ -157,37 +157,37 @@ $.extend($.easing,
   };
 
   $(document.documentElement).keyup(function (event) {
-    if (!$('.presentation').length) {
+    if (!$('.carousel').length) {
       return;
     }
     var k = event.keyCode;
     switch (k) {
     case 33: // pageup
     case 36: // home
-      $('.presentation .slide').first().click();
+      $('.carousel .slide').first().click();
       break;
     case 34: // pagedown
     case 35: // end
-      $('.presentation .slide').last().click();
+      $('.carousel .slide').last().click();
       break;
     case 37: // left arrow
     case 38: // up arrow
-      $('.presentation .prev').click();
+      $('.carousel .prev').click();
       break;
     case 32: // space
     case 39: // right arrow
     case 40: // down arrow
-      $('.presentation .next').click();
+      $('.carousel .next').click();
       break;
     default:
       if (k > 48 && k < 58) { // numbers 1..9
-        $('.presentation .slide').eq(k - 49).click();
+        $('.carousel .slide').eq(k - 49).click();
       }
       break;
     }
   });
 
-  $('.presentation').livequery(function () {
+  $('.carousel').livequery(function () {
       var html = '<div class="title"></div><div><a href="?this=%s" class="prev" title="Previous">&#9664; Back</a>', c = 0;
       $(this).children('img').first().siblings('img').addClass('preshid');
       $(this).children('img').each(function () {
@@ -197,7 +197,7 @@ $.extend($.easing,
       html += ' <a href="?this=%s" class="next" title="Next">Next &#9654;</a><br /><span class="pause">||Pause</span><span class="play">&gt;Play</span></div>';
       $(this).append(html).pres_set_title();
     });
-  $('body').on('click','.presentation img', function () {
+  $('body').on('click','.carousel img', function () {
     var t = TRANSITION_INTERVAL;
     var x = $(this);
     var a;
@@ -232,17 +232,17 @@ $.extend($.easing,
     }
     animate_prev(x,a,t);
   };
-  $('body').on('click','.presentation .prev', function ( e ) {
+  $('body').on('click','.carousel .prev', function ( e ) {
     e.preventDefault();
     $(this).slide_prev();
     auto_advance_temporary_pause();
   });
-  $('body').on('click','.presentation .next', function( e ) {
+  $('body').on('click','.carousel .next', function( e ) {
     e.preventDefault();
     $(this).slide_next();
     auto_advance_temporary_pause();
   });
-  $('body').on('click','.presentation .slide',function() {
+  $('body').on('click','.carousel .slide',function() {
     var t = TRANSITION_INTERVAL;
     var x = $(this).closest('div').siblings('img:visible');
     var a = $(this).closest('div').siblings('img').eq($(this).text() - 1);
@@ -251,20 +251,20 @@ $.extend($.easing,
   });
 
   // AUTO PROGRESS
-  $('body').on('click','.presentation .pause',function() {
+  $('body').on('click','.carousel .pause',function() {
     if ( active ) { return; }
 
     if (pause_timer()) { // NOTE: Calls the function to stop the interval_timer
       $(this).hide(); // from here onwards, activate doesn't happen.
-      $('.presentation .play').show();
+      $('.carousel .play').show();
     }
   });
-  $('body').on('click','.presentation .play',function() {
+  $('body').on('click','.carousel .play',function() {
     if ( active ) { return; }
 
     restart_timer();
     $(this).hide();
-    $('.presentation .pause').show();
+    $('.carousel .pause').show();
   });
 
   // slightly longer delay on the first slide
@@ -272,18 +272,18 @@ $.extend($.easing,
     var q = function () {
       var intervalID = window.setInterval( st, SLIDE_INTERVAL );
       push_timer(intervalID);
-      $('.presentation .pause').show();
+      $('.carousel .pause').show();
       };
 
     // after a couple of seconds, start the show...
     var r          = window.setTimeout( q, DELAY_START );
     // initial setup: can't play if running. can't pause as not running yet
 
-    $('.presentation .pause').hide();
-    $('.presentation .play').hide();
+    $('.carousel .pause').hide();
+    $('.carousel .play').hide();
     // experiment with absolute positioning:
-    $('.presentation div').width( DIMENSION_X );
-    $('.presentation img').addClass('absolute').css('left','0').not(':visible').width( '0px' ).height( DIMENSION_Y );
+    $('.carousel div').width( DIMENSION_X );
+    $('.carousel img').addClass('absolute').css('left','0').not(':visible').width( '0px' ).height( DIMENSION_Y );
   };
  
   $(document).ready( begin );
