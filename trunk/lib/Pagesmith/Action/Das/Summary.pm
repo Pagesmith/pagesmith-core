@@ -33,7 +33,7 @@ sub run_details {
     $self->table
       ->make_sortable
       ->add_class( 'before' )
-      ->set_pagination( [qw(10 25 50)], '25' )
+      ->set_pagination( [qw(10 25 50 all)], '25' )
       ->set_export( [qw(csv xls)] )
       ->set_colfilter
       ->add_columns(
