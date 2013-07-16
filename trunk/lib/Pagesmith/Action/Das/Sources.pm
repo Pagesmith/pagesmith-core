@@ -22,7 +22,7 @@ sub run {
 
 my @T = $self->filtered_sources;
   return $self->xml->printf(
-    '<SOURCES>%s</SOURCES>',
+    qq(<?xml version="1.0" encoding="UTF-8" ?>\n<?xml-stylesheet type="text/xsl" href="/core/css/das.xsl"?>\n<SOURCES>%s</SOURCES>),
     join q(),
     map { $_->{'sources_doc'} }
     $self->filtered_sources,
