@@ -175,7 +175,8 @@ sub retrieve {
   my $c = Pagesmith::Utils::Curl::Fetcher->new->set_timeout( $TIMEOUT_SOURCES );
   my @hosts = @{$conf->{'hosts'}||[]};
 
-  my $my_hosts = { map { ("http://$_" => 1) } @{$conf->{'my_hosts'}||[]} };
+  my @my_hosts = map { "http://$_" } @{$conf->{'my_hosts'}||[]};
+  my $my_hosts = { map { ( $_ => 1 ) } @my_hosts };
 
   foreach my $host ( @hosts ) {
     my $k = lc "http://$host";
@@ -203,7 +204,7 @@ sub retrieve {
         'sources_doc' => $values{ $host }{ 'sources' }{$k},
         'dsn_doc'     => $values{ $host }{ 'dsn'     }{$k}||q(),
         'backend'     => $host,
-      }, $my_hosts );
+      }, $my_hosts, \@my_hosts);
       $sources->{$k}{'realms'} = $restrictions->{$k}||[];
     }
   }
@@ -214,7 +215,7 @@ sub retrieve {
         'sources_doc' => q(),
         'dsn_doc'     => $values{ $host }{ 'dsn'     }{$k}||q(),
         'backend'     => $host,
-      }, $my_hosts );
+      }, $my_hosts, \@my_hosts );
       $sources->{$k}{'realms'} = $restrictions->{$k}||[];
     }
   }
@@ -224,14 +225,20 @@ sub retrieve {
 }
 
 sub modify {
-  my( $self, $source_conf, $my_hosts ) = @_;
+  my( $self, $source_conf, $my_hosts, $front_end_hosts ) = @_;
   (my $regexp  = qq(uri="http://$source_conf->{'backend'})) =~ s{[.]}{[.]}mxsg;
-  my $replace = 'uri="'.$self->base_url.'/das';
+  my $replace     = 'uri="'.$self->base_url.'/das';
+  my $replace_doc = 'doc_href="'.$self->base_url.'/das';
   $source_conf->{'sources_doc'} =~ s{/+das/+}{/das/}mxsg;
   $source_conf->{'dsn_doc'}     =~ s{/+das/+}{/das/}mxsg;
 
   $source_conf->{'sources_doc'} =~ s{$regexp}{$replace}mxsig;
-  $source_conf->{'sources_doc'} =~ s{uri="http://das[.]sanger[.]ac[.]uk/das}{$replace}mixsg;
+  foreach my $fh ( @{$front_end_hosts} ) {
+    ( my $r = qq(uri="$fh) ) =~ s{[.]}{[.]}mxsg;
+    $source_conf->{'sources_doc'} =~ s{$r}{$replace}mixsg;
+    ( my $t = qq(doc_href="$fh) ) =~ s{[.]}{[.]}mxsg;
+    $source_conf->{'sources_doc'} =~ s{$t}{$replace_doc}mixsg;
+  }
   $source_conf->{'dsn_doc'}     =~ s{(<MAPMASTER>)\s*(.*?)(/[^/<\s]+/?\s*</MAPMASTER>)}{ exists $my_hosts->{lc $2} ? $1.$self->base_url.'/das'.$3 : $1.$2.$3 }mxseg;
   return $source_conf;
 }
