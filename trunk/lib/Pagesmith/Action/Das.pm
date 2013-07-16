@@ -20,7 +20,7 @@ use List::MoreUtils qw(any none);
 
 use Const::Fast qw(const);
 
-const my $TIMEOUT_FETCH   => 240;
+const my $TIMEOUT_FETCH   => 600;
 const my $TIMEOUT_SOURCES => 120;
 const my %VALID_COMMANDS  => map { $_ => 1 } qw(
   sources dsn
