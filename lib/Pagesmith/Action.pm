@@ -25,7 +25,7 @@ const my $ONE_MINUTE =>         60;
 
 use base qw(Pagesmith::Support);
 
-use Apache2::Const qw(REDIRECT OK FORBIDDEN NOT_FOUND HTTP_NO_CONTENT DONE);
+use Apache2::Const qw(REDIRECT OK SERVER_ERROR FORBIDDEN NOT_FOUND HTTP_NO_CONTENT HTTP_BAD_REQUEST DONE);
 use Apache2::Response;
 use Apache2::Request;
 use Apache2::Util;
@@ -456,12 +456,24 @@ sub ok {
   return OK;
 }
 
+sub forbidden {
+  return FORBIDDEN;
+}
+
 sub not_found {
   return NOT_FOUND;
 }
 
 sub no_content {
   return HTTP_NO_CONTENT;
+}
+
+sub bad_request {
+  return HTTP_BAD_REQUEST;
+}
+
+sub server_error {
+  return SERVER_ERROR;
 }
 
 sub login_required {
