@@ -21,7 +21,7 @@ sub run {
   my $self = shift;
 
   return $self->xml->printf(
-    '<DASDSN>%s</DASDSN>',
+    qq(<?xml version="1.0" encoding="UTF-8" ?>\n<?xml-stylesheet type="text/xsl" href="/core/css/das.xsl"?>\n<DASDSN>%s</DASDSN>),
     join q(),
     map { $_->{'dsn_doc'} }
     $self->filtered_sources,

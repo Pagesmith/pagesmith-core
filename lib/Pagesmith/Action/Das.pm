@@ -37,17 +37,17 @@ sub das_config {
 
 sub filtered_sources {
   my $self = shift;
-  my @sources       = values %{$self->fetch_config};
+  my @sources       = values %{$self->fetch_config||{}};
   my @client_realms = split m{,\s+}mxs, $self->r->headers_in->get('ClientRealm')||q();
 
   ## If client isn't in any realm then we return only those with no realms defined...
-  my @s = grep { ! @{$_->{'realms'}} } @sources;
+  my @s = grep { ! @{$_->{'realms'}||[]} } @sources;
 
   return @s unless @client_realms;
 
   ## If the client has realms we return those with no realms defined OR those
   ## whose realm list overlaps with the client_realms list!
-  my @q = grep {   @{$_->{'realms'}} } @sources;
+  my @q = grep {   @{$_->{'realms'}||[]} } @sources;
 
   my %client_realms = map { $_=>1 } @client_realms;
   push @s,
