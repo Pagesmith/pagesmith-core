@@ -71,7 +71,6 @@ sub add_body {
   }
   $self->r->print( $chunk );
   return length $chunk;
-
 }
 
 sub add_head {
