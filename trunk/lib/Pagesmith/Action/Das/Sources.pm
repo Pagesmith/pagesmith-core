@@ -19,14 +19,8 @@ use base qw(Pagesmith::Action::Das);
 
 sub run {
   my $self = shift;
-
-my @T = $self->filtered_sources;
-  return $self->xml->printf(
-    qq(<?xml version="1.0" encoding="UTF-8" ?>\n<?xml-stylesheet type="text/xsl" href="/core/css/das.xsl"?>\n<SOURCES>%s</SOURCES>),
-    join q(),
-    map { $_->{'sources_doc'} }
-    $self->filtered_sources,
-  )->ok;
+  $self->r->headers_out->set( 'X-Das-Capabilities', 'sources/1.0; dsn/1.0' );
+  return $self->sources_markup( $self->filtered_sources );
 }
 
 1;

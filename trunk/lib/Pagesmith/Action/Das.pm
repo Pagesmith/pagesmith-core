@@ -18,7 +18,14 @@ use version qw(qv); our $VERSION = qv('0.1.0');
 use base qw(Pagesmith::Action);
 use List::MoreUtils qw(any none);
 
+use Apache2::Const qw(HTTP_BAD_REQUEST);
+
 use Const::Fast qw(const);
+
+const my $BAD_COMMAND     => 400;
+const my $BAD_SOURCE      => 401;
+const my $NOT_IMPLEMENTED => 501;
+const my $VALID_REQUEST   => 200;
 
 const my $TIMEOUT_FETCH   => 600;
 const my $TIMEOUT_SOURCES => 120;
@@ -33,6 +40,27 @@ use Pagesmith::ConfigHash qw(template_name);
 sub das_config {
   my $self = shift;
   return $self->{'sources_config'} || $self->fetch_config;
+}
+
+sub das_error_message {
+  my( $self, $status, $das_status, $subject, $body ) = @_;
+  $self->xml;
+  $self->r->err_headers_out->set( 'X-Das-Status', $das_status );
+  $self->r->err_headers_out->set( 'access-control-allow-credentials', 'true' );
+  $self->r->err_headers_out->set( 'access-control-allow-origin', q(*) );
+  $self->r->err_headers_out->set( 'access-control-expose-headers', 'X-DAS-Version, X-DAS-Server, X-DAS-Status, X-DAS-Capabilities' );
+  $self->r->err_headers_out->set( 'x-das-capabilities', 'sources/1.0; dsn/1.0' );
+  $self->r->err_headers_out->set( 'x-das-server', 'PagesmithDasProxy/1' );
+  $self->r->err_headers_out->set( 'x-das-version', 'DAS/1.6E' );
+  $self->r->status( $status );
+  $self->r->status_line( 'DAS ERROR' );
+  $self->r->err_headers_out->set( 'Status'   => "$status DAS_ERROR" );
+  my $str = sprintf qq(<?xml version="1.0" encoding="UTF-8"?>\n<error>\n<![CDATA[\n\n%s\n\n%s\n\n]]>\n</error>),
+    $subject,
+    $body;
+  $self->r->err_headers_out->add( 'Content-Length', length $str );
+  $self->print( $str );
+  return $status;
 }
 
 sub filtered_sources {
@@ -72,102 +100,42 @@ sub fetch_config {
   return $self->{'sources_config'};
 }
 
-sub run_xsl {
-  my $self = shift;
-  ## Move these out and slurp!
-  ## no critic (ImplicitNewlines InterpolationOfMetachars)
-  return $self->content_type('text/xsl')->print(q(<?xml version="1.0" encoding="UTF-8"?>
-<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0">
-<xsl:output method="html" indent="yes"/>
-<xsl:template match="/">
-<html xmlns="http://www.w3.org/1999/xhtml">
-<head>
-  <style type="text/css">
-    html,body {font-family:helvetica,arial,sans-serif;font-size:0.8em}
-    h2, table    { width: 95%; margin: 0 auto }
-    h2 { border:1px solid white }
-    h2 span { font-size: 1.5em; padding: 2px 0.5em }
-    h2, thead    {background:#ddd}
-    thead th {margin:0;padding:2px}
-    .tr1     {background:#eee}
-    .tr2     {background:#ffb}
-    tr{vertical-align:top}
-  </style>
-  <title>Features for <xsl:value-of select="/DASGFF/GFF/@href"/></title>
-</head>
-<body>
-  <h2><span>Features for <xsl:value-of select="/DASGFF/GFF/@href"/></span></h2>
-  <table class="z" id="data">
-  <thead>
-    <tr>
-      <th>Label</th>
-      <th>Segment</th>
-      <th>Start</th>
-      <th>End</th>
-      <th>Orientation</th>
-      <th>Type</th>
-      <th>Notes</th>
-      <th>Link</th>
-    </tr>
-  </thead>
-  <tbody>
-    <xsl:apply-templates select="/DASGFF/GFF/SEGMENT"/>
-  </tbody>
-  </table>
-</body>
-</html>
-</xsl:template>
-
-<xsl:template match="SEGMENT">
-  <xsl:for-each select="FEATURE">
-    <xsl:sort select="@id"/>
-    <tr>
-      <td><xsl:value-of select="@id"/></td>
-      <td><xsl:value-of select="../@id"/></td>
-      <td><xsl:value-of select="START"/></td>
-      <td><xsl:value-of select="END"/></td>
-      <td><xsl:value-of select="ORIENTATION"/></td>
-      <td><xsl:value-of select="TYPE"/></td>
-      <td><xsl:apply-templates select="NOTE"/></td>
-      <td><xsl:if test="LINK"><xsl:apply-templates select="LINK"/></xsl:if></td>
-    </tr>
-  </xsl:for-each>
-</xsl:template>
-
-<xsl:template match="NOTE">
-  <xsl:value-of select="."/>
-  <xsl:if test="position()!=last()"><br/></xsl:if>
-</xsl:template>
-
-<xsl:template match="LINK">
-  [<a><xsl:attribute name="href"><xsl:value-of select="@href"/></xsl:attribute><xsl:value-of select="."/></a>]
-</xsl:template>
-
-</xsl:stylesheet>
-) )->ok;
-  ## use critic
+sub sources_markup {
+  my( $self, @sources ) = @_;
+  $self->r->headers_out->set( 'X-Das-Capabilities', 'sources/1.0; dsn/1.0' );
+  $self->r->headers_out->set( 'X-Das-Status',       $VALID_REQUEST );
+  my $markup = sprintf
+    qq(<?xml version="1.0" encoding="UTF-8" ?>\n<?xml-stylesheet type="text/xsl" href="/core/css/das.xsl"?>\n<SOURCES>%s</SOURCES>),
+    join q(),
+    map { $_->{'sources_doc'} }
+    @sources;
+  return $self->xml->set_length( length $markup )->print( $markup )->ok;
 }
+
 sub run {
   my $self = shift;
   my $source  = $self->next_path_info || q();
-
-  return $self->run_xsl if $source eq 'das.xsl';
 
   my $command = $self->next_path_info || q();
   return $self->redirect( '/das/sources' ) unless $source;
   ## Now we get backend for source ...
   my $config = $self->fetch_config;
 
-  return $self->wrap( 'Invalid source', '<p>Do not recognise source</p>' )->ok unless exists $config->{$source};
+  return $self->das_error_message(
+    $self->bad_request,
+    $BAD_SOURCE,
+    'Invalid source',
+    'We do not recognise the source requested',
+   ) unless exists $config->{$source};
 
   my $details = $config->{$source};
 
   unless( $command ) {
-    return $self->wrap( 'Misconfigured sources', '<p>No sources information</p>' )->ok unless $details->{'sources_doc'};
-    return $self->xml->print( '<SOURCES>'.$details->{'sources_doc'}.'</SOURCES>' )->ok;
+    return $self->sources_markup( $details ) if $details->{'sources_doc'};
+    return $self->das_error_message( $self->server_error, $NOT_IMPLEMENTED, 'Misconfigured source', 'The source does not have a sources doc' );
   }
 
-  return $self->wrap( 'Invalid command', '<p>You must specify a valid command</p>'  )->ok unless exists $VALID_COMMANDS{ $command };
+  return $self->das_error_message( $self->bad_request, $BAD_COMMAND, 'Unrecognised command', 'You must specify a valid command'  ) unless exists $VALID_COMMANDS{ $command };
   ## We may want to extend this as we could check capabilities as well!!!?! yarg!
 
   ## Now we map backend server and proxy command to it!
@@ -177,7 +145,7 @@ sub run {
   if( @realms ) {
     my @client_realms = split m{,\s+}mxs, $self->r->headers_in->get('ClientRealm')||q();
     my %client_realms = map { ($_=>1) } @client_realms;
-    return $self->wrap( 'Invalid source', '<p>This sources is restricted</p>' )->ok
+    return $self->das_error_message( $self->bad_request, $BAD_SOURCE, 'Invalid source', 'This sources is restricted' )
       if none { exists $client_realms{$_} } @realms;
   }
   ## OK - finally do the fetch....
@@ -197,7 +165,7 @@ sub run {
     }
   }
   ## We will look to use CURL here - but hack the handler to parse in chunks!!!
-  return $self->ok if $st ne '200';
+  return $self->ok if $st eq '200';
   return $st;
 }
 
