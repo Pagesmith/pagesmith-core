@@ -132,6 +132,7 @@ ul { margin-top: 0 ; margin-bottom: 0 }
     </td>
     <td class="l"><xsl:value-of select="VERSION/COORDINATES/@test_range"/></td>
     <td class="c"><xsl:value-of select="VERSION/COORDINATES/@taxid" /></td>
+    <td class="l"><xsl:value-of select="MAINTAINER/@email"/></td>
     <td class="l"><ul>
       <xsl:apply-templates select="VERSION/CAPABILITY" />
     </ul></td>
