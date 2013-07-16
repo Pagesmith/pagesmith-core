@@ -26,24 +26,29 @@ use WWW::Curl::Easy;
 
 use Pagesmith::Utils::Curl::Response;
 
+use base qw(Pagesmith::Root);
+
 ## no critic (CallsToUndeclaredSubs)
 
 sub new {
   my ( $class, $url, $fetcher ) = @_;
+  my $resp_class = $fetcher->resp_class;
+
   my $self = {
     'start_time' => undef,
-    'response'   => Pagesmith::Utils::Curl::Response->new( $url ),
     'curl_id'    => undef,
     'curl'       => WWW::Curl::Easy->new,
     'url'        => $url,
     'max_size'   => 0,
   };
   bless $self, $class;
+  $self->dynamic_use( $resp_class );
+  $self->{'response'} = $resp_class->new( $url );
 
 # Initialise the curl object!
   $self->response->set_max_size( defined $fetcher ? $fetcher->max_size : 0 );
-  $self->setopt( CURLOPT_HEADERFUNCTION, sub { $_[1]->add_head( $_[0] ); return length $_[0]; } );
-  $self->setopt( CURLOPT_WRITEFUNCTION,  sub { $self->{'response'}->add_body( $_[0] ); return length $_[0]; } );
+  $self->setopt( CURLOPT_HEADERFUNCTION, sub { $_[1]->add_head( $_[0], $self ); return length $_[0]; } );
+  $self->setopt( CURLOPT_WRITEFUNCTION,  sub { $self->{'response'}->add_body( $_[0], $self ); return length $_[0]; } );
   $self->setopt( CURLOPT_FILE,           $self->{'response'} );
   $self->setopt( CURLOPT_WRITEHEADER,    $self->{'response'} );
   $self->setopt( CURLOPT_URL,            $self->{'url'} );

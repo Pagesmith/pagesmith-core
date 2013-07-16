@@ -26,6 +26,7 @@ sub new {
   my $self  = {
     'active_handles' => 0,
     'curl_id'        => 1,
+    'resp_class'     => 'Pagesmith::Utils::Curl::Response',
     'data'           => {},
     'curlm'          => WWW::Curl::Multi->new(),
     'proxy'          => undef,
@@ -35,6 +36,17 @@ sub new {
   };
   bless $self, $class;
   return $self;
+}
+
+sub set_resp_class {
+  my( $self, $val ) = @_;
+  $self->{'resp_class'} = $val;
+  return $self;
+}
+
+sub resp_class {
+  my $self = shift;
+  return $self->{'resp_class'};
 }
 
 sub set_max_size {

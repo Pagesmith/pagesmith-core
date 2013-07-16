@@ -102,6 +102,7 @@ sub content_length {
 #-------------------------------------------------------------------------------
 sub add_body {
   my ( $self, $chunk ) = @_;
+  return unless length $chunk;
   push @{ $self->{'body'} }, $chunk if $self->{'size'} < $self->max_size;
   $self->{'size'} += length $chunk;
   if( $self->{'size'} > $self->max_size ) {
