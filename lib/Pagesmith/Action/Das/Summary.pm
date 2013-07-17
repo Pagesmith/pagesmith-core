@@ -26,10 +26,24 @@ sub run {
 sub run_details {
   my( $self, $flush ) = @_;
   my $config = $self->fetch_config( $flush );
-  my @sources = uniq sort map { $_->{'backend'} } values %{$config};
+  my @s = values %{$config};
+  my @sources        = uniq sort map { $_->{'backend'} } @s;
+  my $n_docs         =                                   @s;
+  my $n_dsn_docs     =     grep { $_->{'dsn_doc' }     } @s;
+  my $n_sources_docs =     grep { $_->{'sources_doc' } } @s;
 
   ## no critic (LongChainsOfMethodCalls)
-  return $self->html->wrap( 'DAS '.($flush?'Flush':'Summary'),
+  return $self->html->wrap( 'DAS '.($flush ? 'Flush' : 'Summary'),
+    sprintf '<div class="col1">%s</div><div class="col2">%s</div><div class="clear">%s</div>',
+    $self->twocol( {'class' => 'evenwidth outer'} )
+      ->add_entry( 'Sources',                  $n_docs )
+      ->add_entry( 'Sources with /sources',    $n_sources_docs )
+      ->add_entry( 'Sources with /DSN',        $n_dsn_docs )
+      ->render,
+    $self->twocol( {'class' => 'evenwidth outer'} )
+      ->add_entry( 'Sources without /sources', sprintf '<strong>%d</strong>', $n_docs - $n_sources_docs )
+      ->add_entry( 'Sources without /DSN',     sprintf '<strong>%d</strong>', $n_docs - $n_dsn_docs )
+      ->render,
     $self->table
       ->make_sortable
       ->add_class( 'before' )

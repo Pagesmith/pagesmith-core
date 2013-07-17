@@ -27,8 +27,12 @@ const my $BAD_SOURCE      => 401;
 const my $NOT_IMPLEMENTED => 501;
 const my $VALID_REQUEST   => 200;
 
-const my $TIMEOUT_FETCH   => 600;
-const my $TIMEOUT_SOURCES => 120;
+const my $TIMEOUT_FETCH   => 240;
+const my $TIMEOUT_SOURCES => 240;
+
+const my $FRAC_SOURCES_DOCS_REQUIRED => 0.8; ## Don't write cache unless 80% of sources have sources docs!
+const my $MIN_FRAC_OF_OLD_DOCS       => 0.8; ## Don't write cache if no of sources < 80% of current list!
+
 const my %VALID_COMMANDS  => map { $_ => 1 } qw(
   sources dsn
   entry_points sequence types features stylesheet structure dna link
@@ -92,8 +96,14 @@ sub fetch_config {
     my $details = $pch->get;
     if( $flush || ! $details ) {
       my $conf = $self->config('das')->load(1)->get;
+      my $n_old_docs     = $details ? keys %{$details} : 0;
       $details = $self->retrieve( $conf );
-      $pch->set( $details );
+      my $n_sources_docs = grep { $_->{'sources_docs'} } values %{$details};
+      my $n_docs         = values %{$details};
+      $pch->set( $details ) if $self->param('force')
+        || $n_sources_docs > $n_docs     * $FRAC_SOURCES_DOCS_REQUIRED
+        || $n_docs         > $n_old_docs * $MIN_FRAC_OF_OLD_DOCS
+        ;
     }
     $self->{'sources_config'} = $details;
   }
@@ -170,6 +180,26 @@ sub run {
 }
 
 sub retrieve {
+#@params ($self) (hashref $conf - server configuration hash)
+#@return hashref{} details of source
+## Uses curl to fetch sources/dsn commands from all configured backend servers
+## and stores the details in a hashref.
+##
+## Each entry in the hashref is itself a hash with keys
+##
+## * sources_doc - re-written sources doc fragment
+## * dsn_doc     - re-written dsn doc fragment
+## * backend     - name of machine/port to send request back to
+## * realms      - realms which access has to come from!
+##
+## Uses curl and Pagesmith::Utils::Curl::Response::Das::Sources/DSN to parallelize
+## fetchs to minimise response time.
+##
+## Results are merged in order - sources with sources command, sources with only dsn
+## command, and within each group in order of the backend servers supplied.
+## Only the first source for a given "name" is returned.
+
+
   my( $self, $conf ) = @_;
 
   my $c = Pagesmith::Utils::Curl::Fetcher->new->set_timeout( $TIMEOUT_SOURCES );
@@ -225,6 +255,7 @@ sub retrieve {
 }
 
 sub modify {
+## Rewrites sources/dsn documents - basically replacing URLs...
   my( $self, $source_conf, $my_hosts, $front_end_hosts ) = @_;
   (my $regexp  = qq(uri="http://$source_conf->{'backend'})) =~ s{[.]}{[.]}mxsg;
   my $replace     = 'uri="'.$self->base_url.'/das';
