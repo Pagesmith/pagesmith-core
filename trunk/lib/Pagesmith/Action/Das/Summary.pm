@@ -25,12 +25,14 @@ sub run {
 
 sub run_details {
   my( $self, $flush ) = @_;
-  my $config = $self->fetch_config( $flush );
+  my $config = $self->fetch_config( 1, $flush );
   my @s = values %{$config};
-  my @sources        = uniq sort map { $_->{'backend'} } @s;
-  my $n_docs         =                                   @s;
-  my $n_dsn_docs     =     grep { $_->{'dsn_doc' }     } @s;
-  my $n_sources_docs =     grep { $_->{'sources_doc' } } @s;
+
+  my @backends       = uniq sort map { $_->{'backend_key'}  } @s;
+  my @users          = uniq sort map { $_->{'maintainer'}   } @s;
+  my $n_docs         =                                        @s;
+  my $n_dsn_docs     =          grep { $_->{'dsn_doc' }     } @s;
+  my $n_sources_docs =          grep { $_->{'sources_doc'}  } @s;
 
   ## no critic (LongChainsOfMethodCalls)
   return $self->html->wrap( 'DAS '.($flush ? 'Flush' : 'Summary'),
@@ -51,17 +53,21 @@ sub run_details {
       ->set_export( [qw(csv xls)] )
       ->set_colfilter
       ->add_columns(
-      { 'key' => 'source',  'label' => 'Source' },
-      { 'key' => 'host',    'label' => 'Host',            'filter_values' => \@sources },
-      { 'key' => 'sources', 'label' => 'Sources command', 'filter_values' => [ qw(- Yes) ], 'align' => 'c' },
-      { 'key' => 'dsn',     'label' => 'DSN command',     'filter_values' => [ qw(- Yes) ], 'align' => 'c' },
-      { 'key' => 'realms',  'label' => 'Security realms', 'default' => q(-), 'align' => 'c' },
+      { 'key' => 'source',      'label' => 'Source', 'link' => $self->base_url.'/das/[[h:source]]' },
+      { 'key' => 'backend',     'label' => 'Group',           'filter_values' => \@backends },
+      { 'key' => 'host',        'label' => 'Host', },
+      { 'key' => 'sources',     'label' => 'Sources command', 'filter_values' => [ qw(- Yes) ], 'align' => 'c' },
+      { 'key' => 'dsn',         'label' => 'DSN command',     'filter_values' => [ qw(- Yes) ], 'align' => 'c' },
+      { 'key' => 'maintainer',  'label' => 'Maintainer',      'default' => q(-), 'align' => 'c', 'filter_values' => \@users },
+      { 'key' => 'realms',      'label' => 'Security realms', 'default' => q(-), 'align' => 'c' },
     )->add_data(
-      map {  { 'source'   => $_,
-               'host'     => $config->{$_}{'backend'},
-               'sources'  => $config->{$_}{'sources_doc'} ? 'Yes' : q(-) ,
-               'dsn'      => $config->{$_}{'dsn_doc'}     ? 'Yes' : q(-) ,
-               'realms'   => join q(; ), @{$config->{$_}{'realms'}},
+      map {  { 'source'     => $_,
+               'backend'    => $config->{$_}{'backend_key'},
+               'host'       => ( join q(, ), @{$config->{$_}{'backend'}} ),
+               'sources'    => $config->{$_}{'sources_doc'} ? 'Yes' : q(-) ,
+               'dsn'        => $config->{$_}{'dsn_doc'}     ? 'Yes' : q(-) ,
+               'maintainer' => $config->{$_}{'maintainer'},
+               'realms'     => join q(; ), @{$config->{$_}{'realms'}},
              } } sort keys %{$config},
     )->render,
   )->ok;
