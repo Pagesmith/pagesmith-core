@@ -48,7 +48,7 @@ sub sources {
 }
 
 sub add_body {
-  my( $self, $chunk, $req ) = @_;
+  my( $self, $chunk ) = @_;
   ## We need to just need to push content to the browser!
   if( $self->{'success'} ) {
     unless( exists $self->{'not_first_chunk'} ) {
@@ -56,7 +56,7 @@ sub add_body {
       $chunk =~ s{<[?]xml-stylesheet.*?[?]>}{}mxs;
       $chunk =~ s{<[?]xml-stylesheet.*?[?]>}{}mxs;
       $chunk =~ s{<!DOCTYPE}{<?xml-stylesheet type="text/xsl" href="/core/css/das.xsl" ?>\n<!DOCTYPE}mxs;
-      $chunk =~ s{<!DOCTYPE\s+([[:upper:]]+)\s+SYSTEM\s+(['"]).*?(\w+[.]dtd)\2\s*>}{<!DOCTYPE \1 SYSTEM "http://www.biodas.org/dtd/\3">}mxs; ## no critic (ComplexRegexes)
+      $chunk =~ s{<!DOCTYPE\s+([[:upper:]]+)\s+SYSTEM\s+(['"]).*?(\w+[.]dtd)\2\s*>}{<!DOCTYPE $1 SYSTEM "http://www.biodas.org/dtd/$3">}mxs; ## no critic (ComplexRegexes)
       ## no critic (ComplexRegexes)
       $chunk =~ s{(<[_[:upper:]]+[ ](?:.*?[ ])?href=")([^"?]+?)(/[^/?]+/[^/?]+(?:[?][^"]*|)")}{$1.$self->das_url.$3}mesxi;
       ## use critic
@@ -66,33 +66,46 @@ sub add_body {
           $self->{'length'} - $cl + length $chunk );
       }
     }
+    $self->r->print( $chunk );
   } else {
-    $chunk = sprintf qq(<?xml version="1.0" encoding="UTF-8"?>\n<error>\n<![CDATA[\n\n%s\n\n]]>\n</error>),
+    ## Clear the stored body (we will treat this as a normal Curl Response in the case of an error
+    ## rather than a streaming response!)
+    $chunk =sprintf qq(<?xml version="1.0" encoding="UTF-8"?>\n<error>\n<![CDATA[\n\n%s\n\n]]>\n</error>),
       $chunk;
-    $self->r->err_headers_out->add( 'Content-Length', length $chunk );
+    $self->{'body'} = [ $chunk ];
+    $self->flush_header( 'Content-Length', length $chunk );
   }
-  $self->r->print( $chunk );
   return length $chunk;
 }
 
 sub add_head {
-  my( $self, $chunk, $req ) = @_;
+  my( $self, $chunk ) = @_;
   chomp $chunk;
   $chunk =~ s{\s+\Z}{}mxs;    ## Remove trailing whitespace.
+  $self->{'success'} = 1 unless exists $self->{'success'};
   if( $chunk =~ m{\AHTTP/\d[.]\d\s*(\d+)\s*(.*)}mxs ) {    ## Handle the HTTP line
     my ( $code, $text ) = ($1,$2);
-    $self->r->err_headers_out->set( 'Status'   => "$code $text" );
-    $self->r->status_line( $chunk );
-    $self->r->status(      $code );
     $self->{'success'} = $code < $MIN_ERROR ? 1 : 0;
     $self->{'code'}    = $code;
-  } elsif ( $chunk =~ m{\A(.*?):\s*(.*)}mxs ) {              ## Handle all other header lines
-    my $key = lc $1;
-    if( $key eq 'content-length' ) {
-      $self->{'length'} = $2;
-    } else {
-      $self->r->err_headers_out->add($key,$2);
+    $self->{'text'}    = $text;
+    if( $self->{'success'} ) {
+      $self->r->err_headers_out->set( 'Status'   => "$code $text" );
+      $self->r->status_line( $chunk );
+      $self->r->status(      $code );
     }
+  } elsif( $self->{'success'} ) {
+    if( $chunk =~ m{\A(.*?):\s*(.*)}mxs ) {              ## Handle all other header lines
+      my $key = lc $1;
+      if( $key eq 'content-length' ) {
+        $self->{'length'} = $2;
+      } else {
+        $self->r->err_headers_out->add($key,$2);
+      }
+    }
+  } else {
+    ## Push the header! (we will treat this as a normal Curl Response in the case of an error
+    ## rather than a streaming response!)
+    $self->SUPER::add_head( $chunk );
   }
   return;
 }

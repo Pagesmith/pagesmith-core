@@ -92,6 +92,14 @@ sub header {
   return wantarray() ? @{ $self->{'headers'}{$key} } : $self->{'headers'}{$key}[-1];
 }
 
+sub headers_hash {
+  my $self = shift;
+  return {
+    map { $self->{'headers_name'}{$_} => $self->{'headers'}{$_} }
+    keys %{$self->{'headers'}},
+  };
+}
+
 sub content_length {
   my $self = shift;
   return $self->header('content-length') || 0;
@@ -126,10 +134,25 @@ sub add_head {
     $self->{'code'}         = $2;
     $self->{'text'}         = $3;
   } elsif ( $chunk =~ m{\A(.*?):\s*(.*)}mxs ) {              ## Handle all other header lines
-    my $key = lc $1;
-    push @{ $self->{'headers'}{ $key } }, $2;
+    $self->add_header( $1, $2 );
   }
   return;
+}
+
+sub flush_header {
+  my( $self, $key, $value ) = @_;
+  my $lc_key = lc $key;
+  $self->{'headers'}{ $lc_key } = [];
+  $self->add_header( $key, $value );
+  return $self;
+}
+
+sub add_header {
+  my( $self, $key, $value ) = @_;
+  my $lc_key = lc $key;
+  $self->{'headers_name'}{ $lc_key } ||= $key;
+  push @{ $self->{'headers'}{ $lc_key } }, $value;
+  return $self;
 }
 
 1;

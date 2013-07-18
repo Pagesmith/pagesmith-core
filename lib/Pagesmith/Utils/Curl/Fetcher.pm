@@ -82,11 +82,17 @@ sub conn_timeout {
   return $self->{'conn_timeout'};
 }
 
-sub new_request {
+sub new_request_obj {
   my( $self, $url, $method ) = @_;
   my $t = Pagesmith::Utils::Curl::Request->new( $url, $self );
   $t->set_method( defined $method ? $method : 'GET' );
   $t->init;
+  return $t;
+}
+
+sub new_request {
+  my( $self, $url, $method ) = @_;
+  my $t = $self->new_request_obj( $url, $method );
   $self->add( $t );
   return $t;
 }
