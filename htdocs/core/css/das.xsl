@@ -147,13 +147,13 @@ ul { margin-top: 0 ; margin-bottom: 0 }
   <xsl:choose>
     <xsl:when test="($function='entry_points') or ($function='stylesheet')">
       <xsl:element name="a">
-        <xsl:attribute name="href">/das/<xsl:value-of select="../../@title" />/<xsl:value-of select="$function" /></xsl:attribute>
+        <xsl:attribute name="href"><xsl:value-of select="@query_uri" /></xsl:attribute>
         <xsl:value-of select="@type" />
       </xsl:element>
     </xsl:when>
     <xsl:otherwise>
       <xsl:element name="a">
-        <xsl:attribute name="href">/das/<xsl:value-of select="../../@title" />/<xsl:value-of select="$function" />?segment=<xsl:value-of select="../COORDINATES/@test_range" /></xsl:attribute>
+        <xsl:attribute name="href"><xsl:value-of select="@query_uri" />?segment=<xsl:value-of select="../COORDINATES/@test_range" /></xsl:attribute>
         <xsl:value-of select="@type" />
       </xsl:element>
     </xsl:otherwise>
