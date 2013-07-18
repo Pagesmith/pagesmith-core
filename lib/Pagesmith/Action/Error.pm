@@ -73,6 +73,10 @@ sub run {
   ## and uri...
 
   if( $self->r->prev ) {
+    my $flag = $self->r->prev->pnotes( 'do_not_throw_error_page' );
+    if( $flag ) {  ## Do not throw any extra output!
+      return;
+    }
     $error_code = $self->r->prev->status;
     $msg_key    = $self->r->prev->pnotes( 'error-reason' );
     $parsed_uri = $self->r->prev->parsed_uri;
