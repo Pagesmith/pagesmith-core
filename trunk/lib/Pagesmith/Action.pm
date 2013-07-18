@@ -46,6 +46,11 @@ use Pagesmith::HTML::TwoCol;
 use Pagesmith::Form::Stub;
 use Pagesmith::Utils::FormObjectCreator;
 
+sub do_not_throw_extra_error {
+  my $self = shift;
+  $self->r->pnotes( 'do_not_throw_error_page', 1 );
+  return $self;
+}
 sub can_ajax {
   my $self = shift;
   my $flags = parse_cookie($self->r)||{};
