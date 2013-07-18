@@ -241,6 +241,7 @@ sub rebless {
        : "Unable to create sub-class module $module_name - $msg"
        ;
 }
+
 sub dynamic_use {
 
 #@param (self)
