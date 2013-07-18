@@ -58,7 +58,7 @@ sub add_body {
       $chunk =~ s{<!DOCTYPE}{<?xml-stylesheet type="text/xsl" href="/core/css/das.xsl" ?>\n<!DOCTYPE}mxs;
       $chunk =~ s{<!DOCTYPE\s+([[:upper:]]+)\s+SYSTEM\s+(['"]).*?(\w+[.]dtd)\2\s*>}{<!DOCTYPE \1 SYSTEM "http://www.biodas.org/dtd/\3">}mxs; ## no critic (ComplexRegexes)
       ## no critic (ComplexRegexes)
-      $chunk =~ s{(<[_[:upper:]]+[ ]href=")([^"?]+?)(/[^/?]+/[^/?]+(?:[?][^"]*|)")}{$1.$self->das_url.$3}mesxi;
+      $chunk =~ s{(<[_[:upper:]]+[ ](?:.*?[ ])?href=")([^"?]+?)(/[^/?]+/[^/?]+(?:[?][^"]*|)")}{$1.$self->das_url.$3}mesxi;
       ## use critic
       $self->{'not_first_chunk'} = 1;
       if( exists $self->{'length'} ) {
