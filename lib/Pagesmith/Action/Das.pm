@@ -41,11 +41,6 @@ const my %VALID_COMMANDS  => map { $_ => 1 } qw(
 use Pagesmith::Utils::Curl::Fetcher;
 use Pagesmith::ConfigHash qw(template_name);
 
-sub das_config {
-  my $self = shift;
-  return $self->{'sources_config'} || $self->fetch_config;
-}
-
 sub das_error_message {
   my( $self, $status, $das_status, $subject, $body ) = @_;
   $self->xml;
@@ -64,12 +59,14 @@ sub das_error_message {
     $body;
   $self->r->err_headers_out->add( 'Content-Length', length $str );
   $self->print( $str );
+  $self->do_not_throw_extra_error;
   return $status;
 }
 
 sub filtered_sources {
   my $self = shift;
-  my @sources       = values %{$self->fetch_config||{}};
+  my $conf = $self->fetch_config(1)||{};
+  my @sources       = map { $conf->{$_} } sort { lc $a cmp lc $b } keys %{$conf};
   my @client_realms = split m{,\s+}mxs, $self->r->headers_in->get('ClientRealm')||q();
 
   ## If client isn't in any realm then we return only those with no realms defined...
@@ -89,25 +86,39 @@ sub filtered_sources {
 }
 
 sub fetch_config {
-  my( $self, $flush ) = @_;
+  my( $self, $full, $flush ) = @_;
+  my $config_type = $full ? 'full' : 'partial';
   $flush ||= 0;
-  if( $flush || ! exists $self->{'sources_config'} ) {
-    my $pch = $self->cache( 'tmpdata', 'config|das-sources' );
+  if( $flush || ! exists $self->{"sources_config_$config_type"} ) {
+    my $pch = $self->cache( 'tmpdata', "config|das-sources-$config_type" );
     my $details = $pch->get;
     if( $flush || ! $details ) {
-      my $conf = $self->config('das')->load(1)->get;
+      my $pch_full    = $config_type eq 'full'    ? $pch : $self->cache( 'tmpdata', 'config|das-sources-full'    );
+      my $pch_partial = $config_type eq 'partial' ? $pch : $self->cache( 'tmpdata', 'config|das-sources-partial' );
+      my $conf           = $self->config('das')->load(1)->get;
       my $n_old_docs     = $details ? keys %{$details} : 0;
       $details = $self->retrieve( $conf );
-      my $n_sources_docs = grep { $_->{'sources_docs'} } values %{$details};
-      my $n_docs         = values %{$details};
-      $pch->set( $details ) if $self->param('force')
+      my @s = values %{$details};
+      my $n_sources_docs = grep { $_->{'sources_doc'} } @s;
+      my $n_docs         = @s;
+      my $partial = { map {$_ => {
+        'backend' => $details->{$_}{'backend'},
+        'realms'  => $details->{$_}{'realms'},
+      } } keys %{$details} };
+      if( $self->param('force')
         || $n_sources_docs > $n_docs     * $FRAC_SOURCES_DOCS_REQUIRED
         || $n_docs         > $n_old_docs * $MIN_FRAC_OF_OLD_DOCS
-        ;
+      ) {
+        $pch_full->set( $details );
+        $pch_partial->set( $partial );
+      }
+      $self->{'sources_config-full'   } = $details;
+      $self->{'sources_config-partial'} = $partial;
+    } else {
+      $self->{"sources_config-$config_type"} = $details;
     }
-    $self->{'sources_config'} = $details;
   }
-  return $self->{'sources_config'};
+  return $self->{"sources_config-$config_type"};
 }
 
 sub sources_markup {
@@ -122,14 +133,16 @@ sub sources_markup {
   return $self->xml->set_length( length $markup )->print( $markup )->ok;
 }
 
+## no critic (ExcessComplexity)
 sub run {
   my $self = shift;
   my $source  = $self->next_path_info || q();
 
-  my $command = $self->next_path_info || q();
+  my $command = $self->next_path_info || 'sources';
   return $self->redirect( '/das/sources' ) unless $source;
+
   ## Now we get backend for source ...
-  my $config = $self->fetch_config;
+  my $config = $self->fetch_config( $command eq 'sources' );
 
   return $self->das_error_message(
     $self->bad_request,
@@ -140,7 +153,7 @@ sub run {
 
   my $details = $config->{$source};
 
-  unless( $command ) {
+  if( $command eq 'sources' ) {
     return $self->sources_markup( $details ) if $details->{'sources_doc'};
     return $self->das_error_message( $self->server_error, $NOT_IMPLEMENTED, 'Misconfigured source', 'The source does not have a sources doc' );
   }
@@ -160,18 +173,56 @@ sub run {
   }
   ## OK - finally do the fetch....
   $self->xml;
-  my $c = Pagesmith::Utils::Curl::Fetcher->new->set_timeout( $TIMEOUT_FETCH );
-  $c->set_resp_class( 'Pagesmith::Utils::Curl::Response::Das' );
-  my $req = $c->new_request( sprintf q(http://%s/%s/%s?%s), $details->{'backend'}, $source, $command, $self->args )->init;
+  my $c = Pagesmith::Utils::Curl::Fetcher->new
+          ->set_timeout( $TIMEOUT_FETCH )
+          ->set_resp_class( 'Pagesmith::Utils::Curl::Response::Das' );
+  my @urls = map { sprintf q(http://%s/%s/%s?%s), $_, $source, $command, $self->args } @{$details->{'backend'}};
+
+  my $req_url = splice @urls, rand @urls, 1;
+
+  warn "   DAS: $req_url\n";
+  my $req = $c->new_request_obj( $req_url, $details->{'backend'}, $source, $command, $self->args );
      $req->response->set_r(        $self->r        );
      $req->response->set_das_url(  $self->base_url.'/das' );
+     $c->add( $req );
   my $st;
-
   while( $c->has_active ) {
     next if $c->active_transfers == $c->active_handles;
+
     while( my $r = $c->next_request ) {
       $st = $r->response->{'code'};
       $c->remove($r);
+      if( $r->response->{'success'} ) {
+        $st = $r->response->{'code'};
+      } elsif( @urls ) {
+        $req_url = splice @urls, rand @urls, 1;
+        warn "Re-DAS: $req_url\n";
+        $req = $c->new_request_obj( $req_url, $details->{'backend'}, $source, $command, $self->args );
+          $req->response->set_r(        $self->r        );
+          $req->response->set_das_url(  $self->base_url.'/das' );
+        $c->add( $req );
+      } else {
+        $st = $r->response->{'code'};
+        ## We need to know send the error page... assume we send the last one!
+        my $headers = $r->response->headers_hash;
+        $headers->{'X-Das-Version'}                    ||= ['DAS/1.6E'];
+        $headers->{'access-control-allow-credentials'} ||= [ 'true' ];
+        $headers->{'access-control-allow-origin'}        = [ q(*)];
+        $headers->{'access-control-expose-headers'}    ||= ['X-DAS-Version, X-DAS-Server, X-DAS-Status, X-DAS-Capabilities'];
+        $headers->{'X-Das-Dapabilities'}               ||= ['sources/1.0; dsn/1.0'];
+        $headers->{'X-Das-server'}                     ||= ['PagesmithDasProxy/1'];
+
+        $self->r->status( $st );
+        $self->r->status_line( 'DAS ERROR' );
+        $self->r->err_headers_out->set( 'Status'   => "$st DAS_ERROR" );
+
+        foreach my $hk ( keys %{$headers} ) {
+          $self->r->err_headers_out->add( $hk, $_ ) foreach @{$headers->{$hk}};
+        }
+        $self->print( $r->response->body );
+        $self->do_not_throw_extra_error;
+        return $st;
+      }
     }
   }
   ## We will look to use CURL here - but hack the handler to parse in chunks!!!
@@ -199,22 +250,26 @@ sub retrieve {
 ## command, and within each group in order of the backend servers supplied.
 ## Only the first source for a given "name" is returned.
 
-
   my( $self, $conf ) = @_;
 
   my $c = Pagesmith::Utils::Curl::Fetcher->new->set_timeout( $TIMEOUT_SOURCES );
-  my @hosts = @{$conf->{'hosts'}||[]};
+
+  my @order = split m{\s+}mxs, $conf->{'order'};
+  my %hosts = %{$conf->{'hosts'}||{}};
+     @order = sort keys %hosts unless @order;
 
   my @my_hosts = map { "http://$_" } @{$conf->{'my_hosts'}||[]};
   my $my_hosts = { map { ( $_ => 1 ) } @my_hosts };
 
-  foreach my $host ( @hosts ) {
-    my $k = lc "http://$host";
-    $my_hosts->{ $k }++;
-    $c->set_resp_class( 'Pagesmith::Utils::Curl::Response::Das::Sources' );
-    $c->new_request( "http://$host/sources" )->init;
-    $c->set_resp_class( 'Pagesmith::Utils::Curl::Response::Das::DSN' );
-    $c->new_request( "http://$host/dsn"     )->init;
+  foreach my $block ( @order ) {
+    foreach my $host ( @{$hosts{$block}||[]} ) {
+      my $k = lc "http://$host";
+      $my_hosts->{ $k }++;
+      $c->set_resp_class( 'Pagesmith::Utils::Curl::Response::Das::Sources' );
+      $c->new_request( "http://$host/sources" )->init;
+      $c->set_resp_class( 'Pagesmith::Utils::Curl::Response::Das::DSN' );
+      $c->new_request( "http://$host/dsn"     )->init;
+    }
   }
   my %values;
   while( $c->has_active ) {
@@ -225,45 +280,51 @@ sub retrieve {
       $values{ $domain }{$type} = $req->response->{'_sources_'};
     }
   }
+
   my $restrictions = $conf->{'realms'}||{};
   my $sources;
-  foreach my $host ( @hosts ) {
-    foreach my $k ( sort keys %{$values{$host}{'sources'}||{}} ) {
-      next if exists $sources->{$k}; ## #already seen!
-      $sources->{$k} = $self->modify( {
-        'sources_doc' => $values{ $host }{ 'sources' }{$k},
-        'dsn_doc'     => $values{ $host }{ 'dsn'     }{$k}||q(),
-        'backend'     => $host,
-      }, $my_hosts, \@my_hosts);
-      $sources->{$k}{'realms'} = $restrictions->{$k}||[];
+  my $seen = {};
+  foreach my $type ( qw(sources dsn) ) {
+    foreach my $block ( @order ) {
+      foreach my $host ( @{$hosts{$block}||[]} ) {
+        foreach my $k ( sort keys %{$values{$host}{$type}||{}} ) {
+          next if exists $seen->{$k}; ## #already seen!
+          if( exists $sources->{$k} ) {
+            push @{$sources->{$k}->{'backend'}}, $host;
+            next;
+          }
+          $sources->{$k} = $self->modify( {
+            'backend_key' => $block,
+            'sources_doc' => $values{ $host }{ 'sources' }{$k}||q(),
+            'dsn_doc'     => $values{ $host }{ 'dsn'     }{$k}||q(),
+            'backend'     => [$host],
+          }, $my_hosts, \@my_hosts);
+          $sources->{$k}{'realms'} = $restrictions->{$k}||[];
+        }
+      }
+      $seen->{$_}++ foreach keys %{$sources};
     }
   }
-  foreach my $host ( @hosts ) {
-    foreach my $k ( sort keys %{$values{$host}{'dsn'}||{}} ) {
-      next if exists $sources->{$k}; ## #already seen!
-      $sources->{$k} = $self->modify( {
-        'sources_doc' => q(),
-        'dsn_doc'     => $values{ $host }{ 'dsn'     }{$k}||q(),
-        'backend'     => $host,
-      }, $my_hosts, \@my_hosts );
-      $sources->{$k}{'realms'} = $restrictions->{$k}||[];
-    }
-  }
-  ## Now we have to re-write the sources and dsn commands...
-  #$self->dumper( $sources );
+
   return $sources;
 }
+## use critic
 
 sub modify {
 ## Rewrites sources/dsn documents - basically replacing URLs...
   my( $self, $source_conf, $my_hosts, $front_end_hosts ) = @_;
-  (my $regexp  = qq(uri="http://$source_conf->{'backend'})) =~ s{[.]}{[.]}mxsg;
   my $replace     = 'uri="'.$self->base_url.'/das';
   my $replace_doc = 'doc_href="'.$self->base_url.'/das';
   $source_conf->{'sources_doc'} =~ s{/+das/+}{/das/}mxsg;
   $source_conf->{'dsn_doc'}     =~ s{/+das/+}{/das/}mxsg;
 
-  $source_conf->{'sources_doc'} =~ s{$regexp}{$replace}mxsig;
+  foreach my $s (@{$source_conf->{'backend'}}) {
+    (my $regexp     = qq(uri="http://$s)      ) =~ s{[.]}{[.]}mxsg;
+    (my $regexp_doc = qq(doc_href="http://$s) ) =~ s{[.]}{[.]}mxsg;
+    $source_conf->{'sources_doc'} =~ s{$regexp}{$replace}mxsig;
+    $source_conf->{'sources_doc'} =~ s{$regexp_doc}{$replace_doc}mxsig;
+  }
+
   foreach my $fh ( @{$front_end_hosts} ) {
     ( my $r = qq(uri="$fh) ) =~ s{[.]}{[.]}mxsg;
     $source_conf->{'sources_doc'} =~ s{$r}{$replace}mixsg;
@@ -271,6 +332,8 @@ sub modify {
     $source_conf->{'sources_doc'} =~ s{$t}{$replace_doc}mixsg;
   }
   $source_conf->{'dsn_doc'}     =~ s{(<MAPMASTER>)\s*(.*?)(/[^/<\s]+/?\s*</MAPMASTER>)}{ exists $my_hosts->{lc $2} ? $1.$self->base_url.'/das'.$3 : $1.$2.$3 }mxseg;
+
+  ($source_conf->{'maintainer'}) = $source_conf->{'sources_doc'} =~ m{<MAINTAINER\s+email="(.*?)"}mxs ? $1 : q(-);
   return $source_conf;
 }
 
