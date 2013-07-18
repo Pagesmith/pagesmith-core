@@ -24,11 +24,24 @@ use Apache2::Request;
 
 use Pagesmith::Adaptor;
 use Pagesmith::Cache;
+use Pagesmith::ConfigHash qw(get_config);
 use Pagesmith::Session::User;
 
 ## empty constructor!
 
 ## Code that requires r!
+
+sub tmp_dumper {
+  my( $self, $filename, $data_to_dump, $name_of_data ) = @_;
+  $filename =~ s{[^-\w.]}{}mxsg;
+  if( open my $fh, q(>), get_config( 'RealTmp').$filename ) {
+    ## no critic (RequireChecked)
+    print {$fh} $self->raw_dumper( $data_to_dump, $name_of_data );
+    close $fh;
+    ## use critic
+  }
+  return $self;
+}
 
 sub dump_events {
   my $self = shift;
