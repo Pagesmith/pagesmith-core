@@ -1,6 +1,15 @@
 package Pagesmith::Action::Das;
 
-## Monitorus proxy!
+## Intelligent, load balancing proxy to merge multiple internal das servers together behind a single front end URL
+##
+## Handles
+##  * nicely formatting server errors!
+##  * merging DSN/Sources list and re-writing response to supply proxy URLs where appropriate through out
+##  * re-writing DAS requests (URLs)
+##  * making multiple attempts to request sources from the backend servers
+##  *
+##  *
+##
 ## Author         : js5
 ## Maintainer     : js5
 ## Created        : 2009-08-13
@@ -16,34 +25,53 @@ use utf8;
 use version qw(qv); our $VERSION = qv('0.1.0');
 
 use base qw(Pagesmith::Action);
-use List::MoreUtils qw(any none);
 
-use Apache2::Const qw(HTTP_BAD_REQUEST);
+use Const::Fast     qw(const);
 
-use Const::Fast qw(const);
-
+## Das response codes...
 const my $BAD_COMMAND     => 400;
 const my $BAD_SOURCE      => 401;
 const my $NOT_IMPLEMENTED => 501;
 const my $VALID_REQUEST   => 200;
 
-const my $TIMEOUT_FETCH   => 240;
-const my $TIMEOUT_SOURCES => 240;
+## Timeouts etc...
+const my $TIMEOUT_FETCH   => 240; ## 4 minutes..
+const my $TIMEOUT_CONN    => 3;   ## 3 seconds..
+const my $TIMEOUT_SOURCES => 240; ## 4 minutes..
+
+const my $MAX_TRIES       => 3;   ## Tries up to 3 times to get response from backends before giving up!
+
+## Following are used to try and stop a re-write of a badgered config...
 
 const my $FRAC_SOURCES_DOCS_REQUIRED => 0.8; ## Don't write cache unless 80% of sources have sources docs!
 const my $MIN_FRAC_OF_OLD_DOCS       => 0.8; ## Don't write cache if no of sources < 80% of current list!
 
+## If you wish to add any more das commands to be
+## proxied back then you need to add them to this
+## list...
+## Note sources command is handled specicially!
+
 const my %VALID_COMMANDS  => map { $_ => 1 } qw(
-  sources dsn
   entry_points sequence types features stylesheet structure dna link
 );
 
+use List::MoreUtils qw(any none);
 use Pagesmith::Utils::Curl::Fetcher;
-use Pagesmith::ConfigHash qw(template_name);
 
 sub das_error_message {
-  my( $self, $status, $das_status, $subject, $body ) = @_;
-  $self->xml;
+#@params (self) (status int - HTTP status) (das_status int - DAS status) (message string+ DAS error message...)
+#@return (int) HTTP error code!
+## Renders a DAS XML document with appropriate headers... and the error message wrapped in a CDATA block...
+  my( $self, $status, $das_status, @message ) = @_;
+
+  my $str = sprintf qq(<?xml version="1.0" encoding="UTF-8"?>\n<error>\n<![CDATA[\n\n%s\n\n]]>\n</error>),
+    join qq(\n\n), @message;
+
+  $self->xml->do_not_throw_extra_error;
+
+  $self->r->status(               $status );
+  $self->r->status_line(          'DAS ERROR' );
+
   $self->r->err_headers_out->set( 'X-Das-Status', $das_status );
   $self->r->err_headers_out->set( 'access-control-allow-credentials', 'true' );
   $self->r->err_headers_out->set( 'access-control-allow-origin', q(*) );
@@ -51,45 +79,53 @@ sub das_error_message {
   $self->r->err_headers_out->set( 'x-das-capabilities', 'sources/1.0; dsn/1.0' );
   $self->r->err_headers_out->set( 'x-das-server', 'PagesmithDasProxy/1' );
   $self->r->err_headers_out->set( 'x-das-version', 'DAS/1.6E' );
-  $self->r->status( $status );
-  $self->r->status_line( 'DAS ERROR' );
   $self->r->err_headers_out->set( 'Status'   => "$status DAS_ERROR" );
-  my $str = sprintf qq(<?xml version="1.0" encoding="UTF-8"?>\n<error>\n<![CDATA[\n\n%s\n\n%s\n\n]]>\n</error>),
-    $subject,
-    $body;
-  $self->r->err_headers_out->add( 'Content-Length', length $str );
+  $self->r->err_headers_out->set( 'Content-Length', length $str );
+
   $self->print( $str );
-  $self->do_not_throw_extra_error;
+
   return $status;
 }
 
 sub filtered_sources {
+#@param (self)
+#@return (hashref+ details)
+## Returns an array of sources - filtered by the realm the user is in
+
   my $self = shift;
-  my $conf = $self->fetch_config(1)||{};
+
+  my $conf = $self->fetch_config(1)||{}; ## Get version of config which contains the sources info!
+
   my @sources       = map { $conf->{$_} } sort { lc $a cmp lc $b } keys %{$conf};
+
   my @client_realms = split m{,\s+}mxs, $self->r->headers_in->get('ClientRealm')||q();
 
   ## If client isn't in any realm then we return only those with no realms defined...
   my @s = grep { ! @{$_->{'realms'}||[]} } @sources;
 
+  ## No realms.. so we just show return the public list!
   return @s unless @client_realms;
 
-  ## If the client has realms we return those with no realms defined OR those
-  ## whose realm list overlaps with the client_realms list!
-  my @q = grep {   @{$_->{'realms'}||[]} } @sources;
+  ## If the client has realms we push those whose realm list overlaps with the client_realms list!
 
+  my @q = grep {   @{$_->{'realms'}||[]} } @sources;
   my %client_realms = map { $_=>1 } @client_realms;
-  push @s,
-    grep { any { exists $client_realms{$_} } @{$_->{'realms'}} }
-    @q;
+
+  push @s, grep { any { exists $client_realms{$_} } @{$_->{'realms'}} } @q;
+
   return @s;
 }
 
 sub fetch_config {
+#@params (self) (full bool - Return full doc - including DSN/sources) (flush bool - ignore cache)
+#@return (hashref) config data structure
   my( $self, $full, $flush ) = @_;
   my $config_type = $full ? 'full' : 'partial';
   $flush ||= 0;
+  ## If flush then we will always fetch the object..
+  ## o/w only fetch if it doesn't exist!
   if( $flush || ! exists $self->{"sources_config_$config_type"} ) {
+    ## We need to fetch, and parse the data to generate data structure!
     my $pch = $self->cache( 'tmpdata', "config|das-sources-$config_type" );
     my $details = $pch->get;
     if( $flush || ! $details ) {
@@ -122,6 +158,9 @@ sub fetch_config {
 }
 
 sub sources_markup {
+#@params (self) (sources hashref+ - full details of sources)
+#@return (int) status OK!
+## Generates an appropriate sources document!
   my( $self, @sources ) = @_;
   $self->r->headers_out->set( 'X-Das-Capabilities', 'sources/1.0; dsn/1.0' );
   $self->r->headers_out->set( 'X-Das-Status',       $VALID_REQUEST );
@@ -173,13 +212,16 @@ sub run {
   }
   ## OK - finally do the fetch....
   $self->xml;
+  ## no critic (LongChainsOfMethodCalls)
   my $c = Pagesmith::Utils::Curl::Fetcher->new
+          ->set_timeout( $TIMEOUT_CONN  )
           ->set_timeout( $TIMEOUT_FETCH )
           ->set_resp_class( 'Pagesmith::Utils::Curl::Response::Das' );
+  ## use critic
   my @urls = map { sprintf q(http://%s/%s/%s?%s), $_, $source, $command, $self->args } @{$details->{'backend'}};
 
   my $req_url = splice @urls, rand @urls, 1;
-
+  my $req_count = 1;
   warn "   DAS: $req_url\n";
   my $req = $c->new_request_obj( $req_url, $details->{'backend'}, $source, $command, $self->args );
      $req->response->set_r(        $self->r        );
@@ -194,16 +236,17 @@ sub run {
       $c->remove($r);
       if( $r->response->{'success'} ) {
         $st = $r->response->{'code'};
-      } elsif( @urls ) {
+      } elsif( @urls && $req_count >= $MAX_TRIES ) {
         $req_url = splice @urls, rand @urls, 1;
         warn "Re-DAS: $req_url\n";
         $req = $c->new_request_obj( $req_url, $details->{'backend'}, $source, $command, $self->args );
           $req->response->set_r(        $self->r        );
           $req->response->set_das_url(  $self->base_url.'/das' );
         $c->add( $req );
+        $req_count++;
       } else {
-        $st = $r->response->{'code'};
         ## We need to know send the error page... assume we send the last one!
+        $st = $r->response->{'code'};
         my $headers = $r->response->headers_hash;
         $headers->{'X-Das-Version'}                    ||= ['DAS/1.6E'];
         $headers->{'access-control-allow-credentials'} ||= [ 'true' ];
@@ -221,7 +264,6 @@ sub run {
         }
         $self->print( $r->response->body );
         $self->do_not_throw_extra_error;
-        return $st;
       }
     }
   }
@@ -231,8 +273,9 @@ sub run {
 }
 
 sub retrieve {
-#@params ($self) (hashref $conf - server configuration hash)
-#@return hashref{} details of source
+#@params (self) (conf hashref - server configuration hash)
+#@return (hashref{}) details of source
+##
 ## Uses curl to fetch sources/dsn commands from all configured backend servers
 ## and stores the details in a hashref.
 ##
@@ -319,8 +362,8 @@ sub modify {
   $source_conf->{'dsn_doc'}     =~ s{/+das/+}{/das/}mxsg;
 
   foreach my $s (@{$source_conf->{'backend'}}) {
-    (my $regexp     = qq(uri="http://$s)      ) =~ s{[.]}{[.]}mxsg;
-    (my $regexp_doc = qq(doc_href="http://$s) ) =~ s{[.]}{[.]}mxsg;
+    (my $regexp     = qq(uri="(?:http://)?$s)      ) =~ s{[.]}{[.]}mxsg;
+    (my $regexp_doc = qq(doc_href="(?:http://)?$s) ) =~ s{[.]}{[.]}mxsg;
     $source_conf->{'sources_doc'} =~ s{$regexp}{$replace}mxsig;
     $source_conf->{'sources_doc'} =~ s{$regexp_doc}{$replace_doc}mxsig;
   }
