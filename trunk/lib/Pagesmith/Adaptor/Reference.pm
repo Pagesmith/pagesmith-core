@@ -420,7 +420,6 @@ sub parse_pubmed_xml {
   local $_ = shift;
   my $res = [];
   return $res unless $_;
-  utf8::decode($_); ##no critic (CallsToUnexportedSubs)
   foreach my $pa (m{<PubmedArticle>(.*?)</PubmedArticle>}mxsg) { ## no critic (UnusedCapture)
     local $_ = $pa;
     my $block = { 'xml' => "<PubmedArticle>$_</PubmedArticle>" };
