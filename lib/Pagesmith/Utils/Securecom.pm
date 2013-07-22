@@ -27,7 +27,7 @@ Readonly my $DEFAULT_TIMEOUT => 11; # LWP::UserAgent->timeout :  the timeout val
 
 use Pagesmith::Core qw(safe_base64_decode safe_base64_encode safe_md5 );
 use Pagesmith::ConfigHash qw(get_config);
-use base qw(Pagesmith::Action);
+use base qw(Pagesmith::Root);
 
 use Data::Dumper qw(Dumper);
 
@@ -66,8 +66,10 @@ sub decode {
 
 sub encode {
   my ($self,$plainhash) = @_;
-  my $encoded_object =  eval { safe_base64_encode( $self->cipher->encrypt( $self->json_encode( $plainhash ) ) ) };
+  my $encoded_object =  eval { safe_base64_encode( $self->cipher->encrypt( $self->json_encode( $plainhash ) ) ) } || q();
   $encoded_object =~ s/\n//sxmg;
+#print {*STDERR} "PLAINHASH: $plainhash\nJSON: ".$self->json_encode( $plainhash )."\n";
+#print {*STDERR} "ENCODED:$encoded_object\n";
   return $encoded_object;
 }
 
