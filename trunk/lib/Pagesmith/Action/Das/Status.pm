@@ -25,6 +25,7 @@ use Pagesmith::Utils::Curl::Fetcher;
 use Const::Fast qw(const);
 const my $MAX_REQ       => 20;
 const my $THREE_MINUTES => 180;
+const my $FOUR_K        => 4_096;
 
 my %valid_response_codes = (
   '200' => {qw(200 1)},
@@ -64,7 +65,7 @@ sub fetch_results {
 
   my $regex = sprintf 'http://%s/das/([^?]*)', join q([.]), split m{[.]}mxs, $domain;
 
-  my $c     = Pagesmith::Utils::Curl::Fetcher->new->set_timeout( $THREE_MINUTES );
+  my $c     = Pagesmith::Utils::Curl::Fetcher->new->set_timeout( $THREE_MINUTES )->set_max_size( $FOUR_K );
 
   foreach ( 1..$MAX_REQ ) {
     last unless @urls_to_test;
@@ -102,7 +103,7 @@ sub fetch_results {
         'http_code'   => $rc,
         'das_code'    => $dc,
         'command'     => $co,
-        'length'      => length $bdy,
+        'length'      => $req->response->size,
         'source'      => $s,
         'resp_type'   => $type,
         'servers'     => $servers,
