@@ -33,7 +33,7 @@ my %valid_response_codes = (
   '500' => {qw(500 1 501 1)},
 );
 
-my %expected = qw(entry_points DASEP features DASGFF sequence DASSEQUENCE ---- SOURCES sources SOURCES stylesheet DASSTYLE types DASTYPES);
+my %expected = qw(entry_points DASEP features DASGFF sequence DASSEQUENCE ---- SOURCES sources SOURCES stylesheet DASSTYLE types DASTYPES alignment dasalignment);
 
 
 sub get_sources {
