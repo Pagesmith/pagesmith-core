@@ -48,6 +48,17 @@ sub new {
 # Accessors
 #-------------------------------------------------------------------------------
 
+sub set_max_size_action {
+  my( $self, $size_action ) = @_;
+  $self->{'max_size_action'} = $size_action;
+  return $self;
+}
+
+sub max_size_action {
+  my $self = shift;
+  return $self->{'max_size_action'} || q(truncate);
+}
+
 sub set_max_size {
   my( $self, $size ) = @_;
   $self->{'max_size'} = $size;
@@ -115,10 +126,18 @@ sub content_length {
 #-------------------------------------------------------------------------------
 sub add_body {
   my ( $self, $chunk ) = @_;
-  return unless length $chunk;
-  push @{ $self->{'body'} }, $chunk if $self->{'size'} < $self->max_size;
-  $self->{'size'} += length $chunk;
-  if( $self->{'size'} > $self->max_size ) {
+
+  my $cl = length $chunk;
+
+  return unless $cl;
+
+  $self->{'size'} += $cl;
+
+  return if $self->{'size'} > $self->max_size;
+
+  if( $self->{'size'} + $cl <= $self->max_size ) {
+    push @{ $self->{'body'} }, $chunk;
+  } elsif( $self->max_size_action ne 'truncate' ) {
     $self->{'body'} = [];
   }
   return;

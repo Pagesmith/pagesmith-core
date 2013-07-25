@@ -45,6 +45,7 @@ sub new {
     'timeout'        => 0,
     'conn_timeout'   => 0,
     'max_size'       => 0,
+    'max_size_action' => 'truncate',
   };
   bless $self, $class;
   return $self;
@@ -70,6 +71,17 @@ sub set_max_size {
 sub max_size {
   my $self = shift;
   return $self->{'max_size'};
+}
+
+sub set_max_size_action {
+  my( $self, $val ) = @_;
+  $self->{'max_size'} = $val;
+  return $self;
+}
+
+sub max_size_action {
+  my $self = shift;
+  return $self->{'max_size_action'};
 }
 
 sub set_timeout {
