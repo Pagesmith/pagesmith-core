@@ -124,6 +124,7 @@ sub run {
       ->set_export( [qw(csv xls)] )
       ->set_colfilter
       ->add_columns(
+        { 'key' => 'duration',   'caption' => 'Duration', 'foramt' => 'f3' },
         { 'key' => 'error',      'caption' => 'Error',      'align' => 'c', },
         { 'key' => 'error_http', 'caption' => 'HTTP error', 'align' => 'c', },
         { 'key' => 'error_das', 'caption'  => 'DAS error',  'align' => 'c', },
