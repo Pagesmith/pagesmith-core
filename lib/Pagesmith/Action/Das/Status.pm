@@ -33,7 +33,11 @@ my %valid_response_codes = (
   '500' => {qw(500 1 501 1)},
 );
 
-my %expected = qw(entry_points DASEP features DASGFF sequence DASSEQUENCE ---- SOURCES sources SOURCES stylesheet DASSTYLE types DASTYPES alignment dasalignment);
+my %expected = qw(
+  entry_points DASEP features DASGFF sequence DASSEQUENCE
+  ---- SOURCES sources SOURCES stylesheet DASSTYLE types DASTYPES
+  alignment dasalignment structure dasstructure
+);
 
 
 sub get_sources {
@@ -47,7 +51,7 @@ sub get_sources {
     my @URLS    = m{<CAPABILITY[^>]+query_uri="([^"]+)"}mxsg;
     push @{$sources{$name}}, sprintf '%s?%s=%s',
       $_,
-      m{alignment\Z}mxs ? 'query' : 'segment',
+      m{/(?:structure|alignment)\Z}mxs ? 'query' : 'segment',
       $query foreach @URLS;
   }
   return map { @{$_} } values %sources;
