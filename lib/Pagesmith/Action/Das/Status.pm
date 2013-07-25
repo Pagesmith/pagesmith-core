@@ -104,6 +104,7 @@ sub fetch_results {
         'das_code'    => $dc,
         'command'     => $co,
         'length'      => $req->response->size,
+        'l2'          => length $bdy,
         'source'      => $s,
         'resp_type'   => $type,
         'servers'     => $servers,
@@ -147,6 +148,7 @@ sub run {
         { 'key' => 'command',    'caption' => 'Command', },
         { 'key' => 'resp_type', 'caption' => 'Response type', },
         { 'key' => 'length',    'caption' => 'Length', 'format' => 'd' },
+        { 'key' => 'l2',    'caption' => 'Length', 'format' => 'd' },
         { 'key' => 'servers',   'caption' => 'Servers', },
       )->add_data( @res )
       ->set_current_row_class([
