@@ -120,7 +120,7 @@ sub run {
   my @res = $self->fetch_results( $domain, $self->get_sources( $domain ) );
 
   return $self->html->wrap( 'DAS status',
-    sprintf '<p>Time to retrieve all URLS: %0.3f seconds</p>',
+    sprintf '<p>Time to retrieve all URLS: %0.3f seconds</p>%s',
       time - $start,
     $self->table
       ->make_sortable
