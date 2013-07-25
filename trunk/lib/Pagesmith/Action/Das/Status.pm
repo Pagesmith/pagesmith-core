@@ -84,7 +84,7 @@ sub fetch_results {
       my $servers  = join q(; ), map { m{https?://([^/]+)/}mxs ? $1 : q(??) } $req->response->header( 'X-DAS-RealUrl' );
       my $bdy      = $req->response->body || q();
       my ($type)   = $bdy =~ m{<(\w+)}mxs;
-         $type   ||= q(===);
+         $type   ||= q(###);
       $c->remove($req);
 
       push @results, {
