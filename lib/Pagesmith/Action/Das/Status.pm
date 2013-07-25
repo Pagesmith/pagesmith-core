@@ -43,18 +43,19 @@ my %expected = qw(
 sub get_sources {
   my( $self, $domain ) = @_;
   my $sources_markup = get "http://$domain/das/sources";
-  my %sources;
+  my @urls;
   foreach ( split m{</SOURCE>}mxs, $sources_markup ) {
     my ($name)  = m{<SOURCE[^>]+uri="([^"]+)"}mxs;
+    next unless $name;
     my ($query) = m{test_range="([^"]+)"}mxs;
        $query||=q();
-    my @URLS    = m{<CAPABILITY[^>]+query_uri="([^"]+)"}mxsg;
-    push @{$sources{$name}}, sprintf '%s?%s=%s',
+    my @cap_urls    = m{<CAPABILITY[^>]+query_uri="([^"]+)"}mxsg;
+    push @urls, sprintf '%s?%s=%s',
       $_,
       m{/(?:structure|alignment)\Z}mxs ? 'query' : 'segment',
-      $query foreach @URLS;
+      $query foreach @cap_urls;
   }
-  return map { @{$_} } values %sources;
+  return @urls;
 }
 
 ## no critic (ExcessComplexity)
