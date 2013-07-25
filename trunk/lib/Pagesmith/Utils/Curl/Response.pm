@@ -137,7 +137,9 @@ sub add_body {
 
   if( $self->{'size'} + $cl <= $self->max_size ) {
     push @{ $self->{'body'} }, $chunk;
-  } elsif( $self->max_size_action ne 'truncate' ) {
+  } elsif( $self->max_size_action eq 'truncate' ) {
+    push @{ $self->{'body'} }, substr $chunk, 0, $self->max_size - $self->{'size'};
+  } else { ## discard
     $self->{'body'} = [];
   }
   return;
