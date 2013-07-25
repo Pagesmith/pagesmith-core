@@ -53,7 +53,7 @@ const my $MIN_FRAC_OF_OLD_DOCS       => 0.8; ## Don't write cache if no of sourc
 ## Note sources command is handled specicially!
 
 const my %VALID_COMMANDS  => map { $_ => 1 } qw(
-  entry_points sequence types features stylesheet structure dna link
+  entry_points sequence types features stylesheet structure dna link alignment
 );
 
 use List::MoreUtils qw(any none);
