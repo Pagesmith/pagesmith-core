@@ -18,7 +18,7 @@ use version qw(qv);our $VERSION = qv('0.1.0');
 
 use Const::Fast qw(const);
 
-const my %LOOKUP => map { lc $_ => $_ } qw(Sources DSN Flush Summary);
+const my %LOOKUP => map { lc $_ => $_ } qw(Sources DSN Flush Summary Status);
 
 use Pagesmith::Apache::Action qw(my_handler);
 
