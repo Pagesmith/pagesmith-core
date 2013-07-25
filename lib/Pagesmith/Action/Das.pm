@@ -29,6 +29,7 @@ use base qw(Pagesmith::Action);
 use Const::Fast     qw(const);
 
 ## Das response codes...
+const my $PROXY_NAME      => 'PagesmithDas::Proxy/1';
 const my $BAD_COMMAND     => 400;
 const my $BAD_SOURCE      => 401;
 const my $NOT_IMPLEMENTED => 501;
@@ -72,13 +73,13 @@ sub das_error_message {
   $self->r->status(               $status );
   $self->r->status_line(          'DAS ERROR' );
 
-  $self->r->err_headers_out->set( 'X-Das-Status', $das_status );
-  $self->r->err_headers_out->set( 'access-control-allow-credentials', 'true' );
-  $self->r->err_headers_out->set( 'access-control-allow-origin', q(*) );
-  $self->r->err_headers_out->set( 'access-control-expose-headers', 'X-DAS-Version, X-DAS-Server, X-DAS-Status, X-DAS-Capabilities' );
-  $self->r->err_headers_out->set( 'x-das-capabilities', 'sources/1.0; dsn/1.0' );
-  $self->r->err_headers_out->set( 'x-das-server', 'PagesmithDasProxy/1' );
-  $self->r->err_headers_out->set( 'x-das-version', 'DAS/1.6E' );
+  $self->r->err_headers_out->set( 'X-DAS-Status', $das_status );
+  $self->r->err_headers_out->set( 'Access-Control-Allow-Credentials', 'true' );
+  $self->r->err_headers_out->set( 'Access-Control-Allow-Origin', q(*) );
+  $self->r->err_headers_out->set( 'Access-Control-Expose-Headers', 'X-DAS-Version, X-DAS-Server, X-DAS-Status, X-DAS-Capabilities' );
+  $self->r->err_headers_out->set( 'X-DAS-Capabilities', 'sources/1.0; dsn/1.0' );
+  $self->r->err_headers_out->set( 'X-DAS-Server', $PROXY_NAME );
+  $self->r->err_headers_out->set( 'X-DAS-Version', 'DAS/1.6E' );
   $self->r->err_headers_out->set( 'Status'   => "$status DAS_ERROR" );
   $self->r->err_headers_out->set( 'Content-Length', length $str );
 
@@ -222,7 +223,6 @@ sub run {
 
   my $req_url = splice @urls, rand @urls, 1;
   my $req_count = 1;
-  warn "   DAS: $req_url\n";
   my $req = $c->new_request_obj( $req_url, $details->{'backend'}, $source, $command, $self->args );
      $req->response->set_r(        $self->r        );
      $req->response->set_das_url(  $self->base_url.'/das' );
@@ -236,24 +236,24 @@ sub run {
       $c->remove($r);
       if( $r->response->{'success'} ) {
         $st = $r->response->{'code'};
-      } elsif( @urls && $req_count >= $MAX_TRIES ) {
+      } elsif( @urls && $req_count <= $MAX_TRIES ) {
         $req_url = splice @urls, rand @urls, 1;
-        warn "Re-DAS: $req_url\n";
+        $self->r->err_headers_out->add( 'X-DAS-RealURL'   => $r->response->url );
         $req = $c->new_request_obj( $req_url, $details->{'backend'}, $source, $command, $self->args );
-          $req->response->set_r(        $self->r        );
-          $req->response->set_das_url(  $self->base_url.'/das' );
+        $req->response->set_r(        $self->r        );
+        $req->response->set_das_url(  $self->base_url.'/das' );
         $c->add( $req );
         $req_count++;
       } else {
         ## We need to know send the error page... assume we send the last one!
         $st = $r->response->{'code'};
         my $headers = $r->response->headers_hash;
-        $headers->{'X-Das-Version'}                    ||= ['DAS/1.6E'];
-        $headers->{'access-control-allow-credentials'} ||= [ 'true' ];
-        $headers->{'access-control-allow-origin'}        = [ q(*)];
-        $headers->{'access-control-expose-headers'}    ||= ['X-DAS-Version, X-DAS-Server, X-DAS-Status, X-DAS-Capabilities'];
-        $headers->{'X-Das-Dapabilities'}               ||= ['sources/1.0; dsn/1.0'];
-        $headers->{'X-Das-server'}                     ||= ['PagesmithDasProxy/1'];
+        $headers->{'X-DAS-Version'}                    ||= ['DAS/1.6E'];
+        $headers->{'Access-Control-Allow-Credentials'} ||= [ 'true' ];
+        $headers->{'Access-Control-Allow-Origin'}        = [ q(*)];
+        $headers->{'Access-Control-Expose-Headers'}    ||= ['X-DAS-Version, X-DAS-Server, X-DAS-Status, X-DAS-Capabilities'];
+        $headers->{'X-DAS-Capabilities'}               ||= ['sources/1.0; dsn/1.0'];
+        push @{$headers->{'X-DAS-Server'}}, $PROXY_NAME;
 
         $self->r->status( $st );
         $self->r->status_line( 'DAS ERROR' );
