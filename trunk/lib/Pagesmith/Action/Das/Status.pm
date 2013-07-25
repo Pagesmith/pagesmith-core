@@ -116,7 +116,12 @@ sub run {
 
   my $domain = $self->r->headers_in->{'Host'}||'das.sanger.ac.uk';
   ## no critic (LongChainsOfMethodCalls)
+  my $start = time;
+  my @res = $self->fetch_results( $domain, $self->get_sources( $domain ) );
+
   return $self->html->wrap( 'DAS status',
+    sprintf '<p>Time to retrieve all URLS: %0.3f seconds</p>',
+      time - $start,
     $self->table
       ->make_sortable
       ->add_class( 'before' )
@@ -124,7 +129,7 @@ sub run {
       ->set_export( [qw(csv xls)] )
       ->set_colfilter
       ->add_columns(
-        { 'key' => 'duration',   'caption' => 'Duration', 'foramt' => 'f3' },
+        { 'key' => 'duration',   'caption' => 'Duration', 'format' => 'f3' },
         { 'key' => 'error',      'caption' => 'Error',      'align' => 'c', },
         { 'key' => 'error_http', 'caption' => 'HTTP error', 'align' => 'c', },
         { 'key' => 'error_das', 'caption'  => 'DAS error',  'align' => 'c', },
@@ -137,7 +142,7 @@ sub run {
         { 'key' => 'resp_type', 'caption' => 'Response type', },
         { 'key' => 'length',    'caption' => 'Length', 'format' => 't' },
         { 'key' => 'servers',   'caption' => 'Servers', },
-      )->add_data( $self->fetch_results( $domain, $self->get_sources( $domain ) ) )
+      )->add_data( @res )
       ->set_current_row_class([
        [ 'fatal', 'exact', 'error_http', 'HTTP', ],
        [ 'fatal', 'exact', 'error_das',  'DAS.',  ],
