@@ -46,7 +46,7 @@ sub new {
   $self->{'response'} = $resp_class->new( $url );
 # Initialise the curl object!
   $self->response->set_max_size( defined $fetcher ? $fetcher->max_size : 0 );
-  $self->response->set_max_size_action( defined $fetcher ? $fetcher->max_size_action : 0 );
+  $self->response->set_max_size_action( defined $fetcher ? $fetcher->max_size_action : 'truncate' );
   $self->setopt( CURLOPT_HEADERFUNCTION, sub { $_[1]->add_head( $_[0], $self ); return length $_[0]; } );
   $self->setopt( CURLOPT_WRITEFUNCTION,  sub { $self->{'response'}->add_body( $_[0], $self ); return length $_[0]; } );
   $self->setopt( CURLOPT_FILE,           $self->{'response'} );

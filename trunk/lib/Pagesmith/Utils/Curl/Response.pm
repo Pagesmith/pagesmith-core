@@ -132,8 +132,7 @@ sub add_body {
   return unless $cl;
 
   $self->{'size'} += $cl;
-
-  return if $self->{'size'} > $self->max_size;
+  return if $self->{'size'}-$cl > $self->max_size;
 
   if( $self->{'size'} <= $self->max_size ) {
     push @{ $self->{'body'} }, $chunk;
