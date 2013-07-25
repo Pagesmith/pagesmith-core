@@ -96,7 +96,7 @@ sub fetch_results {
                          'X' : q(-),
         'error_http'  => $rc ne '200' ? 'HTTP' : q(-),
         'error_das'   => $dc ne '200' ? 'DAS'  : q(-),
-        'error_resp'  => exists $expected{$co} ? ( $type eq $expected{$co}||q(-) ? q(-) : q(resp) ) : q(req),
+        'error_resp'  => exists $expected{$co} ? ( $type eq ($expected{$co}||q(-)) ? q(-) : q(resp) ) : q(req),
         'error_code'  => exists $valid_response_codes{$rc}{$dc} ? q(-) : q(mismatch),
         'http_code'   => $rc,
         'das_code'    => $dc,
