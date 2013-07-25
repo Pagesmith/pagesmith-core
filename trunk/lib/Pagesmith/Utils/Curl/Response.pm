@@ -58,11 +58,16 @@ sub max_size {
   my $self = shift;
   return $self->{'max_size'} || $MAX_SIZE;
 }
+
 sub http_version {
   my $self = shift;
   return $self->{'http_version'};
 }
 
+sub url {
+  my $self = shift;
+  return $self->{'url'};
+}
 sub code {
   my $self = shift;
   return $self->{'code'};

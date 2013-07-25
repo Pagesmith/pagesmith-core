@@ -62,7 +62,7 @@ sub add_body {
       ## use critic
       $self->{'not_first_chunk'} = 1;
       if( exists $self->{'length'} ) {
-        $self->r->err_headers_out->add( 'Content-Length',
+        $self->r->err_headers_out->set( 'Content-Length',
           $self->{'length'} - $cl + length $chunk );
       }
     }
@@ -92,6 +92,9 @@ sub add_head {
       $self->r->err_headers_out->set( 'Status'   => "$code $text" );
       $self->r->status_line( $chunk );
       $self->r->status(      $code );
+      $self->r->err_headers_out->set( 'X-DAS-RealUrl', $self->url );
+    } else {
+      $self->add_header( 'X-DAS-RealUrl', $self->url );
     }
   } elsif( $self->{'success'} ) {
     if( $chunk =~ m{\A(.*?):\s*(.*)}mxs ) {              ## Handle all other header lines
