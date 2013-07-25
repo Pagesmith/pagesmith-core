@@ -229,7 +229,10 @@ sub run {
      $c->add( $req );
   my $st;
   while( $c->has_active ) {
-    next if $c->active_transfers == $c->active_handles;
+    if( $c->active_transfers == $c->active_handles ) {
+      $c->short_sleep;
+      next;
+    }
 
     while( my $r = $c->next_request ) {
       $st = $r->response->{'code'};
