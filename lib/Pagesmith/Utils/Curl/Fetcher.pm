@@ -19,8 +19,20 @@ use WWW::Curl::Multi;
 
 use Pagesmith::Utils::Curl::Request;
 
+use Const::Fast qw(const);
+const my $DEFAULT_SLEEP => 2;
+const my $MILLISECOND   => 1_000;
+
+use Time::HiRes qw(sleep);
+
 use Data::Dumper qw(Dumper);
 
+sub short_sleep {
+  my( $self, $dur ) = @_;
+  $dur ||= $DEFAULT_SLEEP;
+  sleep $dur / $MILLISECOND;
+  return $self;
+}
 sub new {
   my $class = shift;
   my $self  = {
