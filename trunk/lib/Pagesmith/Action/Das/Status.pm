@@ -144,7 +144,7 @@ sub run {
         { 'key' => 'source',    'caption' => 'Source', },
         { 'key' => 'command',    'caption' => 'Command', },
         { 'key' => 'resp_type', 'caption' => 'Response type', },
-        { 'key' => 'length',    'caption' => 'Length', 'format' => 't' },
+        { 'key' => 'length',    'caption' => 'Length', 'format' => 'd' },
         { 'key' => 'servers',   'caption' => 'Servers', },
       )->add_data( @res )
       ->set_current_row_class([
