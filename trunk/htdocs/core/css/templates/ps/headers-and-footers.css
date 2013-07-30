@@ -14,7 +14,7 @@
 #search input#q { width: 200px; border:0; padding:0; color: #000; margin: 0; font-weight: bold; font-size: 12px; background-color: transparent; }
 #search #q.qdef { color: #bcc5cc; }
 #search #q_submit { height:20px; width:30px; }
-#search span { display: block; float:left; height: 29px; padding: 3px 0 3px 0; border: 0; margin: 0; background: #e0e4e7 url(/core/gfx/templates/ps/bars-120724.png) no-repeat 0 -370px; line-height:12px; }
+#search span { display: block; float:left; height: 29px; padding: 3px 0 3px 0; border: 0; margin: 0; background: #e0e4e7 url(/core/gfx/templates/ps/bars-130725.png) no-repeat 0 -370px; line-height:12px; }
 #search #s1 { padding: 7px 6px 2px 8px; }
 #search #s4 { padding-left: 4px; background-position: -398px -370px; padding-top: 3px; width: 200px}
 #search #s4 { padding-top: 5px; }
@@ -45,21 +45,24 @@ body.s-p, #r-p { font-size: 180%; line-height: 1em; }
 #access span { float: left; height: 14px; width: 12px; overflow:hidden; padding:0; margin: 0 1px; border:1px solid #bcc5cc; background-color: #e0e4e7; text-align:center; cursor: pointer; }
 
 ul#skip { display: none; }
-#footer { font-size: 0.8em; color: #5c5150; position: relative; float:left; margin-left: 20px; width: 95%;}
+#footer { font-size: 0.8em; color: #5c5150; position: relative; float:left; margin-left: 20px; width: 95%; }
 #lnx { color: #fff; text-align: center; clear: both; margin: 1em 0; font-size: 0.8em; }
 #lnx a { color: #14559f; text-decoration: none; }
-ul#footer_links { float:left; margin: 0 0 0 -5px; padding: 0; }
+ul#footer_links { float:left; margin: 0 0 0 -5px; padding: 0 }
 #footer_links li { text-align:left; background: none; padding: 0 0.6em; display: inline; }
 #footer_links a { text-decoration: none; font-weight: bold; }
-#footer .charity {width: 80%; float: left;}
+#footer .charity { clear: both }
 /* footer social media styling */
-.social {float: right; text-align: bottom; margin:0; width: 235px; padding: 0;}
-.social ul { height: 20px; float: right; margin: -5px -15px 0 0;}
-.social li { text-decoration: none; display: inline-block; list-style-type: none; width: 20px; height: 20px; padding: 0 0 0 4px; margin:0;}
-.social .connect { width: 120px; color: #5c5150; vertical-align: top; line-height:10pt; background: none; text-align: right;}
-.social .facebook { background: url(/i/icons/facebook-icon.png); background-repeat: no-repeat; background-position: center;}
-.social .twitter { background: url(/i/icons/twitter-icon.png);  background-repeat: no-repeat; background-position: center;}
-.social .email { background: url(/i/icons/email-icon.png);  background-repeat: no-repeat; background-position: center;}
+
+ul.social { height: 20px; float: right; margin: -5px -15px 0 0; float: right; text-align: bottom; margin:0; padding: 0; }
+.social li { text-decoration: none; display: inline-block; list-style-type: none; width: 20px; height: 20px; padding: 0; margin: 0 0 0 4px;
+             background: url(/core/gfx/icons-130725.png) no-repeat 0 -140px }
+.social li.connect { background: none; width:110px; vertical-align: top; line-height: 20px; text-align: right }
+.social li.fb { background-position: 0     -140px }
+.social li.tw { background-position: -20px -140px }
+.social li.yt { background-position: -40px -140px }
+.social li.wp { background-position: -60px -140px }
+.social li img { height: 20px; width: 20px }
 
 
 #footer_print, #footer p { display: none; }
@@ -77,5 +80,5 @@ ul#footer_links { float:left; margin: 0 0 0 -5px; padding: 0; }
 }
 
 #user { float: right; clear: right; margin-right: 1em; }
-#logout, #login { vertical-align: middle; padding: 0; margin: 0; height: 18px; width:56px; background: url(/core/gfx/icons-120724.png) 0 -80px no-repeat; }
+#logout, #login { vertical-align: middle; padding: 0; margin: 0; height: 18px; width:56px; background: url(/core/gfx/icons-130725.png) 0 -80px no-repeat; }
 #logout { background-position: 0 -60px; }

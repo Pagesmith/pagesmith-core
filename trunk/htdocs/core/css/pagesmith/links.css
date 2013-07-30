@@ -9,7 +9,7 @@
 .link:hover, a:hover { text-decoration: none; }
 a img   { border:none; }
 
-.extftp, .pdf, .external { position:relative; line-height:18px; background:url(/core/gfx/icons-120724.png) right -363px no-repeat; padding-right:16px; }
+.extftp, .pdf, .external { position:relative; line-height:18px; background:url(/core/gfx/icons-130725.png) right -363px no-repeat; padding-right:16px; }
 .extftp { background-position: right -562px; }
 .pdf    { background-position: right -161px; }
 
@@ -17,9 +17,9 @@ a img   { border:none; }
 .more .external { padding-right:0px; background:transparent; }
 
 p.more {float:right; padding-right: 10px; }
-p.more img { vertical-align: top; height: 18px; width:67px; background: url(/core/gfx/icons-120724.png) 0 0 no-repeat; }
+p.more img { vertical-align: top; height: 18px; width:67px; background: url(/core/gfx/icons-130725.png) 0 0 no-repeat; }
 
-.launch img { vertical-align: top; height: 18px; width:67px; background: url(/core/gfx/icons-120724.png) 0 -40px no-repeat; }
+.launch img { vertical-align: top; height: 18px; width:67px; background: url(/core/gfx/icons-130725.png) 0 -40px no-repeat; }
 
 @media print {
   a { text-decoration: none; }

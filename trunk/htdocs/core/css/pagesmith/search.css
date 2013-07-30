@@ -19,7 +19,7 @@
 
 p.link { margin-left: 4em; font-size: 90%; }
 #searchresults #rhs ul li {
-  list-style-type:none;   background: url(/core/gfx/icons-120724.png) 10px -1420px no-repeat;   padding-left: 20px
+  list-style-type:none;   background: url(/core/gfx/icons-130725.png) 10px -1420px no-repeat;   padding-left: 20px
 }
 
 
@@ -35,7 +35,7 @@ p.link { margin-left: 4em; font-size: 90%; }
   icon - so just shuffling the background image.!
 ----------------------------------------------------------------------*/
 #collapse-all, #expand-all {
-  font-size: 0.5em;   float: right; display: block; border: 1px solid #bcc5cc;   line-height:2em;   padding: 1px 0.5em 1px 20px; font-weight: bold; cursor: pointer; color: #14559f;    background: #e0e4e7 url(/core/gfx/icons-120724.png) -20px -1380px no-repeat; margin-left: 0.5em
+  font-size: 0.5em;   float: right; display: block; border: 1px solid #bcc5cc;   line-height:2em;   padding: 1px 0.5em 1px 20px; font-weight: bold; cursor: pointer; color: #14559f;    background: #e0e4e7 url(/core/gfx/icons-130725.png) -20px -1380px no-repeat; margin-left: 0.5em
 }
 
 #collapse-all { background-position: -40px -1360px; }

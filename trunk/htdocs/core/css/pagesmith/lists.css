@@ -9,7 +9,7 @@ li, #rhs .bullet li { padding: 0 0 0.25em 30px; }
 
 ul ul, ul ol, ol ul, ol ol { padding-right: 0; }
 
-ul li, #rhs ul.bullet li { list-style-type:none; background: url(/core/gfx/icons-120724.png) 10px -1420px no-repeat; }
+ul li, #rhs ul.bullet li { list-style-type:none; background: url(/core/gfx/icons-130725.png) 10px -1420px no-repeat; }
 
 ul ol li { background: none; }
 ol li { list-style: decimal; padding-left: 0; margin-left: 3em; }
