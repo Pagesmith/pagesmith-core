@@ -25,7 +25,7 @@
 .cb {margin: 0; padding:5px; clear: both}
 
 /* Top corners and border */
-.bt, .bb, .bt div, .bb div { background-image: url(/core/gfx/templates/ps/bars-120724.png); background-repeat: no-repeat; height:8px; margin:0; }
+.bt, .bb, .bt div, .bb div { background-image: url(/core/gfx/templates/ps/bars-130725.png); background-repeat: no-repeat; height:8px; margin:0; }
 .bt div, .bb div { position:relative; left:0; width:8px; font-size:0; line-height:0; }
 .bt     { background-position: 100% -42px; }
 .bt div { background-position: 0 -42px; }

@@ -19,7 +19,7 @@
   .collapsible h4.keep img ,
   .collapsible p.head img {
      cursor: pointer;
-     background: url(/core/gfx/icons-120724.png) -16px -1400px no-repeat;
+     background: url(/core/gfx/icons-130725.png) -16px -1400px no-repeat;
      height:16px; width:16px; padding: 0px; margin-right: 0.5em; float: left; display: block; }
 
 .collapsed h3:first-child img,

@@ -23,7 +23,7 @@ table thead tr th {
 }
 
 table.sorted-table thead tr .header {
-  cursor: pointer; padding: 2px 18px; background: #bcc5cc url(/core/gfx/icons-120724.png) no-repeat right -759px; }
+  cursor: pointer; padding: 2px 18px; background: #bcc5cc url(/core/gfx/icons-130725.png) no-repeat right -759px; }
 
 table.narrow-sorted thead tr .header {
   padding-left: 4px; }
