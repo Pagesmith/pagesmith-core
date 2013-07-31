@@ -1,5 +1,5 @@
 /**
- * Rounded corner box code. 
+ * Rounded corner box code.
  * Replace class="panel" divs with a cb div containing wrappers and
  * padders to place the background graphics onto the page.... and to
  * adjust the spacing.
@@ -66,6 +66,7 @@ function pollSize() {
   if (lastHeight === newHeight) {
     return;
   }
+  lastHeight = newHeight;
   $(window).resize();
 }
 window.setInterval(pollSize, 250);
