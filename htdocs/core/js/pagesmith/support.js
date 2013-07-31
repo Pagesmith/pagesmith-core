@@ -368,9 +368,10 @@ PageSmith.Timer = {
 /* On resize function to give "relative heights" to containers! */
 function getPageSize(){
   var de = document.documentElement;
-  var w = window.innerWidth  || (de&&de.clientWidth)  || document.body.clientWidth;
-  var h = window.innerHeight || (de&&de.clientHeight) || document.body.clientHeight;
-  return {w:w,h:h};
+/*jsl:ignore*/
+  return {w: window.innerWidth  || self.innerWidth  || (de&&de.clientWidth)  || document.body.clientWidth,
+          h: window.innerHeight || self.innerHeight || (de&&de.clientHeight) || document.body.clientHeight };
+/*jsl:end*/
 }
 
 $(window).on('resize', function() {
@@ -378,7 +379,7 @@ $(window).on('resize', function() {
     var config = $.extend({},
       { padding: 200, minheight: 400 },
       $.metadata && $(this).metadata() ? $(this).metadata() : {});
-    $(this).css('height',Math.max( (getPageSize()).w-config.padding,config.minheight )+'px' );
+    $(this).css('height',Math.max( (getPageSize()).h-config.padding,config.minheight )+'px' );
   });
 });
 $(window).trigger('resize');
