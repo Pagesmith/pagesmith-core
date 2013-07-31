@@ -247,7 +247,7 @@ PageSmith.Tabs.prototype = {
         nav.unshift('<li><a href="#' + t.name + '">' + t.title + '</a></li>');
       }
       /* Now for the content... */
-      extra = t.flag.scrollanle ? 'scrollable' : (t.flag.classname || '');
+      extra = t.flag.scrollable ? 'scrollable' : (t.flag.classname || '');
       if (j) {
         extra = extra ? extra + ' tabc_hid' : 'tabc_hid';
       }
@@ -364,3 +364,22 @@ PageSmith.Timer = {
     this.t0 = d.getTime();
   }
 };
+
+/* On resize function to give "relative heights" to containers! */
+function getPageSize(){
+  var de = document.documentElement;
+  var w = window.innerWidth  || (de&&de.clientWidth)  || document.body.clientWidth;
+  var h = window.innerHeight || (de&&de.clientHeight) || document.body.clientHeight;
+  return {w:w,h:h};
+}
+
+$(window).on('resize', function() {
+  $('.vert-sizing').each(function(){
+    var config = $.extend({},
+      { padding: 200, minheight: 400 },
+      $.metadata && $(this).metadata() ? $(this).metadata() : {});
+    $(this).css('height',Math.max( (getPageSize()).w-config.padding,config.minheight )+'px' );
+  });
+});
+$(window).trigger('resize');
+
