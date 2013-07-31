@@ -8,15 +8,9 @@
 
 $(function () {
   if (typeof document.body.style.maxHeight === "undefined" && $('body').attr('id') !== 'homepage') { //if IE 6
-    $(window).resize(function () {
-      var X = $(window).width() - 20;
-      if (X < 780) {
-        X = 780;
-      }
-      if (X > 1380) {
-        X = 1380;
-      }
-      if ($('#outer').width() !== X) {
+    $(window).on('resize',function () {
+      var X = Math.min( Math.max( $(window).width() - 20, 780 ), 1380 );
+      if( $('#outer').width() !== X ) {
         $('#outer').width(X);
       }
     });
