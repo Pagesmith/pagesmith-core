@@ -26,6 +26,8 @@ use List::MoreUtils qw(any);
 sub run {
   my $self = shift;
 
+## Part 1 - dynamically include the component we are trying to export the SQL from!
+
   my $component = $self->safe_module_name( $self->next_path_info );
   if( $component =~ m{\A([[:alnum:]]+)::}mxs && ! can_name_space( $1 ) ) {
     warn "ACTION: cannot perform $component - not in valid name space\n";
@@ -41,6 +43,9 @@ sub run {
     $self->push_message( "$component failed to compile: module $module:\n" . $self->dynamic_use_failure($module    ), 'fatal' );
     return $self->server_error;
   }
+
+## Get the component object!
+
   my $comp_obj;
   my $status = eval { $comp_obj = $module->new($self); };  ## Not sure if I like this here!!
   if( $EVAL_ERROR ) {
@@ -48,24 +53,29 @@ sub run {
     return $self->server_error;
   }
 
-  ## Get the component object, and then call the configure function!
+## Get table, adapor, and SQL structure from object!
+
   my $table           = $comp_obj->data_table;
   my $adaptor         = $comp_obj->data_adaptor;
   return $self->not_found unless $table && $adaptor;
 
-  my $iterator_method = $comp_obj->iterator_method;
-
-  my $iterator        = $adaptor->$iterator_method(
-    $table->parse_structure( $self->json_decode( $self->trim_param( 'config' )||q({}) ) ),
-  );
-
-  my @colkeys = map { $_->{'key'}   } my @columns = $table->columns;
+  my $results_sql     = $comp_obj->data_sql(
+    $table->parse_structure( $self->json_decode( $self->trim_param( 'config' )||q({}) ) ) );
 
 # Specify its CSV, give it's filename AND then write out the header column!
+
+  my @columns = $table->columns;
 
   $self->csv
        ->download_as( $comp_obj->export_filename )
        ->say( $self->csv_line( map { $_->{'label'} } @columns ) );            # Heading line
+
+  return $self->ok unless $results_sql;
+
+## Short cut output if we have no iterator.. happens when SQL is know to return no entries!!
+
+  my $iterator  = $adaptor->get_iterator( $results_sql->{'sql'}, @{$results_sql->{'pars'}} );
+  my @colkeys   = map { $_->{'key'} } @columns;
 
 # We now treat the code in one of two ways - to see if we have any columns which need to
 # be munged before being output!
