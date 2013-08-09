@@ -201,13 +201,19 @@ sub csv_print {
   return $self->csv->print( $str )->set_length( length $str )->ok;
 }
 
+sub csv_line {
+  my( $self, @line ) = @_;
+  @line = ${$line[0]} if @line && ref $line[0];
+  $self->csv_handler->combine( @line );
+  return $self->csv_handler->string;
+}
+
 sub csv_string {
   my( $self, $display_data ) = @_;
   my @out;
   foreach( @{$display_data} ) {
     $self->csv_handler->combine( @{$_} );
-    my $s = $self->csv_handler->string;
-    push @out, $s;
+    push @out, $self->csv_handler->string;
   }
   return join "\n", @out;
 }
@@ -216,6 +222,12 @@ sub tsv_print {
   my( $self, @display_data ) = @_;
   my $str = join "\n", map { $self->tsv_string( $_ ) } @display_data;
   return $self->tsv->print( $str )->set_length( length $str )->ok;
+}
+
+sub tsv_line {
+  my( $self, @line ) = @_;
+  @line = ${$line[0]} if @line && ref $line[0];
+  return join qq(\t), map { Encode::encode('iso-8859-1',$_) } @line;
 }
 
 sub tsv_string {
