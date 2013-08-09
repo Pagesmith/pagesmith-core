@@ -23,22 +23,17 @@ use base qw(Pagesmith::Component);
 
 my $user_name_cache = {};
 
-sub iterator_method {
-  my $self = shift;
-  return 'get_results_iterator';
+sub data_sql {
+  my( $self, $params ) = @_;
+  return $self->data_adaptor->get_results_sql( $params );
 }
 
-sub results_method {
-  my $self = shift;
-  return 'get_results';
-}
-
-sub data_table {     ## Must override
+sub data_table {             ## Must override
   my $self = shift;
   return;
 }
 
-sub data_adaptor {   ## Must override
+sub data_adaptor {           ## Must override
   my $self = shift;
   return;
 }
@@ -50,7 +45,7 @@ sub export_prefix {
 
 sub export_filename {
   my $self = shift;
-  return $self->export_prefix.time2str( '-%Y-%m-%d--%H-%m.csv', time );
+  return $self->export_prefix.time2str( '-%Y-%m-%d--%H-%M.csv', time );
 }
 
 sub usage {
@@ -76,10 +71,11 @@ sub execute {
 
   my $structure    = $self->json_decode( join q( ),$self->pars )||{};
   my $table        = $self->data_table;
-  return '<p>You must overrider get_comp_table</p>' unless $table;
-  my $fetch_method = $self->results_method;
-  my ($count,$results) = $self->data_adaptor->$fetch_method(
-    $table->parse_structure( $structure ) );
+
+  return '<p>You must overrid get_comp_table</p>' unless $table;
+
+  my ($count,$results) = $self->data_adaptor->count_and_hash(
+    $self->data_sql( $table->parse_structure( $structure ) ) );
 
   (my $module_name = ref $self) =~ s{^Pagesmith::Component::}{}mxs;
   ## no critic (LongChainsOfMethodCalls)

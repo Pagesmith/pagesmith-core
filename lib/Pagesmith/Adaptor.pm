@@ -418,9 +418,43 @@ sub dbpass {
   return $self->{'_dbpass'};
 }
 
-sub get_col_filters {
-  my( $self, $filters, $col_defs, $params ) = @_;
-  my $from_where_sql = q();
+sub get_results_sql_generic {
+  my ($self, $params, $parts ) = @_;
+
+  my $limit = $params->{'size'};
+  my $start = $limit * $params->{'page'};
+     $start = 0 if $start < 0;
+
+  my @sql_params;
+  ## As we are using
+  my $where_sql = $self->get_where_sql(
+    $params->{'filter'}||[],
+    $parts->{'columns'}||{},
+    \@sql_params,
+    $parts->{'where'}||q(),
+  );
+
+  ## Short cut to no rows if we know this will return nothing!
+  ## get_where_sql returns nothing if one of the restrictions is blank!
+  return unless defined $where_sql;
+
+  return {
+    'c_sql' => "select count(*) from $parts->{'from'} $where_sql",
+    'pars'  => \@sql_params,
+    'start' => $start,
+    'size'  => $limit,
+    'sql'   => join q( ),
+               'select', $parts->{'select'},
+               'from',   $parts->{'from'},
+               $where_sql,
+               $self->get_order_by_sql( $params->{'sort_list'}||[] ),
+  };
+}
+
+sub get_where_sql {
+  my( $self, $filters, $col_defs, $params, $where_sql ) = @_;
+  my @parts;
+  push @parts, $where_sql if $where_sql;
   foreach my $col ( @{$filters||[]} ) {
     ## Looking at filters - we have to handle the tech & state ones differently as they
     ## cannot be used in count as the aliased names! - the alternate SQL is in the COL_DEFS
@@ -430,25 +464,26 @@ sub get_col_filters {
     if( 'CODE' eq ref $exp ) {
       my ($sql, @pars) = &{$exp}($self, $col->[1]);
       return unless $sql;
-      $from_where_sql .= "\n      and $sql";
+      push @parts, $sql;
       push @{$params}, @pars;
     } else {
       if( $col->[1] =~ m{\A([<>]|[!<>]?=)\s*(.*)\Z}mxs ) {
-        $from_where_sql .= "\n      and $exp $1 ?";
+        push @parts, "$exp $1 ?";
         push @{$params}, $2;
       } elsif( $col->[1] =~ m{\A!\s*(.*)\Z}mxs ) {
-        $from_where_sql .= "\n      and $exp not like ?";
+        push @parts, "$exp not like ?";
         push @{$params}, "%$1%";
       } else {
-        $from_where_sql .= "\n      and $exp like ?";
+        push @parts, "$exp like ?";
         push @{$params}, "%$col->[1]%";
       }
     }
   }
-  return $from_where_sql;
+  return q() unless @parts;
+  return "\n     where ".join "\n       and ", @parts;
 }
 
-sub get_order_by {
+sub get_order_by_sql {
   my( $self, $sort_list ) = @_;
   return q() unless @{$sort_list||[]};
   return "\n     order by". join q(, ),
@@ -468,6 +503,7 @@ sub count_and_hash {
 ## * string[] c_pars (optional) - parameters to pass to count SQL
 
   my ($self, $details) = @_;
+  return ( 0, [] ) unless $details;
   my $count   = $self->sv( $details->{'c_sql'}, @{ exists $details->{'c_pars'}  ? $details->{'c_pars'} :  $details->{'pars'}} );
 
   $details->{'start'} = $details->{'size'} * floor( $count/$details->{'size'} ) if $details->{'start'} > $count;
