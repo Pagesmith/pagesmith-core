@@ -138,7 +138,7 @@
             sort_list:   c.sortList,
             col_filters: $.grep($.map(c.col_filters,function(v,i){return [[i,v.val]];}),function(el) { return el[1] !== ''; })
           }).replace(/\\/g,'\\\\').replace(/'/g,"\\\'").replace(/"/g,'\\"');
-          var URL = c.refresh_url.match(/[&?]pars=/) ? c.refresh_url+'+'+json_string : ( c.refresh_url+(c.refresh_url.match(/\?/)?'&':'?')+'pars='+json_string );
+          var URL = c.refresh_url.match(/[&?]pars=/) ? c.refresh_url+'+'+json_string : ( c.refresh_url+(c.refresh_url.match(/\?/)?'&':'?')+'pars='+encodeURIComponent(json_string));
           if( c.human_inter ) {
             if( URL !== c.latest_url ) {
               if( c.ajax_obj !== false ) {
