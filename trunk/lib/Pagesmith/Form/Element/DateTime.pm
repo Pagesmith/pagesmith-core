@@ -234,7 +234,7 @@ sub render_widget_date {
       $options;
 
   } else {
-    $return .= sprintf qq(\n      <input name="%s_y" id="%s_y" value="%s" class="short" />),
+    $return .= sprintf qq(\n      <input name="%s_y" id="%s_y" value="%s" class="vshort" />),
       $code, $id, encode_entities( defined $v->{'year'} ? $v->{'year'} : q() );
   }
   return $return;
