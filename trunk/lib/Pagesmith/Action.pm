@@ -123,11 +123,16 @@ sub tabs {
   return Pagesmith::HTML::Tabs->new( @pars );
 }
 
+sub fake_tabs {
+  my( $self, @pars ) = @_;
+  return $self->tabs( @pars )->set_option( 'fake', 1 );
+}
+
 sub hidden_tabs {
   my( $self, @pars ) = @_;
   @pars = {} unless @pars;
   $pars[0]{'fake'}=1;
-  return Pagesmith::HTML::Tabs->new( @pars )->add_classes('hidden');
+  return $self->tabs( @pars )->add_classes('hidden');
 }
 
 sub second_tabs {
@@ -135,7 +140,7 @@ sub second_tabs {
   @pars = {} unless @pars;
   $pars[0]{'fake'}=1;
   $pars[0]{'no_heading'}=1;
-  return Pagesmith::HTML::Tabs->new( @pars )->add_classes('second-tabs');
+  return $self->tabs( @pars )->add_classes('second-tabs');
 }
 
 sub push_message {
