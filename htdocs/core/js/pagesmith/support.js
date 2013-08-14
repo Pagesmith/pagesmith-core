@@ -365,6 +365,10 @@ PageSmith.Timer = {
   }
 };
 
+$('body')
+  .on('click','#main  .toggle-width',function() { $('#main').attr('id','mainx'); $('#rhs').attr('id','rhsx'); $(this).html('&gt;=&lt;');} )
+  .on('click','#mainx .toggle-width',function() { $('#mainx').attr('id','main'); $('#rhsx').attr('id','rhs'); $(this).html('&lt;=&gt;');} );
+
 /* On resize function to give "relative heights" to containers! */
 function getPageSize(){
   var de = document.documentElement;
