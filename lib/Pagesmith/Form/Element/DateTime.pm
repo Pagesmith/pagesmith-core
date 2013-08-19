@@ -21,6 +21,7 @@ const my $DAYS_IN_MONTH  => 31;
 const my $MONTHS_IN_YEAR => 12;
 const my $HOURS_IN_DAY   => 24;
 const my $SIXTY          => 60;
+const my $ONE_DAY        => $HOURS_IN_DAY * $SIXTY * $SIXTY;
 
 use base qw( Pagesmith::Form::Element );
 
@@ -107,6 +108,22 @@ sub now {
   return $self;
 }
 
+sub days_ago {
+  my ( $self, $days ) = @_;
+  my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = - $days * $ONE_DAY + gmtime;
+  $self->set_default_value( { 'second' => $sec,  'minute' => $min,  'hour' => $hour,
+                        'day'    => $mday, 'month' => $mon+1, 'year' => $year+$YEAR_OFFSET } );
+  return $self;
+}
+
+sub start_of_month {
+  my $self = shift;
+  my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = gmtime;
+  $self->set_default_value( { 'second' => 0,  'minute' => 0,  'hour' => 0,
+                        'day'    => 1, 'month' => $mon+1, 'year' => $year+$YEAR_OFFSET } );
+  return $self;
+}
+
 sub today {
   my $self = shift;
   my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = gmtime;
@@ -130,12 +147,19 @@ sub set_obj_data {
 
 sub update_from_apr {
   my( $self, $apr ) = @_;
-  $self->{'user_data'}{'day'}   = $apr->param( $self->code.'_d' );
-  $self->{'user_data'}{'month'} = $apr->param( $self->code.'_m' );
-  $self->{'user_data'}{'year'}  = $apr->param( $self->code.'_y' );
-  $self->{'user_data'}{'second'}   = $apr->param( $self->code.'_s' );
-  $self->{'user_data'}{'minute'} = $apr->param( $self->code.'_x' );
-  $self->{'user_data'}{'hour'}  = $apr->param( $self->code.'_h' );
+  my $d = $apr->param( $self->code.'_d' );
+  my $m = $apr->param( $self->code.'_m' );
+  my $y = $apr->param( $self->code.'_y' );
+  my $s = $apr->param( $self->code.'_s' );
+  my $x = $apr->param( $self->code.'_x' );
+  my $h = $apr->param( $self->code.'_h' );
+  $self->{'user_data'}{'day'}    = $d if defined $d;
+  $self->{'user_data'}{'month'}  = $m if defined $m;
+  $self->{'user_data'}{'year'}   = $y if defined $y;
+  $self->{'user_data'}{'second'} = $s if defined $s;
+  $self->{'user_data'}{'minute'} = $x if defined $x;
+  $self->{'user_data'}{'hour'}   = $h if defined $h;
+
   return;
 }
 

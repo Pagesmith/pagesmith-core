@@ -19,9 +19,12 @@ use base qw( Pagesmith::Form::Element::Date );
 
 sub update_from_apr {
   my( $self, $apr ) = @_;
-  $self->{'user_data'}{'second'} = $apr->param( $self->code.'_s' );
-  $self->{'user_data'}{'minute'} = $apr->param( $self->code.'_x' );
-  $self->{'user_data'}{'hour'}   = $apr->param( $self->code.'_h' );
+  my $s = $apr->param( $self->code.'_s' );
+  my $x = $apr->param( $self->code.'_x' );
+  my $h = $apr->param( $self->code.'_h' );
+  $self->{'user_data'}{'second'} = $s if defined $s;
+  $self->{'user_data'}{'minute'} = $x if defined $x;
+  $self->{'user_data'}{'hour'}   = $h if defined $h;
   return;
 }
 
