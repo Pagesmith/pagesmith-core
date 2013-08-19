@@ -421,7 +421,7 @@ sub update_from_apr {
 ## update the element from the
   my( $self, $apr, $flag ) = @_;
   my $v = $apr->param( $self->code );
-  $self->{'user_data'} = $self->tidy_up( $v, $flag );
+  $self->{'user_data'} = $self->tidy_up( $v, $flag ) if defined $v;
   return;
 }
 

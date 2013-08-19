@@ -28,9 +28,11 @@ sub populate_user_values {
 sub update_from_apr {
   my( $self, $apr ) = @_;
   my $d = $apr->param( $self->code.'_d' );
-  $self->{'user_data'}{'day'}   = $apr->param( $self->code.'_d' );
-  $self->{'user_data'}{'month'} = $apr->param( $self->code.'_m' );
-  $self->{'user_data'}{'year'}  = $apr->param( $self->code.'_y' );
+  my $m = $apr->param( $self->code.'_m' );
+  my $y = $apr->param( $self->code.'_y' );
+  $self->{'user_data'}{'day'}   = $d if defined $d;
+  $self->{'user_data'}{'month'} = $m if defined $m;
+  $self->{'user_data'}{'year'}  = $y if defined $y;
   return;
 }
 
