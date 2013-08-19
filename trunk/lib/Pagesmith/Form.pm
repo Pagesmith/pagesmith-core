@@ -1297,6 +1297,7 @@ sub is_completed {
 
 sub update_from_apr {
   my $self = shift;
+  return $self unless $self->param; ## Short cut if the param list is empty!!!
   my $pound = $self->apr->param('__utf8')||q();
   ## no critic (EscapedCharacters)
   my $flag = $pound eq "\xC2\xA3" ? 'utf-8'
