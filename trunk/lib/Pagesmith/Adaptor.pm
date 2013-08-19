@@ -326,6 +326,7 @@ sub quote {
   my( $self, $str ) = @_;
   return $self->dbh->quote( $str );
 }
+
 sub realise_sql {
   my ( $self, $sql, @pars ) = @_;
   my @parts = split m{[?]}mxs, $sql, - 1;
