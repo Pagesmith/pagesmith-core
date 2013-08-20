@@ -32,7 +32,7 @@ my %defaults = (
   'cancel_button'        => 1, # Show
   'no_reset'             => 0, # Show
   'is_action'            => 0,
-
+  'do_not_pass_ref'      => 0,
   'form_title'           => 'Form',
   'progress_caption'     => 'Form progress',
   'required_string'      => '<strong title="required field"><em>Required</em></strong>',
