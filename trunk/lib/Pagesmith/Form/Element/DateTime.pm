@@ -26,7 +26,8 @@ const my $ONE_DAY        => $HOURS_IN_DAY * $SIXTY * $SIXTY;
 use base qw( Pagesmith::Form::Element );
 
 use POSIX qw(strftime);
-use Date::Format qw(time2str);
+use Date::Parse qw(strptime);
+use List::MoreUtils qw(pairwise);
 
 use HTML::Entities qw(encode_entities);
 
@@ -145,6 +146,14 @@ sub set_obj_data {
   return $self;
 }
 
+sub get_date_array {
+  my($self,$date) = @_;
+  my @time = strptime( $date );
+  return unless @time;
+  my @now  = gmtime;
+  return pairwise { defined $a ? $a : $b } @time,@now;
+}
+
 sub update_from_apr {
   my( $self, $apr ) = @_;
   my $d = $apr->param( $self->code.'_d' );
@@ -153,6 +162,20 @@ sub update_from_apr {
   my $s = $apr->param( $self->code.'_s' );
   my $x = $apr->param( $self->code.'_x' );
   my $h = $apr->param( $self->code.'_h' );
+  my $date = $apr->param( $self->code );
+  if( defined $date ) {
+    my @time = $self->get_date_array( $date );
+    if( @time ) {
+      my ($x_y,$x_m,$x_d,$x_h,$x_x,$x_s) = split m{:}mxs, strftime('%Y:%m:%d:%H:%M:%S',@time);
+      $d ||= $x_d;
+      $m ||= $x_m;
+      $y ||= $x_y;
+      $h ||= $x_h;
+      $x ||= $x_x;
+      $s ||= $x_s;
+    }
+  }
+
   $self->{'user_data'}{'day'}    = $d if defined $d;
   $self->{'user_data'}{'month'}  = $m if defined $m;
   $self->{'user_data'}{'year'}   = $y if defined $y;

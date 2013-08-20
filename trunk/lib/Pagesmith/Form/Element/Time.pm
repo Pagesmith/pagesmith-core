@@ -15,6 +15,8 @@ use utf8;
 
 use version qw(qv); our $VERSION = qv('0.1.0');
 
+use POSIX qw(strftime);
+
 use base qw( Pagesmith::Form::Element::Date );
 
 sub update_from_apr {
@@ -22,6 +24,18 @@ sub update_from_apr {
   my $s = $apr->param( $self->code.'_s' );
   my $x = $apr->param( $self->code.'_x' );
   my $h = $apr->param( $self->code.'_h' );
+
+  my $date = $apr->param( $self->code );
+  if( defined $date ) {
+    my @time = $self->get_date_array( $date );
+    if( @time ) {
+      my ($x_h,$x_x,$x_s) = split m{:}mxs, strftime('%H:%M:%S',@time);
+      $h ||= $x_h;
+      $x ||= $x_x;
+      $s ||= $x_s;
+    }
+  }
+
   $self->{'user_data'}{'second'} = $s if defined $s;
   $self->{'user_data'}{'minute'} = $x if defined $x;
   $self->{'user_data'}{'hour'}   = $h if defined $h;
