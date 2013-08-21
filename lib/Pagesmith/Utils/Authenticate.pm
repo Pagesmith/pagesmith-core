@@ -35,7 +35,7 @@ use HTTP::Request;
 
 use Const::Fast qw(const);
 
-const my $DEFAULT_TIMEOUT => 3;
+const my $DEFAULT_TIMEOUT => 5;
 
 use Pagesmith::Core qw(safe_base64_decode safe_base64_encode safe_md5 );
 use Pagesmith::ConfigHash qw(get_config);
