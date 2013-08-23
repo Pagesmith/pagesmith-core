@@ -20,6 +20,7 @@ use utf8;
 use version qw(qv); our $VERSION = qv('0.1.0');
 
 use Mail::Mailer;
+use Crypt::CBC;
 
 use base qw(Pagesmith::Form);
 
@@ -166,8 +167,26 @@ sub generic_footer {
   my $self = shift;
   return sprintf 'Sent by Pagesmith form: %s', ref $self;
 }
-1;
 
+sub set_encryption_keys {
+  my $self = shift;
+  $self->add_attribute( 'enc_key',    $self->safe_uuid );
+  $self->add_attribute( 'enc_secret', $self->safe_uuid );
+  return $self;
+}
+
+sub email_checksum {
+  my($self,$email) = @_;
+  $self->set_encryption_keys;
+  my $cipher = Crypt::CBC->new(
+    '-key'    => $self->attribute('end_key'),
+    '-cipher' => 'Blowfish',
+    '-header' => 'randomiv', ## Make this compatible with PHP Crypt::CBC
+  );
+  return $self->safe_md5( $self->attripte('enc_secret').q(:).$cipher->encrypt( $email ) );
+}
+
+1;
 __END__
 h1. Pagesmith::MyForm
 
