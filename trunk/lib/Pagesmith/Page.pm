@@ -300,7 +300,7 @@ sub merge_cssjs {
             my $tm = <$fh>;
             close $fh; ##no critic (CheckedSyscalls CheckedClose)
             unlink "$fn.map";
-            my $new_uri = sprintf '/%s/cssjs/%s', get_config('TmpUrl'), $uri;
+            my $new_uri = sprintf '%scssjs/%s', get_config('TmpUrl'), $uri;
             $tm =~ s{"file":"/tmp/[^"]+"}{"file":"$new_uri.c.js"}mxs;
             $tm =~ s{"sources":\["/tmp/[^"]+"\]}{"sources":["$new_uri.u.js"]}mxs;
             $ch_m->set( $tm );
