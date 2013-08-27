@@ -282,15 +282,29 @@ sub merge_cssjs {
       if( $type eq 'js' ) {
         system 'java', '-jar', '/www/utilities/jars/compiler.jar',
           '--js',                 $fn,
-          '--js_output_file',     "$fn.out",
-          '--compilation_level',  $flag eq 'advanced' ? 'ADVANCED_OPTIMIZATIONS' : 'SIMPLE_OPTIMIZATIONS';
-        if ( open $fh, '<', "$fn.out" ) {
+          '--create_source_map',  "$fn.map",
+          '--source_map_format',  'V3',
+          '--js_output_file',     "$fn.min.js",
+          '--compilation_level',  $flag eq 'a.jsdvanced' ? 'ADVANCED_OPTIMIZATIONS' : 'SIMPLE_OPTIMIZATIONS';
+        if ( open $fh, '<', "$fn.min.js" ) {
           local $INPUT_RECORD_SEPARATOR = undef;
           $t = <$fh>;
           close $fh; ##no critic (CheckedSyscalls CheckedClose)
-          unlink "$fn.out" ;
+          unlink "$fn.min.js" ;
         }
+        ## Create the map cache object!
         if( length $t ) {
+          my $ch_m = Pagesmith::Cache->new( 'tmpfile', qq(cssjs|$uri.$type.map) );
+          if( open $fh, '<', "$fn.map" ) {
+            local $INPUT_RECORD_SEPARATOR = undef;
+            my $tm = <$fh>;
+            close $fh; ##no critic (CheckedSyscalls CheckedClose)
+            unlink "$fn.map";
+            my $new_uri = sprintf '/%s/cssjs/%s', get_config('TmpUrl'), $uri;
+            $tm =~ s{"file":"/tmp/[^"]+"}{"file":"$new_uri.c.js"}mxs;
+            $tm =~ s{"sources":\["/tmp/[^"]+"\]}{"sources":["$new_uri.u.js"]}mxs;
+            $ch_m->set( $tm );
+          }
           $ch_c->set($t);
           $stored_type = 'c';
         }

@@ -42,6 +42,10 @@ sub handler {
     ## push the handler...
     $r->handler('modperl');
     $r->notes->set( 'filename' => "$1|$2" );
+    ## If the URL is a c.js (compressed javascript then we can create a source map header!)
+    if( $uri =~ m{(.*)[.]c[.]js\Z}mxs ) {
+      $r->headers_out->set('X-SourceMap',"$1.js.map");
+    }
     $r->filename( $tmp_url );
     $r->push_handlers( 'PerlResponseHandler' => \&send_content );
     return OK;
