@@ -26,8 +26,11 @@ var Cookie = {
 };
 
 var PageSmith = {
-  flags: {z: 'n'},
   cookie_name: 'PageSmith',
+  flags: {z: 'n'},
+  setCookie: function () {
+    Cookie.set(this.cookie_name, JSON.stringify(this.flags));
+  },
   getCookie: function () {
     var json_string = Cookie.get(this.cookie_name), data_structure;
     if (json_string) {
@@ -39,13 +42,10 @@ var PageSmith = {
       } catch (e) {
       }
     }
-  },
-  setCookie: function () {
-    Cookie.set(this.cookie_name, JSON.stringify(this.flags));
   }
 };
 
-window.PageSmith = PageSmith;
-window.Cookie    = Cookie;
-
 PageSmith.getCookie();
+window.Cookie    = Cookie;
+window.PageSmith = PageSmith;
+
