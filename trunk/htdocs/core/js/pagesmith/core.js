@@ -45,7 +45,7 @@ var PageSmith = {
   }
 };
 
-PageSmith.getCookie();
 window.Cookie    = Cookie;
 window.PageSmith = PageSmith;
+PageSmith.getCookie();
 
