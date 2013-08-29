@@ -56,4 +56,8 @@ sub symbols {
   return @SYMBOLS;
 }
 
+sub random_symbol {
+  my $self = shift;
+  return $SYMBOLS[ (rand @SYMBOLS) ];
+}
 1;
