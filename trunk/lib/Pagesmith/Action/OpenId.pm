@@ -22,7 +22,7 @@ use Const::Fast qw(const);
 
 use Net::OpenID::Consumer;
 use Pagesmith::Cache;
-use Pagesmith::ConfigHash qw(get_config);
+use Pagesmith::ConfigHash qw(proxy_url);
 use Carp qw(carp);
 
 use Pagesmith::Utils::FormObjectCreator;
@@ -64,7 +64,7 @@ sub run {
   return $self->no_content unless $form;
 
   my $ua = LWP::UserAgent->new;
-  my $proxy_url = get_config( 'ProxyURL' );
+  my $proxy_url = proxy_url;
      $ua->proxy( ['http','https'], $proxy_url ) if $proxy_url;
 
   ## We need to split this three ways now...
