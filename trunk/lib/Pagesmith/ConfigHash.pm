@@ -58,12 +58,11 @@ my $defaults = { qw(
     CookieToken     C0@kiE?0Ken
     QrURL           /qr/
     QrEnabled       0
-    LdapURL         localhost
     Editable        none
     Staging         false
     CachePageParams false
   ),
-  map { ($_,undef) } qw( ProxyURL Domain RequiredDiv AltCacheSite ),
+  map { ($_,undef) } qw( Domain RequiredDiv AltCacheSite ),
 };
 
 sub init_data {
