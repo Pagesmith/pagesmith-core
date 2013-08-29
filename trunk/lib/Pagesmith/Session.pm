@@ -253,7 +253,7 @@ sub read_cookie {
   $self->{'permanent'} = $details->{'permanent'};
   $self->{'ip'}        = $details->{'ip'};
   my $now = time;
-  if( $now > $details->{'expiry_time'} ) {
+  if( $now > $details->{'expiry_time'}||0 ) {
     $self->clear_cookie;
     $self->session_cache->unset;
     return 0;
