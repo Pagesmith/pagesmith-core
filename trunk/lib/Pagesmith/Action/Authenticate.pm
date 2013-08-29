@@ -38,7 +38,7 @@ sub run {
   my $cipher = Crypt::CBC->new(
     '-key'    => $conf->{'key'},
     '-cipher' => 'Blowfish',
-    '-header' => 'randomiv', ## Make this compactible with PHP Crypt::CBC
+    '-header' => 'randomiv', ## Make this compatible with PHP Crypt::CBC
   );
 
   my $real_password = $cipher->decrypt( safe_base64_decode( $pass ) );
