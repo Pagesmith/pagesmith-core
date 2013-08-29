@@ -125,3 +125,7 @@ ul.ul_james li.li_james_hovered, #rhs ul.ul_james li.li_james_hovered { backgrou
 .login-facebook { background-position: 0 -50px }
 .login-live     { background-position: 0 -75px }
 .login-shib     { background-position: 0 -125px }
+
+
+/* copied from 6 ? */
+input.add_entry { width: 3em }
