@@ -78,6 +78,11 @@ sub new {
     ->set_paper_size( 'A4' )
     ;
 }
+sub reset_top {
+  my $self = shift;
+  $self->{'top'} = $self->{'default_top'};
+  return $self;
+}
 sub strike_out {
   my $self = shift;
   return $self
@@ -347,6 +352,21 @@ sub draw_image {
 }
 ## use critic
 
+sub draw_para {
+  my( $self, $params, $string ) = @_;
+  my $txt = $self->txt;
+  foreach ( qw(font size width left align text_colour line_height para_spacing) ) {
+    $params->{$_} = $self->{'options'}{$_} unless exists $params->{$_}
+  }
+  $txt->fillcolor( $params->{'text_colour'} );
+  $txt->font( $self->font($params->{'font'}), $params->{'size'} );
+  my $top = $params->{'top'}|| $self->{'top'};
+    ## Ignore what comes out of this...
+  my $det =  $self->text_block( $txt, $string, $params );
+  $self->{'top'} = $det->{'last_ypos'};
+  return $self;
+}
+
 sub draw_string {
   my( $self, $params, $string ) = @_;
   my $txt = $self->txt;
@@ -406,9 +426,16 @@ sub draw_box {
 sub text_block {
   my( $self, $txt, $string, $params ) = @_;
   # Get the text in paragraphs
-  my @paragraphs = split m{\s*\n\s*}mxs, $string;
-  # calculate width of all words
   my $ypos = exists $params->{'top'} ? $params->{'top'} : $self->{'top'};
+  my @paragraphs = split m{\s*\n\s*}mxs, $string;
+
+  # calculate width of all words
+  return {(
+    'last_width' => 0,
+    'last_ypos'  => $ypos,
+    'overflow'   => q(),
+  )} unless @paragraphs;
+
   if( $self->debug ) {
     $self->draw_box( { 'fill_colour' => undef, 'fill_stroke' => 'red' }, $params->{'left'}, $ypos, $params->{'width'}, -$params->{'height'} );
   }
@@ -553,35 +580,39 @@ sub draw_table {
     }
   }
   ## Draw heading row!
-  $self->draw_box( { 'fill_colour' => $params->{'header'} }, $table_left, $self->{'top'}-$params->{'header_height'}, $table_width, $params->{'header_height'} );
   my $left_pos = $params->{'left'};
   my $padding = 2;
   ## Produce the header row(s)
-  foreach my $col ( @{$columns} ) {
-    my $hf = $col->{'header_font'} || $params->{'header_font'} || [ 'bold', $DEFAULT_SIZE ];
-    $self->draw_string(
-      {
-        'align'       => 'c',
-        'font'        => $hf->[0],
-        'size'        => $hf->[1],
-        'line_height' => $params->{'header_line_height'} || $hf->[1],
-        'left'        => $left_pos+$padding,
-        'height'      => $params->{'header_height'}      || undef,
-        'width'       => $col->{'width'}-2*$padding,
-      },
-      $col->{'label'},
-    );
-    $left_pos += $col->{'width'};
+  my $no_box = $params->{'no_box'};
+  unless( exists $params->{'no_header'} && $params->{'no_header'} ) {
+    $self->draw_box( { 'fill_colour' => $params->{'header'} }, $table_left, $self->{'top'}-$params->{'header_height'}, $table_width, $params->{'header_height'} ) unless $no_box;
+    foreach my $col ( @{$columns} ) {
+      my $hf = $col->{'header_font'} || $params->{'header_font'} || [ 'bold', $DEFAULT_SIZE ];
+      $self->draw_string(
+        {
+          'align'       => 'c',
+          'font'        => $hf->[0],
+          'size'        => $hf->[1],
+          'line_height' => $params->{'header_line_height'} || $hf->[1],
+          'left'        => $left_pos+$padding,
+          'height'      => $params->{'header_height'}      || undef,
+          'width'       => $col->{'width'}-2*$padding,
+        },
+        $col->{'label'},
+      );
+      $left_pos += $col->{'width'};
+    }
+    $self->down( $params->{'header_height'} );
   }
-  my $sub_font_f = $params->{'subhead_font'}[0];
-  my $sub_font_h = $params->{'subhead_font'}[1];
+  my $sub_font_f = $params->{'subhead_font'}[0]||'bold';
+  my $sub_font_h = $params->{'subhead_font'}[1]||$DEFAULT_SIZE;
   my $sub_row_height = $sub_font_h + 2 * $padding;
   my $font_f = $params->{'body_font'}[0];
   my $font_h = $params->{'body_font'}[1];
-  $self->down( $params->{'header_height'} );
+
   foreach my $block ( @blocks ) {
     if( exists $block->{'spanning_header'} ) {
-      $self->draw_box( { 'fill_colour' => $params->{'spanning'} }, $table_left, $self->{'top'}-$sub_row_height, $table_width , $sub_row_height);
+      $self->draw_box( { 'fill_colour' => $params->{'spanning'} }, $table_left, $self->{'top'}-$sub_row_height, $table_width , $sub_row_height) unless $no_box;
       $self->draw_string( { 'align' => 'c', 'font' => $sub_font_f, 'size' => $sub_font_h, 'left' => $table_left+$padding, 'width' => $table_width-2*$padding },
         $block->{'spanning_header'} );
       $self->down( $sub_font_h + 2* $padding );
@@ -589,7 +620,7 @@ sub draw_table {
     my $f = 0;
     my $row_height = $font_h + $padding * 2;
     foreach my $row (@{ $block->{'rows'}||[]}) {
-      $self->draw_box( { 'fill_colour' => $params->{$f?'even':'odd'} }, $table_left, $self->{'top'}-$row_height, $table_width , $row_height);
+      $self->draw_box( { 'fill_colour' => $params->{$f?'even':'odd'} }, $table_left, $self->{'top'}-$row_height, $table_width , $row_height) unless $no_box;
       $left_pos = $table_left;
       foreach my $col ( @{$columns} ) {
         $self->draw_string( { 'align' => $col->{'align'}||'l', 'font' => $font_f, 'size' => $font_h, 'left' => $left_pos+$padding, 'width' => $col->{'width'}-2*$padding },
@@ -616,7 +647,7 @@ sub draw_twocol {
     $params->{$_} = $self->{'options'}{$_} unless exists $params->{$_}
   }
   foreach( @rows ) {
-    $self->draw_string( { 'left' => $self->box_left, 'font' => 'bold', 'size' => $params->{'size'} }, "$_->[0]:" )
+    $self->draw_string( { 'left' => $self->box_left, 'font' => 'bold', 'size' => $params->{'size'} }, $_->[0]? "$_->[0]:" : q() )
          ->draw_string( { 'left' => $self->box_left + $self->box_width * $params->{'tab_size'} , 'size' => $params->{'size'} }, $_->[1] );
     $self->{'top'} -= $params->{'line_height'};
   }
