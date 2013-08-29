@@ -37,9 +37,11 @@ jQuery.fn.james = function (url_to_call, options) {
     onKeystroke:  function (data) { return data; },
     onSelect:     function (dom_value, json_obj) { return $.trim(dom_value); },
     onSelectMultiple: function(dom_value, json_obj) {
+      var in_node;
       dom_value = $.trim(dom_value);
       if( dom_value && ! that.parent().find('span.close_box').filter(function(){ return $(this).text() === dom_value; }).length ) {
-        that.parent().append(' <span title="Click to remove" class="close_box">'+dom_value+'<input name="'+that.attr('name')+'" value="'+dom_value+'" type="hidden" /></span>');
+        in_node = $('<input name="'+that.attr('name')+'" type="hidden" />').attr( 'value', dom_value );
+        that.parent().append($('<span title="Click to remove" class="close_box" />').text(dom_value).append(in_node.html()) );
         return '';
       }
     },
@@ -398,6 +400,7 @@ jQuery.fn.james = function (url_to_call, options) {
 if($.metadata){
   $('.james').livequery(function(){ var md = $(this).metadata(); $(this).james(md.url, md); });
 }
+
 /* Multi-select... */
 $('body').on('click','.close_box',function() { $(this).remove(); });
 
@@ -433,7 +436,7 @@ $('body').on('click','.close_box',function() { $(this).remove(); });
 ** * multiple   - 0/1 - Allows mul
 ** * restricted - 0/1 - Only entries in the drop down list are allowed!
 ** * keydelay   - Length in delay between pressing key and sending ajax request (in milliseconds)
-** * max_entries - No of rows... 
+** * max_entries - No of rows...
 ** Pagesmith forms and auto-complete... (IE7 issues!)
 ** ---------------------------------------------------------------------------------------------------------------------
 **
