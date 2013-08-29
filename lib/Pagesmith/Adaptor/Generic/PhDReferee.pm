@@ -1,6 +1,6 @@
-package Pagesmith::Adaptor::Critic;
+package Pagesmith::Adaptor::Generic::PhDReferee;
 
-## Adaptor to retrieve references from pubmed or the database
+## Adaptor for comments database
 ## Author         : js5
 ## Maintainer     : js5
 ## Created        : 2009-08-12
@@ -12,21 +12,20 @@ package Pagesmith::Adaptor::Critic;
 use strict;
 use warnings;
 use utf8;
-# no warnings qw(uninitialized)
 
 use version qw(qv); our $VERSION = qv('0.1.0');
-use utf8;
 
-use base qw(Pagesmith::Adaptor);
-
-sub connection_pars {
-  return ( 'dbi:mysql:critic:web-vm-db-dev:3302', 'critic_rw', 'Cr171Qz' );
-}
+use base qw(Pagesmith::Adaptor::Generic);
 
 sub new {
-  my $class = shift;
-  my $self  = $class->SUPER::new();
+  my( $class, $db_info, $r ) = @_;
+  my $self = $class->SUPER::new( $db_info, $r );
   bless $self, $class;
+
+  $self
+    ->set_type( 'phdref' )
+    ->set_code( 'code' )
+    ->set_sort_order( 'ref', 'email' );
   return $self;
 }
 

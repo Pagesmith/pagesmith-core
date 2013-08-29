@@ -27,7 +27,7 @@ use Const::Fast qw(const);
 
 const my $BATCH_SIZE => 200;
 
-use Pagesmith::ConfigHash qw(get_config);
+use Pagesmith::ConfigHash qw(proxy_url);
 
 use Pagesmith::Object::Reference;
 
@@ -38,7 +38,7 @@ sub connection_pars {
 sub new {
   my $class             = shift;
   my $self              = $class->SUPER::new( );
-  $self->{'_proxy_url'} = get_config( 'ProxyURL' );
+  $self->{'_proxy_url'} = proxy_url;
   return $self;
 }
 

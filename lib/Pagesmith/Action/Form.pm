@@ -18,7 +18,7 @@ use version qw(qv); our $VERSION = qv('0.1.0');
 use base qw(Pagesmith::Action);
 use HTML::Entities qw(encode_entities);
 use Pagesmith::ConfigHash qw(can_name_space);
-
+use List::MoreUtils qw(uniq);
 
 ## URL for this action is:
 ## http://www.mydomain.com/form/-0123456789012345678901(/action)
@@ -31,6 +31,16 @@ sub run {
   my $form_object;
 
   $self->no_qr();
+  my @keys  = uniq $self->param;
+  if( @keys ) {
+    my @lines = q();
+    foreach my $k (@keys) {
+      my @d = $self->param($k);
+      push @lines, sprintf "%20s : %s\n", $k, $_ foreach @d;
+    }
+    warn join q(), '!raw!',@lines,"\n";
+  }
+
   if( $form_code =~ m{\A-([-\w]{22})\Z}mxs ) { ## We need to get the form edit option!
     ## We are in the middle of an edit....
     $form_object  = $self->form_by_code( $1 );
@@ -88,6 +98,8 @@ sub dump_params {
 }
 
 sub run_post {
+#@return (int) response code
+## Either exectues _view OR redirects!
   my $self = shift;
   return $self->run_previous if $self->param( 'previous' );
   foreach my $id ( 0 .. ($self->form_object->n_stages - 1) ) {
@@ -98,6 +110,8 @@ sub run_post {
 }
 
 sub run_get {
+#@return (int) response code
+## Either exectues _view OR redirects!
   my $self = shift;
   $self->form_object->validate;
   return $self->run_view_paper if $self->param( 'paper' );
@@ -109,6 +123,8 @@ sub run_get {
 }
 
 sub run_cancel {
+#@return (int) response code
+## Redirects!
   my $self = shift;
 
   ## If we cancel where do we go!
@@ -121,6 +137,8 @@ sub run_cancel {
 }
 
 sub run_previous {
+#@return (int) response code
+## Redirects!
   my $self = shift;
 
   return $self->run_view unless $self->form_object->code;   ## No object!      yarg!
@@ -134,6 +152,8 @@ sub run_previous {
 }
 
 sub run_next {
+#@return (int) response code
+## Either exectues _view OR redirects!
   my $self = shift;
   if( $self->r->method eq 'POST' ) {
     $self->form_object->update_from_apr( $self->apr );    ## Update object from APR
@@ -164,6 +184,8 @@ sub run_next {
 }
 
 sub run_goto {
+#@return (int) response code
+## Redirects!
   my( $self, $id ) = @_;
   if( $self->form_object->on_goto( $self->form_object->stage_object, $id ) ) {
     $self->form_object->goto_stage( $id )->store;                  ## Goto next stage
@@ -173,6 +195,8 @@ sub run_goto {
 }
 
 sub run_view {
+#@return (int) response code
+## Either exectues _view OR redirects!
   my $self = shift;
   if( $self->form_object->stage_object->is_type( 'Confirmation' ) &&
     ! $self->form_object->stage_object->sections ) {
@@ -185,18 +209,23 @@ sub run_view {
 }
 
 sub run_jumbo {
+#@return (int) response code
+## Runs "view"!
   my $self = shift;
   $self->form_object->validate_pages; ## This could reset the stage
   return $self->_view( $self->form_object->render_as_one );
 }
 
 sub run_view_paper {
+#@return (int) response code
+## Runs "view"
   my $self = shift;
 #  $self->form_object->validate_pages; ## This could reset the stage
   return $self->_view( $self->form_object->render_paper );
 }
 
 sub _view {
+#@return (int) response code
   my( $self, $html ) = @_;
   return $self->wrap_no_heading( $self->form_object->title, $html )->ok;
 }
