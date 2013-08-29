@@ -54,6 +54,7 @@ my $verbose    = 0;
 my $local      = 0;
 my $dev        = 0;
 my $staging    = 0;
+my $www        = 0;
 
 my @headers;
 my @cookies;
@@ -68,15 +69,10 @@ GetOptions(
   'verbose+'      => \$verbose,
   'xhtml'         => \$xhtml,
   'local'         => \$local,
+  'www'           => \$www,
   'dev'           => \$dev,
   'staging'       => \$staging,
 );
-
-my $type_to_test = $staging ? 'staging'
-                 : $dev     ? 'dev'
-                 : $local   ? 'local'
-                 :            'live'
-                 ;
 
 _docs() if $help;
 
@@ -95,13 +91,18 @@ if( opendir my $dh, "$ROOT_PATH/sites" ) {
   die "Unable to open sites directory...\n";
 }
 
-_munge_urls( $type_to_test, \@urls, \%return_vals ) unless $type_to_test eq 'live';
+
+my @all_urls;
+unshift @all_urls, munge_urls( 'local',   \@urls, \%return_vals ) if $local;
+unshift @all_urls, munge_urls( 'dev',     \@urls, \%return_vals ) if $dev;
+unshift @all_urls, munge_urls( 'staging', \@urls, \%return_vals ) if $staging;
+unshift @all_urls, @urls if $www || ! @all_urls;
 
 my $start_time = time;
 
 _fetch( {
   'rate'    => $rate,
-  'urls'    => \@urls,
+  'urls'    => \@all_urls,
   'cookies' => \@cookies,
   'headers' => \@headers,
   'timeout' => $time_out,
@@ -115,7 +116,7 @@ Total: %10.3f
 ## use critic
 
 ## no critic (DeepNests ExcessComplexity)
-sub _munge_urls {
+sub munge_urls {
   my( $type, $urls, $ret_vals ) = @_;
   my $local_sites = {};
   $local_sites = get_yaml( "$ROOT_PATH/my-sites.yaml" ) if $type eq 'local';
@@ -152,18 +153,17 @@ sub _munge_urls {
       }
       $mapper->{$site}||=q();
       unless( $mapper->{$site} ) {
-        printf "-skip:            : %s\n", $url if $verbose > 1;
+        printf "-skip:            : %-10s : %s\n", $type, $url if $verbose > 1;
         next;
       }
       my $new_url = "$protocol://$mapper->{$site}$rest";
       push @new_urls, $new_url;
       next if $new_url eq $url;
-      $ret_vals->{$new_url} = $ret_vals->{$url};
-      delete $ret_vals->{$url};
+      $ret_vals->{$new_url} = [@{$ret_vals->{$url}}];
+      $ret_vals->{$new_url}[0] = $type;
     }
   }
-  @{$urls} = @new_urls;
-  return;
+  return @new_urls;
 }
 ## use critic
 
@@ -195,9 +195,9 @@ sub _get_urls {
           $det = shift @url_details;
           next;
         }
-        $url = "$protocol://$site$url" unless $url =~ m{\Ahttps?://}mxs;
+        $url = "$protocol://$site_name$url" unless $url =~ m{\Ahttps?://}mxs;
         push @{$ref_urls}, $url;
-        $ref_ret->{ $url } = [ $code ];
+        $ref_ret->{ $url } = [ 'www', $code ];
         $det = shift @url_details;
         while( defined $det && ! index $det, q( ) ) {
           $det =~ s{\A\s+}{}mxs;
@@ -239,23 +239,23 @@ sub _fetch {
       $out++;
       my $end = time;
       my $rc = $req->response->code;
-      my ($exp_rc,@exp_content) = @{$return_vals{$req->url}};
+      my ($flag, $exp_rc,@exp_content) = @{$return_vals{$req->url}};
       if( $rc ) {
         delete $failed_urls->{ $req->url };
         if( $exp_rc == $rc ) {
           (my $content = $req->response->body) =~ s{\s+}{ }mxsg;
           my $extra = $verbose > 1 ? sprintf ' %10.3f :', time-$start->{$req->url} : q();
-          printf "Match:%s %s\n", $extra, $req->url if $verbose;
+          printf "Match:%s %-10s : %s\n", $extra, $flag, $req->url if $verbose;
           foreach my $exp ( @exp_content ) {
             if( 0 <= index $content, $exp ) {
-              printf " Good:%s %s (%s)\n", $extra, $req->url, $exp if $verbose;
+              printf " Good:%s %-10s : %s (%s)\n", $extra, $flag, $req->url, $exp if $verbose;
             } else {
-              printf "  Bad:%s %s (%s)\n", $extra, $req->url, $exp;
+              printf "  Bad:%s %-10s : %s (%s)\n", $extra, $flag, $req->url, $exp;
             }
           }
         } else {
           my $extra = $verbose > 1 ? sprintf ' %10.3f :', time-$start->{$req->url} : q();
-          printf "Error:%s %s [ %d != %d ]\n", $extra, $req->url, $rc, $exp_rc;
+          printf "Error:%s %-10s : %s [ %d != %d ]\n", $extra, $flag, $req->url, $rc, $exp_rc;
         }
       } else {
         push @{$params->{'urls'}}, $req->url if $failed_urls->{ $req->url }++ < $max_tries;
@@ -270,14 +270,14 @@ sub _fetch {
           ->set_timeouts( $params->{'timeout'} )
           ->init->url;
       if( $verbose > 1 ) {
-        printf "-----:            : %s\n", $url;
+        printf "-----:            : %-10s : %s\n", $flag, $url;
         $start->{$url} = time;
       }
       sleep $SLEEP_PERIOD;
     }
   }
   foreach ( sort keys %{$failed_urls} ) {
-    printf "Fatal:            : $_\n";
+    printf "Fatal:            : %10s : %s\n", $return_vals{$_}[0], $_;
   }
   return;
 }

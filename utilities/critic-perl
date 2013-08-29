@@ -34,8 +34,8 @@ use lib "$ROOT_PATH/lib";
 
 use Pagesmith::Utils::PerlCritic qw(skip);
 
-use Readonly qw(Readonly);
-Readonly my $PERC => 100;
+use Const::Fast qw(const);
+const my $PERC => 100;
 
 my $skip = skip();
 # Set up package globals....
@@ -151,6 +151,13 @@ sub _run {
         delete $unindex_files{ $root }{ $module };
         next;
       }
+      (my $md5sum = `md5sum $files->{$root}{$module}`) =~ s{\s.*\Z}{}mxs; ## no critic (BacktickOperators)
+      if( exists $t->{'md5sum'}{$root}{$module} &&
+          $md5sum eq $t->{'md5sum'}{$root}{$module} ) {
+        msg( "Skipping module $module as un-changed ".$files->{$root}{$module} ) unless $quiet;
+        delete $unindex_files{ $root }{ $module };
+        next;
+      }
       delete $unindex_files{ $root }{ $module };
       ## Can't open input file so remove from t...
       my $in_fh;
@@ -172,6 +179,7 @@ sub _run {
         'exc'    => $exceptions,
         'path'   => "$html_path/perl/$safe_root--$safe_module.html",
       });
+      $t->{'md5sum'}{$root}{$module} = $md5sum;
     }
   }
   foreach my $root ( keys %unindex_files ) {
