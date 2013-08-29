@@ -25,7 +25,6 @@ use version qw(qv); our $VERSION = qv('0.1.0');
 #* tmpdata - storage of arbitrary data structures
 
 use Data::Dumper;
-# use Encode qw(decode encode);
 
 use Pagesmith::Cache::Memcache;
 use Pagesmith::Cache::SQL;
