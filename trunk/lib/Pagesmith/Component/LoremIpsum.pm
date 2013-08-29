@@ -24,7 +24,7 @@ use English qw(-no_match_vars $EVAL_ERROR);
 use HTML::Entities qw(encode_entities);
 use LWP::Simple qw($ua get);
 
-use Pagesmith::ConfigHash qw(get_config);
+use Pagesmith::ConfigHash qw(proxy_url);
 
 use base qw(Pagesmith::Component);
 
@@ -67,7 +67,7 @@ sub execute {
   $what   = $DEFAULT_WHAT   unless defined $what && exists $valid{$what};
   $amount = $valid{$what}   unless $amount =~ m{\A\d+\Z}mxs;
 
-  $ua->proxy( 'http', get_config( 'ProxyURL' ) );
+  $ua->proxy( 'http', proxy_url );
 
   my $extra = $self->option('start') ? '&start=yes' : q();
 
