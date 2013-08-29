@@ -24,17 +24,24 @@ use File::Basename qw(dirname);
 use Cwd qw(abs_path);
 
 BEGIN {
-  my $dir = dirname(dirname(abs_path(__FILE__)));
-  if( -e $dir ) {
-    unshift @INC, $dir;
-    $ENV{'PERL5LIB'}||=q();
-    $ENV{'PERL5LIB'} = qq($dir:$ENV{'PERL5LIB'}); ## no critic (LocalizedPunctuationVars)
-  }
-  $dir = dirname($dir).'/ext-lib';
-  if( -e $dir ) {
-    unshift @INC, $dir;
-    $ENV{'PERL5LIB'}||=q();
-    $ENV{'PERL5LIB'} = qq($dir:$ENV{'PERL5LIB'}); ## no critic (LocalizedPunctuationVars)
+  if( exists $ENV{q(SINGLE_LIB_DIR)} && $ENV{q(SINGLE_LIB_DIR)} ) {
+    my $dir = dirname(dirname(dirname(abs_path(__FILE__)))).'/sld';
+    if( -e $dir ) {
+      unshift @INC, $dir;
+    }
+  } else {
+    my $dir = dirname(dirname(abs_path(__FILE__)));
+    if( -e $dir ) {
+      unshift @INC, $dir;
+      $ENV{'PERL5LIB'}||=q();
+      $ENV{'PERL5LIB'} = qq($dir:$ENV{'PERL5LIB'}); ## no critic (LocalizedPunctuationVars)
+    }
+    $dir = dirname($dir).'/ext-lib';
+    if( -e $dir ) {
+      unshift @INC, $dir;
+      $ENV{'PERL5LIB'}||=q();
+      $ENV{'PERL5LIB'} = qq($dir:$ENV{'PERL5LIB'}); ## no critic (LocalizedPunctuationVars)
+    }
   }
 }
 
