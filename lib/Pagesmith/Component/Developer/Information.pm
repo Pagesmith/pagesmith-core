@@ -98,7 +98,7 @@ my $LIST_T = "\n    <li>%s</li>";
   );
   $html .= sprintf $ROW_T, 'Host', encode_entities( $host_name );
   $html .= sprintf $ROW_T, 'PID',  $PID;
-  foreach( @Q ) {
+  foreach( sort @Q ) {
     my $ret = eval { sprintf $ROW_T, encode_entities( $_ ), $self->value( $r->$_ ); };
     $html .= $EVAL_ERROR ? sprintf $ROW_T, encode_entities( $_ ), '###' : $ret;
   }
@@ -113,7 +113,7 @@ my $LIST_T = "\n    <li>%s</li>";
     limit_req_line loglevel path port server_admin
     server_hostname timeout
   );
-  foreach( @Q ) {
+  foreach( sort @Q ) {
     my $ret = eval { sprintf $ROW_T, encode_entities( $_ ), $self->value( $r->server->$_ ); };
     $html .= $EVAL_ERROR ? sprintf $ROW_T, encode_entities( $_ ), '###' : $ret;
   }
@@ -122,7 +122,7 @@ my $LIST_T = "\n    <li>%s</li>";
     get_server_banner
     restart_count server_root user_id group_id
   );
-  foreach( @Q ) {
+  foreach( sort @Q ) {
     my $t = 'Apache2::ServerUtil::'.$_;
     my $ret = eval {
       no strict 'refs'; ##no critic (NoStrict)
@@ -164,8 +164,12 @@ my $LIST_T = "\n    <li>%s</li>";
   <h3 class="keep">Dir config</h3>
   <dl style="font-size: 80%" class="twocol">);
   my $X = $r->dir_config();
+  my %t;
   while( my($K,$V) = each %{$X} ) {
-    $html .= sprintf $ROW_T, encode_entities( $K ), $self->value( $V );
+    push @{$t{$K}}, sprintf $ROW_T, encode_entities( $K ), $self->value( $V );
+  }
+  foreach( sort keys %t ) {
+    $html .= join q(), sort @{$t{$_}};
   }
   $html .= q(
   </dl>
@@ -174,7 +178,7 @@ my $LIST_T = "\n    <li>%s</li>";
   <dl style="font-size: 80%" class="twocol">);
   # And the values of the Pagesmith varibles in the server config!
   $X = Pagesmith::ConfigHash::hash;
-  foreach( keys %{$X} ) {
+  foreach( sort keys %{$X} ) {
     $html .= sprintf $ROW_T, encode_entities( $_ ), $self->value( $X->{$_} );
   }
 
@@ -187,7 +191,7 @@ my $LIST_T = "\n    <li>%s</li>";
   <h3 class="keep">headers in</h3>
   <dl style="font-size: 80%" class="twocol">);
   $X = $r->headers_in();
-  foreach( keys %{$X} ) {
+  foreach( sort keys %{$X} ) {
     $html .= sprintf $ROW_T, encode_entities( $_ ), $self->value( $r->headers_in->{ $_ } );
   }
 
@@ -199,7 +203,7 @@ my $LIST_T = "\n    <li>%s</li>";
   if( keys %{$X} ) {
     $html .= '
   <dl style="font-size: 80%" class="twocol">';
-    foreach( keys %{$X} ) {
+    foreach( sort keys %{$X} ) {
       $html .= sprintf $ROW_T, encode_entities( $_ ), $self->value( $r->headers_out->{ $_ } );
     }
     $html .= '
@@ -212,7 +216,7 @@ my $LIST_T = "\n    <li>%s</li>";
 
   <h3 class="keep">err headers out</h3>
   <dl style="font-size: 80%" class="twocol">';
-    foreach( keys %{$X} ) {
+    foreach( sort keys %{$X} ) {
       $html .= sprintf $ROW_T, encode_entities( $_ ), $self->value( $r->err_headers_out->{ $_ } );
     }
     $html .= '
@@ -229,7 +233,7 @@ my $LIST_T = "\n    <li>%s</li>";
   if( keys %{$X} ) {
     $html .= '
   <dl style="font-size: 80%" class="twocol">';
-    foreach( keys %{$X} ) {
+    foreach( sort keys %{$X} ) {
       $html .= sprintf $ROW_T, encode_entities( $_ ), $self->value( $X->{ $_ } );
     }
     $html .= '
@@ -244,7 +248,7 @@ my $LIST_T = "\n    <li>%s</li>";
   if( keys %{$X} ) {
     $html .= '
   <dl style="font-size: 80%" class="twocol">';
-    foreach( keys %{$X} ) {
+    foreach( sort keys %{$X} ) {
       $html .= sprintf $ROW_T, encode_entities( $_ ), $self->value( $X->{ $_ } );
     }
     $html .= '

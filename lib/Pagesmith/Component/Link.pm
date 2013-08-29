@@ -18,7 +18,7 @@ use version qw(qv); our $VERSION = qv('0.1.0');
 use Const::Fast qw(const);
 const my $TIMEOUT => 2;
 
-use Pagesmith::ConfigHash qw(get_config);
+use Pagesmith::ConfigHash qw(proxy_url);
 
 use base qw(Pagesmith::Component);
 
@@ -52,7 +52,7 @@ sub execute {
   my ($url) = $self->pars;
   my $extra = {};
   if( $self->option( 'get_title' ) ) {
-    $ua->proxy( [qw(http https)], get_config( 'ProxyURL' ) );
+    $ua->proxy( [qw(http https)], proxy_url );
     $ua->timeout( $TIMEOUT );
     my $response = get $url;
     $extra->{'template'} = '%%title%% (%%url%%)';
