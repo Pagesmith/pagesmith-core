@@ -57,7 +57,7 @@ _docs() if $help;
 $access = 1 if $both;
 $error = 1 if $both;
 
-push @extra_params, '-DPAGESMITH_PROFILE' if $profile;
+push @extra_params, '-DPAGESMITH_PROFILE'   if $profile;
 
 printf {*STDERR} "\n%s\n  Performing action '%s' on system '%s'\n\n",
   q(-) x $LINE_LENGTH,
