@@ -20,7 +20,7 @@ use English qw(-no_match_vars $INPUT_RECORD_SEPARATOR);
 use Const::Fast qw(const);
 
 use Pagesmith::Cache;
-use Pagesmith::ConfigHash qw(get_config);
+use Pagesmith::ConfigHash qw(proxy_url);
 use Pagesmith::Core qw(safe_base64_decode);
 use URI::Escape qw(uri_escape_utf8);
 use Pagesmith::Utils::FormObjectCreator;
@@ -100,7 +100,7 @@ sub run {
 
   ## Set up proxy....
   my $ua = LWP::UserAgent->new;
-  my $proxy_url = get_config( 'ProxyURL' );
+  my $proxy_url = proxy_url;
   $ua->proxy( ['http','https'], $proxy_url ) if $proxy_url;
 
   ## Retrieve the authentication token....
