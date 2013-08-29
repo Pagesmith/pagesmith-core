@@ -28,6 +28,8 @@ BEGIN {
     my $dir = dirname(dirname(dirname(abs_path(__FILE__)))).'/sld';
     if( -e $dir ) {
       unshift @INC, $dir;
+      $ENV{'PERL5LIB'}||=q();
+      $ENV{'PERL5LIB'} = qq($dir:$ENV{'PERL5LIB'}); ## no critic (LocalizedPunctuationVars)
     }
   } else {
     my $dir = dirname(dirname(abs_path(__FILE__)));
