@@ -365,6 +365,9 @@ PageSmith.Timer = {
   }
 };
 
+$('.make-wide h2, .make-wide h3').livequery(function(){
+  $(this).append('<span class="toggle-width">&gt;=&lt;</span>');
+});
 $('body')
   .on('click','#main  .toggle-width',function() { $('#main').attr('id','mainx'); $('#rhs').attr('id','rhsx'); $(this).html('&gt;=&lt;');} )
   .on('click','#mainx .toggle-width',function() { $('#mainx').attr('id','main'); $('#rhsx').attr('id','rhs'); $(this).html('&lt;=&gt;');} );
