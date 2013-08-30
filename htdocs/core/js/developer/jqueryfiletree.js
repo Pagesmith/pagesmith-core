@@ -111,10 +111,26 @@
 
 $(document).ready(function () {
   var domain = window.location.protocol + '//' + window.location.hostname + '/';
-  $('#jQueryFileTree').fileTree({multiFolder: true}, function (file) {
-    $('#jQueryFileTop').html('<h4>/' + escape(file) + '</h4>').load('/action/Jft?dir=' + encodeURI(file));
+  $('#jqfTree').fileTree({multiFolder: true}, function (file) {
+    $('#jqfTop').html('<h4>/' + escape(file) + '</h4>').load('/action/Jft?dir=' + encodeURI(file));
+    /* We need to look at the file-extn here and see what to do 
+      html files load!
+      img  files load!
+      js/css <- markup
+      txt files load...
+      docs/pdfs <- include a link to download in the header block (don't load into content until requested!)
+      archive files <- include a link in top to download and to list contents.. if list contents -> push these into body....
+    */
     document.getElementById('pg').src = domain + file;
+    /* Need to add directory code to be able to open a directory and see full listing of contents
+       Option to delete a file using this....! 
+       Option to edit a file, stage + publish it 
+       Option to upload a file into a directory 
+         { assets: doc/docx/pdf/xls/xlsx/ppt/pptx etc, gfx: png/jpg, ... }
+       Option to edit inc files...
+       Option to create a new template page... {feature, ...}
+     */
   });
-  $('#jQueryFileBox').html('<iframe style="width:824px;height:700px" name="pg" id="pg"></iframe>');
+  $('#jqfBox').html('<iframe style="width:100%;height:100%" name="pg" id="pg"></iframe>');
 });
 
