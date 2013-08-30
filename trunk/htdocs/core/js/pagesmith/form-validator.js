@@ -170,6 +170,7 @@ var FormValidator = {
 /*jsl:end*/
   },
   trim: function (s) {
+    s+=''; // Stringify object incase empty!
     return s.replace(/^(\s+)?(.*\S)(\s+)?$/, '$2');
   },
 
@@ -299,7 +300,9 @@ var FormValidator = {
     el.closest('dd').append('<p><span class="ajax" title="/action/component/Link?pars=-get_title+' + escape(val) + '">Retrieving title</span></p>');
   },
   check: function (el) {
-    var required = el.hasClass('required'), value, flag, myform, o, mynext;
+    var required     = el.hasClass('required'),
+        class_string = 'col-required col-optional col-error col-valid col-supervalid',
+        value, flag, myform, o, mynext;
 
     if (!required && !el.hasClass('optional')) {
       return;
@@ -315,19 +318,22 @@ var FormValidator = {
         ($(el).closest('dd').find('input[type=checkbox]').filter('[name$=all]').filter(':checked').length === 0)) {
       value = 1; // 'we have an attached file!'
     }
+    if( el.hasClass('multiple') && value === '' && $(el).closest('dd').find('.close_box').length ) {
+      required = 0;
+    }
     if (flag[1].length) {
       o = this;
       flag[1].each(function (i, e) {
         var v = o.trim($(e).val());
-        $(e).removeClass('col-required col-optional col-error col-valid').addClass(v === '' ? (required ? 'col-required' : 'col-optional') : (flag[0] ? 'col-valid' : 'col-error'));
+        $(e).removeClass(class_string).addClass(v === '' ? (required ? 'col-required' : 'col-optional') : (flag[0] ? 'col-valid' : 'col-error'));
         if ($(e).hasClass('_checkbox')) {
-          $(e).removeClass('col-required col-optional col-error col-valid');
+          $(e).removeClass(class_string);
         }
       });
     } else {
-      el.removeClass('col-required col-optional col-error col-valid col-supervalid').addClass(value === '' ? (required ? 'col-required' : 'col-optional') : (flag[0] && flag[0] > 1 ? 'col-supervalid' : (flag[0] ? 'col-valid' : 'col-error')));
+      el.removeClass(class_string).addClass(value === '' ? (required ? 'col-required' : 'col-optional') : (flag[0] && flag[0] > 1 ? 'col-supervalid' : (flag[0] ? 'col-valid' : 'col-error')));
       if (el.hasClass('_checkbox')) {
-        el.removeClass('col-required col-optional col-error col-valid');
+        el.removeClass(class_string);
       }
     }
     myform = el.closest('form');
@@ -384,6 +390,9 @@ var FormValidator = {
 
       if (!required && !input.hasClass('optional')) {
         return;
+      }
+      if( input.hasClass('multiple') && input.closest('dd').find('.close_box').length ) { // We already have something selected!
+        required = 0;
       }
 
       value = myself.trim(input.val());
@@ -582,14 +591,16 @@ var FormValidator = {
 // Make elements of class autocomplete "james" objects...
 
 $(function () {
-  $('.auto_complete').livequery(function () {
-    $(this).attr('autocomplete', 'off');
-    var mat = $(this).attr('title').match(/^(\w+)=([^?]+)\??(.*)$/);
-    if (mat) {
-      $(this).james(mat[2], {params: mat[3], varname: mat[1], minlength: 2});
-    }
-    $(this).attr('title', '');
-  });
+  if( $.james ) {
+    $('.auto_complete').livequery(function () {
+      $(this).attr('autocomplete', 'off');
+      var mat = $(this).attr('title').match(/^(\w+)=([^?]+)\??(.*)$/);
+      if (mat) {
+        $(this).james(mat[2], {params: mat[3], varname: mat[1], minlength: 2});
+      }
+      $(this).attr('title', '');
+    });
+  }
   $.fn.extend({
     toggleAttr : function (attrib) {
       if (this.attr(attrib)) {
@@ -660,6 +671,43 @@ $(function () {
     function () {
       return FormValidator.submit_button($(this));
     }
+  ).on(// multiple select
+    'change',
+    'select.multiple',
+    function() {
+      var nd    = $(this),
+          sel_i = nd.prop('selectedIndex'),
+          sel_t = $.trim(nd.find('option').eq([sel_i]).prop('text') ),
+          sel_v = $.trim(nd.find('option').eq([sel_i]).prop('value')),
+          in_node;
+      if( typeof(sel_v) === 'undefined' ) {
+        sel_v = sel_t;
+      }
+      if( sel_v !== '' ) {
+        if(  ! nd.parent().find('span.close_box').filter(function(){ return $.trim($(this).text()) === sel_t; }).length ) {
+          in_node = $('<input />').attr({name:nd.attr('name'),type:'hidden'}).prop( 'value', sel_v );
+          nd.parent().append($('<span title="Click to remove" class="close_box" />').text(sel_t).append(in_node) );
+        }
+        nd[0].selectedIndex = 0;
+        FormValidator.check(nd);
+      }
+    }
+  ).on(// multiple input
+    'blur',
+    'input.multiple',
+      function() {
+      var nd   = $(this),
+          in_t = $.trim(nd.val()),
+          in_node;
+      if( in_t !== '' ) {
+        if( ! nd.parent().find('span.close_box').filter(function(){ return $.trim($(this).text()) === in_t; }).length ) {
+          in_node = $('<input />').attr({name:nd.attr('name'),type:'hidden'}).prop( 'value', in_t );
+          nd.parent().append($('<span title="Click to remove" class="close_box" />').text(in_t).append(in_node) );
+        }
+        nd.val('');
+        FormValidator.check(nd);
+      }
+    }
   ).on(// Clicking on "file-blob" checkbox toggles "deleted" class on "row"
     'click',
     '.checkbox',
@@ -682,9 +730,54 @@ $(function () {
       $(this).closest('form').addClass('logic');
     }
   });
-  $('form.logic').livequery(function () { return FormValidator.check_logic($(this)); });
-  $('form.check :input').livequery(function () { return FormValidator.check($(this)); });
-  $('label').livequery(function () { return FormValidator.push_label($(this)); });
+});
+
+$('form.logic').livequery(function () { return FormValidator.check_logic($(this)); });
+$('form.check :input').livequery(function () { return FormValidator.check($(this)); });
+$('label').livequery(function () { return FormValidator.push_label($(this)); });
+
+/* Multi-select... */
+$('body').on('click','.add_entry',function () {
+  var inputs = $(this).prevAll('select'),nd,sel_i,sel_t,sel_v,in_t,in_node;
+  if( inputs.length ) {
+    nd = inputs.eq(0);
+    sel_i = nd.prop('selectedIndex');
+    sel_t = $.trim(nd.find('option').eq([sel_i]).prop('text'));
+    sel_v = $.trim(nd.find('option').eq([sel_i]).prop('value'));
+    if( typeof(sel_v) === 'undefined' ) {
+      sel_v = sel_t;
+    }
+    if( sel_v !== '' ) {
+      if(  ! nd.parent().find('span.close_box').filter(function(){ return $.trim($(this).text()) === sel_t; }).length ) {
+        in_node = $('<input />').attr({name:nd.attr('name'),type:'hidden'}).prop( 'value', sel_v );
+        nd.parent().append($('<span title="Click to remove" class="close_box" />').text(sel_t).append(in_node) );
+      }
+      nd[0].selectedIndex = 0;
+      FormValidator.check(nd);
+    }
+    return;
+  }
+  inputs = $(this).prevAll('input');
+  if( inputs.length ) {
+    nd = inputs.eq(0);
+    in_t = $.trim(nd.val());
+    if( in_t !== '' ) {
+      if( ! nd.parent().find('span.close_box').filter(function(){ return $.trim($(this).text()) === in_t; }).length ) {
+        in_node = $('<input />').attr({name:nd.attr('name'),type:'hidden'}).prop( 'value', in_t );
+        nd.parent().append($('<span title="Click to remove" class="close_box" />').text(in_t).append(in_node) );
+      }
+      nd.val('');
+      FormValidator.check(nd);
+    }
+  }
+  return;
+});
+
+/* This method then removes the entry */
+$('body').on('click','.close_box',function() {
+  var Z = $(this).closest('dd').find(':input').eq(0);
+  $(this).remove();
+  FormValidator.check( Z.eq(0) );
 });
 
 $(window).on('load',function() {
