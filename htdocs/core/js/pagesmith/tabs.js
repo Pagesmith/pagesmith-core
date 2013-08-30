@@ -61,8 +61,9 @@ $('.enable-tab').livequery(function () {
 });
 
 function fire_tabs( hash_sel, hash_details ) {
-  var id_sel = ' > li > a[href=#'+ hash_sel +']',
-      Z      = $('.tabs' + id_sel + ', .fake-tabs ' + id_sel);
+  var id_sel = ' > li > a[href='+ hash_sel +']',
+      Z      = $('.tabs' + id_sel + ', .fake-tabs ' + id_sel),
+      e;
   if( Z.length ) {
     Z.click().parents('.tabc_hid').each(function () {
       var parent_id_sel = ' > li > a[href=#' + $(this).attr('id') + ']';
@@ -70,13 +71,17 @@ function fire_tabs( hash_sel, hash_details ) {
     });
     if( hash_details.length ) {
       var x = hash_details.shift();
+      x = '#'+x;
       fire_tabs( x, hash_details );
     }
     return;
   }
 
   hash_details.unshift( hash_sel );
-  $('#'+hash_details.join(' ')).get().scrollIntoView();
+  e = $(hash_details.join(' ')).get();
+  if( e.length ) {
+    e[0].scrollIntoView();
+  }
 }
 
 /**
@@ -86,8 +91,8 @@ function fire_tabs( hash_sel, hash_details ) {
 
 var id_str = window.location.hash;
 if (id_str && id_str.match(/^#[- \w]+$/)) {
-  var hash_details = id_str.split(/ +/),
-      hash = hash_details.shift();
+  var hash_details = id_str.split(/ +/), hash;
+  hash = hash_details.shift();
   fire_tabs( hash, hash_details );
 }
 
