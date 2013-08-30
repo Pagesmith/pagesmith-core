@@ -1,40 +1,43 @@
-@charset "UTF-8"; #jqfTree  { float:left; width: 260px; height:802px; border:1px solid black; overflow: scroll; }
-#jqfRight { float:left; width:862px; height:802px; }
-#jqfTop   { width:862px; height:100px; border:1px solid black; overflow: scroll; }
-#jqfBox   { width:862px; height:700px; border:1px solid black; overflow: scroll; }
+@charset "UTF-8";
+#jqfTree  { overflow: auto; }
+
 #jqfTop table { border-collapse: collapse; width: 515px; margin: 2px; padding:0; float: left; overflow: scroll; }
-#jqfTop th, #jqfTop td { font-size: 75%; padding: 2px; width:42%; line-height: 1em; }
-#jqfTop th { font-weight: bold; width: 8%; padding: 1px}
+#jqfTop th,
+#jqfTop td    { font-size: 75%; padding: 2px; width:42%; line-height: 1em; }
+#jqfTop th    { font-weight: bold; width: 8%; padding: 1px}
+
+#jqfBox   { border: 1px dotted red; border-top: 1px solid #666; clear: both; padding: 0 5px }
+
 
 ul.jft{font-family:Verdana, sans-serif; font-size:11px; line-height:18px; padding:0; margin:0}
 #rhs .jft li, .jft li{list-style:none; padding:0; padding-left:20px; margin:0; white-space:nowrap; background-position:top left; background-repeat:no-repeat; background-image:url(/core/gfx/jft.png)}
 .jft a{color:#333; text-decoration:none; display:block; padding:0 2px}
 .jft a:hover{background:#bdf}
 /* Core Styles */
-#rhs .jft .dir, .jft .dir{background-position: 0 -136px}
-#rhs .jft .exp, .jft .exp{background-position:-16px -296px}
-.jft .file{background-position: 0 -200px}
-.jft .wait{background-image: url(/core/gfx/anim/spinner.gif)}
+#rhs .jft .dir   { background-position: 0 -136px}
+#rhs .jft .exp   { background-position:-16px -296px}
+#rhs .jft .file  { background-position: 0 -200px}
+#rhs .jft .wait  { background-image: url(/core/gfx/anim/spinner.gif) }
 /* File Extensions*/
-.jft .ext_app{background-position: 0 -8px}
-.jft .ext_code{background-position: 0 -40px}
-.jft .ext_css{background-position:0 -72px}
-.jft .ext_db{background-position:0 -104px}
-.jft .ext_doc{background-position:0 -168px}
-.jft .ext_film{background-position:0 -232px}
-.jft .ext_fla{background-position:0 -264px}
-#rhs .jft .ext_html, .jft .ext_html{background-position:0 -328px}
-.jft .ext_img{background-position:0 -520px}
-.jft .ext_java{background-position:0 -360px}
-.jft .ext_linux{background-position:0 -392px}
-.jft .ext_music{background-position:0 -424px}
-.jft .ext_pdf{background-position:0 -456px}
-.jft .ext_php{background-position:0 -488px}
-.jft .ext_ppt{background-position:0 -552px}
-.jft .ext_psd{background-position:0 -584px}
-.jft .ext_ruby{background-position:0 -616px}
-.jft .ext_script{background-position:0 -648px}
-#rhs .jft .ext_txt, .jft .ext_txt{background-position:0 -680px}
-.jft .ext_xls{background-position:0 -712px}
-.jft .ext_zip{background-position:0 -744px}
-.jft .ext_unknown{background-position:0 -680px}
+#rhs .jft .ext_app     { background-position: 0 -8px   }
+#rhs .jft .ext_code    { background-position: 0 -40px  }
+#rhs .jft .ext_css     { background-position: 0 -72px  }
+#rhs .jft .ext_db      { background-position: 0 -104px }
+#rhs .jft .ext_doc     { background-position: 0 -168px }
+#rhs .jft .ext_film    { background-position: 0 -232px }
+#rhs .jft .ext_fla     { background-position: 0 -264px }
+#rhs .jft .ext_html    { background-position: 0 -328px }
+#rhs .jft .ext_img     { background-position: 0 -520px }
+#rhs .jft .ext_java    { background-position: 0 -360px }
+#rhs .jft .ext_linux   { background-position: 0 -392px }
+#rhs .jft .ext_music   { background-position: 0 -424px }
+#rhs .jft .ext_pdf     { background-position: 0 -456px }
+#rhs .jft .ext_php     { background-position: 0 -488px }
+#rhs .jft .ext_ppt     { background-position: 0 -552px }
+#rhs .jft .ext_psd     { background-position: 0 -584px }
+#rhs .jft .ext_ruby    { background-position: 0 -616px }
+#rhs .jft .ext_script  { background-position: 0 -648px }
+#rhs .jft .ext_txt     { background-position: 0 -680px }
+#rhs .jft .ext_xls     { background-position: 0 -712px }
+#rhs .jft .ext_zip     { background-position: 0 -744px }
+#rhs .jft .ext_unknown { background-position: 0 -680px }

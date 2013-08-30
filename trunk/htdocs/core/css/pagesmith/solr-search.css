@@ -1,0 +1,27 @@
+#search_counts li span { float:right; width: 8em; border:1px solid #ccc; text-align: right; color; #000; font-weight: normal; overflow:hidden; font-size: 80%; padding: 1px 3px }
+#search_counts li { clear: right; font-weight: bold; color: #14559f; cursor: pointer }
+#search_counts li.search_inactive { color: #ccc }
+#search_counts li.search_total    { color: #666 }
+#search_derestrict { cursor: pointer; }
+#search_res h4 span { float: right; background-color: #fff; padding: 0 3px; font-size: 80%; margin: 1px 2px }
+#search_res h4 { background-color: #eee; padding: 2px 0 5px 4px; margin-bottom: 2px }
+#search_res em,  #search_res h2 strong, #search_waiting strong, #search_derestrict strong { font-weight: bold; color: #900 }
+#search_res h4 a { text-decoration: none; }
+#search_res p { padding: 0 5px; margin-bottom: 2px }
+#search_res dd, #search_res dt { margin-bottom: 2px }
+p#search_waiting, p#search_failed, p#search_derestrict { text-align: center; margin: 0 25%; padding: 4px; border-radius: 6px; }
+p#search_waiting    { background-color: #eee; }
+p#search_failed     { background-color: #fed; }
+p#search_derestrict { background-color: #dfd; }
+
+p#search_waiting img { vertical-align: middle }
+
+.pager { line-height: 2.2em }
+#rhs { width: 29% }
+#main { width: 70% }
+
+@media all and (max-width: 840px) {
+  /* Make sure the two panels are full width */
+  #main, #rhs { float: none; width: 100%; }
+}
+
