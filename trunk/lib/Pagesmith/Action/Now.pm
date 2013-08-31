@@ -23,7 +23,7 @@ use Date::Format qw(time2str);
 sub run {
   my $self = shift;
 
-  return $self->text->print( time2str( 'It is %A %o %B at %l.%M%P', time) )->ok;
+  return $self->text->print( time2str( "It is %A %o %B at %l.%M%P\n", time) )->ok;
 }
 
 1;
