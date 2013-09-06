@@ -365,7 +365,7 @@ PageSmith.Timer = {
   }
 };
 
-$('.make-wide h2, .make-wide h3').livequery(function(){
+$('h2.make-wide, h3.make-wide').livequery(function(){
   $(this).append('<span class="toggle-width">&gt;=&lt;</span>');
 });
 $('body')
