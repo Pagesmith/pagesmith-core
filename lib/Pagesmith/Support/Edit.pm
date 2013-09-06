@@ -29,7 +29,7 @@ const my $TIME_FMT => '%a, %d %b %Y %H:%M %Z';
 use base qw(Pagesmith::Root);
 use Pagesmith::Core qw(user_info);
 
-use Pagesmith::ConfigHash qw(server_root get_config);
+use Pagesmith::ConfigHash qw(server_root get_config is_developer);
 use Pagesmith::Utils::SVN::Config;
 
 #----------------------------------------------------------
@@ -90,7 +90,9 @@ sub svn_cmd {
 
 sub edit_flag {
   my $self = shift;
-  return $self->{'flag'} ||= get_config( 'Editable' ) || 'none';
+  return $self->{'flag'} ||= (
+    is_developer( $self->r->headers_in->get('ClientRealm') ) ? get_config( 'Editable' ) : undef
+  ) || 'none';
 }
 
 sub site_is_editable {
@@ -99,7 +101,7 @@ sub site_is_editable {
 }
 
 sub is_valid_user {
-  my( $self ) = @_;
+  my $self = shift;
   my $u = $self->user;
   return unless $u &&
                 $u->auth_method eq 'sanger_ldap' && ## Needs to be local ldap user!
