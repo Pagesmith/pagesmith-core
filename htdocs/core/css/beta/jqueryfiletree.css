@@ -1,43 +1,45 @@
 @charset "UTF-8";
 #jqfTree  { overflow: auto; }
 
-#jqfTop table { border-collapse: collapse; width: 515px; margin: 2px; padding:0; float: left; overflow: scroll; }
-#jqfTop th,
-#jqfTop td    { font-size: 75%; padding: 2px; width:42%; line-height: 1em; }
-#jqfTop th    { font-weight: bold; width: 8%; padding: 1px}
-
 #jqfBox   { border: 1px dotted red; border-top: 1px solid #666; clear: both; padding: 0 5px }
 
 
 ul.jft{font-family:Verdana, sans-serif; font-size:11px; line-height:18px; padding:0; margin:0}
-#rhs .jft li, .jft li{list-style:none; padding:0; padding-left:20px; margin:0; white-space:nowrap; background-position:top left; background-repeat:no-repeat; background-image:url(/core/gfx/jft.png)}
+#rhs .jft li, .jft li{list-style:none; padding:0; margin:0; white-space:nowrap; }
+#rhs .jft li, .jft li, #main td.jft { padding-left:20px; background-position:top left; background-repeat:no-repeat; background-image:url(/core/gfx/filetree.png); }
+
 .jft a{color:#333; text-decoration:none; display:block; padding:0 2px}
 .jft a:hover{background:#bdf}
 /* Core Styles */
-#rhs .jft .dir   { background-position: 0 -136px}
-#rhs .jft .exp   { background-position:-16px -296px}
-#rhs .jft .file  { background-position: 0 -200px}
+
+
 #rhs .jft .wait  { background-image: url(/core/gfx/anim/spinner.gif) }
 /* File Extensions*/
-#rhs .jft .ext_app     { background-position: 0 -8px   }
-#rhs .jft .ext_code    { background-position: 0 -40px  }
-#rhs .jft .ext_css     { background-position: 0 -72px  }
-#rhs .jft .ext_db      { background-position: 0 -104px }
-#rhs .jft .ext_doc     { background-position: 0 -168px }
-#rhs .jft .ext_film    { background-position: 0 -232px }
-#rhs .jft .ext_fla     { background-position: 0 -264px }
-#rhs .jft .ext_html    { background-position: 0 -328px }
-#rhs .jft .ext_img     { background-position: 0 -520px }
-#rhs .jft .ext_java    { background-position: 0 -360px }
-#rhs .jft .ext_linux   { background-position: 0 -392px }
-#rhs .jft .ext_music   { background-position: 0 -424px }
-#rhs .jft .ext_pdf     { background-position: 0 -456px }
-#rhs .jft .ext_php     { background-position: 0 -488px }
-#rhs .jft .ext_ppt     { background-position: 0 -552px }
-#rhs .jft .ext_psd     { background-position: 0 -584px }
-#rhs .jft .ext_ruby    { background-position: 0 -616px }
-#rhs .jft .ext_script  { background-position: 0 -648px }
-#rhs .jft .ext_txt     { background-position: 0 -680px }
-#rhs .jft .ext_xls     { background-position: 0 -712px }
-#rhs .jft .ext_zip     { background-position: 0 -744px }
-#rhs .jft .ext_unknown { background-position: 0 -680px }
+#main td.ext_app,     #rhs .jft .ext_app     { background-position: -414px 0      }
+#main td.ext_code,    #rhs .jft .ext_code    { background-position: -396px -18px  }
+#main td.ext_css,     #rhs .jft .ext_css     { background-position: -378px -36px  }
+#main td.ext_db,      #rhs .jft .ext_db      { background-position: -360px -54px  }
+#main td.dir,         #rhs .jft .dir         { background-position: -342px -72px  }
+#main td.ext_doc,     #rhs .jft .ext_doc     { background-position: -324px -90px  }
+#main td.ext_unknown, #rhs .jft .ext_unknown,
+#main td.file,        #rhs .jft .file        { background-position: -306px -108px }
+#main td.ext_film,    #rhs .jft .ext_film    { background-position: -288px -126px }
+#main td.ext_fla,     #rhs .jft .ext_fla     { background-position: -270px -144px }
+                      #rhs .jft .exp         { background-position: -252px -162px }
+#main td.ext_html,    #rhs .jft .ext_html    { background-position: -234px -180px }
+#main td.ext_java,    #rhs .jft .ext_java    { background-position: -216px -198px }
+#main td.ext_linux,   #rhs .jft .ext_linux   { background-position: -198px -216px }
+#main td.ext_music,   #rhs .jft .ext_music   { background-position: -180px -234px }
+#main td.ext_pdf,     #rhs .jft .ext_pdf     { background-position: -162px -252px }
+#main td.ext_php,     #rhs .jft .ext_php     { background-position: -144px -270px }
+#main td.ext_img,     #rhs .jft .ext_img     { background-position: -126px -288px }
+#main td.ext_ppt,     #rhs .jft .ext_ppt     { background-position: -108px -306px }
+#main td.ext_psd,     #rhs .jft .ext_psd     { background-position:  -90px -324px }
+#main td.ext_ruby,    #rhs .jft .ext_ruby    { background-position:  -72px -342px }
+#main td.ext_script,  #rhs .jft .ext_script  { background-position:  -54px -360px }
+#main td.ext_txt,     #rhs .jft .ext_txt     { background-position:  -36px -378px }
+#main td.ext_xls,     #rhs .jft .ext_xls     { background-position:  -18px -396px }
+#main td.ext_zip,     #rhs .jft .ext_zip     { background-position:      0 -414px }
+
+
+.extended-info { min-height:80px;max-height:150px;overflow:auto }
