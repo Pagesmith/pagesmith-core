@@ -27,7 +27,10 @@ Readonly my $ACCESS_LEVEL => 1;
 use English qw(-no_match_vars $UID);
 use File::Basename qw(dirname);
 use base qw(Pagesmith::Component Pagesmith::Support::Edit);
+use Pagesmith::ConfigHash qw(is_developer);
+
 use Apache2::RequestUtil;
+use Apache2::URI ();
 use HTML::Entities qw(encode_entities);    ## HTML entity escaping
 use HTML::HeadParser;
 
@@ -36,7 +39,7 @@ use Pagesmith::Utils::Spelling;
 
 use Pagesmith::Utils::SVN::Config;
 use Pagesmith::Core qw(user_info);
-use Pagesmith::ConfigHash qw(server_root get_config);
+use Pagesmith::ConfigHash qw(server_root get_config docroot is_developer);
 
 my %HEADER_MAP = qw(
   Title              title
@@ -97,6 +100,32 @@ my %actions_by_state = (
   q(!) => [qw(revert)],          ## Can't get at the moment!
 ); ## Can't work with "X","I","~" and "#"
 
+sub define_options {
+  my $self = shift;
+  return (
+    $self->click_ajax_option,
+  );
+}
+
+sub usage {
+  my $self = shift;
+  return {
+    'parameters'  => '{dir}',
+    'description' => 'Display table of file information for this directory',
+    'notes'       => [],
+  };
+}
+
+sub ajax_message {
+  my $self = shift;
+  return $self->site_is_editable && $self->user->logged_in ? '<div class="panel"><p class="ajaxwait">Loading information about page</p></div>' : q();
+}
+
+sub ajax {
+  my $self = shift;
+  return $self->click_ajax;
+}
+
 sub user {
   my $self = shift;
   return $self->page->user;
@@ -124,24 +153,28 @@ sub grab_head_data {
   return;
 }
 
-
 ## no critic (Complexity)
 sub execute {
   my $self = shift;
 
-  ## Check to see if a user can edit ANY repository/path
-  return unless $self->user;
-  my $flags = $self->edit_flag;
-
-  return q() unless $flags eq 'any' || $flags eq 'self'; ## Not editable!
-
-  return q() unless $self->is_valid_user( $flags );
+  return q() unless $self->site_is_editable;
+  return q() unless $self->is_valid_user;
   $self->init_events; ## This is the timer code!
 
   my $filename = $self->r->filename;
+  $self->{'in_edit_mode'} = $self->r->unparsed_uri =~ m{\A/action/Edit_Edit(?:/.*)\Z}mxsi;
+  if( $filename =~ m{Component}mxs ) {
+    $self->r->parse_uri( $self->page->full_uri );
+    $filename = $self->r->uri;
+    $self->{'in_edit_mode'} = $filename =~ s{\A/action/Edit_Edit(/.*)?\Z}{$1}mxsi;
+    $filename = docroot.$filename;
+    $filename .= 'index.html' if $filename =~ m{/\Z}mxs;
+  }
+  return q() unless -e $filename;
   my $editable = 1;
   $editable = 0 unless $filename =~ m{\A/}mxs; ## Must be an editable page!
-  return unless $editable;
+
+  return q() unless $editable;
   ## Get repository name from file!
 
   ## Initialize variables!
@@ -151,8 +184,7 @@ sub execute {
 
   ## Get the SVN repository details of the file!
 
-  my $info_results  = $self->run_cmd( [$self->svn_cmd, qw(info --non-interactive),$filename] );
-  my $repos_details = $self->get_repos_details( $info_results, $filename );
+  my $repos_details = $self->get_repos_details( $filename );
 
   return q() unless $repos_details; ## Can't do anything unless in repository root!
 
@@ -195,7 +227,7 @@ sub execute {
     push @{$state_strings}, $label;
     $self->push_event( 'Got status' );
     my %extra_info;
-    if( $info_results->{'success'} ) {
+    if( $repos_details->{'success'} ) {
       %extra_info = (
         'repos_url'   => $repos_details->{'url'},
         'staging_url' => $repos_details->{'root'}.'/staging'.$repos_details->{'part'},
@@ -235,7 +267,7 @@ sub execute {
         'filename'     => $filename,
         'state'        => $state_strings,
         'actions'      => $actions,
-        'info_success' => $info_results->{'success'},
+        'info_success' => $repos_details->{'success'},
         'no_staging'   => get_config('Staging') ne 'true',
         %extra_info,
       });
@@ -276,9 +308,7 @@ sub execute {
 
   my $caption = qq(<h3>Non editable - $notes);
   if( $editable ) {
-    my $link = $self->r->unparsed_uri =~ m{\A/action/edit(/.*|)\Z}mxis ? '<a href="%s">VIEW</a>'
-            :                                                                 '<a href="/action/edit%s">EDIT</a>'
-            ;
+    my $link = $self->{'in_edit_mode'} ? '<a href="%s">VIEW</a>' : '<a href="/action/Edit_Edit%s">EDIT</a>';
     $caption = sprintf q(<h3>Editable page - %s - %s</h3>), $notes, sprintf $link, $self->r->uri;
   }
 
@@ -583,7 +613,7 @@ sub generate_svn_form_panel {
     ( my $url = $self->r->uri ) =~ s{/index[.]html\Z}{/}mxs;
     ## no critic (ImplicitNewlines)
     $self->push_output( sprintf '
-<form action="/action/Edit%s" method="post">
+<form action="/action/Edit_Edit%s" method="post">
   <dl>
     <dt>Action:</dt>  <dd><select name="act">%s</select></dd>
     <dt>Message:</dt> <dd><textarea rows="10" cols="80" name="message" style="width: 98%%"></textarea></dd>

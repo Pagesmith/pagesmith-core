@@ -46,4 +46,23 @@ sub run {
    ->push_css_files( '/core/css/beta/jqueryfiletree.css' )->ok;
   ## use critic
 }
+
 1;
+
+__END__
+
+Things to do for file browser:
+==============================
+
+# Implement upload script
+
+# Implement multiple svn ci, stage, publish from directory tree!
+
+# Implement "Edits for HTML pages etc"
+
+# Implement "cat" of old versions with link!
+
+# Implement code for assets/gfx directories!
+
+# Combine commit/stage/publish - although this will take a long time!
+

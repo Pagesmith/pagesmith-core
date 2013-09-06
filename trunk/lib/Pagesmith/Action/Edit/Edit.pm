@@ -136,14 +136,10 @@ sub grab_head_data {
 sub run {
   my $self = shift;
 
-  return unless $self->user->fetch;
-
-  my $flags = $self->edit_flag;
-
-  return $self->no_content unless $flags eq 'any' || $flags eq 'self'; ## Not editable!
-
+  return $self->no_content unless $self->site_is_editable;
+  return $self->no_content unless $self->user->fetch;
   return $self->wrap( 'Unauthorised user', '<p>Your user does not have access to edit webpages</p>' )->ok
-    unless $self->is_valid_user( $flags );
+    unless $self->is_valid_user;
 
   my $docroot = docroot;
   $self->no_qr;  ## Just a few headers! don't create a QR graphic and don't include spelling on dev site!
@@ -160,8 +156,7 @@ sub run {
   $path =~ s{//+}{/}mxgs; ## Remove multiple q(/)s from path...
   return $self->no_content unless $docroot eq substr $path, 0, length $docroot;
 
-  my $info_results  = $self->run_cmd( [$self->svn_cmd, qw(info --non-interactive),$path] );
-  my $repos_details = $self->get_repos_details( $info_results, $path );
+  my $repos_details = $self->get_repos_details( $path );
 
   return $self->wrap( 'Non publishable directory', '<p>This area can not be maintained by web-interface</p>' )->ok
     unless $repos_details; ## Can't do anything unless in repository root!

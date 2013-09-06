@@ -91,13 +91,14 @@ sub execute {
     ->set_export( [qw(txt csv xls)] )
     ->set_pagination( [qw(10 25 50 all)], $DEFAULT_PAGE )
     ->add_columns(
-      { 'key' => 'name',       'caption' => 'File name', },
+      { 'key' => 'name',       'caption' => 'File name', 'class' => 'jft [[h:class]]' },
       { 'key' => 'type',       'caption' => 'File type', },
       { 'key' => 'last_mod',   'caption' => 'Last modified', 'format' => [['datetime','true','last_mod'],[q()]] },
       { 'key' => 'size',       'caption' => 'Size',          'format' => [ ['k','true','size'],[q()]],          'align' => 'r' },
       { 'key' => 'diff_dev',   'caption' => 'Local mods', 'filter_values' => [ qw(? ! ~ C M A D C* M* A* D*) ], 'align' => 'c' },
       { 'key' => 'diff_stage', 'caption' => 'Staging',    'filter_values' => [ qw(M A D) ],                     'align' => 'c' },
       { 'key' => 'diff_live',  'caption' => 'Live',       'filter_values' => [ qw(M A D) ],                     'align' => 'c' },
+      { 'key' => 'checkbox',   'caption' => 'X', 'template' => '<input type="checkbox" name="check" value="[[h:name]]" />', 'no_filter' => 1,'align'=>'c'},
     )
     ->add_data( @{$files} )
     ->render;
@@ -129,7 +130,7 @@ sub get_files {
     }
   }
 
-  return map { @{$_} } @files;
+  return [ map { @{$_} } @files ];
 }
 
 sub get_file_info {
@@ -142,7 +143,7 @@ sub get_file_info {
   my $part       = substr $url, length "$repos_root/trunk/";
 
   my $diffs = {};
-  ### Deal with changes to local files....
+  ### Deal with changes to local ....
   my $local_diffs = $self->run_cmd( [$self->svn_cmd, qw(st -uvN --non-interactive),$full_path] );
   foreach ( @{$local_diffs->{'stdout'}||[]} ) {
     next if m{\AStatus[ ]against[ ]revision}mxs;
@@ -171,7 +172,7 @@ sub get_file_info {
   }
 
   ## Push these status changes back to the file list!
-  foreach (@files) {
+  foreach (@{$files}) {
     my $k = $_->{'name'};
     next unless exists $diffs->{$k};
     $_->{'diff_dev'}   = $diffs->{$k}{'local'}  ||q();
@@ -181,7 +182,7 @@ sub get_file_info {
   }
 
   ## Files which have an entry in the diffs - BUT are not in the local copy!!
-  push @files, map {{
+  push @{$files}, map {{
     'name'       => $_,
     'size'       => 0,
     'type'       => 'Missing',
@@ -190,7 +191,7 @@ sub get_file_info {
     'diff_live'  => $diffs->{$_}{'live'}||q(),
   }} sort keys %{$diffs};
 
-  return \@files;
+  return $files;
 }
 
 1;
