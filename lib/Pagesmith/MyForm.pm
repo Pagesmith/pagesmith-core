@@ -156,6 +156,7 @@ sub default_send_email {
       'From'        => $email_ref->{'from'},
       'Subject'     => $email_ref->{'subject'},
       'X-Generator' => 'Pagesmith: '.($email_ref->{'generator'}||'Form To Email'),
+      'Content-type' => 'text/plain; charset=UTF-8',
     } );
     print {$mailer} $body; ## no critic (CheckedSyscalls)
     $mailer->close;
