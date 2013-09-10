@@ -50,13 +50,13 @@ sub year_range {
 sub value {
   my $self = shift;
   my $return = {};
-  $self->{'user_data'}||={};
-  foreach ( qw(second minute hour day month year) ) {
-    $return->{$_} = exists $self->{'user_data'}{$_} && defined $self->{'user_data'}{$_} ?  $self->{'user_data'}{$_}
-                  : exists $self->{'obj_data' }{$_} && defined $self->{'obj_data' }{$_} ?  $self->{'obj_data' }{$_}
-                  : exists $self->{'default'  }{$_} && defined $self->{'default'  }{$_} ?  $self->{'default'  }{$_}
-                  : 0
-                  ;
+  foreach my $k ( qw(second minute hour day month year) ) {
+    $return->{$k} = 0;
+    foreach ( qw(user_data obj_data default) ) {
+      next unless exists $self->{$_} && defined $self->{$_} && @{$self->{$_}} && exists $self->{$_}[0]{$k} && defined $self->{$_}[0]{$k};
+      $return->{$k} = $self->{$_}[0]{$k};
+      last;
+    }
   }
   return $return;
 }
@@ -136,12 +136,12 @@ sub today {
 sub set_obj_data {
   my( $self, $value ) = @_;
   if( ref $value eq 'HASH' ) {
-    $self->{'obj_data'} = $value;
+    $self->{'obj_data'} = [$value];
   } else {
     my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = $self->munge_date_time_array( $value );
-    $self->SUPER::set_obj_data({
+    $self->SUPER::set_obj_data([{
       'second' => $sec,  'minute' => $min,  'hour' => $hour,
-      'day'    => $mday, 'month' => $mon+1, 'year' => $year+$YEAR_OFFSET });
+      'day'    => $mday, 'month' => $mon+1, 'year' => $year+$YEAR_OFFSET }]);
   }
   return $self;
 }
@@ -176,13 +176,14 @@ sub update_from_apr {
     }
   }
 
-  $self->{'user_data'}{'day'}    = $d if defined $d;
-  $self->{'user_data'}{'month'}  = $m if defined $m;
-  $self->{'user_data'}{'year'}   = $y if defined $y;
-  $self->{'user_data'}{'second'} = $s if defined $s;
-  $self->{'user_data'}{'minute'} = $x if defined $x;
-  $self->{'user_data'}{'hour'}   = $h if defined $h;
-
+  $self->{'user_data'} = [{
+    'day'     => defined $d ? $d : undef,
+    'month'   => defined $m ? $m : undef,
+    'year'    => defined $y ? $y : undef,
+    'second'  => defined $s ? $s : undef,
+    'minute'  => defined $x ? $x : undef,
+    'hour'    => defined $h ? $h : undef,
+  }];
   return;
 }
 

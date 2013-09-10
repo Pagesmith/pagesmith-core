@@ -45,11 +45,12 @@ sub render_extra {
 
   my $oauth = $pch->get( 'oauth2' );
   my $html = join q(),
-    map { sprintf '<li><a href="/action/OAuth2/%s/%s">Use %s</a></li>', $_, $self->code, $oauth->{$_}{'name'}||$_  }
+    map { sprintf '<li><a href="/action/OAuth2/%s/%s"><img src="/core/gfx/blank.gif" class="login-button login-%s" />Use %s credentials</a></li>',
+      $_, $self->code, $oauth->{$_}{'type'}, $oauth->{$_}{'name'}||$_  }
     sort grep { exists $oauth->{$_}{'enabled'} && $oauth->{$_}{'enabled'} } keys %{$oauth};
 
   if( $pch->get( 'shibboleth', 'enabled' ) ) {
-    $html .= sprintf '<li><a href="/action/Shibboleth/%s">Use shibboleth</a></li>', $self->code;
+    $html .= sprintf '<li><a href="/action/Shibboleth/%s"><img src="/core/gfx/blank.gif" class="login-button login-shib" />Use shibboleth</a></li>', $self->code;
   }
   $html = sprintf '<h3>External authentication</h3><ul>%s</ul>', $html if $html;
 

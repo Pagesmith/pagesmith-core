@@ -25,6 +25,7 @@ use Const::Fast qw(const);
 const my $MAX_SLEEP   => 0.02;
 const my $MICRO_SLEEP => 0.001;
 use Pagesmith::Cache::Base qw(expires columns);
+use Encode;
 
 my $memd_config = { 'servers' => [], 'debug' => 'off' };
 my $server_keys = {};
@@ -59,6 +60,7 @@ sub get {    ## Returns value of undef if not found!
   my $key     = shift;
   my $content = $memd->get($key);
   return unless $content;
+  Encode::decode_utf8($content);
   if ( $content =~ m{\A2(\d+)\Z}mxs ) {    ## We have a large file!
     my @keys = map { $key . q(-) . $_ } 1 .. $1;
     my $y = $memd->get_multi(@keys);
@@ -75,10 +77,10 @@ sub get {    ## Returns value of undef if not found!
 ##no critic (AmbiguousNames);
 sub set {    ## Returns true if set was successful...
   my ( $key, $content, $expires ) = @_;
+  Encode::encode_utf8($content);
   $memd ||= _new_cache;
   return unless $memd;
   $expires = expires($expires);
-  #printf {*STDERR} "SETTING TO %s ... %s [%s] %d\n", $memd, $key, $expires, length $content;
   return unless defined $content;
   my @t = split m{[|]}mxs, $key;
   my @cols = columns($t[0]);
@@ -87,6 +89,7 @@ sub set {    ## Returns true if set was successful...
   my @tags = map { ( shift @keys ) . q(:) . $_ } @t;
 
   my $len = length $content;
+
   if ( $len > $MAX_SIZE ) {
     my $blocks = ceil( $len / $MAX_SIZE );
     my $v = $memd->set( $key, "2$blocks", $expires, @tags );
@@ -95,7 +98,6 @@ sub set {    ## Returns true if set was successful...
     }
     return $v;
   } else {
-    #printf {*STDERR} "SETTING %s -> %d bytes (%s)\n", $key, $len, "@tags";
     my $v = $memd->set( $key, $content, $expires, @tags );
     return $v;
   }

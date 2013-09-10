@@ -57,6 +57,12 @@ sub new {
 sub validate {
   my( $self, $form ) = @_;
   return $self if $self->has_logic && ! $form->evaluate_logic( $self );
+  # foreach( $self->elements ) {
+  #   $_->validate( $form );
+  #   warn sprintf ">> %s : %s/%s/%s=%s\n",
+  #     $_->code, $_->is_empty, $_->is_required, $_->is_invalid,
+  #     $_->is_empty ? $_->is_required : $_->is_invalid;
+  # }
   $_->validate( $form ) foreach $self->elements;
   return $self;
 }
@@ -262,12 +268,12 @@ sub base_render {
   $output .= $self->{'button_html'}{'top'}    if exists $self->{'button_html'}{'top'};
   $output .= $elements;
   $output .= $self->{'button_html'}{'bottom'} if exists $self->{'button_html'}{'bottom'};
+  $output .= $hidden;
   $output .= "\n  </div>";
   return $output;
 }
 
 sub render {
-
 #@param (self)
 #@return (HTML) Form rendered in HTML.
 ## Render the section of the form.
@@ -292,9 +298,9 @@ sub render {
 ## Grab all the hidden elements....
 ## Now loop through the "groups" to generate the non-hidden elements HTML...
   my $hidden     = join q(), map { $_->render( $form ) } grep { ref($_) =~ m{Hidden}mxs } $self->elements;
-
   my $not_hidden = $self->render_group( q(-), $form ); ## Render the top level group....
-  return $self->base_render( $not_hidden, $hidden );
+  my $t = $self->base_render( $not_hidden, $hidden );
+  return $t;
 }
 
 sub render_group {
@@ -339,8 +345,8 @@ sub render_readonly {
   my( $self, $form ) = @_;
   return q() if $self->has_logic && ! $form->evaluate_logic( $self );
   my $not_hidden = $self->render_group( q(-), $form, 'two_col', 'readonly' );
-
-  return $self->base_render( $not_hidden , q(), ' class="twocol"' );
+  my $t = $self->base_render( $not_hidden , q(), ' class="twocol"' );
+  return $t;
 }
 
 sub render_paper {

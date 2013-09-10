@@ -36,9 +36,11 @@ sub update_from_apr {
     }
   }
 
-  $self->{'user_data'}{'second'} = $s if defined $s;
-  $self->{'user_data'}{'minute'} = $x if defined $x;
-  $self->{'user_data'}{'hour'}   = $h if defined $h;
+  $self->{'user_data'} = [{
+    'second'  => defined $s ? $s : undef,
+    'minute'  => defined $x ? $x : undef,
+    'hour'    => defined $h ? $h : undef,
+  }];
   return;
 }
 

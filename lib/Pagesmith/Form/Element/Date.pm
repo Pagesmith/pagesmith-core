@@ -42,9 +42,12 @@ sub update_from_apr {
       $y ||= $x_y;
     }
   }
-  $self->{'user_data'}{'day'}   = $d if defined $d;
-  $self->{'user_data'}{'month'} = $m if defined $m;
-  $self->{'user_data'}{'year'}  = $y if defined $y;
+  $self->{'user_data'} = [{
+    'day'     => defined $d ? $d : undef,
+    'month'   => defined $m ? $m : undef,
+    'year'    => defined $y ? $y : undef,
+  }];
+
   return;
 }
 

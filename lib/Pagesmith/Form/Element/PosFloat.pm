@@ -24,14 +24,13 @@ sub new {
 sub validate {
   my $self = shift;
   return $self->set_invalid if $self->value == 0;
-  return $self->set_valid if $self->value =~ m{\A(?=\d|[.]\d)\d*(?:[.]\d*)?(?:[Ee][+-]?\d+)?\Z}mxs;
+  return $self->set_valid   if $self->value =~ m{\A(?=\d|[.]\d)\d*(?:[.]\d*)?(?:[Ee][+-]?\d+)?\Z}mxs;
   return $self->set_invalid;
 }
 
 sub element_class {
   my $self = shift;
-  $self->add_class( '_posfloat' );
-  $self->add_class( 'short' );
+  $self->add_class( qw(_posfloat short) );
   return;
 }
 1;

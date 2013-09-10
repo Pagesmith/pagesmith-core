@@ -25,6 +25,7 @@ use List::MoreUtils qw(any firstidx);
 ## Form child objects;
 
 use Pagesmith::Form::Stage;
+use Pagesmith::Form::Stage::EmailConfirmation;
 use Pagesmith::Form::Stage::Confirmation;
 use Pagesmith::Form::Stage::Final;
 use Pagesmith::Form::Stage::Redirect;
@@ -35,22 +36,13 @@ use Pagesmith::Form::SubmitButton;
 use Pagesmith::Form::ResetButton;
 use Pagesmith::Adaptor;
 
-use Pagesmith::Session::User;
 use Pagesmith::Cache;
 use Pagesmith::Core       qw(safe_md5);
 use Pagesmith::ConfigHash qw(site_key);
 
-my $ID = 0;
-
-sub header_safe {
-  my( $self, $string ) = @_;
-  $string =~ s{\s+}{ }mxgs;
-  $string =~ s{(['"<>\\])}{\\$1}mxgs;
-  return $string =~ m{\A\s*(.*?)\s*\Z}mxs ? $1 : $string;
-}
-
-
-my %defaults = (
+use Const::Fast qw(const);
+const my $LENGTH_CHECKSUM => 8;
+const my %DEFAULTS => (
   'code'         => undef,  ## The cache key code for the form
   'data'         => {},
   'stage'        => 0,      ## Current stage in progress of form 0,1,2,3,4,...(n-1) confirm complete
@@ -59,7 +51,90 @@ my %defaults = (
   'type'         => undef,  ## Type of form object
   'object_id'    => undef,  ## ID of entry being editted
   'view_url'     => undef,  ## The view url (undef if it uses the action to display the
+  'form_id'      => undef,
 );
+
+my $ID = 0;
+
+sub new {
+  my( $class, $hash_ref ) = @_;
+  # Copy hash ref to self - and copy defaults from above...
+  my $self = {
+    '_r'               => $hash_ref->{'r'},
+    '_apr'             => $hash_ref->{'apr'},
+    'user'             => undef,
+    'form_attributes'  => {
+      'accept-charset' => 'UTF-8',
+      'action' => undef,
+      'method' => 'post',
+      'enctype' => 'application/x-www-form-urlencoded',
+    },
+    'view_url'         => $hash_ref->{'view_url'}||undef,
+    'form_id'          => undef,
+    'object'           => undef,
+
+## Entries used to create and store the stages of the form
+    'current_stage'    => undef,                  # Current page when creating form
+    'stages'           => {},                     # Pages to display
+    'stage_order'      => [],                     # Order of stages
+
+## Hashes to store values when looping through all elements of form...
+
+    'elements_by_code'  => {},
+    'elements_by_alias' => {},
+
+
+## Storing the buttons on the page!
+#   'buttons'          => [],                      # Buttons on page..
+
+    'response'         => undef,
+
+    'cache_handle'     => exists $hash_ref->{'cache_handle'} ? $hash_ref->{'cache_handle'} : undef,
+    'messages'         => [ map { Pagesmith::Form::Message->new( $_ ) } @{$hash_ref->{'messages'}||[]} ],
+    'attributes'       => $hash_ref->{'attributes'}||{},
+  };
+## Copy stuff from the creation of the form object,
+## This will include the form/object code or type/id, and any data stored
+## against the form object.
+
+  $self->{$_} = exists $hash_ref->{$_} ? $hash_ref->{$_} : $DEFAULTS{$_} foreach keys %DEFAULTS;
+
+
+  bless $self, $class;
+
+  ## From now on in the new call we have to have the object - rather than working on the raw hash
+  ## so we can calls on self!
+
+  $self->{'form_id'} = $hash_ref->{'form_id'} || 'form_'.$self->random_code;
+
+  $self->{'config'} = Pagesmith::Form::Config->new( {
+    'form_id'  => $self->{'form_id'},
+    'options'  => $hash_ref->{'options'}||{},
+    'classes'  => $hash_ref->{'classes'}||{},
+    'form_url' => $self->action_url_get,
+  } );
+
+  # Generate the object! and if it fails to generate reset ID!
+
+  $self->{'object_id'} = $self->default_id unless defined $self->{'object_id'};
+
+  undef $self->{'object_id'} if $self->{'object_id'} && !$self->fetch_object(); ## Returns
+
+  $self->add_attribute( 'ref', $self->apr->param( '__ref' ) || $self->r->headers_in->{'Referer'} );  ## Set the refererer
+
+  $self->initialize_form         # Create form elements
+       ->populate_object_values  # Load values from the object if it exists
+       ->populate_user_values;   # Load values onto elements from the cache
+
+  return $self;
+}
+
+sub header_safe {
+  my( $self, $string ) = @_;
+  $string =~ s{\s+}{ }mxgs;
+  $string =~ s{(['"<>\\])}{\\$1}mxgs;
+  return $string =~ m{\A\s*(.*?)\s*\Z}mxs ? $1 : $string;
+}
 
 # Form structure....
 
@@ -81,14 +156,11 @@ my %defaults = (
 
 sub create_adaptor {
   my( $self, $type, $db_info ) = @_;
-  my $adaptor;
-  if( $type ) {
-    my $class = "Pagesmith::Adaptor::$type";
-    $self->dynamic_use( $class );
-    $adaptor = $class->new( $db_info );
-  } else {
-    $adaptor = Pagesmith::Adaptor->new( $db_info );
-  }
+  my $adaptor = defined $type
+              ? Pagesmith::Adaptor->new( $type )
+              : $self->get_adaptor(      $db_info )
+              ;
+  return unless $adaptor;
   $adaptor->set_r( $self->r );
   return $adaptor;
 }
@@ -147,73 +219,6 @@ sub make_form_get {
 sub make_form_post {
   my $self = shift;
   $self->{'form_attributes'}{'method'} = 'post';
-  return $self;
-}
-
-sub new {
-  my( $class, $hash_ref ) = @_;
-  # Copy hash ref to self - and copy defaults from above...
-  my $self = {
-    '_r' => $hash_ref->{'r'},
-    '_apr' => $hash_ref->{'apr'},
-    'attributes' => {},
-    'user' => undef,
-    'form_attributes'  => {
-      'accept-charset' => 'UTF-8',
-      'action' => undef,
-      'method' => 'post',
-      'enctype' => 'application/x-www-form-urlencoded',
-    },
-    'view_url'         => $hash_ref->{'view_url'}||undef,
-    'form_id'          => undef,
-    'object'           => undef,
-
-## Entries used to create and store the stages of the form
-    'current_stage'    => undef,                  # Current page when creating form
-    'stages'           => {},                     # Pages to display
-    'stage_order'      => [],                     # Order of stages
-    'elements'         => {},
-
-## Storing the buttons on the page!
-#   'buttons'          => [],                      # Buttons on page..
-
-    'response'         => undef,
-
-    'cache_handle'     => exists $hash_ref->{'cache_handle'} ? $hash_ref->{'cache_handle'} : undef,
-  };
-## Copy stuff from the creation of the form object,
-## This will include the form/object code or type/id, and any data stored
-## against the form object.
-
-  foreach( keys %defaults ) {
-    $self->{$_} = exists $hash_ref->{$_} ? $hash_ref->{$_} : $defaults{$_};
-  }
-
-  $self->{'messages'} = [ map { Pagesmith::Form::Message->new( $_ ) } @{$hash_ref->{'messages'}||[]} ];
-  $self->{'attributes'} = $hash_ref->{'attributes'}||{};
-
-  bless $self, $class;
-  $self->{'form_id'} = $hash_ref->{'form_id'} || 'form_'.$self->random_code;
-
-  $self->{'config'} = Pagesmith::Form::Config->new( {
-    'form_id'  => $self->{'form_id'},
-    'options'  => $hash_ref->{'options'}||{},
-    'classes'  => $hash_ref->{'classes'}||{},
-    'form_url' => $self->action_url_get,
-  } );
-
-  # Generate the object! and if it fails to generate reset ID!
-
-  $self->{'object_id'} = $self->default_id unless defined $self->{'object_id'};
-
-  undef $self->{'object_id'} if $self->{'object_id'} && !$self->fetch_object(); ## Returns
-
-  $self->add_attribute( 'ref', $self->apr->param( '__ref' ) || $self->r->headers_in->{'Referer'} );  ## Set the refererer
-
-  $self->initialize_form         # Create form elements
-       ->populate_object_values  # Load values from the object if it exists
-       ->populate_user_values;   # Load values onto elements from the cache
-
   return $self;
 }
 
@@ -367,6 +372,11 @@ sub add_confirmation_stage {
   return $self->_add_stage( 'Pagesmith::Form::Stage::Confirmation', $stage_data || 'Confirmation' , $caption )->set_next( 'Confirm' );
 }
 
+sub add_emailconfirm_stage {
+  my( $self, $stage_data, $caption ) = @_;
+  return $self->_add_stage( 'Pagesmith::Form::Stage::EmailConfirmation', $stage_data || 'EmailConfirmation' , $caption );
+}
+
 sub add_redirect_stage {
   my( $self, $stage_data, $caption ) = @_;
   return $self->_add_stage( 'Pagesmith::Form::Stage::Redirect', $stage_data || 'Redirect' , $caption )->set_next( 'X' );
@@ -486,7 +496,7 @@ sub populate_user_values {
   foreach my $code ( keys %{$self->all_elements} ) {
     next unless exists $self->{'data'}{$code};
     foreach my $el ( $self->elements($code) ) {
-      $el->set_user_data( @{ $self->{'data'}{$code} } );
+      $el->set_user_data( $self->{'data'}{$code} );
     }
   }
   return $self;
@@ -495,10 +505,10 @@ sub populate_user_values {
 sub get_data_from_elements {
   my $self = shift;
   my $form_data = {};
-  foreach my $code (keys %{$self->all_elements||[]} ) {
+  foreach my $code (keys %{$self->all_elements||{}} ) {
     foreach my $el (@{$self->{'elements'}{$code}} ) {
       next if $el->do_not_store;
-      push @{$form_data->{$code}}, $el->user_data;
+      $form_data->{$code} = $el->user_data;
     }
   }
   return $form_data;
@@ -689,11 +699,11 @@ sub render {
     $self->add_class( 'form', 'upload' );
     $self->add_form_attribute( 'enctype', 'multipart/form-data' );
   }
-  my $html = $self->_trim(
-    $self->render_form_start.
-    $self->render_messages.
-    $stage->render($self).
-    $self->render_form_end );
+  my $o = $self->render_form_start;
+  $o .= $self->render_messages;
+  $o .= $stage->render($self);
+  $o .= $self->render_form_end;
+  my $html = $self->_trim( $o );
   return $html unless $self->config->option( 'is_action' );
   ## This is used by Action...
   ( my $template = $self->page_template ) =~ s{<%\sForm\s%>}{$html}mxs;
@@ -897,7 +907,7 @@ sub store {
     $self->{'cache_handle'}   = Pagesmith::Cache->new( 'form', $self->{'code'}, undef, site_key );
   }
 
-  my $data_to_store = { map { $_ => $self->{$_} } keys %defaults };
+  my $data_to_store = { map { $_ => $self->{$_} } keys %DEFAULTS };
   ## For error pages we don't store the error page the user is on - but the last stage they were on!
   $data_to_store->{'stage'}     = $self->{'stage_to_store'} if exists $self->{'stage_to_store'};
   $data_to_store->{'data'}      = $self->get_data_from_elements;
@@ -907,7 +917,10 @@ sub store {
     @{ $self->{'messages'}||[] } ];
   $data_to_store->{'attributes'}  = $self->{'attributes'};
 
-  $self->{'cache_handle'}->set( $data_to_store );
+  my $dts = $self->json_encode( $data_to_store );
+  ## Store to cache object!
+  utf8::upgrade($dts); ## no critic (CallsToUnexportedSubs)
+  $self->{'cache_handle'}->set( $dts );
   return $self;
 }
 
@@ -1296,6 +1309,7 @@ sub is_completed {
   return $self->state eq 'completed';
 }
 
+use Encode;
 sub update_from_apr {
   my $self = shift;
   return $self unless $self->param; ## Short cut if the param list is empty!!!
@@ -1397,6 +1411,19 @@ sub on_redirect {
 sub on_error {
   my $self = shift;
   return;
+}
+
+sub set_encryption_keys {
+  my $self = shift;
+  $self->add_attribute( 'enc_secret', $self->safe_uuid );
+  $self->store;
+  return $self;
+}
+
+sub email_checksum {
+  my($self,$email) = @_;
+  $self->set_encryption_keys;
+  return substr safe_md5( join q(:), $self->attribute('enc_secret'), $self->code, $email ),0,$LENGTH_CHECKSUM;
 }
 
 1;

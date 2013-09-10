@@ -59,32 +59,54 @@ sub render_widget_paper {
   my $class = $self->generate_class_string =~ m{short}mxs ? 'bordered_short' : 'bordered';
   return sprintf '<div class="%s">%s</div>%s',
     $class,
-    ( $self->raw ? $self->render_value : encode_entities( $self-> render_value ) ) ||'&nbsp;',
+    $self->render_widget_readonly,
     $self->req_opt_string,
   ;
 }
 
 sub render_value {
-  my $self = shift;
-  return $self->value;
+  my( $self, $val ) = @_;
+  return $val;
 }
 
 sub render_widget {
   my $self = shift;
-
-  return sprintf '<input type="%s" name="%s" value="%s" id="%s" class="%s" size="%s" %s/>%s',
-    $self->widget_type,
-    encode_entities( $self->code ),
-    ( $self->raw ? $self-> render_value : encode_entities( $self-> render_value ) ),
-    $self->generate_id_string,
-    $self->generate_class_string,
-    $self->size || $DEFAULT_SIZE,
-    $self->extra_markup,
-    $self->req_opt_string,
-  ;
+  if( $self->multiple ) {
+    return sprintf '<input type="%s" name="%s" value="%s" id="%s" class="%s" size="%s" %s/>%s',
+      $self->widget_type,
+      encode_entities( $self->code ),
+      q(),
+      $self->generate_id_string,
+      $self->generate_class_string,
+      $self->size || $DEFAULT_SIZE,
+      $self->extra_markup,
+      join q(),
+        $self->multiple_button,
+        $self->req_opt_string,
+        $self->multiple_markup,
+    ;
+  } else {
+    return sprintf '<input type="%s" name="%s" value="%s" id="%s" class="%s" size="%s" %s/>%s',
+      $self->widget_type,
+      encode_entities( $self->code ),
+      ( $self->raw ? $self->render_value( $self->value ) : encode_entities( $self->render_value( $self->value ) ) ),
+      $self->generate_id_string,
+      $self->generate_class_string,
+      $self->size || $DEFAULT_SIZE,
+      $self->extra_markup,
+      $self->req_opt_string
+     ;
+  }
 }
 
 sub extra_markup {
   return q();
 }
+
+sub multiple_button {
+  my $self = shift;
+  return q() unless $self->multiple;
+  return '<input type="button" class="add_entry" value="+" />';
+}
+
 1;

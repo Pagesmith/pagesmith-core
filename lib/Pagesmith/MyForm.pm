@@ -117,7 +117,6 @@ sub fetch_generic_object {
 sub default_store_and_send_email {
   my( $self, $flag ) = @_;
   $flag ||= q();
-
   my $object_data = {};
 
   ## Send out emails to the user and to the applications people!
@@ -145,6 +144,7 @@ sub default_store_and_send_email {
   $self->completed unless $flag eq 'do_not_complete';
   return $self->object->id;
 }
+
 sub default_send_email {
   my $self = shift;
   my @emails = $self->get_email_addresses;
@@ -166,24 +166,6 @@ sub default_send_email {
 sub generic_footer {
   my $self = shift;
   return sprintf 'Sent by Pagesmith form: %s', ref $self;
-}
-
-sub set_encryption_keys {
-  my $self = shift;
-  $self->add_attribute( 'enc_key',    $self->safe_uuid );
-  $self->add_attribute( 'enc_secret', $self->safe_uuid );
-  return $self;
-}
-
-sub email_checksum {
-  my($self,$email) = @_;
-  $self->set_encryption_keys;
-  my $cipher = Crypt::CBC->new(
-    '-key'    => $self->attribute('end_key'),
-    '-cipher' => 'Blowfish',
-    '-header' => 'randomiv', ## Make this compatible with PHP Crypt::CBC
-  );
-  return $self->safe_md5( $self->attripte('enc_secret').q(:).$cipher->encrypt( $email ) );
 }
 
 1;

@@ -329,7 +329,9 @@ sub render {
   my( $self, $form ) = @_;
   my $output = sprintf qq(\n  <div id="%s_%s">), encode_entities( $self->config->form_id ), encode_entities( $self->id );
   $output .= sprintf "<h2>%s</h2>\n", encode_entities( $self->caption ) if $self->caption && $self->config->option( 'show_page_titles' );
-  $output .= $_->render( $form ) foreach $self->sections;
+  foreach ($self->sections) {
+    $output .= $_->render( $form );
+  }
   $output .= "\n  </div>";
   return $output;
 }
