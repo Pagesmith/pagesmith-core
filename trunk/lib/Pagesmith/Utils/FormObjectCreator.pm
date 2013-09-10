@@ -21,6 +21,7 @@ use base qw(Pagesmith::Support);
 use Pagesmith::ConfigHash qw(site_key);
 use Pagesmith::Cache;
 use Pagesmith::Form::Message;
+use HTML::Entities qw(decode_entities);
 
 sub new {
 #@constructor
@@ -50,9 +51,10 @@ sub generic_form {
 sub form_from_code {
   my( $self, $code ) = @_;
   my $ch = Pagesmith::Cache->new( 'form', $code, undef, site_key );
-  my $form_data = $ch->get();
-  return unless $form_data;                ## Cannot generate form object as code doesn't exist!
-
+  my $fd = $ch->get();
+  return unless $fd;                ## Cannot generate form object as code doesn't exist!
+  utf8::downgrade($fd); ## no critic (CallsToUnexportedSubs)
+  my $form_data = $self->json_decode( $fd );
   my $form_type = $form_data->{'type'};
   my $module    = "Pagesmith::MyForm::$form_type";
   return unless $self->dynamic_use( $module ); ## Cannot compile object of class $module

@@ -78,12 +78,9 @@ sub extra_file_info {
       $image->Set('alpha'=>'remove');
       $image->BlobToImage( ${$content} );
       return ( 'error' => 'not an image' ) unless $image->[0];
-      $self->dumper( $image );
       $image = $image->[0];
-      $self->dumper( $image );
       $w = $image->Get('width');
       $h = $image->Get('height');
-      $self->dumper( [$w,$h] );
       $type = $self->get_extn_from_type( $upload->type );
     } else {
       return ( 'error' => 'not an image' );

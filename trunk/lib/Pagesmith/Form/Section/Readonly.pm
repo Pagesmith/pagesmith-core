@@ -46,7 +46,6 @@ sub render {
     $output .= $st->render_readonly( $form, 'readonly_section' );
   }
   $output .= $self->base_render( q(), q() ) if $self->{'button_html'}{'bottom'};
-
   return $output;
 }
 

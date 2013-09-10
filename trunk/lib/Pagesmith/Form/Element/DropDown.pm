@@ -44,7 +44,8 @@ sub init {
   return $self
     ->set_firstline(        $element_data->{'firstline'}       )
     ->set_firstline_value(  $element_data->{'firstline_value'} )
-    ->set_values(           $element_data->{'values'}          );
+    ->set_values(           $element_data->{'values'}          )
+    ;
 }
 
 sub set_firstline {
@@ -70,7 +71,6 @@ sub firstline_value {
   return $self->{'_firstline_value'};
 }
 
-## no critic (BuiltinHomonyms)
 sub set_values {
   my( $self, $values ) = @_;
   $self->{'_values'} = $values;
@@ -83,13 +83,12 @@ sub add_values {
   return $self;
 }
 
-sub values {
+sub dropdown_values {
   my $self = shift;
   return map { { 'value' => $_, 'name' => $self->{'_values'}{$_} } } sort keys %{$self->{'_values'}}
     if ref $self->{'_values'} eq 'HASH';
   return @{ $self->{'_values'} || [] };
 }
-## use critic (BuiltinHomonyms)
 
 sub print_as {
   my $self = shift;
@@ -120,13 +119,17 @@ sub render_widget_paper {
     my $class = $self->generate_class_string =~ m{short}mxs ? 'bordered_short' : 'bordered';
     return sprintf '<div class="%s">%s</div>',
       $class,
-      encode_entities( $self->value )||'&nbsp;'
-    ;
+      $self->render_widget_readonly;
   }
   my $options = q();
   my $current_group = q();
   my $html = q();
-  foreach my $V ( $self->values ) {
+
+  my %multiple_values = $self->multiple
+                      ? map { ($_ => 1) } $self->multi_values
+                      : ($_->value=>1);
+
+  foreach my $V ( $self->dropdown_values ) {
     $V = {'value'=>$V,'name'=>$V} unless ref $V;
     if( exists $V->{'group'} && $V->{'group'} ne $current_group ) {
       if( $current_group ) {
@@ -137,11 +140,11 @@ sub render_widget_paper {
       }
       $current_group = $V->{'group'};
     }
-    my $extra = $self->value eq $V->{'value'} ? 'X' : '&nbsp;&nbsp;';
+    my $extra = $multiple_values{ $V->{'value'} } ? 'X' : '&nbsp;&nbsp;';
+
     my $value = $V->{'name'} || $V->{'value'};
     $options .= sprintf qq(\n        <li><span>%s</span>%s</li>),
-      $extra, $self->raw ? $value : encode_entities( $value )
-    ;
+      $extra, $self->raw ? $value : encode_entities( $value );
   }
   if( $current_group ) {
     $options.="\n       </ul></li>";
@@ -152,10 +155,26 @@ sub render_widget_paper {
 
 sub render_widget_readonly {
   my $self = shift;
-  my $value = $self->value;
-  my ($text)  = map { ( ref $_ ? ($_->{'value'} eq $value ? ($_->{'name'}) : ()) : ( $_ eq $value ? ($_) : () ) ) } $self->values;
-  $text = q(--) unless defined $text;
-  return $self->raw ? $text : encode_entities( $text );
+  if( $self->multiple ) {
+    my %multiple_values = map { ($_ => 1) } $self->multi_values;
+    my @text = map { ( ref $_
+                     ? ( exists $multiple_values{ $_->{'value'} } ? ($_->{'name'}) : () )
+                     : ( exists $multiple_values{ $_            } ? ($_          ) : () ) ) }
+      $self->dropdown_values;
+    if( @text ) {
+      return sprintf '<ul><li>%s</li></ul>',
+        join '</li><li>',
+        map { $self->raw ? $_ : encode_entities( $_ ) }
+        @text;
+    } else {
+      return q(--);
+    }
+  } else {
+    my $value  = $self->value;
+    my ($text) = map { ( ref $_ ? ($_->{'value'} eq $value ? ($_->{'name'}) : ()) : ( $_ eq $value ? ($_) : () ) ) } $self->dropdown_values;
+    $text = q(--) unless defined $text;
+    return $self->raw ? $text : encode_entities( $text );
+  }
 }
 
 sub render_widget {
@@ -167,7 +186,13 @@ sub render_widget {
   }
   my $optcount = 0;
 
-  foreach my $V ( $self->values ) {
+  my $val             = $self->multiple ? q() : $self->value;
+     $val = q() unless defined $val;
+  my %multiple_values = $self->multiple ? map { ($_ => 1) } $self->multi_values : ();
+  my @extra_multiple;
+
+  # Generate the drop down...
+  foreach my $V ( $self->dropdown_values ) {
     $V = {'value'=>$V,'name'=>$V} unless ref $V;
     if( exists $V->{'group'} && $V->{'group'} ne $current_group ) {
       if( $current_group ) {
@@ -180,22 +205,34 @@ sub render_widget {
       }
       $current_group = $V->{'group'};
     }
-    my $extra = $self->value eq $V->{'value'} ? ' selected="selected"' : q();
+    # Deal with multivalued dropdown -> push results onto extra_multiple array we will render later!
+    if( $self->multiple && exists $multiple_values{ $V->{'value'} } ) {
+      push @extra_multiple, sprintf
+        '<span class="close_box">%s<input type="hidden" value="%s" name="%s" /></span>',
+          encode_entities($V->{'name'}), encode_entities($V->{'value'}), encode_entities( $self->code );
+    }
+
+    my $extra = !$self->multiple && $val eq $V->{'value'} ? ' selected="selected"' : q();
     my $value = $V->{'name'} || $V->{'value'};
     $options .= sprintf qq(\n        <option value="%s"%s>%s</option>),
-      encode_entities( $V->{'value'} ), $extra, $self->raw ? $self->strip_html( $value ) : encode_entities( $self->strip_html( $value ) );
+      encode_entities( $V->{'value'} ),
+      $extra,
+      $self->raw ? $self->strip_html( $value ) : encode_entities( $self->strip_html( $value ) );
     $optcount++;
   }
-  if( $current_group ) { $options.="\n       </optgroup>"; }
+  if( $current_group ) {
+    $options.="\n       </optgroup>";
+  }
 
   return sprintf qq(<select name="%s" id="%s" class="%s">%s\n      </select>%s),
-    encode_entities( $self->code ),
-    $self->generate_id_string,
-    $self->generate_class_string,
-    $options,
-    $self->req_opt_string
-    ;
-
+    encode_entities( $self->code ), ## name=
+    $self->generate_id_string,      ## id=
+    $self->generate_class_string,   ## class=
+    $options,                       ## <option>*
+    join q(),
+      $self->multiple_button,       ## "multiple button?"
+      $self->req_opt_string,        ## Required/optional
+      @extra_multiple;              ## already selected values
 }
 
 1;

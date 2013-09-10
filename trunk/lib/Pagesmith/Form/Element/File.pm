@@ -75,6 +75,8 @@ my $extn_groups = {
   'spreadsheet'  => [qw(TXT CSV XLS XLT XLSB XLSM XLTM XLSX XLTX ODS ODS-X)],
   'presentation' => [qw(PPT POT POTM PPTM PPTX POTX ODP PDF ODP-X)],
   'images'       => [qw(PNG GIF BMP JPG SVG PS)],
+  'img_upload'   => [qw(PNG JPG)],
+  'asset_upload' => [qw(DOC DOCX PDF XLS XLSX PPT PPTX)],
 };
 
 my %type_to_extn = reverse %extn_to_type;
@@ -89,7 +91,7 @@ sub new {
   if( exists $pars->{'multiple'} ) {
     $self->set_multiple;
   } else {
-    $self->set_single;
+    $self->clear_multiple;
   }
   return $self;
 }
@@ -101,20 +103,9 @@ sub is_empty {
   return 1;
 }
 
-sub multiple {
-  my $self = shift;
-  return $self->{'multiple'};
-}
-
-sub set_multiple {
-  my $self = shift;
-  $self->{'multiple'} = 1;
-  return $self;
-}
-
 sub set_single {
   my $self = shift;
-  $self->{'multiple'} = 0;
+  $self->clear_multiple;
   return $self;
 }
 
@@ -171,7 +162,8 @@ sub remove_accepted_types {
 
 sub get_extn_from_type {
   my( $self, $type ) = @_;
-  return lc $type_to_extn{ $type };
+  ( my $extn = lc $type_to_extn{ $type } ) =~ s{-.+}{}mxs;
+  return $extn;
 }
 
 sub remove_accepted_extns {
@@ -215,13 +207,13 @@ sub render_widget {
 sub remove_uploaded_file {
   my( $self, $key ) = @_;
   Pagesmith::Cache->new( 'form_file', $key )->unset;
-  delete $self->{'user_data'}{'files'}{$key};
+  delete $self->{'user_data'}[0]{'files'}{$key};
   return 1;
 }
 
 sub remove_all_uploaded_files {
   my $self = shift;
-  foreach my $key ( keys %{ $self->{'user_data'}{'files'} } ) {
+  foreach my $key ( keys %{ $self->{'user_data'}[0]{'files'} } ) {
     $self->remove_uploaded_file( $key );
   }
   return 1;
@@ -250,16 +242,17 @@ sub add_uploaded_file {
     return 0 unless any { $obj_type eq $_ || "$obj_class/*" eq $_ } @types;
   }
   my $prefix = $self->config->option('code').q(|).$self->code;
-  $self->{'user_data'}{'next_idx'}||=1;
-  my $next_idx = $self->{'user_data'}{'next_idx'}++;
+  $self->{'user_data'}[0]{'next_idx'}||=1;
+  my $next_idx = $self->{'user_data'}[0]{'next_idx'}++;
   my $key = "$prefix|$next_idx";
 
   Pagesmith::Cache->new( 'form_file', $key )->set( $content );
-  $self->{'user_data'}{'files'}{$key} = {
+  $self->{'user_data'}[0]{'files'}{$key} = {
     'ndx'   => $next_idx,
     'size'  => $size,
     'type'  => $upload->type,
     'name'  => $upload->filename,
+    'xtn'   => $self->get_extn_from_type( $upload->type ),
     %extra_file_info,
   };
   return 1;
@@ -276,8 +269,8 @@ sub update_from_apr {
   ## Loop through all the checkboxes and delete attached files...
   my $del_all = $apr->param( $self->code.'_del_all' ) ? 1 : 0;
   $del_all = 2 if !$self->multiple && @uploads && any { $_ } @uploads;
-  foreach my $key ( keys %{ $self->{'user_data'}{'files'} } ) {
-    my $idx = $self->{'user_data'}{'files'}{$key}{'ndx'};
+  foreach my $key ( keys %{ $self->{'user_data'}[0]{'files'} } ) {
+    my $idx = $self->{'user_data'}[0]{'files'}{$key}{'ndx'};
     $self->remove_uploaded_file( $key ) if $del_all || $apr->param( $self->code.'_del_'.$idx );
   }
 
@@ -311,19 +304,19 @@ sub expand {
 
 sub render_email {
   my( $self, $form ) = @_;
-  my ($entry) = values %{$self->{'user_data'}{'files'}||{}};
+  my ($entry) = values %{$self->{'user_data'}[0]{'files'}||{}};
   my $prefix = $self->config->option('code').q(/).$self->code;
   return $self->SUPER::render_email( sprintf qq(%s (%0.1fk %s)\n%s/action/FormFile/%s/%d/%s-%d.%s),
     $entry->{'name'}, $entry->{'size'}/$K, $entry->{'type'},
     $self->base_url($self->{'r'}),
-    $prefix, $entry->{'ndx'}, $prefix, $entry->{'ndx'},$entry->{'xtn'},
+    $prefix, $entry->{'ndx'}, $prefix, $entry->{'ndx'}, $self->get_extn_from_type( $entry->{'type'} ),
   );
 }
 
 sub render_single {
   my($self,$flag) = @_;
   ## Get first value....
-  my ($entry) = values %{$self->{'user_data'}{'files'}||{}};
+  my ($entry) = values %{$self->{'user_data'}[0]{'files'}||{}};
   return q() unless $entry; # '<p>No files currently attached</p>' unless $entry;
   ## no critic (ImplicitNewlines)
   my $prefix = $self->config->option('code').q(/).$self->code;
@@ -337,7 +330,7 @@ sub render_single {
     %s
   </dl>
   </div>',
-    $prefix, $entry->{'ndx'},$prefix,$entry->{'ndx'},$entry->{'xtn'},
+    $prefix, $entry->{'ndx'},$prefix,$entry->{'ndx'}, $entry->{'xtn'},
     encode_entities( $entry->{'name'} ),
     $entry->{'size'}/$K, $entry->{'type'},
     !$flag ? q() : sprintf '<dt>Delete?</dt><dd><input type="checkbox" class="checkbox _cb_%s" id="%s_del_%d" name="%s_del_%d" value="delete" /></dd>',
@@ -347,20 +340,22 @@ sub render_single {
 
 sub get_file_info{
   my $self = shift;
-  return values %{$self->{'user_data'}{'files'}||{}};
+  return values %{$self->{'user_data'}[0]{'files'}||{}};
 }
 
 sub render_table {
   my($self,$flag) = @_;
 
-  my @rows = values %{$self->{'user_data'}{'files'}||{}};
+  my @rows = values %{$self->{'user_data'}[0]{'files'}||{}};
   return q() unless @rows;## '<p>No files currently attached</p>' unless @rows;
+
+  my $prefix = $self->config->option('code').q(/).$self->code;
 
   my @columns = (
     ##{ 'key' => 'ndx',  'label' => 'Index', 'align' => 'right' },
-    { 'key' => 'name', 'label' => 'Name', },
+    { 'key' => 'name', 'label' => 'Name', 'link' => "/action/FormFile/$prefix/[[d:ndx]]/$prefix-[[d:ndx]].[[h:xtn]]" },
     { 'key' => 'type', 'label' => 'Type', },
-    { 'key' => 'size', 'label' => 'Size', 'align' => 'right' },
+    { 'key' => 'size', 'label' => 'Size', 'align' => 'right', 'format' => 'k1' },
     $self->extra_columns,
   );
 
@@ -373,7 +368,7 @@ sub render_table {
   my $table = Pagesmith::HTML::Table->new( $self->r )
     ->set_current_row_class( 'file-details' )
     ->add_columns( @columns )
-    ->add_data( sort { $a->{'ndx'} <=> $b->{'ndx'} } values %{$self->{'user_data'}{'files'}||{}} );
+    ->add_data( sort { $a->{'ndx'} <=> $b->{'ndx'} } values %{$self->{'user_data'}[0]{'files'}||{}} );
   $table->add_block( 'foot', { 'name' => 'ALL', 'ndx' => 'all' } )
         ->set_current_row_class( 'file-details', 'delete-all' ) if $flag;
   ## use critic

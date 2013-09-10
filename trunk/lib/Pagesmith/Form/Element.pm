@@ -23,13 +23,64 @@ use List::MoreUtils qw(any);
 use English qw(-no_match_vars $PID);
 use Pagesmith::ConfigHash qw(get_config);
 use Text::Wrap qw(wrap $columns $huge);
-use Encode qw(encode_utf8);
+use Encode qw(decode_utf8 encode_utf8);
 use Data::Dumper;
 use Const::Fast qw(const);
 
 const my $LONG_LINE_LENGTH  => 72;
 const my $SHORT_LINE_LENGTH => 40;
 const my $CAPTION_WIDTH     => 26;
+
+sub new {
+  my ( $class, $section, $element_data ) = @_;
+
+  my $id   = $element_data->{'id'};
+  my $code = $element_data->{'code'} || $element_data->{'id'};
+  ( my $t_code = $code ) =~ s{_}{ }mxgs;
+  my $self = {
+    'object'         => $section->object,
+    'config'         => $section->config,
+    'r'              => $section->r,
+    'raw'            => exists $element_data->{'raw'} && $element_data->{'raw'} eq 'yes' ? 1 : 0,
+    'id'             => $element_data->{'id'} || $section->config->next_id,
+    'alias'          => $element_data->{'alias'} || $code,
+    'classes'        => { map { $_=>1 } $section->config->classes('element') },
+    'layouts'        => { map { $_=>1 } $section->config->classes('layout') },
+    'caption'        => exists $element_data->{'caption'} ? $element_data->{'caption'} : ucfirst $t_code,
+## Values are always array refs now to allow for multiple valued entries
+    'default'        => exists $element_data->{'default'}
+                      ? ('ARRAY' eq ref $element_data->{'default'} ? $element_data->{'default'} :  [$element_data->{'default'}] )
+                      : [],
+
+    'info'           => exists $element_data->{'info'}    ? $element_data->{'info'} : q(),
+    'notes'          => exists $element_data->{'notes'}   ? $element_data->{'notes'} : q(),
+    'required'       => (exists $element_data->{'required'} && $element_data->{'required'} eq 'no') ? 'no' : 'yes',
+    'hidden_caption' => exists $element_data->{'hidden_caption'} ? $element_data->{'hidden_caption'} : q(),
+    'options'        => $element_data,
+    'readonly'       => exists $element_data->{'readonly'} ? $element_data->{'readonly'} : 0,
+    'invalid'        => 0,
+    'view_in_table'  => 0,
+    'enabled'        => 1,
+    'logic_type'     => 'any', ## none (0), any (>0), all (N), not_all (<N), 'at_least_\d', 'at_most_\d',
+    'logic'          => [],
+    'multiple'       => exists $element_data->{'multiple'} ? $element_data->{'multiple'} : 0,
+  };
+
+  $self->{ 'code' } = $element_data->{ 'code' }||$self->{ 'id' };
+
+  bless $self, $class;
+  $self->init( $element_data );
+  $self->element_class;
+
+  if( exists $element_data->{'class'} ) {
+    $self->add_class( $element_data->{'class'} );
+  }
+
+  if( exists $element_data->{'layout'} ) {
+    $self->add_layout( $element_data->{'layout'} );
+  }
+  return $self;
+}
 
 sub init {
   my $self = shift;
@@ -43,9 +94,15 @@ sub r {
 
 sub set_user_data {
   my( $self, @values ) = @_;
-  $self->{'user_data'} = $values[0] if @values;
+  if( 'ARRAY' eq ref $values[0] ) {
+    $self->{'user_data'} = $values[0];
+  } else {
+    my @v = grep { defined $_ } @values;
+    $self->{'user_data'} = @v ? \@v : undef;
+  }
   return $self;
 }
+
 sub user_data {
   my $self = shift;
   return $self->{'user_data'};
@@ -53,7 +110,12 @@ sub user_data {
 
 sub set_obj_data {
   my( $self, @values ) = @_;
-  $self->{'obj_data'} = $values[0] if @values;
+  if( 'ARRAY' eq ref $values[0] ) {
+    $self->{'obj_data'} = $values[0];
+  } else {
+    my @v = grep { defined $_ } @values;
+    $self->{'obj_data'} = @v ? \@v : undef;
+  }
   return $self;
 }
 
@@ -118,49 +180,37 @@ sub clear_raw {
   return $self;
 }
 
-sub new {
-  my ( $class, $section, $element_data ) = @_;
+sub multiple_button {
+  my $self = shift;
+  return q();
+}
 
-  my $id   = $element_data->{'id'};
-  my $code = $element_data->{'code'} || $element_data->{'id'};
-  ( my $t_code = $code ) =~ s{_}{ }mxgs;
-  my $self = {
-    'object'         => $section->object,
-    'config'         => $section->config,
-    'r'              => $section->r,
-    'raw'            => exists $element_data->{'raw'} && $element_data->{'raw'} eq 'yes' ? 1 : 0,
-    'id'             => $element_data->{'id'} || $section->config->next_id,
-    'classes'        => { map { $_=>1 } $section->config->classes('element') },
-    'layouts'        => { map { $_=>1 } $section->config->classes('layout') },
-    'caption'        => exists $element_data->{'caption'} ? $element_data->{'caption'} : ucfirst $t_code,
-    'default'        => exists $element_data->{'default'} ? $element_data->{'default'} : q(),
-    'info'           => exists $element_data->{'info'}    ? $element_data->{'info'} : q(),
-    'notes'          => exists $element_data->{'notes'}   ? $element_data->{'notes'} : q(),
-    'required'       => (exists $element_data->{'required'} && $element_data->{'required'} eq 'no') ? 'no' : 'yes',
-    'hidden_caption' => exists $element_data->{'hidden_caption'} ? $element_data->{'hidden_caption'} : q(),
-    'options'        => $element_data,
-    'readonly'       => exists $element_data->{'readonly'} ? $element_data->{'readonly'} : 0,
-    'invalid'        => 0,
-    'view_in_table'  => 0,
-    'enabled'         => 1,
-    'logic_type'      => 'any', ## none (0), any (>0), all (N), not_all (<N), 'at_least_\d', 'at_most_\d',
-    'logic'           => [],
-  };
-  $self->{ 'code' } = $element_data->{ 'code' }||$self->{ 'id' };
-  bless $self, $class;
-  $self->init( $element_data );
-  $self->element_class;
+sub multiple_markup {
+  my $self = shift;
+  return q() unless $self->multiple;
+  return join q(), map {
+    sprintf '<span class="close_box">%s<input type="hidden" value="%s" name="%s" /></span>',
+      encode_entities($_), encode_entities($_), encode_entities( $self->code );
+  } $self->multi_values;
+}
 
-  if( exists $element_data->{'class'} ) {
-    $self->add_class( $element_data->{'class'} );
-  }
-
-  if( exists $element_data->{'layout'} ) {
-    $self->add_layout( $element_data->{'layout'} );
-  }
+sub set_multiple {
+  my $self = shift;
+  $self->{'multiple'} = 1;
   return $self;
 }
 
+
+sub clear_multiple {
+  my $self = shift;
+  $self->{'multiple'} = 0;
+  return $self;
+}
+
+sub multiple {
+  my $self = shift;
+  return $self->{'multiple'}||0;
+}
 
 ##-- Set and read "readonly" status of an element
 
@@ -242,6 +292,7 @@ sub do_not_store {
 ##-- Check to see if value is "empty"
 sub is_empty {
   my $self = shift;
+  return 1 unless defined $self->value;
   return $self->value eq q();
 }
 
@@ -313,6 +364,23 @@ sub code {
   return $self->{'code'};
 }
 
+sub set_alias {
+  my( $self, $value ) = @_;
+  $self->{'alias'} = $value;
+  return $self;
+}
+
+sub reset_alias {
+  my $self = shift;
+  $self->{'alias'} = $self->{'code'};
+  return $self;
+}
+
+sub alias {
+  my $self = shift;
+  return $self->{'alias'};
+}
+
 sub set_info {
   my( $self, $value ) = @_;
   $self->{'info'} = $value;
@@ -347,10 +415,15 @@ sub caption {
 }
 
 sub set_default_value {
-  my( $self, $value ) = @_;
-  $self->{'default'} = $value;
+  my( $self, @values ) = @_;
+  if( 'ARRAY' eq ref $values[0] ) {
+    $self->{'default'} = $values[0];
+  } else {
+    $self->{'default'} = [ grep { defined $_ } @values ];
+  }
   return $self;
 }
+
 
 sub default_value {
   my $self = shift;
@@ -414,23 +487,35 @@ sub validate {
 
 sub tidy_up {
   my( $self, $string, $flag ) = @_;
-  return $flag eq 'utf-8' ? $string : encode_utf8( $string );
+  return $flag eq 'utf-8' ? decode_utf8($string) : $string; #encode_utf8( $string );
 }
 
 sub update_from_apr {
 ## update the element from the
   my( $self, $apr, $flag ) = @_;
-  my $v = $apr->param( $self->code );
-  $self->{'user_data'} = $self->tidy_up( $v, $flag ) if defined $v;
+  my @v = $apr->param( $self->code ); ## We need to collect multiple values;
+  if( $self->{'multiple'} ) {
+    $self->{'user_data'} = [ grep { $_ ne q() } map { $self->tidy_up( $_, $flag ) } @v ];
+  } elsif( @v ) {
+    $self->{'user_data'} = [ $self->tidy_up( $v[0], $flag ) ];
+  } else {
+    $self->{'user_data'} = undef;
+  }
   return;
+}
+
+sub multi_values {
+  my $self = shift;
+  return @{$self->user_data}          if defined $self->user_data;
+  return @{$self->obj_data}           if defined $self->obj_data;
+  return @{$self->default_value||[]};
 }
 
 sub value {
   my $self = shift;
-  return defined $self->user_data ? $self->user_data
-       : defined $self->obj_data  ? $self->obj_data
-       :                            $self->default_value
-       ;
+  my @values = $self->multi_values;
+  return $values[0] if @values;
+  return q();
 }
 
 sub scalar_value {
@@ -532,6 +617,7 @@ sub layout_class_string {
 sub generate_class_string {
   my $self = shift;
   $self->add_class( $self->is_required ? 'required' : 'optional' );
+  $self->add_class( 'multiple' ) if $self->multiple;
   return join q( ), $self->classes;
 }
 
@@ -607,9 +693,30 @@ sub render_widget_paper {
   return $self->render_widget;
 }
 
+sub render_value_if_raw {
+  my( $self,$val ) = @_;
+  my $rendered_val = $self->render_value( $val );
+  return $rendered_val      if $self->raw;
+  my $eval_tmp = eval { encode_entities( $rendered_val ) };
+  return $eval_tmp if $eval_tmp;
+  $rendered_val =~ s{&}{&amp;}mxsg;
+  $rendered_val =~ s{<}{&lt;}mxsg;
+  $rendered_val =~ s{>}{&gt;}mxsg;
+  return $rendered_val;
+}
+
 sub render_widget_readonly {
   my $self = shift;
-  my $val = $self->raw ? $self->value : eval { encode_entities( $self->value ); } || $self->value;
+  my $val = q();
+  # Multi-valued entries
+  if( $self->multiple &&
+      $self->multi_values   &&
+      $self->multi_values > 1 ) {
+    $val = sprintf '<ul><li>%s</li></ul>', join q(</li><li>),
+      map { $self->render_value_if_raw( $_ ) } $self->multi_values;
+  } elsif( $self->multi_values ) {
+    $val = $self->render_value_if_raw( $self->value );
+  }
   $val = '&nbsp;' if $val =~ m{\A\s*\Z}mxs;
   return $val;
 }

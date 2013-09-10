@@ -133,6 +133,7 @@ sub render_widget_readonly {
   return '&nbsp' unless $self->value;
   return sprintf '<ul>%s</ul>', join q(), map { sprintf '<li>%s</li>', encode_entities( $_ )  } split m{\n+}mxs, $self->value if $self->is_list;
   return join q(), map { sprintf '<p>%s</p>', encode_entities( $_ ) } split m{\n\s*\n}mxs, $self->value;
+  #return join q(), map { sprintf '<p>%s</p>', $_ } split m{\n\s*\n}mxs, $self->value;
 }
 
 sub render_widget_paper {

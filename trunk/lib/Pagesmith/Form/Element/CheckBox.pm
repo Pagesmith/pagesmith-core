@@ -35,7 +35,7 @@ sub init {
 sub update_from_apr {
   my( $self, $apr, $flag ) = @_;
   my $v = $apr->param( $self->code ) || $self->{'off_value'};
-  $self->{'user_data'} = $v eq $self->{'on_value'} ? $self->{'on_value'} : $self->{'off_value'};
+  $self->{'user_data'} = [$v eq $self->{'on_value'} ? $self->{'on_value'} : $self->{'off_value'}];
   return;
 }
 

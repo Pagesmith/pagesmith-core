@@ -25,8 +25,7 @@ sub validate {
 
 sub element_class {
   my $self = shift;
-  $self->add_class( '_posint' );
-  $self->add_class( 'short' );
+  $self->add_class( qw(_posint short) );
   return;
 }
 1;

@@ -53,7 +53,7 @@ sub set_pass {
 
 sub add_option {
   my ( $k, $v ) = @_;
-  $dbh_config->{$k} = $v;
+  $dbh_config->{'options'}{$k} = $v;
   return;
 }
 

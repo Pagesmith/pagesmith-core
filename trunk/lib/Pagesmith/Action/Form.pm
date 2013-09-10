@@ -31,15 +31,6 @@ sub run {
   my $form_object;
 
   $self->no_qr();
-  my @keys  = uniq $self->param;
-  if( @keys ) {
-    my @lines = q();
-    foreach my $k (@keys) {
-      my @d = $self->param($k);
-      push @lines, sprintf "%20s : %s\n", $k, $_ foreach @d;
-    }
-    warn join q(), '!raw!',@lines,"\n";
-  }
 
   if( $form_code =~ m{\A-([-\w]{22})\Z}mxs ) { ## We need to get the form edit option!
     ## We are in the middle of an edit....
@@ -159,6 +150,7 @@ sub run_next {
     $self->form_object->update_from_apr( $self->apr );    ## Update object from APR
     $self->form_object->validate;                         ## Get valid status of next pages...
   }
+
   if( $self->form_object->stage_object->is_type( 'Confirmation' ) ) {
     ## Current stage is a confirmation stage.... so we
     my $confirmation_succeeded =  $self->form_object->on_confirmation( $self->form_object->stage_object );
