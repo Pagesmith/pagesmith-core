@@ -115,12 +115,11 @@ sub get_id {
   return $self->create( { 'type' => $self->type, 'id' => $id, %{$hashref} } );
 }
 
-sub get_all {
+sub parse_filter {
   my ( $self, @filter ) = @_;
-  ##no critic (ImplicitNewlines)
+
   my $extra = q();
   my @params = ($self->type);
-  my $extra_filters = {};
 
   if( @filter && ref $filter[0] eq 'ARRAY' ) {
     my $restrictions = shift @filter;
@@ -170,6 +169,13 @@ sub get_all {
       push @params, $filter_string."\t%";
     }
   }
+  return ($extra,@params);
+}
+
+sub get_all {
+  my ( $self, @filter ) = @_;
+  my ($extra,@params) = $self->filter_filter( @filter );
+  ##no critic (ImplicitNewlines)
   my $array = $self->all_hash(
     'select type, id, code, created_at, created_by, updated_at, updated_by, ip, useragent, objdata, state
        from '.$self->table_name.'
@@ -226,8 +232,8 @@ sub json_safer_encode {
     return $self->json_encode( $struct );
   }
 }
-sub store {
 
+sub store {
 #@param (self)
 #@param (Pagesmith::Object::Generic) object to store
 #@return (boolean) true if insert OK
