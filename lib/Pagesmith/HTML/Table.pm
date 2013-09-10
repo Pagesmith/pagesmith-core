@@ -454,6 +454,7 @@ sub truncate_string {
 sub format_fixed  {
   my( $self, $size, $unit, $prec ) = @_;
   $prec ||= 0;
+  $size ||= 0;
   my $sign = $size < 0 ? q(-) : q();
   $size = abs $size;
   $size /= $K;
@@ -464,6 +465,7 @@ sub format_fixed  {
 sub format_size {
   my( $self, $size, $prec ) = @_;
   $prec ||= 0;
+  $size ||= 0;
   my $sign = $size < 0 ? q(-) : q();
   $size = abs $size;
   return '0' if $size == 0;
