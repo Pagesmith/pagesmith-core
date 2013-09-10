@@ -174,7 +174,7 @@ sub parse_filter {
 
 sub get_all {
   my ( $self, @filter ) = @_;
-  my ($extra,@params) = $self->filter_filter( @filter );
+  my ($extra,@params) = $self->parse_filter( @filter );
   ##no critic (ImplicitNewlines)
   my $array = $self->all_hash(
     'select type, id, code, created_at, created_by, updated_at, updated_by, ip, useragent, objdata, state

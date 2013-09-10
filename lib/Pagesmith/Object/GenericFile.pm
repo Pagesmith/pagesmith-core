@@ -49,7 +49,7 @@ sub set_code {
   return $self;
 }
 
-sub set_sort_code {
+sub set_sort_order {
   my ($self,@order) = @_;
   $self->{'sort_order'} = [@order];
   return $self;
