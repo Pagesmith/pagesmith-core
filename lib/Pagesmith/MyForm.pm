@@ -152,10 +152,10 @@ sub default_send_email {
   foreach my $email_ref ( @emails ) {
     my $mailer = Mail::Mailer->new();
     $mailer->open( {
-      'To'          => $email_ref->{'to'},
-      'From'        => $email_ref->{'from'},
-      'Subject'     => $email_ref->{'subject'},
-      'X-Generator' => 'Pagesmith: '.($email_ref->{'generator'}||'Form To Email'),
+      'To'           => $email_ref->{'to'},
+      'From'         => $email_ref->{'from'},
+      'Subject'      => $self->header_encode( $email_ref->{'subject'} ),
+      'X-Generator'  => $self->header_encode( 'Pagesmith: '.($email_ref->{'generator'}||'Form To Email') ),
       'Content-type' => 'text/plain; charset=UTF-8',
     } );
     print {$mailer} $body; ## no critic (CheckedSyscalls)

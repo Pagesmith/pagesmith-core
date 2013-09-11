@@ -71,6 +71,7 @@ sub new {
     'margin_bottom'  => $DEFAULT_MARGIN,
   };
   bless $self, $class;
+
   return $self
     ->set_corefont( 'normal', 'Helvetica' )
     ->set_corefont( 'bold',   'Helvetica-Bold' )
@@ -78,6 +79,7 @@ sub new {
     ->set_paper_size( 'A4' )
     ;
 }
+
 sub reset_top {
   my $self = shift;
   $self->{'top'} = $self->{'default_top'};
@@ -335,6 +337,18 @@ sub font {
 sub set_corefont {
   my( $self, $key, $name ) = @_;
   $self->{'fonts'}{$key} = $self->pdf->corefont( $name );
+  return $self;
+}
+
+sub set_font_path {
+  my( $self, $path ) = @_;
+  $self->{'font_path'} = $path;
+  return $self;
+}
+
+sub set_ttfont {
+  my( $self, $key, $name ) = @_;
+  $self->{'fonts'}{$key} = $self->pdf->ttfont( "$self->{'font_path'}/$name.ttf" );
   return $self;
 }
 
