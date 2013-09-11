@@ -21,6 +21,7 @@ use Carp qw(carp);
 use HTML::Entities qw(encode_entities);
 use URI::Escape qw(uri_escape_utf8);
 use List::MoreUtils qw(any firstidx);
+use Encode;
 
 ## Form child objects;
 
@@ -130,11 +131,37 @@ sub new {
 }
 
 sub header_safe {
-  my( $self, $string ) = @_;
-  $string =~ s{\s+}{ }mxgs;
-  $string =~ s{(['"<>\\])}{\\$1}mxgs;
-  return $string =~ m{\A\s*(.*?)\s*\Z}mxs ? $1 : $string;
+  my ($self, $email ) = @_;
+  if( $email =~ m{\A(.*)@(.*)}mxs ) {
+    return join q(@), $self->header_safe_part( $1 ), $self->header_safe_part( $2 );
+  }
+  return $self->header_safe_part( $email );
 }
+
+sub header_safe_part {
+#@param (self) (email_part)
+  my( $self, $string ) = @_;
+
+  $string =~ s{\s+}{ }mxgs;
+  $string =~ m{\A\s*(.*?)\s*\Z}mxs ? $1 : $string;
+  if( $string =~ s{(["\\])}{\\$1}mxsg ||
+      $string =~ m{[ (),:;<>@\[\]]}mxs ) {
+    $string = "$string";
+  }
+  return $string;
+}
+
+sub header_encode {
+  my ( $self, $str ) = @_;
+  return Encode::encode('MIME-Header',$str);
+}
+
+sub email_header_encode {
+  my ( $self, $email, $name ) = @_;
+  return $self->header_safe( $email ) unless $name;
+  return sprintf '%s <%s>', Encode::encode('MIME-Header',$name), $self->header_safe( $email );
+}
+
 
 # Form structure....
 
