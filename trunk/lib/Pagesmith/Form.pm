@@ -143,10 +143,10 @@ sub header_safe_part {
   my( $self, $string ) = @_;
 
   $string =~ s{\s+}{ }mxgs;
-  $string =~ m{\A\s*(.*?)\s*\Z}mxs ? $1 : $string;
+  $string = $self->trim( $string );
   if( $string =~ s{(["\\])}{\\$1}mxsg ||
       $string =~ m{[ (),:;<>@\[\]]}mxs ) {
-    $string = "$string";
+    $string = qq("$string");
   }
   return $string;
 }
