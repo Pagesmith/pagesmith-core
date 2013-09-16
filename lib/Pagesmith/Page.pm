@@ -757,7 +757,7 @@ sub _get_perl_js {
       $var_cache->set( $markup );
     }
   }
-  if( $self->r->pnotes('embed_js') && $markup =~ m{cssjs/(.*)\Z}mxs ) {
+  if( $self->r->pnotes('embed_js') && $markup =~ m{cssjs/(.*)"></script>\Z}mxs ) {
     my $js_cache = Pagesmith::Cache->new( 'tmpfile', qq(cssjs|$1) );
     my $js_string = $js_cache->get;
     return sprintf qq(<script type="text/javascript">//<![CDATA[\n%s//]]></script>), $js_string if $js_string;
@@ -786,7 +786,7 @@ sub _get_perl_css {
         $css_string = $self->merge_cssjs( 'css', $compress, @files );
         $var_cache->set( $css_string );
       }
-      if( $self->r->pnotes('embed_css') && $css_string =~ m{cssjs/([^"]+)\Z}mxs ) {
+      if( $self->r->pnotes('embed_css') && $css_string =~ m{cssjs/([^"]+)"[ ]/>\Z}mxs ) {
         my $css_cache  = Pagesmith::Cache->new( 'tmpfile', qq(cssjs|$1) );
         my $tmp_string = $css_cache->get;
         $css_string = sprintf qq(<style type="text/css">/*<![CDATA[*/\n%s/*]]>*/</style>\n), $tmp_string if $tmp_string;
