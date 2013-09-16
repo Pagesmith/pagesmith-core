@@ -33,6 +33,6 @@ li p { margin: 2px 10px; padding: 0 0 0.5em 0; }
 
 .faq { margin:10px 10pt 20px 20px; }
 .faq dt { font-weight: bold; margin: 0; color: #383838; margin-top: 10px; }
-.faq dd { font-weight: none; margin:0 0 10px 20px; color: #3d3d3d; }
+.faq dd { font-weight: normal; margin:0 0 10px 20px; color: #3d3d3d; }
 .faq ol li { margin: 0 0 0 40px; padding:0;}
 

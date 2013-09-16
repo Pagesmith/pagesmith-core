@@ -51,7 +51,7 @@ table.flip tbody tr.odd td { background-color:#fff; }
 
 .pager { text-align: center; margin:2px auto; font-size: 80%; }
 .pager span span, .pager span strong { background-color: #bbb; padding: 2px 4px; margin: 0 2px; border: 1px solid #ccc; }
-.pager span span { cursor: pointer; background-color; #ddd; }
+.pager span span { cursor: pointer; background-color: #ddd; }
 
 tr.errors  td { font-weight: bold; color: #900 }
 tr.warning td { font-weight: bold; color: #c60 }
