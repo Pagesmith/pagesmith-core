@@ -54,7 +54,7 @@ ul#footer_links { float:left; margin: 0 0 0 -5px; padding: 0 }
 #footer .charity { clear: both }
 /* footer social media styling */
 
-ul.social { height: 20px; float: right; margin: -5px -15px 0 0; float: right; text-align: bottom; margin:0; padding: 0; }
+ul.social { height: 20px; float: right; margin: -5px -15px 0 0; float: right; vertical-align: bottom; margin:0; padding: 0; }
 .social li { text-decoration: none; display: inline-block; list-style-type: none; width: 20px; height: 20px; padding: 0; margin: 0 0 0 4px;
              background: url(/core/gfx/icons-130725.png) no-repeat 0 -140px }
 .social li.connect { background: none; width:110px; vertical-align: top; line-height: 20px; text-align: right }

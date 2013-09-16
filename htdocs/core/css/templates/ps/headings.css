@@ -22,7 +22,7 @@ h1, h2, h3, h4, h5, h6 {color:#14559f; padding:0; margin: 10px; font-weight:bold
 
 h1 { font-size: 1.75em; color: #8e0018; font-weight: normal; margin: 0.25em 0 0.5em 10px; line-height: 1.75em; }
 h2 { font-size: 1.4em; font-weight: bold; line-height: 1.4em; margin-top: 1em; }
-h2:first { margin-top: 0; }
+h2:first-child { margin-top: 0; }
 h3 { font-size: 1.2em; padding-bottom: 4px; font-weight: bold; line-height: 1.2em; }
 
 h3.emboldened, #landing #main h3 { position: relative; color: #8e0018; border-bottom: 1px solid #ccc; background: url(/core/gfx/templates/ps/bars-130725.png) 0 bottom; }
