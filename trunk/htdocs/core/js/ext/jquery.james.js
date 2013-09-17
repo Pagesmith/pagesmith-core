@@ -37,11 +37,10 @@ jQuery.fn.james = function (url_to_call, options) {
     onKeystroke:  function (data) { return data; },
     onSelect:     function (dom_value, json_obj) { return $.trim(dom_value); },
     onSelectMultiple: function(dom_value, json_obj) {
-      var in_node;
       dom_value = $.trim(dom_value);
       if( dom_value && ! that.parent().find('span.close_box').filter(function(){ return $(this).text() === dom_value; }).length ) {
-        in_node = $('<input name="'+that.attr('name')+'" type="hidden" />').attr( 'value', dom_value );
-        that.parent().append($('<span title="Click to remove" class="close_box" />').text(dom_value).append(in_node.html()) );
+        that.parent().append($('<span title="Click to remove" class="close_box" />').text(dom_value).append(
+          $('<input name="'+that.attr('name')+'" type="hidden" />').attr( 'value', dom_value ) ));
         return '';
       }
     },
