@@ -89,7 +89,8 @@ sub new {
 #   'buttons'          => [],                      # Buttons on page..
 
     'response'         => undef,
-
+    'expiry'           => 0,  ## infinite!
+    'url_expiry'       => '1 month',
     'cache_handle'     => exists $hash_ref->{'cache_handle'} ? $hash_ref->{'cache_handle'} : undef,
     'messages'         => [ map { Pagesmith::Form::Message->new( $_ ) } @{$hash_ref->{'messages'}||[]} ],
     'attributes'       => $hash_ref->{'attributes'}||{},
@@ -129,6 +130,34 @@ sub new {
 
   return $self;
 }
+
+sub remove_ref {
+  my $self = shift;
+  $self->update_attribute( 'ref', q() );
+  return $self;
+}
+sub expiry {
+  my $self = shift;
+  return $self->{'expiry'};
+}
+
+sub url_expiry {
+  my $self = shift;
+  return $self->{'url_expiry'};
+}
+
+sub set_expiry {
+  my ( $self, $val ) = @_;
+  $self->{'expiry'} = $val;
+  return $self;
+}
+
+sub set_url_expiry {
+  my ( $self, $val ) = @_;
+  $self->{'url_expiry'} = $val;
+  return $self;
+}
+
 
 sub header_safe {
   my ($self, $email ) = @_;
@@ -909,8 +938,16 @@ sub type {
 sub destroy_object {
   my $self = shift;
   return $self unless $self->{'code'}; ## No cache object!
+
+  ## We remember the redirect of the form before we destroy it - then if we
+  ## call /form/-{code} again it will know where to go (e.g. for login etc!)
+
+  my $url = $self->attribute( 'ref' );
+  ## 2DO! We may need to put an expiry here - would expect history to be cleared in 30 days...
+  Pagesmith::Cache->new( 'variable', 'form|'.$self->{'code'} )->set( $url, $self->url_expiry ) if $url;
+
   unless( $self->{'cache_handle'} ) {
-    $self->{'cache_handle'} = Pagesmith::Cache->new( 'form', $self->{'code'}, undef, site_key );
+    $self->{'cache_handle'} = Pagesmith::Cache->new( 'form', $self->{'code'} );
   }
   $self->{'cache_handle'}->unset;
   return $self;
@@ -947,7 +984,10 @@ sub store {
   my $dts = $self->json_encode( $data_to_store );
   ## Store to cache object!
   utf8::upgrade($dts); ## no critic (CallsToUnexportedSubs)
-  $self->{'cache_handle'}->set( $dts );
+  ## Store the URL in the variable table!
+  my $url = $self->attribute( 'ref' );
+  Pagesmith::Cache->new( 'variable', 'form|'.$self->{'code'} )->set( $url, $self->url_expiry ) if $url;
+  $self->{'cache_handle'}->set( $dts, $self->expiry );
   return $self;
 }
 

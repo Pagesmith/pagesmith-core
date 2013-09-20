@@ -100,6 +100,11 @@ sub render_readonly {
   return $self->SUPER::render_readonly( $form );
 }
 
+sub render_value {
+  my( $self, $val ) = @_;
+  return $val;
+}
+
 sub render_email {
   my( $self, $form ) = @_;
   return q() if $self->{'readonly_when_true'} && $self->value ne $self->on_value;
