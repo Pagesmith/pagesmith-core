@@ -27,6 +27,7 @@ use Getopt::Long qw(GetOptionsFromString :config permute);
 
 use Pagesmith::Core qw(safe_md5);
 use Pagesmith::HTML::Table;
+use Pagesmith::Form::Stub;
 use Pagesmith::HTML::Tabs;
 use Pagesmith::HTML::TwoCol;
 use Pagesmith::Utils::FormObjectCreator;
@@ -502,6 +503,11 @@ sub get_output {
 sub table {
   my( $self, @pars ) = @_;
   return Pagesmith::HTML::Table->new( $self->r, @pars );
+}
+
+sub stub_form {
+  my( $self, $pars ) = @_;
+  return Pagesmith::Form::Stub->new( {( %{$pars||{}}, 'r' => $self->r, 'apr' => $self->apr )} );
 }
 
 sub form {

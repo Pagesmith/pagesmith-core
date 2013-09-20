@@ -34,9 +34,13 @@ sub run {
 
   if( $form_code =~ m{\A-([-\w]{22})\Z}mxs ) { ## We need to get the form edit option!
     ## We are in the middle of an edit....
-    $form_object  = $self->form_by_code( $1 );
-    return $self->wrap( 'Form error', "\n<p>\n  Do not recognise reference\n</p>" )->ok unless $form_object;
-
+    my $form_id = $1;
+    $form_object  = $self->form_by_code( $form_id );
+    unless( $form_object ) {
+      my $redirect_url = $self->cache( 'variable', "form|$form_id" )->get;
+      return $self->redirect( $redirect_url ) if $redirect_url;
+      return $self->wrap( 'Form error', "\n<p>\n  Do not recognise reference\n</p>" )->ok ;
+    }
     my $msg = $form_object->cant_edit;                  ## See if the user can edit this stage!
     $form_object->set_stage_by_name( $msg ) if $msg;    ## CAN'T!
   } else { # Code is actually type....
