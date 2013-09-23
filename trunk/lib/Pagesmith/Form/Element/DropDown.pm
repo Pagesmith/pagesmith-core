@@ -48,6 +48,23 @@ sub init {
     ;
 }
 
+sub set_sort_by_value {
+  my $self = shift;
+  $self->{'_sort_by_value'} = 1;
+  return $self;
+}
+
+sub clear_sort_by_value {
+  my $self = shift;
+  $self->{'_sort_by_value'} = 0;
+  return $self;
+}
+
+sub sort_by_value {
+  my $self = shift;
+  return $self->{'_sort_by_value'}||0;
+}
+
 sub set_firstline {
   my( $self, $value ) = @_;
   $self->{'_firstline'} = $value;
@@ -85,8 +102,14 @@ sub add_values {
 
 sub dropdown_values {
   my $self = shift;
+  return map { { 'value' => $_, 'name' => $self->{'_values'}{$_} } }
+         sort { $self->{'_values'}{$a} cmp $self->{'_values'}{$b} }
+         keys %{$self->{'_values'}}
+    if ref $self->{'_values'} eq 'HASH' && $self->sort_by_value;
+
   return map { { 'value' => $_, 'name' => $self->{'_values'}{$_} } } sort keys %{$self->{'_values'}}
     if ref $self->{'_values'} eq 'HASH';
+
   return @{ $self->{'_values'} || [] };
 }
 
