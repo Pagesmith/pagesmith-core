@@ -18,6 +18,17 @@ use version qw(qv); our $VERSION = qv('0.1.0');
 use Const::Fast qw(const);
 const my $ONE_MONTH => 2_592_000;
 const my $ONE_YEAR => 31_622_400;
+const my %MIME_TYPE_MAP => qw(
+  css  text/css;charset=utf-8
+  js   text/javascript;charset=utf-8
+  gif  image/gif
+  pdf  application/pdf
+  png  image/png
+  jpg  image/jpeg
+  jpeg image/jpeg
+  map  application/json
+);
+const my $DEFAULT_MIME_TYPE => 'text/html;charset=utf-8';
 
 use Apache2::Const qw(OK FORBIDDEN DECLINED HTTP_METHOD_NOT_ALLOWED NOT_FOUND M_OPTIONS M_GET);
 use Apache2::RequestIO;
@@ -84,13 +95,7 @@ sub send_content {
 
     if ($content) {
       my ($extn) = $filename =~ m{[.](\w+)\Z}mxs;
-      $r->content_type(
-          $extn eq 'css'  ? 'text/css;charset=utf-8'
-        : $extn eq 'js'   ? 'text/javascript;charset=utf-8'
-        : $extn eq 'png'  ? 'image/png'
-        : $extn eq 'jpg'  ? 'image/jpeg'
-        : $extn eq 'jpeg' ? 'image/jpeg'
-        : 'text/html' );
+      $r->content_type(     exists $MIME_TYPE_MAP{$extn} ? $MIME_TYPE_MAP{$extn} : $DEFAULT_MIME_TYPE );
       $r->headers_out->set( 'Content-Length', length $content );
       $r->headers_out->set( 'Last-Modified',  Apache2::Util::ht_time( $r->pool, time - $ONE_MONTH ) ); ## no critic(CallsToUnexportedSubs)
       $r->headers_out->set( 'Expires',        Apache2::Util::ht_time( $r->pool, time + $ONE_YEAR  ) ); ## no critic(CallsToUnexportedSubs)
