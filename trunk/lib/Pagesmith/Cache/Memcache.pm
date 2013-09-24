@@ -25,7 +25,6 @@ use Const::Fast qw(const);
 const my $MAX_SLEEP   => 0.02;
 const my $MICRO_SLEEP => 0.001;
 use Pagesmith::Cache::Base qw(expires columns);
-use Encode;
 
 my $memd_config = { 'servers' => [], 'debug' => 'off' };
 my $server_keys = {};
@@ -60,7 +59,7 @@ sub get {    ## Returns value of undef if not found!
   my $key     = shift;
   my $content = $memd->get($key);
   return unless $content;
-  Encode::decode_utf8($content);
+  utf8::upgrade( $content ); ## no critic (CallsToUnexportedSubs)
   if ( $content =~ m{\A2(\d+)\Z}mxs ) {    ## We have a large file!
     my @keys = map { $key . q(-) . $_ } 1 .. $1;
     my $y = $memd->get_multi(@keys);
@@ -77,7 +76,6 @@ sub get {    ## Returns value of undef if not found!
 ##no critic (AmbiguousNames);
 sub set {    ## Returns true if set was successful...
   my ( $key, $content, $expires ) = @_;
-  Encode::encode_utf8($content);
   $memd ||= _new_cache;
   return unless $memd;
   $expires = expires($expires);
@@ -88,6 +86,7 @@ sub set {    ## Returns true if set was successful...
   my @keys = ( 'category', 'sitekey', @cols );
   my @tags = map { ( shift @keys ) . q(:) . $_ } @t;
 
+  utf8::downgrade( $content ); ## no critic (CallsToUnexportedSubs)
   my $len = length $content;
 
   if ( $len > $MAX_SIZE ) {
