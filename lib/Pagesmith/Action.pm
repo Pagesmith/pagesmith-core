@@ -360,6 +360,7 @@ sub reset_path_info {
   $self->{'_path_info'} = \@parts;
   return $self;
 }
+
 sub next_path_info {
   my $self = shift;
   return shift @{ $self->{'_path_info'} };

@@ -42,6 +42,7 @@ sub sort_order {
   my $self = shift;
   return @{ $self->{'sort_order'}||[] };
 }
+
 sub set_sort_order {
   my( $self, @attributes ) = @_;
   $self->{'sort_order'} = \@attributes;
