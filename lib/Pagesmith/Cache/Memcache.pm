@@ -59,7 +59,7 @@ sub get {    ## Returns value of undef if not found!
   my $key     = shift;
   my $content = $memd->get($key);
   return unless $content;
-  utf8::upgrade( $content ); ## no critic (CallsToUnexportedSubs)
+  utf8::upgrade( $content ) if $key =~ m{\Aform[|]}mxs; ## no critic (CallsToUnexportedSubs)
   if ( $content =~ m{\A2(\d+)\Z}mxs ) {    ## We have a large file!
     my @keys = map { $key . q(-) . $_ } 1 .. $1;
     my $y = $memd->get_multi(@keys);
@@ -86,7 +86,7 @@ sub set {    ## Returns true if set was successful...
   my @keys = ( 'category', 'sitekey', @cols );
   my @tags = map { ( shift @keys ) . q(:) . $_ } @t;
 
-  utf8::downgrade( $content ); ## no critic (CallsToUnexportedSubs)
+  utf8::downgrade( $content ) if $t[0] eq 'form'; ## no critic (CallsToUnexportedSubs)
   my $len = length $content;
 
   if ( $len > $MAX_SIZE ) {
