@@ -112,31 +112,7 @@ sub get_by_code {
     $code,
   );
   return Pagesmith::Object::Qr->new( $self, $hashref ) if defined $hashref;
-## Neato hack which retrieves old turl urls and converts them to new qr urls....
-  if( $code =~ m{\Aturl-(\w{1,3})\Z}mxs ) {
-    my $id = hex $1;
-    my ($url) = $self->turl_dbh->selectrow_array( 'select url from turl where id = ?', {}, $id );
-    return unless $url =~ m{\A(ftp|http|https)://}mxs;
-    my $qr_obj = Pagesmith::Object::Qr->new( $self, { 'code' => lc($code), 'url' => $url } );
-    $self->dumper( $qr_obj );
-    return $qr_obj if $qr_obj->store;
-  }
   return;
-}
-
-sub turl_dbh {
-#@param (self)
-#@return DBI object
-## Return the DBI object relating to the "old" turl database (note connects if not already connected)
-
-  my $self = shift;
-  unless( exists $self->{'_turl_dbh'} ) {
-    my $pch = Pagesmith::Config->new( { 'file' => 'databases', 'location' => 'site' } );
-    $pch->load( 1 );
-    my $db_details = $pch->get( 'web_facilities' );
-    $self->{'_turl_dbh'} = DBI->connect( $self->generate_dsn( $db_details ), $db_details->{'user'}, $db_details->{'pass'} );
-  }
-  return $self->{'_turl_dbh'}||q();
 }
 
 1;
