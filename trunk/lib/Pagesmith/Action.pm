@@ -330,11 +330,6 @@ sub new {
   return $self;
 }
 
-sub apr {
-  my $self = shift;
-  return $self->{'_apr'} ||= Apache2::Request->new( $self->{'_r'} );
-}
-
 sub param {
   my ( $self, @param ) = @_;
   return $self->apr->param(@param);
