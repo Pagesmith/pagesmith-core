@@ -38,13 +38,7 @@ const my %UNIT_MULTIPLIER => (
   'yr'      => 31_622_400,
   'year'    => 31_622_400,
 );
-
-use base qw(Exporter);
-
-our @EXPORT_OK = qw(expires columns);
-our %EXPORT_TAGS = ( 'ALL' => \@EXPORT_OK );
-
-my $columns = {
+const my $COLUMNS => {
   'action'    => [qw(type cachekey)],
   'appdata'   => [qw(app cachekey)],
   'component' => [qw(type cachekey)],
@@ -60,9 +54,25 @@ my $columns = {
   'variable'  => [qw(type cachekey)],
 };
 
+const my $TEXT_MODE => {
+  'form'      => 1,
+};
+
+
+use base qw(Exporter);
+
+our @EXPORT_OK = qw(expires columns text_mode);
+our %EXPORT_TAGS = ( 'ALL' => \@EXPORT_OK );
+
+sub text_mode {
+  my $key = shift;
+  $key =~ s{[|].*}{}mxs;
+  return exists $TEXT_MODE->{$key} ? $TEXT_MODE->{$key} : 0;
+}
+
 sub columns {
   my $key = shift;
-  return @{ $columns->{$key} || [] };
+  return return exists $COLUMNS->{$key} ? @{$COLUMNS->{$key}} : [];
 }
 
 sub expires {
