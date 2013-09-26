@@ -197,8 +197,8 @@ sub flush_cache {
 }
 
 sub apr {
-  my $self = shift;
-  $self->{'_apr'} ||= Apache2::Request->new( $self->r );
+  my( $self, $options ) = shift;
+  $self->{'_apr'} ||= Apache2::Request->new( $self->r, %{$options||{}} );
   return $self->{'_apr'};
 }
 
