@@ -395,22 +395,27 @@ sub validate {
 
 sub png_or_jpg {
   my $self = shift;
-  return $self->add_accepted_types( qw(image/png image/jpeg) );
+  return $self->jpg->png;
 }
 
 sub jpg {
   my $self = shift;
-  return $self->add_accepted_types( qw(image/jpeg) );
+  return $self->add_accepted_types( qw(
+    image/jpeg image/jpg image/pipeg image/pjpeg image/vnd.swiftview.jpeg
+    application/x-jpg
+  ) );
 }
 
 sub png {
   my $self = shift;
-  return $self->add_accepted_types( qw(image/png) );
+  return $self->add_accepted_types( qw(image/png application/x-png) );
 }
 
 sub pdf {
   my $self = shift;
-  return $self->add_accepted_types( qw(application/pdf) );
+  return $self->add_accepted_types( qw(
+    application/pdf application/x-pdf application/vnd.pdf application/acrobat
+    text/pdf text/x-pdf) );
 }
 
 1;
