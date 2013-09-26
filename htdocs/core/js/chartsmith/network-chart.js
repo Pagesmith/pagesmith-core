@@ -538,6 +538,7 @@ PageSmith.NetworkChart.prototype = {
       }
       /* We need to pass the event (e) into the line_click function
       ** so we can get the location of the click */
+      jn.click(  function( e ) { self.line_click( this, e ); } );
       jn2.click( function( e ) { self.line_click( this, e ); } );
     }
   },
