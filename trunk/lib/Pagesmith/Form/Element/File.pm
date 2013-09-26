@@ -418,6 +418,11 @@ sub pdf {
     text/pdf text/x-pdf) );
 }
 
+sub generics {
+  my $self = shift;
+  return $self->add_accepted_types( qw(application/x-download application/octet-stream) );
+}
+
 1;
 __END__
 
