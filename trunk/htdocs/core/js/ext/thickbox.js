@@ -30,7 +30,6 @@ function tb_init(domChunk){
 
 /* LEAVE ALONE! */
 function tb_show(caption, url, imageGroup) {//function called when the user clicks on a thickbox link
-
   try {
     if (typeof document.body.style.maxHeight === "undefined") {//if IE 6
       $("body","html").css({height: "100%", width: "100%"});
@@ -51,23 +50,17 @@ function tb_show(caption, url, imageGroup) {//function called when the user clic
     }else{
       $("#TB_overlay").addClass("TB_overlayBG");//use background and opacity
     }
-
-    if(caption===null){caption="";}
+    if(caption===null){
+      caption="";
+    }
     $("body").append("<div id='TB_load'><img src='"+tb_pathToImage+"' /></div>");//add loader to the page
     $('#TB_load').show();//show loader
 
-    var baseURL;
-     if(url.indexOf("?")!==-1){ //ff there is a query string involved
-      baseURL = url.substr(0, url.indexOf("?"));
-     }else{
-         baseURL = url;
-     }
+    var baseURL = url.indexOf("?")!==-1 ? url.substr(0, url.indexOf("?")) : url;
 
-     var urlString = /\.jpg$|\.jpeg$|\.png$|\.gif$|\.bmp$/;
-     var urlType = baseURL.toLowerCase().match(urlString);
-
+    var urlString = /\.jpg$|\.jpeg$|\.png$|\.gif$|\.bmp$/;
+    var urlType = baseURL.toLowerCase().match(urlString);
     if(urlType == '.jpg' || urlType == '.jpeg' || urlType == '.png' || urlType == '.gif' || urlType == '.bmp'){//code to show images
-
       TB_PrevCaption = "";
       TB_PrevURL = "";
       TB_PrevHTML = "";
@@ -100,90 +93,88 @@ function tb_show(caption, url, imageGroup) {//function called when the user clic
 
       imgPreloader = new Image();
       imgPreloader.onerror = tb_remove;
-      imgPreloader.onload = function(){
-      imgPreloader.onload = null;
+      imgPreloader.onload = function() {
+        imgPreloader.onload = null;
 
-      // Resizing large images - orginal by Christian Montoya edited by me.
-      var pagesize = tb_getPageSize();
-      var x = pagesize[0] - 150;
-      var y = pagesize[1] - 200;
-      var imageWidth = imgPreloader.width;
-      var imageHeight = imgPreloader.height;
-      if (imageWidth > x) {
-        imageHeight = imageHeight * (x / imageWidth);
-        imageWidth = x;
-        if (imageHeight > y) {
-          imageWidth = imageWidth * (y / imageHeight);
-          imageHeight = y;
-        }
-      } else if (imageHeight > y) {
-        imageWidth = imageWidth * (y / imageHeight);
-        imageHeight = y;
+        // Resizing large images - orginal by Christian Montoya edited by me.
+        var pagesize = tb_getPageSize();
+        var x = pagesize[0] - 150;
+        var y = pagesize[1] - 200;
+        var imageWidth = imgPreloader.width;
+        var imageHeight = imgPreloader.height;
         if (imageWidth > x) {
           imageHeight = imageHeight * (x / imageWidth);
           imageWidth = x;
+          if (imageHeight > y) {
+            imageWidth = imageWidth * (y / imageHeight);
+            imageHeight = y;
+          }
+        } else if (imageHeight > y) {
+          imageWidth = imageWidth * (y / imageHeight);
+          imageHeight = y;
+          if (imageWidth > x) {
+            imageHeight = imageHeight * (x / imageWidth);
+            imageWidth = x;
+          }
         }
-      }
       // End Resizing
 
-      TB_TOP    = 40;
-      TB_WIDTH  = imageWidth + 30;    if( TB_WIDTH < 300 ) TB_WIDTH = 480;
-      TB_HEIGHT = imageHeight + 60;  if( TB_HEIGHT < 300 ) TB_HEIGHT = 300;
-      $("#TB_window").append("<a href='' class='no-img' id='TB_ImageOff' title='Close'><img id='TB_Image' src='"+url+"' width='"+imageWidth+"' height='"+imageHeight+"' alt='"+caption+"'/></a>" + "<div id='TB_caption'>"+caption+"<div id='TB_secondLine'>" + TB_imageCount + TB_PrevHTML + TB_NextHTML + "</div></div><div id='TB_closeWindow'><a href='#' class='no-img' id='TB_closeWindowButton' title='Close'>close</a> or Esc Key</div>");
+        TB_TOP    = 40;
+        TB_WIDTH  = imageWidth + 30;    if( TB_WIDTH < 300 ) TB_WIDTH = 480;
+        TB_HEIGHT = imageHeight + 60;  if( TB_HEIGHT < 300 ) TB_HEIGHT = 300;
+        $("#TB_window").append("<a href='' class='no-img' id='TB_ImageOff' title='Close'><img id='TB_Image' src='"+url+"' width='"+imageWidth+"' height='"+imageHeight+"' alt='"+caption+"'/></a>" + "<div id='TB_caption'>"+caption+"<div id='TB_secondLine'>" + TB_imageCount + TB_PrevHTML + TB_NextHTML + "</div></div><div id='TB_closeWindow'><a href='#' class='no-img' id='TB_closeWindowButton' title='Close'>close</a> or Esc Key</div>");
 
-      $("#TB_closeWindowButton").click(tb_remove);
+        $("#TB_closeWindowButton").click(tb_remove);
 
-      if (!(TB_PrevHTML === "")) {
-        function goPrev(){
-          if($(document).unbind("click",goPrev)){$(document).unbind("click",goPrev);}
-          $("#TB_window").remove();
-          $("body").append("<div id='TB_window'></div>");
-          tb_show(TB_PrevCaption, TB_PrevURL, imageGroup);
-          return false;
-        }
-        $("#TB_prev").click(goPrev);
-      }
-
-      if (!(TB_NextHTML === "")) {
-        function goNext(){
-          $("#TB_window").remove();
-          $("body").append("<div id='TB_window'></div>");
-          tb_show(TB_NextCaption, TB_NextURL, imageGroup);
-          return false;
-        }
-        $("#TB_next").click(goNext);
-
-      }
-
-      document.onkeydown = function(e){
-        if (e == null) { // ie
-          keycode = event.keyCode;
-        } else { // mozilla
-          keycode = e.which;
-        }
-        if(keycode == 27){ // close
-          tb_remove();
-        } else if(keycode == 190){ // display previous image
-          if(!(TB_NextHTML == "")){
-            document.onkeydown = "";
-            goNext();
+        if (!(TB_PrevHTML === "")) {
+          function goPrev(){
+            if($(document).unbind("click",goPrev)){$(document).unbind("click",goPrev);}
+            $("#TB_window").remove();
+            $("body").append("<div id='TB_window'></div>");
+            tb_show(TB_PrevCaption, TB_PrevURL, imageGroup);
+            return false;
           }
-        } else if(keycode == 188){ // display next image
-          if(!(TB_PrevHTML == "")){
-            document.onkeydown = "";
-            goPrev();
-          }
+          $("#TB_prev").click(goPrev);
         }
-      };
 
-      tb_position();
-      $("#TB_load").remove();
-      $("#TB_ImageOff").click(tb_remove);
-      $("#TB_window").css({display:"block"}); //for safari using css instead of show
-      };
+        if (!(TB_NextHTML === "")) {
+          function goNext(){
+            $("#TB_window").remove();
+            $("body").append("<div id='TB_window'></div>");
+            tb_show(TB_NextCaption, TB_NextURL, imageGroup);
+            return false;
+          }
+          $("#TB_next").click(goNext);
+        }
 
+        document.onkeydown = function(e){
+          if (e == null) { // ie
+            keycode = event.keyCode;
+          } else { // mozilla
+            keycode = e.which;
+          }
+          if(keycode == 27){ // close
+            tb_remove();
+          } else if(keycode == 190){ // display previous image
+            if(!(TB_NextHTML == "")){
+              document.onkeydown = "";
+              goNext();
+            }
+          } else if(keycode == 188){ // display next image
+            if(!(TB_PrevHTML == "")){
+              document.onkeydown = "";
+              goPrev();
+            }
+          }
+        };
+
+        tb_position();
+        $("#TB_load").remove();
+        $("#TB_ImageOff").click(tb_remove);
+        $("#TB_window").css({display:"block"}); //for safari using css instead of show
+      };
       imgPreloader.src = url;
-    }else{//code to show html
+    } else {//code to show html
 
       var queryString = url.replace(/^[^\?]+\??/,'');
       var params = tb_parseQuery( queryString );
@@ -195,58 +186,55 @@ function tb_show(caption, url, imageGroup) {//function called when the user clic
       ajaxContentH = TB_HEIGHT - 45;
 
       if(url.indexOf('TB_iframe') != -1){// either iframe or ajax window
-          urlNoQuery = url.split('TB_');
-          $("#TB_iframeContent").remove();
-          if(params['modal'] != "true"){//iframe no modal
-            $("#TB_window").append("<div id='TB_title'><div id='TB_ajaxWindowTitle'>"+caption+"</div><div id='TB_closeAjaxWindow'><a href='#' class='no-img' id='TB_closeWindowButton' title='Close'>close</a> or Esc Key</div></div><iframe frameborder='0' hspace='0' src='"+urlNoQuery[0]+"' id='TB_iframeContent' name='TB_iframeContent"+Math.round(Math.random()*1000)+"' onload='tb_showIframe()' style='width:"+(ajaxContentW + 29)+"px;height:"+(ajaxContentH + 17)+"px;' > </iframe>");
-          }else{//iframe modal
+        urlNoQuery = url.split('TB_');
+        $("#TB_iframeContent").remove();
+        if(params['modal'] != "true"){//iframe no modal
+          $("#TB_window").append("<div id='TB_title'><div id='TB_ajaxWindowTitle'>"+caption+"</div><div id='TB_closeAjaxWindow'><a href='#' class='no-img' id='TB_closeWindowButton' title='Close'>close</a> or Esc Key</div></div><iframe frameborder='0' hspace='0' src='"+urlNoQuery[0]+"' id='TB_iframeContent' name='TB_iframeContent"+Math.round(Math.random()*1000)+"' onload='tb_showIframe()' style='width:"+(ajaxContentW + 29)+"px;height:"+(ajaxContentH + 17)+"px;' > </iframe>");
+        } else {//iframe modal
           $("#TB_overlay").unbind();
-            $("#TB_window").append("<iframe frameborder='0' hspace='0' src='"+urlNoQuery[0]+"' id='TB_iframeContent' name='TB_iframeContent"+Math.round(Math.random()*1000)+"' onload='tb_showIframe()' style='width:"+(ajaxContentW + 29)+"px;height:"+(ajaxContentH + 17)+"px;'> </iframe>");
+          $("#TB_window").append("<iframe frameborder='0' hspace='0' src='"+urlNoQuery[0]+"' id='TB_iframeContent' name='TB_iframeContent"+Math.round(Math.random()*1000)+"' onload='tb_showIframe()' style='width:"+(ajaxContentW + 29)+"px;height:"+(ajaxContentH + 17)+"px;'> </iframe>");
+        }
+      } else {// not an iframe, ajax
+        if($("#TB_window").css("display") != "block"){
+          if(params['modal'] != "true"){//ajax no modal
+          $("#TB_window").append("<div id='TB_title'><div id='TB_ajaxWindowTitle'>"+caption+"</div><div id='TB_closeAjaxWindow'><a href='#' class='no-img' id='TB_closeWindowButton'>close</a> or Esc Key</div></div><div id='TB_ajaxContent' style='width:"+ajaxContentW+"px;height:"+ajaxContentH+"px'></div>");
+          }else{//ajax modal
+          $("#TB_overlay").unbind();
+          $("#TB_window").append("<div id='TB_ajaxContent' class='TB_modal' style='width:"+ajaxContentW+"px;height:"+ajaxContentH+"px;'></div>");
           }
-      }else{// not an iframe, ajax
-          if($("#TB_window").css("display") != "block"){
-            if(params['modal'] != "true"){//ajax no modal
-            $("#TB_window").append("<div id='TB_title'><div id='TB_ajaxWindowTitle'>"+caption+"</div><div id='TB_closeAjaxWindow'><a href='#' class='no-img' id='TB_closeWindowButton'>close</a> or Esc Key</div></div><div id='TB_ajaxContent' style='width:"+ajaxContentW+"px;height:"+ajaxContentH+"px'></div>");
-            }else{//ajax modal
-            $("#TB_overlay").unbind();
-            $("#TB_window").append("<div id='TB_ajaxContent' class='TB_modal' style='width:"+ajaxContentW+"px;height:"+ajaxContentH+"px;'></div>");
-            }
-          }else{//this means the window is already up, we are just loading new content via ajax
-            $("#TB_ajaxContent")[0].style.width = ajaxContentW +"px";
-            $("#TB_ajaxContent")[0].style.height = ajaxContentH +"px";
-            $("#TB_ajaxContent")[0].scrollTop = 0;
-            $("#TB_ajaxWindowTitle").html(caption);
-          }
+        } else {//this means the window is already up, we are just loading new content via ajax
+          $("#TB_ajaxContent")[0].style.width = ajaxContentW +"px";
+          $("#TB_ajaxContent")[0].style.height = ajaxContentH +"px";
+          $("#TB_ajaxContent")[0].scrollTop = 0;
+          $("#TB_ajaxWindowTitle").html(caption);
+        }
       }
 
       $("#TB_closeWindowButton").click(tb_remove);
-
-        if(url.indexOf('TB_inline') != -1){
-          $("#TB_ajaxContent").append($('#' + params['inlineId']).children());
-          $("#TB_window").unload(function () {
-            $('#' + params['inlineId']).append( $("#TB_ajaxContent").children() ); // move elements back when you're finished
-          });
-          tb_position();
+      if(url.indexOf('TB_inline') != -1){
+        $("#TB_ajaxContent").append($('#' + params['inlineId']).children());
+        $("#TB_window").unload(function () {
+          $('#' + params['inlineId']).append( $("#TB_ajaxContent").children() ); // move elements back when you're finished
+        });
+        tb_position();
+        $("#TB_load").remove();
+        $("#TB_window").css({display:"block"});
+      }else if(url.indexOf('TB_iframe') != -1){
+        tb_position();
+        if( Object.prototype.toString.call(window.HTMLElement).indexOf('Constructor') > 0 ) { //safari needs help because it will not fire iframe onload
           $("#TB_load").remove();
           $("#TB_window").css({display:"block"});
-        }else if(url.indexOf('TB_iframe') != -1){
-          tb_position();
-          if( Object.prototype.toString.call(window.HTMLElement).indexOf('Constructor') > 0 ) { //safari needs help because it will not fire iframe onload
-            $("#TB_load").remove();
-            $("#TB_window").css({display:"block"});
-          }
-        }else{
-          $("#TB_ajaxContent").load(url += (url.match(/\?/)?'&':'?')+"random=" + (new Date().getTime()),function(){//to do a post change this load method
-            tb_position();
-            $("#TB_load").remove();
-            tb_init("#TB_ajaxContent a.thickbox");
-            $("#TB_window").css({display:"block"});
-          });
         }
-
+      } else {
+        $("#TB_ajaxContent").load(url += (url.match(/\?/)?'&':'?')+"random=" + (new Date().getTime()),function(){//to do a post change this load method
+          tb_position();
+          $("#TB_load").remove();
+          tb_init("#TB_ajaxContent a.thickbox");
+          $("#TB_window").css({display:"block"});
+        });
+      }
     }
-
-    if(!params['modal']){
+    if(params && !params['modal']){
       document.onkeyup = function(e){
         if (e == null) { // ie
           keycode = event.keyCode;
@@ -258,7 +246,6 @@ function tb_show(caption, url, imageGroup) {//function called when the user clic
         }
       };
     }
-
   } catch(e) {
     //nothing here
   }
@@ -270,8 +257,8 @@ function tb_showIframe(){
   $("#TB_window").css({display:"block"});
 }
 
-function tb_remove() {
-   $("#TB_imageOff").unbind("click");
+function tb_remove( ) {
+  $("#TB_imageOff").unbind("click");
   $("#TB_closeWindowButton").unbind("click");
   $("#TB_window").fadeOut("fast",function(){$('#TB_window,#TB_overlay,#TB_HideSelect').trigger("unload").unbind().remove();});
   $("#TB_load").remove();
