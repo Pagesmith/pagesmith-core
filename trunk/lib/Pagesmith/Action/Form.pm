@@ -20,13 +20,21 @@ use HTML::Entities qw(encode_entities);
 use Pagesmith::ConfigHash qw(can_name_space);
 use List::MoreUtils qw(uniq);
 
+use Const::Fast qw(const);
+const my $MAX_POST => 20_971_520; ## 20M max upload!
+
 ## URL for this action is:
 ## http://www.mydomain.com/form/-0123456789012345678901(/action)
 ## http://www.mydomain.com/form/FormType(/action)/ID <- if editing
 
+sub configure_apr {
+  my $self = shift;
+  return $self->apr( { 'POST_MAX' => $MAX_POST } );
+}
+
 sub run {
   my $self = shift;
-
+  $self->configure_apr;
   my $form_code   = $self->next_path_info;
   my $form_object;
 
