@@ -196,6 +196,7 @@ PageSmith.Tabs = function (options) {
   this.options = options || {};
   this.classes = [];
 };
+
 PageSmith.Tabs.prototype = {
   add_tab: function (name, title, content, flag) {
     if (typeof (flag) === 'undefined') {
