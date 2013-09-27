@@ -19,7 +19,6 @@ use utf8;
 
 use version qw(qv); our $VERSION = qv('0.1.0');
 
-use Mail::Mailer;
 use Crypt::CBC;
 
 use base qw(Pagesmith::Form);
@@ -150,16 +149,14 @@ sub default_send_email {
   my @emails = $self->get_email_addresses;
   my $body   = $self->email_template;
   foreach my $email_ref ( @emails ) {
-    my $mailer = Mail::Mailer->new();
-    $mailer->open( {
+    $self->send_email( {
       'To'           => $email_ref->{'to'},
       'From'         => $email_ref->{'from'},
+      'Return-Path'  => $email_ref->{'from'},
       'Subject'      => $self->header_encode( $email_ref->{'subject'} ),
       'X-Generator'  => $self->header_encode( 'Pagesmith: '.($email_ref->{'generator'}||'Form To Email') ),
       'Content-type' => 'text/plain; charset=UTF-8',
-    } );
-    print {$mailer} $body; ## no critic (CheckedSyscalls)
-    $mailer->close;
+    }, $body );
   }
   return;
 }
