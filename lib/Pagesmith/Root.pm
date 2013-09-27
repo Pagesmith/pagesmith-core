@@ -37,6 +37,7 @@ use Time::HiRes qw(time);
 use MIME::Base64 qw(decode_base64 encode_base64);
 use Pagesmith::Config;
 use Pagesmith::Adaptor;
+use Mail::Mailer;
 
 my $failed_modules;
 
@@ -431,6 +432,19 @@ sub base_url {
 #@class get
   my $self = shift;
   return $self->{'_base_url'} || q(/);
+}
+
+sub send_email {
+  my ($self, $options, $message ) = @_;
+  my $ct = exists $options->{'Content-type'} ? $options->{'Content-type'} : 'text/plain';
+  $ct .= '; charset=UTF-8' unless $ct =~ m{charset}mxs;
+  $options->{'Content-type'} = $ct;
+  $options->{'X-Generator'} ||= 'Pagesmith';
+  my $mailer = Mail::Mailer->new( $options );
+  binmode $mailer,':utf8'; ## no critic (EncodingWithUTF8Layer)
+  printf {$mailer} $message;
+  $mailer->close;
+  return;
 }
 
 1;
