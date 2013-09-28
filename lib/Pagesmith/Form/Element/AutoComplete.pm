@@ -51,9 +51,11 @@ sub element_class {
   return;
 }
 
-sub extra_markup {
+sub render_widget {
   my $self = shift;
-  return sprintf ' title="%s=%s"', encode_entities( $self->{'query_name'}) , encode_entities( $self->{'url'} );
+  return $self->add_class( q(james), $self->encode($self->json_encode( {
+      'varname'=>$self->{'query_name'},
+      'url'    =>$self->{'url'},
+  })))->SUPER::render_widget;
 }
-
 1;
