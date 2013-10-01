@@ -43,7 +43,8 @@ sub run {
     return $self->print( $img )->ok;
   }
   $self->r->content_type('image/svg+xml');
-  return $self->download_as( $key.'.svg' )->print( $self->param('svg') )->ok;
+  (my $svg = $self->param('svg')) =~ s{\s+xlink:title=}{ title=}mxsg;
+  return $self->download( "$key.svg", \$svg );
 }
 
 1;
