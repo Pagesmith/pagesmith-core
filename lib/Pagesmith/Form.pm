@@ -71,7 +71,6 @@ sub new {
       'enctype' => 'application/x-www-form-urlencoded',
     },
     'view_url'         => $hash_ref->{'view_url'}||undef,
-    'form_id'          => undef,
     'object'           => undef,
 
 ## Entries used to create and store the stages of the form
@@ -1284,7 +1283,7 @@ sub errors {
 
 sub id {
   my $self = shift;
-  return $self->{'id'};
+  return $self->{'form_id'};
 }
 
 sub object {
