@@ -440,7 +440,8 @@ sub send_email {
   $ct .= '; charset=UTF-8' unless $ct =~ m{charset}mxs;
   $options->{'Content-type'} = $ct;
   $options->{'X-Generator'} ||= 'Pagesmith';
-  my $mailer = Mail::Mailer->new( $options );
+  my $mailer = Mail::Mailer->new;
+  $mailer->open( $options );
   binmode $mailer,':utf8'; ## no critic (EncodingWithUTF8Layer)
   printf {$mailer} $message;
   $mailer->close;
