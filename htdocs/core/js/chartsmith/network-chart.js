@@ -68,6 +68,7 @@ PageSmith.NetworkChart.prototype = {
     this.paper.text( this.WIDTH/2, this.HEIGHT/2, this.fetching_notice ).attr( {fill:'#000','font-size':24} );
     this.SF                  = ( this.WIDTH < this.HEIGHT ? this.WIDTH : this.HEIGHT ) / 2 - 10;
     this.popup_array = {};
+    this.data_loaded = 0;
     $(window).on('resize',function(){self.draw_chart();});
     window.setTimeout( function() { self._init(options); }, this.DELAY );
     return this;
@@ -371,6 +372,9 @@ PageSmith.NetworkChart.prototype = {
 
   /* Now functions to draw chart */
   draw_chart: function( ) {
+    if( ! this.data_loaded ) {
+      return this;
+    }
     var self = this,h = this.jq_obj.height(), w = this.jq_obj.width();
     if( !this.jq_obj.is(':visible') ) { // Can't resize if not visible!
       h = this.HEIGHT;
