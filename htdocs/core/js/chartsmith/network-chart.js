@@ -372,12 +372,9 @@ PageSmith.NetworkChart.prototype = {
   /* Now functions to draw chart */
   draw_chart: function( ) {
     var self = this,h = this.jq_obj.height(), w = this.jq_obj.width();
-    if( !this.jq_obj.is(':visible') ) {
+    if( !this.jq_obj.is(':visible') ) { // Can't resize if not visible!
       h = this.HEIGHT;
       w = this.WIDTH;
-    }
-    if( h === 0 || w === 0 ) {
-      return;
     }
     /* First thing we do is make sure that we don't move outside the
     ** displayable box... OR zoom to far in (currently set to x40)
@@ -408,7 +405,7 @@ PageSmith.NetworkChart.prototype = {
         this.c_y === this.prev_c_y &&
         this.sc === this.prev_sc &&
         !this.parameter_change() ) {
-      return;
+      return this;
     }
     if( h !== this.HEIGHT || w !== this.WIDTH) {
       this.WIDTH    = w;
@@ -421,6 +418,7 @@ PageSmith.NetworkChart.prototype = {
     this.prev_c_y = this.c_y;
     this.paper.rect(0,0,this.WIDTH,this.HEIGHT).attr({fill:'#666',opacity:0.2,cursor:'wait'});
     window.setTimeout( function() { self._draw_chart(); }, this.DELAY );
+    return this;
   },
   draw_object: function(x,y,pars) {
     var self         = this,
