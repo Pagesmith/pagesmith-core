@@ -367,11 +367,11 @@ PageSmith.Timer = {
 };
 
 $('h2.make-wide, h3.make-wide').livequery(function(){
-  $(this).append('<span class="toggle-width">&gt;=&lt;</span>');
+  $(this).append('<span class="toggle-width" title="Full width">&#x21d4;</span>');
 });
 $('body')
-  .on('click','#main  .toggle-width',function() { $('#main').attr('id','mainx'); $('#rhs').attr('id','rhsx'); $(this).html('&gt;=&lt;');} )
-  .on('click','#mainx .toggle-width',function() { $('#mainx').attr('id','main'); $('#rhsx').attr('id','rhs'); $(this).html('&lt;=&gt;');} );
+  .on('click','#main  .toggle-width',function() { $('#main').attr('id','mainx'); $('#rhs').attr('id','rhsx'); $(this).html('&lArr;').attr('title','Show navigation'); $(window).trigger('resize');} )
+  .on('click','#mainx .toggle-width',function() { $('#mainx').attr('id','main'); $('#rhsx').attr('id','rhs'); $(this).html('&#x21d4;').attr('title','Full width'); $(window).trigger('resize');} );
 
 /* On resize function to give "relative heights" to containers! */
 function getPageSize(){
