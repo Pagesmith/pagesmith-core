@@ -66,8 +66,9 @@ PageSmith.NetworkChart.prototype = {
     /* Put up a message at the start of the script */
     this.get_params().copy_params_to_previous();
     this.paper.text( this.WIDTH/2, this.HEIGHT/2, this.fetching_notice ).attr( {fill:'#000','font-size':24} );
-    this.SF       = ( this.WIDTH < this.HEIGHT ? this.WIDTH : this.HEIGHT ) / 2 - 10;
+    this.SF                  = ( this.WIDTH < this.HEIGHT ? this.WIDTH : this.HEIGHT ) / 2 - 10;
     this.popup_array = {};
+    $(window).on('resize',function(){self.draw_chart();});
     window.setTimeout( function() { self._init(options); }, this.DELAY );
     return this;
   },
@@ -226,65 +227,66 @@ PageSmith.NetworkChart.prototype = {
       var redraw = 1;
       switch( k ) {
         case 38: // up arrow
-        case 104: // up arrow
+        case 104: // (up arrow) num pad 8
         case 56: // up arrow
           self.c_y -= 1/self.sc;
           break;
         case 40: // down arrow
-        case 98: // down arrow
+        case 98: // (down arrow) num pad 2
         case 50: // down arrow
           self.c_y += 1/self.sc;
           break;
         case 37: // left arrow
-        case 100: // left arrow
+        case 100: // (left arrow) num pad 4
         case 52: // left arrow
           self.c_x -= 1/self.sc;
           break;
-        case 102: // right arrow
+        case 102: // (right arrow) num pad 6
         case 54: // right arrow
         case 39: // right arrow
           self.c_x += 1/self.sc;
           break;
         case 97: // num pad 1
-        case 35: // 1
+        case 35: // (end) num pad 1
         case 49: // 1
           self.c_x -= 1/self.sc;
           self.c_y += 1/self.sc;
           break;
         case 99: // num pad 3
-        case 34: // 3
+        case 34: // (page down) num pad 3
         case 51: // 3
           self.c_x += 1/self.sc;
           self.c_y += 1/self.sc;
           break;
         case 103: // num pad 7
-        case 36: // 7
+        case 36: // (home) num pad 7
         case 55: // 7
           self.c_x -= 1/self.sc;
           self.c_y -= 1/self.sc;
           break;
         case 105: // num pad 9
-        case 33: //
+        case 33: // (page up) num pad 9
         case 57: //
           self.c_x += 1/self.sc;
           self.c_y -= 1/self.sc;
           break;
         case 101: // numpad 5
         case 48: // 0
-        case 45: // 0
+        case 45: // (insert) numpad 0
+        case 82: // r
         case 12: // 5
           self.c_x =0;
           self.c_y =0;
           self.sc  =1;
           break;
-        case 107: // +
-        case 187: // +
+        case 107: // numpad +
+        case 187: // = (unshifted +)
         case 61:  // +
         case 43:  // +
           self.sc  *=2;
           break;
-        case 189: // -
-        case 109: // -
+        case 189: // _ (unshifted -)
+        case 109: // numpad -
         case 95:  // -
           self.sc  /=2;
           break;
@@ -293,7 +295,7 @@ PageSmith.NetworkChart.prototype = {
           break;
       }
       if( redraw ) {
-        self.draw_chart();
+        self.draw_chart( );
         return false;
       }
     });
@@ -368,8 +370,15 @@ PageSmith.NetworkChart.prototype = {
   },
 
   /* Now functions to draw chart */
-  draw_chart: function() {
-    var self = this;
+  draw_chart: function( ) {
+    var self = this,h = this.jq_obj.height(), w = this.jq_obj.width();
+    if( !this.jq_obj.is(':visible') ) {
+      h = this.HEIGHT;
+      w = this.WIDTH;
+    }
+    if( h === 0 || w === 0 ) {
+      return;
+    }
     /* First thing we do is make sure that we don't move outside the
     ** displayable box... OR zoom to far in (currently set to x40)
     */
@@ -393,10 +402,23 @@ PageSmith.NetworkChart.prototype = {
     }
     /* Check to see if we have changed the location/scale if NOT
     ** then return now without redrawing */
-    if( this.c_x === this.prev_c_x && this.c_y === this.prev_c_y && this.sc === this.prev_sc && !this.parameter_change() ) {
+    if( h === this.HEIGHT &&
+        w === this.WIDTH &&
+        this.c_x === this.prev_c_x &&
+        this.c_y === this.prev_c_y &&
+        this.sc === this.prev_sc &&
+        !this.parameter_change() ) {
       return;
     }
-    /* Re-draw... */
+    if( h !== this.HEIGHT || w !== this.WIDTH) {
+      this.WIDTH    = w;
+      this.HEIGHT   = h;
+      this.paper.setSize( w, h );
+      this.SF       = ( w < h ? w : h ) / 2 - 10;
+    }
+    this.prev_sc  = this.sc;
+    this.prev_c_x = this.c_x;
+    this.prev_c_y = this.c_y;
     this.paper.rect(0,0,this.WIDTH,this.HEIGHT).attr({fill:'#666',opacity:0.2,cursor:'wait'});
     window.setTimeout( function() { self._draw_chart(); }, this.DELAY );
   },
@@ -421,6 +443,9 @@ PageSmith.NetworkChart.prototype = {
       t.click( function( e ) { self.object_click( this, e ); } );
     } else {
       c = this.paper.circle( x, y, r ).attr({fill:fill_color,stroke:stroke_color,'stroke-width':stroke_width,title:ttl});
+      this.paper.text( x, y+r+6, nm ).attr( {opacity: 0.6,'stroke-width':3,stroke:'#fff','font-size': 10, 'font-weight': 'bold', fill:'#fff' } );
+      t = this.paper.text( x, y+r+6, nm ).attr( {'font-size': 10, 'font-weight': 'bold', fill:'#cc0000', title: ttl } );
+      t.click( function( e ) { self.object_click( this, e ); } );
     }
     c.click( function( e ) { self.object_click( this, e ); } );
     return 1;
@@ -635,3 +660,4 @@ PageSmith.NetworkChart.prototype = {
     return this;
   }
 };
+
