@@ -17,7 +17,7 @@ use version qw(qv); our $VERSION = qv('0.1.0');
 
 use English qw(-no_match_vars $INPUT_RECORD_SEPARATOR);
 
-use Mime::Base64 qw(encode_base64);
+use MIME::Base64 qw(encode_base64);
 use Digest::MD5 qw(md5_hex);
 use Image::Size qw(imgsize);
 use Image::Magick;
