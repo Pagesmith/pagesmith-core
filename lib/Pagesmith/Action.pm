@@ -34,6 +34,7 @@ use HTML::Entities qw(encode_entities);
 use English qw(-no_match_vars $PID);
 use Encode ();
 use Spreadsheet::WriteExcel;
+use Excel::Writer::XLSX;
 
 use Pagesmith::Message;
 use Pagesmith::ConfigHash qw(can_cache get_config);
@@ -175,12 +176,21 @@ sub json_print {
   return $self->json->set_length( length $string )->print( $string )->ok;
 }
 
-sub excel_print {
+sub xls_print {
   my( $self, $head_data, $body_data ) = @_;
+  return $self->excel_print( $head_data, $body_data, 'xls' );
+}
+sub xlsx_print {
+  my( $self, $head_data, $body_data ) = @_;
+  return $self->excel_print( $head_data, $body_data, 'xlsx' );
+}
+sub excel_print {
+  my( $self, $head_data, $body_data, $version ) = @_;
   my $str;
   ## no critic (BriefOpen)
   if( open my $fh, q(>), \$str ) {
-    my $workbook  = Spreadsheet::WriteExcel->new($fh);
+    binmode $fh;
+    my $workbook  = $version eq 'xlsx' ? Excel::Writer::XLSX->new($fh) : Spreadsheet::WriteExcel->new($fh);
     my $worksheet = $workbook->add_worksheet;
     my $header = $workbook->add_format;
     $header->set_bold;
@@ -192,7 +202,7 @@ sub excel_print {
       $worksheet->write( $r++, 0, $row );
     }
     $workbook->close;
-    $self->excel->print( $str )->set_length( length $str );
+    $self->excel( $version )->print( $str )->set_length( length $str );
     close $fh; ## no critic (RequireChecked)
     return $self->ok;
   }
@@ -406,7 +416,8 @@ sub tsv {
 }
 
 sub excel {
-  my $self = shift;
+  my ($self, $version ) = @_;
+  return $self->content_type('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet') if $version && $version eq 'xlsx';
   return $self->content_type('application/vnd.ms-excel');
 }
 
