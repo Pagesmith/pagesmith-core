@@ -188,4 +188,5 @@ use Pagesmith::Page;
 use Pagesmith::Root;
 use Pagesmith::Adaptor;
 
+use DBD::mysql;
 1;
