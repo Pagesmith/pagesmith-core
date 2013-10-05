@@ -33,7 +33,7 @@ my $path    = dirname(dirname(abs_path($PROGRAM_NAME)));
 
 my $command = basename($PROGRAM_NAME);
 my $system  = basename($path);
-my $flag    = $system =~ m{www-(\w+)\Z}mxs ? $1 : $system; ## Uses system name as flag....
+my $flag    = $system =~ m{www-(\w+)(?:-\d+)?\Z}mxs ? $1 : $system; ## Uses system name as flag....
 
 my @extra_params;
 

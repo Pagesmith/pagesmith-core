@@ -159,7 +159,7 @@ sub _find_repositories {
           open my $fh, q(<), "$path/$dir/.svn/entries" ) {
         while( my $line = <$fh> ) {
           chomp $line;
-          if( $line =~ m{\Asvn[+]ssh://[^/]+/repos/svn/([^/]+(?:/[^/]+)?)/(trunk|live|staging)(.*)\Z}mxs ) {
+          if( $line =~ m{\Asvn[+]p?s?ssh://(?:.*?@)?[^/]+/repos/svn/([^/]+(?:/[^/]+)?)/(trunk|live|staging)(.*)\Z}mxs ) {
             push @{ $repos{ $1 }{ $2 } }, { 'path' => $3, 'directory' => $paths{$path}.$dir };
             last;
           }
