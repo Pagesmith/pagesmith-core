@@ -36,7 +36,7 @@ PageSmith.ajax = {
     }
     ajax_pars.success = function(data,status) {
       x.replaceWith(data);
-      window.trigger('resize');
+      $(window).trigger('resize');
     };
     ajax_pars.error = function(xhr,status,message) {
       x.replaceWith('<p>Unable to load content</p>').prop('title',message);
