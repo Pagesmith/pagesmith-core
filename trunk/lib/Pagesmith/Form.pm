@@ -21,7 +21,7 @@ use Carp qw(carp);
 use HTML::Entities qw(encode_entities);
 use URI::Escape qw(uri_escape_utf8);
 use List::MoreUtils qw(any firstidx);
-use Encode;
+use Encode qw(decode_utf8 encode_utf8);
 
 ## Form child objects;
 
@@ -1375,7 +1375,6 @@ sub is_completed {
   return $self->state eq 'completed';
 }
 
-use Encode;
 sub update_from_apr {
   my $self = shift;
   return $self unless $self->param; ## Short cut if the param list is empty!!!
