@@ -136,7 +136,7 @@ sub extra_file_info {
 sub render_single {
   my($self,$flag) = @_;
   ## Get first value....
-  my ($entry) = values %{$self->{'user_data'}{'files'}||{}};
+  my ($entry) = values %{$self->{'user_data'}[0]{'files'}||{}};
   return '<p>No image currently attached</p>' unless $entry;
   my $prefix = $self->config->option('code').q(/).$self->code;
   ## no critic (ImplicitNewlines)
