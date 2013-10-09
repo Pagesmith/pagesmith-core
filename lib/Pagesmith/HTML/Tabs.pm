@@ -71,6 +71,12 @@ sub set_option {
   return $self;
 }
 
+sub add_tabs {
+  my( $self, @tab_details ) = @_;
+  $self->add_tab( @{$_} ) foreach @tab_details;
+  return $self;
+}
+
 sub add_tab {
   my( $self, $key, $title, $html, $options ) = @_;
   $options ||= {};
