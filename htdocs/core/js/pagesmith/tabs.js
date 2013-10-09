@@ -109,7 +109,7 @@ $('.tabc:visible').livequery(function(){
     j--;
     m = list[j].match(/onshow_(\w+)/);
     if(m) {
-      fire_tabs( m[1], [] );
+      fire_tabs( '#'+m[1], [] );
     }
   }
 });
