@@ -696,6 +696,9 @@ $(function () {
     'blur',
     'input.multiple',
       function() {
+        if($(this).attr('type') === 'file' || $(this).attr('type') === 'FILE' ) {
+          return;
+        }
       var nd   = $(this),
           in_t = $.trim(nd.val()),
           in_node;
