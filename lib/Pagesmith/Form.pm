@@ -601,23 +601,24 @@ sub all_input_elements {
   }
   return @inputs;
 }
-sub set_next_text { ## These are now set on each of the sections!
+sub set_next { ## These are now set on each of the sections!
   my( $self, $txt ) = @_;
-  $self->current_stage->{'next_text'} = $txt;
+  $self->current_stage->set_next( $txt );
   return $self;
 }
 
-sub set_prev_text {
+sub set_back {
   my( $self, $txt ) = @_;
-  $self->current_stage->{'prev_text'} = $txt;
+  $self->current_stage->set_back( $txt );
   return $self;
 }
 
-sub set_prev_stage {
+sub set_back_stage {
   my( $self, $stage_code ) = @_;
-  $self->current_stage->{'prev_stage'} = $stage_code;
+  $self->current_stage->set_back_stage( $stage_code );
   return $self;
 }
+
 sub add_reset_button {
   my ( $self, $action, $text, $title ) = @_;
 
