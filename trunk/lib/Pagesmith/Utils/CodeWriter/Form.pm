@@ -55,7 +55,7 @@ sub admin {
 
     \$self->add_stage('$type');
     \$self->add_section( 'Administration of $type objects' );
-    \$self->set_next_text( 'Create' );";
+    \$self->set_next( 'Create' );";
   }
   my $populate_object_code = q();
   my $update_object_code   = q();
