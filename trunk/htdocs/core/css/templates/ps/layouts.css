@@ -155,3 +155,5 @@ p.portrait {color:#5c5150; font-size:0.7em; font-weight:normal; text-align:cente
 #rhsx { display: none }
 #mainx { width: 100% }
 
+.ep-plain { margin-top: 10px; }
+#landing #main .ep-plain h3 { background: none; border-bottom: 0 }
