@@ -50,11 +50,13 @@ sub sources {
 sub add_body {
   my( $self, $chunk ) = @_;
   ## We need to just need to push content to the browser!
+  $self->r->err_headers_out->unset( 'transfer-encoding' );
   if( $self->{'success'} ) {
     unless( exists $self->{'not_first_chunk'} ) {
       my $cl = length $chunk;
       $chunk =~ s{<[?]xml-stylesheet.*?[?]>}{}mxs;
       $chunk =~ s{<[?]xml-stylesheet.*?[?]>}{}mxs;
+      $chunk =~ s{\n\s*\n}{}mxsg;
       $chunk =~ s{<!DOCTYPE}{<?xml-stylesheet type="text/xsl" href="/core/css/das.xsl" ?>\n<!DOCTYPE}mxs;
       $chunk =~ s{<!DOCTYPE\s+([[:upper:]]+)\s+SYSTEM\s+(['"]).*?(\w+[.]dtd)\2\s*>}{<!DOCTYPE $1 SYSTEM "http://www.biodas.org/dtd/$3">}mxs; ## no critic (ComplexRegexes)
       ## no critic (ComplexRegexes)
