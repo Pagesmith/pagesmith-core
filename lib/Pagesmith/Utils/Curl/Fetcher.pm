@@ -42,6 +42,7 @@ sub new {
     'data'           => {},
     'curlm'          => WWW::Curl::Multi->new(),
     'proxy'          => undef,
+    'no_proxy'       => [],
     'timeout'        => 0,
     'conn_timeout'   => 0,
     'max_size'       => 0,
@@ -148,6 +149,16 @@ sub proxy {
 sub set_proxy {
   my( $self, $proxy ) = @_;
   $self->{'proxy'} = $proxy;
+  return $self;
+}
+sub no_proxy {
+  my $self = shift;
+  return $self->{'no_proxy'};
+}
+
+sub set_no_proxy {
+  my( $self, $domains ) = @_;
+  $self->{'no_proxy'} = $domains;
   return $self;
 }
 

@@ -58,7 +58,7 @@ sub new {
   $self->setopt( CURLOPT_SSL_VERIFYHOST, 0 );
   $self->setopt( CURLOPT_SSL_VERIFYPEER, 0 );
   $self->setopt( CURLOPT_SSLVERSION,     $SSL_VERSION );
-  $self->set_proxy( $fetcher->proxy ) if defined $fetcher && $fetcher->proxy;
+  $self->setup_proxy( $fetcher->proxy, $fetcher->no_proxy, $url ) if defined $fetcher;
 
   return $self;
 }
@@ -74,12 +74,36 @@ sub max_size {
   return $self->{'max_size'};
 }
 
-sub set_proxy {
-  my( $self, $proxy ) = @_;
-  my( $host, $port ) = split m{:}mxs, $proxy;
-  return $self unless defined $port;
-  $self->setopt( CURLOPT_PROXY,     $host );
-  $self->setopt( CURLOPT_PROXYPORT, $port );
+sub setup_proxy {
+  my( $self, $proxy, $no_proxy, $url ) = @_;
+  if( $proxy ) {
+    my $use_proxy = 1;
+    my $host_name = $url =~ m{\Ahttps?://([^/]+)}mxs ? $1 : q();
+    foreach my $rule ( @{$no_proxy} ) {
+      if( q(.) eq substr $rule,0,1 ) {
+        $use_proxy = 0 if $rule eq substr $host_name, -length $rule;
+      } else {
+        $use_proxy = 0 if $host_name eq $rule;
+      }
+    }
+    if( $use_proxy ) {
+      $proxy =~ s{\Ahttps?://}{}mxs;
+      my( $host, $port ) = split m{:}mxs, $proxy;
+      $port =~ s{\D}{}mxsg;
+      if( $port ) {
+        $self->setopt( CURLOPT_PROXY,     $host );
+        $self->setopt( CURLOPT_PROXYPORT, $port );
+      }
+      return $self;
+    }
+  }
+  return $self;
+}
+
+sub set_no_proxy {
+  my( $self, $no_proxy ) = @_;
+  $self->setopt( CURLOPT_NOPROXY, join q(, ), @{$no_proxy} );
+
   return $self;
 }
 
