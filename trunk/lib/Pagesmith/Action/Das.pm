@@ -58,6 +58,7 @@ const my %VALID_COMMANDS  => map { $_ => 1 } qw(
 
 use List::MoreUtils qw(any none);
 use Pagesmith::Utils::Curl::Fetcher;
+use Pagesmith::ConfigHash qw( proxy_url proxy_noproxy );
 
 sub das_error_message {
 #@params (self) (status int - HTTP status) (das_status int - DAS status) (message string+ DAS error message...)
@@ -215,8 +216,10 @@ sub run {
   $self->xml;
   ## no critic (LongChainsOfMethodCalls)
   my $c = Pagesmith::Utils::Curl::Fetcher->new
-          ->set_timeout( $TIMEOUT_CONN  )
-          ->set_timeout( $TIMEOUT_FETCH )
+          ->set_conn_timeout( $TIMEOUT_CONN  )
+          ->set_timeout(      $TIMEOUT_FETCH )
+          ->set_proxy(        proxy_url )
+          ->set_no_proxy(     proxy_noproxy )
           ->set_resp_class( 'Pagesmith::Utils::Curl::Response::Das' );
   ## use critic
   my @urls = map { sprintf q(http://%s/%s/%s?%s), $_, $source, $command, $self->args } @{$details->{'backend'}};
@@ -233,7 +236,6 @@ sub run {
       $c->short_sleep;
       next;
     }
-
     while( my $r = $c->next_request ) {
       $st = $r->response->{'code'};
       $c->remove($r);
@@ -255,6 +257,7 @@ sub run {
         $headers->{'Access-Control-Allow-Credentials'} ||= [ 'true' ];
         $headers->{'Access-Control-Allow-Origin'}        = [ q(*)];
         $headers->{'Access-Control-Expose-Headers'}    ||= ['X-DAS-Version, X-DAS-Server, X-DAS-Status, X-DAS-Capabilities'];
+        delete $headers->{'transfer-encoding'};
         $headers->{'X-DAS-Capabilities'}               ||= ['sources/1.0; dsn/1.0'];
         push @{$headers->{'X-DAS-Server'}}, $PROXY_NAME;
 
