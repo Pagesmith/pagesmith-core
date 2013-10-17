@@ -80,6 +80,7 @@ sub setup_proxy {
     my $use_proxy = 1;
     my $host_name = $url =~ m{\Ahttps?://([^/]+)}mxs ? $1 : q();
     foreach my $rule ( @{$no_proxy} ) {
+      $rule =~ s{,\s*\Z}{}mxs;
       if( q(.) eq substr $rule,0,1 ) {
         $use_proxy = 0 if $rule eq substr $host_name, -length $rule;
       } else {
@@ -97,6 +98,7 @@ sub setup_proxy {
       return $self;
     }
   }
+  $self->setopt( CURLOPT_PROXY,     q() );
   return $self;
 }
 
