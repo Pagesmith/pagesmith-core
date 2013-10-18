@@ -39,28 +39,21 @@ exit 0 unless $config;
 exit 0 unless $config->set_repos( $repos );
 ## User can commit to repository
 
-unless( $config->set_user( $user ) ) {
-  $support->send_message( "User '%s' unable to update repository '%s'\n", $user, $repos )->clean_up();
-  ## User can't perform any action on repository...
-  exit 1;
-}
+## User can't perform any action on repository...
+exit $support->send_message( "User '%s' unable to update repository '%s'\n", $user, $repos )->clean_up
+  unless $config->set_user( $user );
 
-unless( $config->can_perform( $path, 'lock' ) ) {
-  $support->send_message( "User '%s' unable to lock/unlock this path '%s' in repository '%s'\n", $user, $path, $repos )->clean_up();
-  ## User can't lock this path!
-  exit 1;
-}
+## User can't lock this path!
+exit $support->send_message( "User '%s' unable to lock/unlock this path '%s' in repository '%s'\n", $user, $path, $repos )->clean_up
+  unless $config->can_perform( $path, 'lock' );
 
 exit 0 if $config->can_perform( $path, 'break' ); ## Can break lock in all cases!
 
 my(@lines) = $support->svnlook( 'lock', $repos, $path );
 
-unless( @lines ) {
-  $support->send_message( "No lock present on this path '%s' in repository '%s'\n", $path, $repos )->clean_up();
-  ## User can't lock this path!
-  exit 1;
-
-}
+## User can't lock this path!
+exit $support->send_message( "No lock present on this path '%s' in repository '%s'\n", $path, $repos )->clean_up
+  unless @lines;
 
 my $unlock_info = {};
 if( @lines ) {
@@ -82,12 +75,10 @@ if( @lines ) {
   }
 }
 
-if( $config->user ne $unlock_info->{'Owner'} ) {
-  $support->send_message(
-    "You cannot break the lock on this file\n\nUser '%s' has lock on this file with comment:\n  %s\n\n",
-    $unlock_info->{'Owner'}, $unlock_info->{'comment'})->clean_up();
-  exit 1;
-}
+exit $support->send_message(
+  "You cannot break the lock on this file\n\nUser '%s' has lock on this file with comment:\n  %s\n\n",
+  $unlock_info->{'Owner'}, $unlock_info->{'comment'})->clean_up
+  unless $config->user eq $unlock_info->{'Owner'};
 
 exit 1;
 

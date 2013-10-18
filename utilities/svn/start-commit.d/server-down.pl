@@ -38,8 +38,6 @@ my $support = Pagesmith::Utils::SVN::Support->new();
 exit 0 unless -e "$ROOT_PATH/maint";
 
 ## Otherwise send an error and cancel the commit
+exit $support->send_message(
+  'The stage/publish mechanism on this SVN repository is currently disabled - please try again later' )->clean_up;
 
-$support->send_message(
- 'The stage/publish mechanism on this SVN repository is currently disabled - please try again later' )->clean_up();
-
-exit 1;  # Commit is cancelled in this case!

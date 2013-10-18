@@ -20,6 +20,8 @@ use English qw(-no_match_vars $PROGRAM_NAME);
 use File::Basename qw(dirname);
 use Const::Fast qw(const);
 
+exit 0 if 1;
+
 my $ROOT_PATH;
 BEGIN {
   $ROOT_PATH = dirname(dirname(dirname(dirname(abs_path($PROGRAM_NAME)))));

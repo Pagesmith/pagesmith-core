@@ -60,11 +60,9 @@ exit 0 unless $config->set_repos( $repos );
 
 my( $user, $datestamp, $length, @msg ) = $support->svnlook( 'info', $repos, '-t', $txn );
 
-unless( $config->set_user( $user ) ) {
-  $support->send_message( 'User "%s" unable to update repository "%s"', $user, $repos )->clean_up();
-  ## User can't perform any action on repository...
-  exit 1;
-}
+## User can't perform any action on repository...
+exit $support->send_message( 'User "%s" unable to update repository "%s"', $user, $repos )->clean_up
+  unless $config->set_user( $user );
 
 my @changed  = $support->svnlook( 'changed',      $repos, '-t', $txn );
 my $forcing = @msg && $msg[0] =~ m{\[[\s\w]*(force)[\s\w]*\]}mxs ? 1 : 0;
@@ -307,6 +305,13 @@ sub check_aspell {
   my $params = shift;
   return 0 if $params->{'filename'} =~ m{\A[^/]+/config/}mxs; ## Either in top level config
   printf {*STDERR} "aspell's prepl & pws directories files should be in the config directory\n", $params->{'filename'};
+  return 1;
+}
+
+sub check_bash {
+  my $params = shift;
+  return 0 if $params->{'filename'} =~ m{/utilities/}mxs;
+  printf {*STDERR} "bash scripts should exist in a utilities directory...\n";
   return 1;
 }
 
@@ -645,7 +650,7 @@ sub check_stylesheet {
 #DEV - add code to check css files in "css" directory....
   my $params = shift;
   return 1 if _check_lower( $params->{'filename'}, 'CSS' );
-  return 0 if $params->{'filename'} =~ m{/css|i/}mxs;
+  return 0 if $params->{'filename'} =~ m{/css/}mxs;
   printf {*STDERR} "CSS file '%s' should be in a /css/ directory\n", $params->{'filename'};
   return 1;
 }

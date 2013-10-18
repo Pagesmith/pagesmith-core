@@ -39,17 +39,13 @@ exit 0 unless $config;
 exit 0 unless $config->set_repos( $repos );
 ## User can commit to repository
 
-unless( $config->set_user( $user ) ) {
-  $support->send_message( 'User "%s" unable to update repository "%s"', $user, $repos )->clean_up();
-  ## User can't perform any action on repository...
-  exit 1;
-}
+## User can't perform any action on repository...
+exit $support->send_message( 'User "%s" unable to update repository "%s"', $user, $repos )->clean_up
+  unless $config->set_user( $user );
 
-unless( $config->can_perform( $path, 'lock' ) ) {
-  $support->send_message( 'User "%s" unable to lock this path "%s" in repository "%s"', $user, $path, $repos )->clean_up();
-  ## User can't lock this path!
-  exit 1;
-}
+## User can't lock this path!
+exit $support->send_message( 'User "%s" unable to lock this path "%s" in repository "%s"', $user, $path, $repos )->clean_up
+  unless $config->can_perform( $path, 'lock' );
 
 exit 0 if $config->can_perform( $path, 'break' ); ## Can break lock!
 
@@ -76,9 +72,8 @@ if( @lines ) {
     }
   }
 }
-$support->send_message(
+
+exit $support->send_message(
   "You cannot break the lock on this file\n\nUser '%s' has lock on this file with comment:\n  %s",
-  $lock_info->{'Owner'}, $lock_info->{'comment'} )->clean_up();
+  $lock_info->{'Owner'}, $lock_info->{'comment'} )->clean_up;
 
-
-exit 1;
