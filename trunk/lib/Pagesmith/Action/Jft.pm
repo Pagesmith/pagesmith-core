@@ -24,6 +24,8 @@ use HTML::Entities qw(encode_entities);
 use HTML::HeadParser;    ## Used to parse the HTML header
 use Image::Size qw(imgsize);
 
+use Const::Fast qw(const);
+const my $TIME_FMT => '%a, %d %b %Y %H:%M %Z';
 #----------------------------------------------------------
 
 my %ext_map = (
@@ -66,7 +68,7 @@ sub run {
   $dir =~ s{\A/}{}mxs;
   my $full_dir = realpath( File::Spec->rel2abs( $dir, $root ) );
   return $self->not_found unless -e $full_dir;    ## Check exists and database
-  if ( -d $full_dir ) {
+  if ( -d $full_dir && $self->r->method eq 'POST' ) {
     $dir = "$dir/" unless $dir =~ m{/\Z}mxs;
     $dir =~ s{\A/}{}mxs;
     $full_dir .= q(/);
@@ -111,58 +113,63 @@ sub run {
       $st_gid,$st_rdev,$st_size,$st_atime,$st_mtime,
       $st_ctime,$st_blksize,$st_blocks ) = stat $full_dir;
 
+    if( -d $full_dir ) {
+      my $two_col_left = $self->twocol
+        ->add_entry( 'File name',      q(/) . encode_entities($dir)   )
+        ->add_entry( 'File type',      'Directory' );
+
+      my $two_col_right = $self->twocol
+        ->add_entry( 'Last modified',  time2str( $TIME_FMT, $st_mtime ) );
+
+      $self->printf(q(<div class="col1">%s</div><div class="col2" style="height:150px;overflow:auto">%s</div>),
+        $two_col_left->render, $two_col_right->render );
+      return $self->ok;
+    }
+
     my ($ext) = $dir =~ m{[.]([^.]+)\Z}mxs ? $1 : q();
     $ext = exists $types{$ext} ? $types{$ext} : 'unknown';
 
     ## Get author information so we can set it!
-    my ($owner_id,$u_passwd,$u_uid,$u_gid,$u_quota,$u_comment,$owner_name,$u_dir,$u_shell,$u_expire) = getpwuid $st_uid;
-    $owner_name =~ s{,+\s*}{}mxs;
-    my ($group_id) = getgrgid $u_gid;                  # Get author information so we can set it!
-    my $owner     = sprintf '%s (%s:%s)', $owner_name, $owner_id, $group_id;
-
-    my @entries = (
-      'File name'     => q(/) . encode_entities($dir),
-      'File type'     => $types_desc{$ext},
-      'File size'     => ( -s $full_dir ) . ' bytes',
-      'Last modified' => time2str( '%a, %d %b %Y %H:%M %Z', $st_mtime ),
-      'Owner'         => $owner,
-    );
-    push @entries, 'Actions', '****';
+    ## no critic (LongChainsOfMethodCalls)
+    my $two_col_left = $self->twocol
+      ->add_entry( 'File name',      q(/) . encode_entities($dir)   )
+      ->add_entry( 'File type',      $types_desc{$ext}              )
+      ->add_entry( 'File size',      sprintf '%d bytes', -s $full_dir    )
+      ->add_entry( 'Last modified',  time2str( $TIME_FMT, $st_mtime ) );
+    ## use critic
+    my $two_col_right = $self->twocol;
 
     my @actions;
     if ( $ext eq 'img' ) {
-      my ( $x, $y ) = imgsize($full_dir);
-      push @entries, 'Image dimensions', " ($x x $y)";
-    }
-    if ( $ext eq 'html' ) {
+      $two_col_right->add_entry( 'Image dimensions', sprintf ' (%d x %d)', imgsize($full_dir) );
+    } elsif ( $ext eq 'html' ) {
       if( open my $fh, '<', $full_dir ) {
         local $INPUT_RECORD_SEPARATOR = undef;
         my $x = <$fh>;
         close $fh; ##no critic (CheckedSyscalls CheckedClose)
         if ( $x =~ m{<head.*?>(.*?)</head>}mxs ) {
+          (my $head = $1 ) =~ s{<%.*?%>}{}mxsg;
           my $head_parser = HTML::HeadParser->new();
-          my $head_info   = $head_parser->parse($1);
-          my $t           = $head_info->header('Title');
-          push @entries, 'Title', $t if $t;
-          foreach (qw(Author Keywords Description)) {
-            my $tvar = $head_info->header("X-Meta-$_");
-            push @entries, $_, $tvar if $tvar;
+          my $head_info   = $head_parser->parse($head);
+          ## no critic (DeepNests)
+          if( $head_info ) {
+            my $t           = $head_info->header('Title');
+            $two_col_right->add_entry( 'Title', $t ) if $t;
+            foreach (qw(Author Keywords Description)) {
+              my $tvar = $head_info->header("X-Meta-$_");
+              $two_col_right->add_entry( $_, $tvar ) if $tvar;
+            }
           }
+          ## use critic
         }
-        push @actions, qq(<a href="/action/Raw/$dir?format=html" target="pg">Source</a>);
+        push @actions, qq(<a href="/action/Raw/$dir?format=html" target="pg">Source</a>),
+                       qq(<a href="/action/Developer_Edit/$dir" target="pg">Edit</a>);
       }
     }
 
-    my $return = q();
-    my $jump = int @entries/2/2;
-    while ( my ( $k, $v ) = splice @entries, 0, 2 ) {
-      if ( $k eq 'Actions' ) {
-        $v = @actions ? join( q( ), @actions ) : q(--);
-      }
-      $return .= qq(\n  </dl>\n</div>\n<div class="col2">\n  <div class="twocol">) unless $jump--;
-      $return .= sprintf "\n  <dt>%s:</dt>\n  <dd>%s</dd>", $k, $v;
-    }
-    $self->print(qq(<div class="col1"><dl class="twocol">$return\n  </dl>\n</div>));
+    $two_col_left->add_entry( 'Actions', join q( ), @actions ) if @actions;
+    $self->printf(q(<div class="col1">%s</div><div class="col2" style="height:150px;overflow:auto">%s</div>),
+      $two_col_left->render, $two_col_right->render );
   }
   return $self->ok;
 }
