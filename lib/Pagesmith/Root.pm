@@ -166,7 +166,7 @@ sub json_handler {
 
 sub trim {
   my( $self, $string ) = @_;
-  return $string =~ m{\A\s*(.*?)\s*\Z}mxs ? $1 : $string;
+  return scalar reverse unpack 'A*',reverse unpack 'A*',$string;
 }
 
 sub json_encode {

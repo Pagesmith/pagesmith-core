@@ -278,11 +278,6 @@ sub last_modified {
   return $self;
 }
 
-sub trim {
-  my( $self, $str ) = @_;
-  return scalar reverse unpack 'A*',reverse unpack 'A*',$str;
-}
-
 sub _trim {
   my( $self, $str ) = @_;
   return unless defined $str;

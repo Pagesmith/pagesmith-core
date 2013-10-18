@@ -99,9 +99,7 @@ sub _trim {
   my $x = shift;
   return unless defined $x;
   $x =~ s{\s+}{ }mxgs;
-  $x =~ s{\A\s+}{}mxs;
-  $x =~ s{\s+\Z}{}mxs;
-  return $x;
+  return $self->trim( $x );
 }
 
 sub param {

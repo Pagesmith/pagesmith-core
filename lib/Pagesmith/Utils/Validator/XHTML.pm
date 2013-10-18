@@ -108,9 +108,7 @@ sub info {
 sub trim {
   my( $self, $string ) = @_;
   $string =~ s{\s+}{ }mxgs;
-  $string =~ s{\A\s}{}mxgs;
-  $string =~ s{\s\Z}{}mxgs;
-  return $string;
+  return scalar reverse unpack 'A*',reverse unpack 'A*',$string;
 }
 
 ##no critic (ExcessComplexity)
