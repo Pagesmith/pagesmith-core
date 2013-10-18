@@ -487,7 +487,7 @@ sub validate {
 
 sub tidy_up {
   my( $self, $string, $flag ) = @_;
-  return $flag eq 'utf-8' ? decode_utf8($string) : $string; #encode_utf8( $string );
+  return $self->trim( $flag eq 'utf-8' ? decode_utf8($string) : $string );
 }
 
 sub update_from_apr {
