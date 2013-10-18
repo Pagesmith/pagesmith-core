@@ -40,7 +40,7 @@ exit 1 unless @ARGV == 2;               ## Two parameters
 my( $repos, $rev ) = @ARGV;             ## Repository name and revision
 
 my $support = Pagesmith::Utils::SVN::Support->new;
-   $support->turn_on_debug->log_revision( $rev );
+   $support->turn_on_debug->log_revision( $repos, $rev );
    $support->write_log( "Starting to update server - repository $repos" );
 my $config  = Pagesmith::Utils::SVN::Config->new( $ROOT_PATH );
    $support->write_log( 'Read in config' );
@@ -50,7 +50,9 @@ my( $author, $datastamp, $len, @msg )  = $support->svnlook( 'info', $repos, '-r'
 my $user    = Pagesmith::Utils::SVN::Support->get_user_info( $author );
 
 exit 0 unless $config;                                    ## Could not parse file so returned UNDEF!
+$support->write_log( "Config $repos" );
 exit 0 unless $config->set_repos( $repos );               ## We have not configured this repository - so we don't need to send anything
+$support->write_log( 'set repos' );
 exit 1 unless $config->set_user( $user->{'username'} );   ## User is not valid! shouldn't happen svn ci should have failed
 
 $support->write_log( 'Initialiased repos and user' );

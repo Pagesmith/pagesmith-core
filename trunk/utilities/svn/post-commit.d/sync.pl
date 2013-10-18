@@ -21,6 +21,7 @@ use File::Basename qw(dirname);
 use Const::Fast qw(const);
 
 exit 0 if @ARGV < 0;
+exit 0 if 1;
 
 my $ROOT_PATH;
 BEGIN {
@@ -51,9 +52,20 @@ exit 1 unless $config->set_user( $user->{'username'} );
 my $mirrors = $config->info('mirrors');
 
 exit 0 unless $mirrors;
+my $svn_dir = $user->{'home'}.'/.subversion-mirror';
+exit 0 unless -d $svn_dir; ## Key not configured
+
 foreach my $mirror_config ( @{$mirrors} ) {
 ##use Data::Dumper; open FH,'>',"/tmp/svn-$$"; print FH Dumper( $config->info('mirrors') ); close FH;
-  $support->read_from_process( qw(/usr/bin/svnsync synchronize --non-interactive --sync-username), $mirror_config->{'user'},
+  next unless $mirror_config->{'user'} eq 'svn-user';
+  $support->read_from_process(
+    'usr/bin/svnsync',
+    'synchronize',
+    '--non-interactive',
+    '--config-dir',
+    $svn_dir,
+    '--sync-username',
+    $mirror_config->{'user'},
     sprintf 'svn+ssh://%s@%s%s/%s',
       $mirror_config->{'user'}, $mirror_config->{'host'}, $mirror_config->{'path'},
       $config->info('repository'),

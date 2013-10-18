@@ -53,9 +53,9 @@ my $words = (my @T = split m{\s+}mxs, join q( ), @msg ); # @T to avoid deprecate
 
 exit 0 if $length >= $MIN_LENGTH && $words >= $MIN_WORDS; # Commit can go ahead so we exit with value 0
 
-$support->send_message( sprintf
+# Commit is cancelled in this case!
+exit $support->send_message( sprintf
   "Please use a more meaningful commit message (at least %d characters and %d words)\n\n  '%s'",
     $MIN_LENGTH, $MIN_WORDS,
-    join q( ), @msg)->clean_up();
+    join q( ), @msg)->clean_up;
 
-exit 1;  # Commit is cancelled in this case!
