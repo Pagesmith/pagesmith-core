@@ -161,7 +161,6 @@
 
                 if (table.tBodies.length == 0) return; // In the case of empty tables
                 var rows = table.tBodies[0].rows;
-
                 if (rows[0]) {
 
                     var list = [],
@@ -187,7 +186,7 @@
                         if (table.config.debug) {
                             parsersDebug += "column:" + i + " parser:" + p.id + "\n";
                         }
-if( p.id === 'none' ) { $($headers[i]).removeClass('header'); }
+                        if( p.id === 'none' ) { $($headers[i]).removeClass('header'); }
 
                         list.push(p);
                     }
@@ -247,7 +246,6 @@ if( p.id === 'none' ) { $($headers[i]).removeClass('header'); }
             /* utils */
 
             function buildCache(table) {
-
                 if (table.config.debug) {
                     var cacheTime = new Date();
                 }
@@ -269,15 +267,14 @@ if( p.id === 'none' ) { $($headers[i]).removeClass('header'); }
                     // if this is a child row, add it to the last row's children and
                     // continue to the next row
                     if (c.hasClass(table.config.cssChildRow)) {
-                        cache.row[cache.row.length - 1] = cache.row[cache.row.length - 1].add(c);
+                        cache.row[cache.row.length - 1] = cache.row[cache.row.length - 1].add(c.clone());
                         // go to the next for loop
                         continue;
                     }
-
-                    cache.row.push(c);
+                    cache.row.push(c.clone());
 
                     for (var j = 0; j < totalCells; ++j) {
-                        cols.push(parsers[j].format(getElementText(table.config, c[0].cells[j]), table, c[0].cells[j]));
+                      cols.push(parsers[j].format(getElementText(table.config, c[0].cells[j]), table, c[0].cells[j]));
                     }
 
                     cols.push(cache.normalized.length); // add position for rowCache
@@ -337,11 +334,8 @@ if( p.id === 'none' ) { $($headers[i]).removeClass('header'); }
 
                 for (var i = 0; i < totalRows; i++) {
                     var pos = n[i][checkCell];
-
                     rows.push(r[pos]);
-
                     if (!table.config.appender) {
-
                         //var o = ;
                         var l = r[pos].length;
                         for (var j = 0; j < l; j++) {
@@ -862,15 +856,15 @@ if( p.id === 'none' ) { $($headers[i]).removeClass('header'); }
             };
             this.clearTableBody = function (table) {
               if( table.tBodies.length == 0 ) { return; }
-                if (document.all) {
-                    function empty() {
-                        while (this.firstChild)
-                        this.removeChild(this.firstChild);
-                    }
-                    empty.apply(table.tBodies[0]);
-                } else {
-                    table.tBodies[0].innerHTML = "";
+              if (document.all) {
+                function empty() {
+                  while (this.firstChild)
+                    this.removeChild(this.firstChild);
                 }
+                empty.apply(table.tBodies[0]);
+              } else {
+                  table.tBodies[0].innerHTML = "";
+              }
             };
         }
     });
