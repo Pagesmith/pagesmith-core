@@ -170,11 +170,8 @@
           }
 
           tableBody = $(table.tBodies[0]);
-
-          // clear the table body
-
           for (i = s; i < e; i++) {
-            o = rows[i];
+            o = rows[i].clone(); // So IE 11 doesn't remove contents!
             l2 = o.length;
             for (j = 0; j < l2; j++) {
               tableBody[0].appendChild(o[j]);
