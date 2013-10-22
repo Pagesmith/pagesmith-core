@@ -17,12 +17,14 @@ use version qw(qv); our $VERSION = qv('0.1.0');
 
 use English qw(-no_match_vars $INPUT_RECORD_SEPARATOR);
 
+use Const::Fast qw(const);
+const my %IMG_TYPES => map { ($_=>1) } qw( PNG JPG GIF BMP TIF JPEG TIFF );
 use MIME::Base64 qw(encode_base64);
 use Digest::MD5 qw(md5_hex);
 use Image::Size qw(imgsize);
 use Image::Magick;
-use WWW::Curl::Easy;
-use Pagesmith::ConfigHash qw(proxy_url);
+use Pagesmith::Utils::Curl::Fetcher;
+use Pagesmith::ConfigHash qw(proxy_url docroot);
 
 my $_cid = 0;
 
@@ -38,7 +40,7 @@ sub new {
     'width'     => 0,
     'height'    => 0,
     'image'     => 1,
-    'inline'    => 'inline',
+    'type'      => 'inline',
   };
   bless $self, $class;
   return $self;
@@ -184,23 +186,29 @@ sub set_image {
   return $self;
 }
 
-sub inline {
+sub type {
 #@getter
 #@self
-#@return (String) value of 'inline'
+#@return (String) value of 'type'
 
   my $self = shift;
-  return $self->{'inline'};
+  return $self->{'type'};
 }
 
-sub set_inline {
+sub set_type {
 #@setter
 #@self
-#@inline (String) value of 'inline'
+#@inline (String) value of 'type'
 #@return $self
 
-  my( $self, $inline ) = @_;
-  $self->{'inline'} = $inline;
+  my( $self, $type ) = @_;
+  $self->{'type'} = $type;
+  return $self;
+}
+
+sub make_inline {
+  my $self = shift;
+  $self->{'type'} = 'inline';
   return $self;
 }
 
@@ -246,87 +254,87 @@ sub set_width {
 
 
 sub render {
-  my $self = shift;
-  my $render = q();
-  if( $self->image ) {
-    $render .= sprintf 'Content-Type: %s;', $self->mime;
-  } else {
-    $render .= sprintf
-      "Content-Disposition: attachment\r\nContent-Type: %s; name= %s\r\n",
-      $self->mime, $self->code;
-    if( $self->encoding ) {
-      $render .= sprintf "Content-Encoding: %s\r\n", $self->encoding;
-    }
-  }
-  $render .= sprintf
-    "Content-ID: %s\r\nContent-Transfer-Encoding: base64\r\n\r\n%s",
-    $self->cid,
-    encode_base64( $self->content );
-  return $render;
+  my ( $self, $type ) = @_;
+  return sprintf qq(Content-Type: %s; name="%s"\r\nContent-Transfer-Encoding: base64\r\nContent-ID: <%s>\r\nContent-Disposition: inline; filename="%s"\r\n\r\n%s),
+    $self->mime, $self->filename, $self->cid, $self->filename, encode_base64($self->content) if $type eq 'image';
+  return sprintf qq(Content-Type: %s; name="%s"\r\nContent-Transfer-Encoding: base64\r\nContent-Disposition: attachment; filename="%s"\r\n\r\n%s),
+    $self->mime, $self->filename, $self->filename, encode_base64($self->content);
 }
 
 sub load_from_string {
-  my( $self, $code, $string, $mime_type );
+#@params ($self, string $code, string $string, string $type)
+#@return
+  my( $self, $code, $string, $mime_type ) = @_;
   $mime_type ||= 'text/plain';
   $self->set_content(  $string );
   $self->set_code(     $code );
   $self->set_filename( $code =~ m{([^\s/]+)\Z}msx ? $1 : $code );
   $self->set_cid(      md5_hex( $_cid++ ) );
-  $self->set_mime(     $mime_type;
-  return unless $mime_type =~ m{\Aimage/(.*)\Z}msx ) && !$self->width;
+  $self->set_mime(     $mime_type );
+  ## For images we add additional information about them being an image!
+  return 1 unless $mime_type =~ m{\Aimage/(.*)\Z}msx;
 
+  ## Load image with Image::Magick to get it's details...!
   my $image = Image::Magick->new( $1 );
   $image->BlobToImage( $string );
-  return unless $image->get('width');
+  return 1 unless $image->get('width');
   $self->set_width(  $image->get( 'width'  ) );
   $self->set_height( $image->get( 'height' ) );
   $self->set_image(  1 );
-  return;
+  return 1;
 }
 
 sub load_from_file {
-  my( $self, $file, $code, $mime_type ) = @_;
+  my( $self, $code, $file, $mime_type ) = @_;
   $mime_type ||= q();
   $code      = $file unless $code;
   return 0 unless -e $file && -r $file && -f $file; ## no critic (Filetest_f)
   if( open my $fh, q(<), $file ) {
     local $INPUT_RECORD_SEPARATOR = undef;
-    my $img_content = <$fh>;
+    my $contents = <$fh>;
     close $fh; ## no critic (CheckedSyscalls CheckedClose)
-    my( $x, $y, $type ) = imgsize( $file );
-    return unless $x;
-    $self->set_width(  $x );
-    $self->set_height( $y );
-    $mime_type ||= 'image/'.lc $type;
-    return $self->load_from_string( $code, $string, $mime_type );
+    unless( $mime_type ) { ## If no mime-type set see if we have an image!
+      my( $x, $y, $type ) = imgsize( $file );
+      my $k = uc $type;
+      if( $x && $y && exists $IMG_TYPES{ $k }) {
+        $self->set_width(  $x );
+        $self->set_height( $y );
+        $mime_type ||= 'image/'.lc $type;
+      } else {
+        $mime_type = 'application/octet-stream';
+      }
+    }
+    return $self->load_from_string( $code, $contents, $mime_type );
   }
-  return;
+  return 0;
 }
 
 sub load_from_url {
-  my( $self, $url, $doc_root, $mime_type ) = @_;
-  $doc_root ||= q();
+  my( $self, $url, $mime_type ) = @_;
   $mime_type ||= q();
-  if( $url =~ m{\Ahttps?://}msx ) {
-    ## Do a curl fetch here!
-    my $curl = WWW::Curl::Easy->new;
-## no critic (CallsToUndeclaredSubs)
-    $curl->setopt( CURLOPT_URL, $url );
-    $curl->setopt( CURLOPT_HEADER, 0 );
-    $curl->setopt( CURLOPT_RETURNTRANSFER, 1 );
-    my( $host, $port ) = split m{:}mxs, proxy_url();
-    $self->setopt( CURLOPT_PROXY,     $host );
-    $self->setopt( CURLOPT_PROXYPORT, $port );
-    my $content;
-    $curl->setopt(CURLOPT_WRITEDATA,\$content);
-    my $ret = $curl->perform;
-## use critic;
-    return unless $content;
-    return $self->load_from_string( $url, $content, $mime_type );
+  unless( $url =~ m{\Ahttps?://}msx ) { ## This is a relative URL!
+    return $self->load_from_file( $url, docroot.$url, $mime_type );
   }
-  $doc_root ||= q();#;$GLOBALS['DOCUMENT_ROOT'];
-
-  return $self->load_from_file( $doc_root.$url, $url, $mime_type );
+  ## Do a curl fetch here!
+  ## We could optimise this in the future (by storing the location
+  ## in this object - and pushing the fetch up a level (or to be
+  ## cheeky and initialise objects here and run the fetcher loop
+  ## ##VERY SCARY!## to push this up a level.. and so parallize fetching...
+  my $c        = Pagesmith::Utils::Curl::Fetcher->new;
+  my $req      = $c->new_request( $url );
+  my $contents = q();
+  while( $c->has_active ) {
+    if( $c->active_transfers == $c->active_handles ) {
+      $c->short_sleep;
+      next;
+    }
+    ## We know we only have one request!
+    my $r = $c->next_request;
+    $c->remove( $r );
+    $contents = $r->response->body if $r->response->{'success'};
+  }
+  return 0 unless $contents;
+  return $self->load_from_string( $url, $contents, $mime_type );
 }
 
 1;
