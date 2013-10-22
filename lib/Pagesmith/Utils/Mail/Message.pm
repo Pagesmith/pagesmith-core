@@ -556,7 +556,7 @@ sub headers {
 sub email {
   my( $self, $to ) = @_;
   my $content = $self->content;
-  $self->set_header( 'to', $to );
+  $self->set_header( 'To', $to );
   return sprintf "<pre>%s\r\n\r\n%s</pre>",
     $self->encode( $self->formatted_headers ),
     $self->encode( $content ) if $self->send_method eq 'debug_html';
