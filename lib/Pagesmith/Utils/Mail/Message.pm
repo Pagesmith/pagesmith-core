@@ -27,13 +27,14 @@ const my %PRIORITY_MAP    => map { uc $_ } reverse %PRIORITIES;
 const my $NORMAL_PRIORITY => $PRIORITY_MAP{ 'NORMAL' };
 const my $BOUNDARY_LENGTH => 12;
 const my $LINE            => q(-) x $COLUMNS;
-use Text::Wrap qw();
 
+use Text::MultiMarkdown;
 use Pagesmith::Core qw(safe_md5);
 use Pagesmith::ConfigHash qw(template_dir);
 use Pagesmith::Utils::Curl::Fetcher;
 use Pagesmith::Utils::Mail::Person;
 use Pagesmith::Utils::Mail::File;
+use Pagesmith::Utils::Wrap;
 
 use base qw(Pagesmith::Root);
 
@@ -50,11 +51,16 @@ sub new {
     'headers'         => {'X-Application' => ["Pagesmith/Mail-$VERSION"]},
     'body_text'       => [],
     'body_html'       => [],
+    'wrapper'         => undef,
   };
   bless $self, $class;
   return $self;
 }
 
+sub wrapper {
+  my $self = shift;
+  return $self->{'wrapper'} ||= Pagesmith::Utils::Wrap->new;
+}
 sub images {
   my $self = shift;
   return values %{$self->{'images'}||{}};
@@ -214,9 +220,10 @@ sub address {
 sub add_heading {
   my( $self, $text, $options ) = @_;
   $self->add_text($LINE,"\n",$text,"\n",$LINE,"\n\n");
-  $self->add_html( sprintf "<h3%s>\n%s\n</h3>",
-    exists $self->{'styles'}{'h3'}
-         ? sprintf ' style="%s"', $self->encode( join q(; ),@{$self->{'styles'}{'h3'}} )
+  my $level = exists $options->{'main'} ? 'h2' : 'h3';
+  $self->add_html( sprintf "<$level%s>\n%s\n</$level>",
+    exists $self->{'styles'}{$level}
+         ? sprintf ' style="%s"', $self->encode( join q(; ),@{$self->{'styles'}{$level}} )
          : q(),
     $self->encode( $text ),
   );
@@ -251,16 +258,32 @@ sub add_list {
   my $numbered = $options->{'type'} && $options->{'type'} eq 'number';
   $self->add_html( $numbered ? '<ol>' : '<ul>' );
   my $counter = 1;
-  $self->add_block( $_, {
-    'type'  => 'li',
-    'class' => $options->{'list_class'}||q(),
-    'text_prefix' => $numbered ? ( sprintf '%2d) ', $counter++ ) : q(  * ),
-    'subs_prefix' => q(    ),
-  } ) foreach @{$list};
+  foreach( @{$list} ) {
+    $self->wrapper->set_headers(
+      $numbered ? ( sprintf '%2d) ', $counter++ ) : q(  * ),
+      q(    ),
+    );
+    $self->add_block( $_, {
+      'type'  => 'li',
+      'class' => $options->{'list_class'}||q(),
+    } );
+  }
+  $self->wrapper->reset_headers;
   $self->add_html( $options->{'type'} && $options->{'type'} eq 'number' ? '</ol>' : '</ul>' );
   return $self;
 }
 
+sub add_markdown {
+  my( $self, $text ) = @_;
+  my $m    = Text::MultiMarkdown->new( 'heading_ids' => 0, 'img_ids' => 0 );
+  my $html = $m->markdown( $text );
+
+  $html =~ s{<h([123])(.*?</h)\1>}{'<h'.($1+1).$2.($1+1).'>'}mxseg;
+  $html = "<p>$html</p>" unless $html =~ m{\A<}mxsg;
+  return $self->add_text( $text )
+              ->load_images_from_html(\$html)
+              ->add_html( $self->modify_markdown_html($html) ); ## Need to do some post processing here!
+}
 sub add_block {
   my( $self, $text, $options ) = @_;
   $options = { 'type' => $options } unless ref $options;
@@ -269,12 +292,7 @@ sub add_block {
   if( exists $options->{'class'} ) {
     push @style, @{$self->{'styles'}{".$_"}||[]} foreach split m{\s+}mxs, $options->{'class'};
   }
-  ## no critic (PackageVars)
-  local $Text::Wrap::unexpand = 0;
-  local $Text::Wrap::columns  = $COLUMNS;
-  local $Text::Wrap::overflow = 'huge';
-  ## use critic
-  $self->add_text( Text::Wrap::wrap( $options->{'text_prefix'}||q(),$options->{'subs_prefix'}||q(),$text ), "\n" );
+  $self->add_text( $self->wrapper->wrap( $text ), "\n" );
   ## no critic (InterpolationOfMetachars)
   $self->add_html( sprintf '<%1$s%3$s>%2$s</%1$s>',
     $block_type,
@@ -292,6 +310,7 @@ sub format_html {
   $string =~ s{(https?://\S+)}{<a href="$1">$1</a>}mxsg;
   return $string;
 }
+
 ## Loading images...
 sub load_images_from_html {
   my( $self, $html ) = @_;
@@ -587,12 +606,12 @@ sub content {
     unless $self->is_mime && $self->template_html;
   my $b = $self->boundary;
   ## Get HTML mail content!
-## no critic (ImplicitNewlines InterpolationOfMetachars)  
+## no critic (ImplicitNewlines InterpolationOfMetachars)
   my $html_mail_content = 'Content-Type: text/html; charset=UTF-8
 Content-Transfer-Encoding: 8bit
 
 '.$self->content_html;
-  my $plain_mail_content = 'Content-Type: text/plain; charset=UTF-8; format=flowed
+  my $plain_mail_content = 'Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
 
 '.$self->content_plain;
@@ -646,8 +665,71 @@ sub content_html {
 sub content_plain {
   my $self = shift;
   my $body = $self->substitute( $self->body_text );
-  ( my $html = $self->template_text ) =~ s{\[\[content\]\]}{$body}mxs;
-  return $html;
+  ( my $text = $self->template_text ) =~ s{\[\[content\]\]}{$body}mxs;
+  $text =~ s{(?<!\r)\n}{\r\n}msxg;
+  return $text;
+}
+
+sub modify_markdown_html {
+  my ( $self, $html ) = @_;
+  ## We need to open each tag in turn and deal with it...
+  my @in = split m{(<.*?>)}mxs, $html;
+  my @html;
+  my @tags;
+  my @style_groups =
+    sort { $a->[2] <=> $b->[2] }
+    map  { [ $self->{'styles'}{$_->[0]}, [reverse @{$_->[1]}], scalar grep { m{\w}mxs } @{$_->[1]} ] }
+    map  { [$_, [m{(\S+)}mxsg]] }
+    grep { !m{[.#]}mxs }
+    keys %{$self->{'styles'}};
+  foreach (@in) {
+    unless(m{\A<}mxs) {
+      push @html, $_;
+      next;
+    }
+    if(m{\A</}mxs) { ## This is closing tag...
+      shift @tags;
+      push @html, $_;
+      next;
+    }
+    if( m{\A<(\w+)(\s*.*?)>\Z}mxs ) {
+      my( $tag_name, $content ) = ($1,$2);
+      my @styles;
+      ## Now we have to get classes list...
+      unshift @tags, $tag_name;
+      push @X, "======== @tags ========";
+      foreach my $sg (@style_groups) {
+        my @css_tags = @{$sg->[1]};
+        next if $tags[0] ne $css_tags[0];
+        my @this_tags = @tags;
+        shift @this_tags;
+        shift @css_tags;
+        while ( @this_tags && @css_tags) {
+          if($css_tags[0] eq q(>)) {
+            shift @css_tags;
+            last if $css_tags[0] ne $this_tags[0]; ## Not a match - required!
+            shift @css_tags;
+            shift @this_tags;
+          } else {
+            shift @css_tags if $css_tags[0] eq $this_tags[0];
+            shift @this_tags;
+          }
+        }
+        next if @css_tags;
+        push @styles, @{$sg->[0]};
+      }
+      if( @styles ) {
+        push @html, sprintf q(<%s style="%s"%s>),
+          $tag_name,
+          $self->encode( join q(; ), @styles ),
+          $content;
+      } else {
+        push @html, qq(<$tag_name$content>);
+      }
+      shift @tags if m{/>\Z}mxs; ## Self closing... so remove from tag list!
+    }
+  }
+  return join q(),@html;
 }
 
 1;
