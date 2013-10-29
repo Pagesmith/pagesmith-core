@@ -151,7 +151,9 @@ p.portrait {color:#5c5150; font-size:0.7em; font-weight:normal; text-align:cente
 .areas-landing dd { margin-bottom: 1.5em; }
 .areas-landing dt img { float: left; margin: 5px 10px 10px 5px; height: 55px; width: 55px; }
 
-.toggle-width { float: right; background-color: #ccc; color: #000; padding: 0 5px 1px 5px; margin-left: 2em; cursor: pointer }
+.float-box, .toggle-width { float: right; background-color: #ccc; color: #000; padding: 2px 1em; margin-left: 2em; cursor: pointer }
+.float-box a { color: #000; text-decoration: none }
+.toggle-width { padding: 0 5px 1px 5px; }
 #rhsx { display: none }
 #mainx { width: 100% }
 
