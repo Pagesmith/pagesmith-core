@@ -36,7 +36,8 @@ form dd input.medium { width: 15em; }
 form dd input.mediumlong { max-width: 25em; }
 
 form dd select, form dd input { border: 1px solid #666; padding: 2px; }
-form dd select { padding: 1px; }
+form dd select:focus, form dd input:focus { border: 2px solid #090; padding: 1px;  }
+/*form dd select:focus { padding: 0.5px }*/
 
 form h3 { clear: both; }
 

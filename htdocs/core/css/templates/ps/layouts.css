@@ -153,6 +153,8 @@ p.portrait {color:#5c5150; font-size:0.7em; font-weight:normal; text-align:cente
 
 .float-box, .toggle-width { float: right; background-color: #ccc; color: #000; padding: 2px 1em; margin-left: 2em; cursor: pointer }
 .float-box a { color: #000; text-decoration: none }
+h2 span.float-box { font-size: 60% }
+h3 span.float-box { font-size: 75% }
 .toggle-width { padding: 0 5px 1px 5px; }
 #rhsx { display: none }
 #mainx { width: 100% }
