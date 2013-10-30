@@ -38,6 +38,8 @@ use MIME::Base64 qw(decode_base64 encode_base64);
 use Pagesmith::Config;
 use Pagesmith::Adaptor;
 use Mail::Mailer;
+use Pagesmith::Utils::Mail::Message;
+use Pagesmith::Utils::Mail::Person;
 
 my $failed_modules;
 
@@ -448,4 +450,12 @@ sub send_email {
   return;
 }
 
+sub mail_message {
+  my $self = shift;
+  return Pagesmith::Utils::Mail::Message->new;
+}
+sub mail_person {
+  my( $self, $email, $name ) = @_;
+  return Pagesmith::Utils::Mail::Person->new( $email, $name );
+}
 1;
