@@ -111,7 +111,8 @@ sub clear_option {
 }
 
 sub set_option {
-  my( $self, $key, $value ) = @_;
+  my( $self, $key, @values ) = @_;
+  my $value = @values ? $values[0] : $key;
   $self->{'options'}{$key} = $value;
   return $self;
 }
@@ -595,7 +596,7 @@ sub render_thead {
       if( exists $_->{'no_filter'} ) {
         $meta_data->{'no_filter'} = 1;
       }
-      $meta_data->{'sorter'} = 'none' if exists $_->{'no-sort'};
+      $meta_data->{'sorter'} = 'none' if exists $_->{'no_sort'};
       my @class;
       push @class, $self->encode($self->json_encode($meta_data)) if keys %{$meta_data};
       push @class, 'rotated_cell' if $_->{'rotate'};
