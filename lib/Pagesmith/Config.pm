@@ -130,7 +130,7 @@ sub load {
 sub get {
   my( $self, @keys ) = @_;
   my $h = $self->{'data'};
-  foreach ( @keys ) {
+  foreach ( grep { defined $_ } @keys ) {
     if( ref $h eq 'HASH' ) {
       $h = $h->{$_};
     } else {
