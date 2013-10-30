@@ -28,6 +28,7 @@ sub decrypt_input {
   my $pch = $self->config( 'secure' );
      $pch->load(1);
   my $api_key = $self->next_path_info;
+  return 'Do not recognise key for app' unless defined $api_key;
   my $key_config = $pch->get( 'keys', $api_key );
   return 'Do not recognise key for app' unless $key_config;
   my $app_config = $pch->get( 'apps', $app );
