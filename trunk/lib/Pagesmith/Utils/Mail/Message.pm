@@ -29,6 +29,7 @@ const my $BOUNDARY_LENGTH => 12;
 const my $LINE            => q(-) x $COLUMNS;
 
 use Text::MultiMarkdown;
+use List::MoreUtils qw(any);
 use Pagesmith::Core qw(safe_md5);
 use Pagesmith::ConfigHash qw(template_dir);
 use Pagesmith::Utils::Curl::Fetcher;
@@ -46,6 +47,7 @@ sub new {
     'files'           => [],
     'images'          => {},
     'styles'          => {},
+    'style_counter'   => 0,
     'subs'            => {},
     'email_addresses' => {},
     'headers'         => {'X-Application' => ["Pagesmith/Mail-$VERSION"]},
@@ -185,7 +187,8 @@ sub set_style {
   my($self,$k,$v) = @_;
   $v =~ s{;\s*$}{}mxsg;
   $v =~ s{([:;])\s+}{$1}mxsg;
-  push @{$self->{'styles'}{$k}},$v;
+
+  push @{$self->{'styles'}{$k}},[$v,$self->{'style_counter'}++];
   return $self;
 }
 
@@ -217,15 +220,24 @@ sub address {
   return join q(, ), map { $_->format_email } @{$people};
 }
 
+sub style_attr {
+  my ( $self, @tags ) = @_;
+  my @styles;
+  foreach my $tag ( @tags ) {
+    push @styles, map {$_->[0]}
+                  sort { $a->[1] <=> $b->[1] }
+                  @{$self->{'styles'}{$tag}||[]};
+  }
+  return unless @styles;
+  return sprintf ' style="%s"', join q(; ), @styles;
+}
+
 sub add_heading {
   my( $self, $text, $options ) = @_;
   $self->add_text($LINE,"\n",$text,"\n",$LINE,"\n\n");
   my $level = exists $options->{'main'} ? 'h2' : 'h3';
   $self->add_html( sprintf "<$level%s>\n%s\n</$level>",
-    exists $self->{'styles'}{$level}
-         ? sprintf ' style="%s"', $self->encode( join q(; ),@{$self->{'styles'}{$level}} )
-         : q(),
-    $self->encode( $text ),
+    $self->style_attr( $level ), $self->encode( $text ),
   );
   return $self;
 }
@@ -247,6 +259,11 @@ sub add_html {
   return $self;
 }
 
+sub add_html_chunk {
+  my( $self, $html ) = @_;
+  $self->add_html( $self->modify_html( $html ) );
+  return $self;
+}
 sub body_html {
   my $self = shift;
   return join q(), @{$self->{'body_html'}};
@@ -288,16 +305,12 @@ sub add_block {
   my( $self, $text, $options ) = @_;
   $options = { 'type' => $options } unless ref $options;
   my $block_type = $options->{'type'}||'p';
-  my @style      = @{ $self->{'styles'}{$block_type}||[]};
-  if( exists $options->{'class'} ) {
-    push @style, @{$self->{'styles'}{".$_"}||[]} foreach split m{\s+}mxs, $options->{'class'};
-  }
   $self->add_text( $self->wrapper->wrap( $text ), "\n" );
   ## no critic (InterpolationOfMetachars)
   $self->add_html( sprintf '<%1$s%3$s>%2$s</%1$s>',
     $block_type,
     $self->format_html( $text ),
-    @style ? sprintf ' style="%s"', $self->encode( join q( ), @style ) : q(),
+    $self->style_attr( $block_type, map { ".$_" } split m{\s+}mxs, $options->{'class'} ),
   );
   ## use critic
   return;
@@ -670,66 +683,146 @@ sub content_plain {
   return $text;
 }
 
-sub modify_markdown_html {
-  my ( $self, $html ) = @_;
-  ## We need to open each tag in turn and deal with it...
-  my @in = split m{(<.*?>)}mxs, $html;
-  my @html;
-  my @tags;
-  my @style_groups =
-    sort { $a->[2] <=> $b->[2] }
-    map  { [ $self->{'styles'}{$_->[0]}, [reverse @{$_->[1]}], scalar grep { m{\w}mxs } @{$_->[1]} ] }
+sub get_style_groups {
+  my( $self, $flag ) = @_;
+  return $self->{'style_groups'} if exists $self->{'style_groups'} && ! $flag;
+
+  $self->{'style_groups'} = $self->{'style_groups'} ||= [
+    sort { $a->[2] cmp $b->[2] }
+  ##   { styles for group, [reversed tags - closest first], specificity "{####}{####}{####}" }
+## Compute specificity...
+    map  { [
+      $self->{'styles'}{$_->[0]},
+      [reverse @{$_->[1]}],
+      sprintf '%04d%04d%04d',
+        ( scalar grep { m{[#]}mxs  } @{$_->[1]} ),
+        ( scalar grep { m{[.]}mxs  } @{$_->[1]} ),
+        ( scalar grep { m{\A\w}mxs } @{$_->[1]} ),
+    ] }
     map  { [$_, [m{(\S+)}mxsg]] }
-    grep { !m{[.#]}mxs }
-    keys %{$self->{'styles'}};
-  foreach (@in) {
-    unless(m{\A<}mxs) {
-      push @html, $_;
+    keys %{$self->{'styles'}},
+  ];
+  foreach my $sg ( @{$self->{'style_groups'}} ) {
+    my @tags = @{$sg->[1]};
+    $sg->[1] = [];
+    foreach my $tag (@tags) {
+      my @parts = split m{([.#])}mxs,$tag;
+      my $href = {'classes'=>[],};
+      my $type = 'name';
+      foreach( @parts ) {
+        if( $_ eq q(.) ) {
+          $type = 'class';
+        } elsif( $_ eq q(#)) {
+          $type = 'id';
+        } elsif( $type eq 'class' ) {
+          push @{$href->{'classes'}}, $_;
+        } else {
+          $href->{$type} = $_;
+        }
+      }
+      push @{$sg->[1]},$href;
+    }
+  }
+  return $self->{'style_groups'};
+}
+
+## no critic (ExcessComplexity)
+sub apply_styles {
+  my( $self, $html_in, $style_groups ) = @_;
+  my @html_out;
+  my @tags;
+  my @in = split m{(<.*?>)}mxs, $html_in;
+  foreach my $chunk (@in) {
+    unless($chunk =~ m{\A<}mxs) { ## Not a tag - so we just push the contents...
+      push @html_out, $chunk;
       next;
     }
-    if(m{\A</}mxs) { ## This is closing tag...
+    if($chunk =~ m{\A</}mxs) {
+      ## This is closing tag so again we push the content, but also remove tag
+      ## from list of active tags
       shift @tags;
-      push @html, $_;
+      push @html_out, $chunk;
       next;
     }
-    if( m{\A<(\w+)(\s*.*?)>\Z}mxs ) {
-      my( $tag_name, $content ) = ($1,$2);
-      my @styles;
+    if($chunk =~ m{\A<(\w+)(\s*.*?)>\Z}mxs ) {
+      my( $tag_name, $attributes ) = ($1,$2);
+      my %styles;
       ## Now we have to get classes list...
-      unshift @tags, $tag_name;
-      push @X, "======== @tags ========";
-      foreach my $sg (@style_groups) {
+      ## Get any ids and classes...
+      my @Q = $attributes =~ m{(\w+)=(['"])(.*?)\2}mxsg;
+      my %attributes;
+      while( $_ = shift @Q ) {
+        shift @Q;
+        $attributes{$_} = shift @Q;
+      }
+      unshift @tags, { 'name'    => $tag_name,
+                       'id'      => $attributes{'id'}||q(),
+                       'classes' => { map { ($_=>1) } split m{\s+}mxs, $attributes{'class'}||q() },
+                     };
+      foreach my $sg (@{$style_groups}) {
+        ## sg = [ styles for group, reversed tags, specificity string... ]
         my @css_tags = @{$sg->[1]};
-        next if $tags[0] ne $css_tags[0];
+        ## Check to see if tag matches...
+        my $inital_match = 1;
+        next if $css_tags[0]{'name'} && $css_tags[0]{'name'} ne $tags[0]{'name'}; ## Tag name doesn't match!
+        next if $css_tags[0]{'id'}   && $css_tags[0]{'id'}   ne $tags[0]{'id'};   ## Tag ID   doesn't match!
+        next if @{$css_tags[0]{'classes'}} &&
+          any { !exists $tags[0]{'classes'}{$_} } @{$css_tags[0]{'classes'}};    ## Classes don't match!
         my @this_tags = @tags;
         shift @this_tags;
         shift @css_tags;
         while ( @this_tags && @css_tags) {
-          if($css_tags[0] eq q(>)) {
+          if($css_tags[0]{'name'} eq q(>)) {
             shift @css_tags;
-            last if $css_tags[0] ne $this_tags[0]; ## Not a match - required!
+            last if $css_tags[0]{'name'} && $css_tags[0]{'name'} ne $this_tags[0]{'name'}; ## Tag name doesn't match!
+            last if $css_tags[0]{'id'}   && $css_tags[0]{'id'}   ne $this_tags[0]{'id'};   ## Tag ID   doesn't match!
+            last if @{$css_tags[0]{'classes'}} &&
+              any { !exists $this_tags[0]{'classes'}{$_} } @{$css_tags[0]{'classes'}};    ## Classes don't match!
+            ## last if $css_tags[0] ne $this_tags[0]{'name'}; ## Not a match - required!
             shift @css_tags;
             shift @this_tags;
           } else {
-            shift @css_tags if $css_tags[0] eq $this_tags[0];
-            shift @this_tags;
+            my $t_tag = shift @this_tags;
+            next if $css_tags[0]{'name'} && $css_tags[0]{'name'} ne $t_tag->{'name'}; ## Tag name doesn't match!
+            next if $css_tags[0]{'id'}   && $css_tags[0]{'id'}   ne $t_tag->{'id'};   ## Tag ID   doesn't match!
+            next if @{$css_tags[0]{'classes'}} &&
+              any { !exists $t_tag->{'classes'}{$_} } @{$css_tags[0]{'classes'}};    ## Classes don't match!
+            shift @css_tags;
           }
         }
         next if @css_tags;
-        push @styles, @{$sg->[0]};
+        push @{$styles{$sg->[2]}}, @{$sg->[0]};
       }
-      if( @styles ) {
-        push @html, sprintf q(<%s style="%s"%s>),
-          $tag_name,
-          $self->encode( join q(; ), @styles ),
-          $content;
-      } else {
-        push @html, qq(<$tag_name$content>);
+      if( keys %styles ) {
+        $attributes{'style'} =
+          $self->encode( join q(; ),
+            map {
+              map { $_->[0] } sort { $a->[1] <=> $b->[1] } @{$styles{$_}}
+            } sort keys %styles ).
+          (exists $attributes{'style'} ? "; $attributes{'style'}" : q());
       }
-      shift @tags if m{/>\Z}mxs; ## Self closing... so remove from tag list!
+      push @html_out, q(<),
+        $tag_name, map { qq( $_="$attributes{$_}") } sort keys %attributes;
+      push @html_out, q(>);
+      shift @tags if $chunk =~ m{/>\Z}mxs; ## Self closing... so remove from tag list!
     }
   }
-  return join q(),@html;
+  return join q(),@html_out;
+
+}
+## use critic
+
+sub modify_html {
+  my ( $self, $html ) = @_;
+  ## We need to open each tag in turn and deal with it...
+  return $self->apply_styles( $html, $self->get_style_groups );
+}
+
+sub modify_markdown_html {
+  my ( $self, $html ) = @_;
+  ## We need to open each tag in turn and deal with it...
+  my @style_groups = grep { $_->[2] =~ m{\A00000000}mxs } @{$self->get_style_groups};
+  return $self->apply_styles( $html, \@style_groups );
 }
 
 1;
