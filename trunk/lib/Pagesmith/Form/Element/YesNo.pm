@@ -40,4 +40,9 @@ sub init {
   return;
 }
 
+sub value {
+  my ($self, @extra ) = @_;
+  return lc $self->SUPER::value( @extra );
+}
+
 1;
