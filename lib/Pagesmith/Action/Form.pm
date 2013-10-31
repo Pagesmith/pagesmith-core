@@ -66,10 +66,11 @@ sub run {
           'Form error',
           sprintf q(<p>Unable to generate form object of type '%s'</p>),
             encode_entities( $form_type ),
-        )->ok unless $form_object;
+        )->ok;
       }
       $form_object  = $self->form( $module_name, $self->next_path_info ); ## This is the ID!
     }
+    return $self->redirect( $form_object->action_url_get ) if $form_object->code; ## This has a forced code so actually just redirect!
     return $self->wrap( 'Form error',
       sprintf q(<p>Unable to generate form object of type '%s'</p>),
       encode_entities( $form_type ) )->ok unless $form_object; ## We can't create a new object!
@@ -122,6 +123,10 @@ sub run_get {
     return $self->run_goto( $id ) if defined $self->param( "goto_$id" );
   }
   return $self->run_jumbo      if $self->param( 'jumbo' );
+  if( $self->form_object->stage_object->is_type( 'Redirect' ) ) {
+    my $redirect_url = $self->form_object->on_redirect( $self->form_object->stage_object );
+    return $self->redirect( $redirect_url ) if $redirect_url;
+  }
   return $self->run_view;
 }
 
