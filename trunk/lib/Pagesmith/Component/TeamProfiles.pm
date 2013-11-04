@@ -45,6 +45,7 @@ sub define_options {
   return (
     $self->ajax_option,
     {'code' => 'prefix', 'defn' => '=s', 'default' => 'team', 'description' => 'Team code' },
+    {'code' => 'extra',  'defn' => '=s', 'default' => q(),    'description' => 'Extra file' },
   );
 }
 
@@ -147,9 +148,13 @@ sub execute {
   <div class="sub_data profiles">
     <div id="sub_%s_index">
       <dl class="twocol evenwidth">%s
-      </dl>
+      </dl>%s
     </div>%s
-  </div>', $prefix, $nav, $prefix, $idx, $ent;
+  </div>', $prefix, $nav,
+    $prefix,
+    $idx,
+    $self->option('extra')? '<% File '.$self->option('extra').' %>' : q(),
+    $ent;
     ## use critic
 }
 
