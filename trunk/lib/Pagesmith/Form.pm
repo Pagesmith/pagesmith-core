@@ -524,6 +524,11 @@ sub current_section {
   return $self->current_stage->current_section;
 }
 
+sub current_element {
+  my $self = shift;
+  return $self->current_stage->current_section->current_element;
+}
+
 #h3 Adding elements
 
 sub add_group {
@@ -541,6 +546,17 @@ sub add {
 
   my $el = $self->current_section->add( @params );
 ## Store the new element onto the array of elements for the form (so we don't have to scan the tree later!)
+  unless( 'Pagesmith::Form::Element::Composite' eq ref $self->current_element ) {
+    $self->{'elements'}{$el->code}||=[];
+    push @{$self->{'elements'}{$el->code}}, $el;
+  }
+  return $el;
+}
+
+sub add_to_composite {
+  my( $self, @params ) = @_;
+  return unless 'Pagesmith::Form::Element::Composite' eq ref $self->current_element;
+  my $el = $self->current_section->add_to_composite( @params );
   $self->{'elements'}{$el->code}||=[];
   push @{$self->{'elements'}{$el->code}}, $el;
   return $el;

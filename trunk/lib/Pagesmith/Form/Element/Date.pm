@@ -42,6 +42,8 @@ sub update_from_apr {
       $y ||= $x_y;
     }
   }
+  $d = $self->limit_day( $d,$m,$y );
+
   $self->{'user_data'} = [{
     'day'     => defined $d ? $d : undef,
     'month'   => defined $m ? $m : undef,
