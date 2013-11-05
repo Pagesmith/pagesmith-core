@@ -215,6 +215,13 @@ sub sv {
   return $res;
 }
 
+sub code_block {
+  my ( $self, $coderef ) = @_;
+  return unless $self->conn;
+  ## We will run these as a transaction!
+  return $self->conn->txn( 'fixup' => $coderef );
+}
+
 sub row {
 
 #@param (self);
@@ -252,7 +259,7 @@ sub all_hash {
 #@param (?)+ parameters to pass to SQL statement.
   my ( $self, $sql, @pars ) = @_;
   return unless $self->conn;
-  return return $self->conn->run( 'fixup' =>  sub { return $_->selectall_arrayref( $sql, { 'Slice' => {} }, @pars ); } );
+  return $self->conn->run( 'fixup' =>  sub { return $_->selectall_arrayref( $sql, { 'Slice' => {} }, @pars ); } );
 }
 
 sub query {
