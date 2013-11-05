@@ -22,6 +22,12 @@ const my $MONTHS_IN_YEAR => 12;
 const my $HOURS_IN_DAY   => 24;
 const my $SIXTY          => 60;
 const my $ONE_DAY        => $HOURS_IN_DAY * $SIXTY * $SIXTY;
+const my $CENTURY        => 100;
+const my $FOUR           => 4;
+const my $QUADCENTURY    => 400;
+const my $FEB            => 2;
+const my $MAX_MONTH      => 31;
+const my %MONTH_MAX      => qw(1 31 2 29 3 31 4 30 5 31 6 30 7 31 8 31 9 30 10 31 11 30 12 31);
 
 use base qw( Pagesmith::Form::Element );
 
@@ -53,7 +59,11 @@ sub value {
   foreach my $k ( qw(second minute hour day month year) ) {
     $return->{$k} = 0;
     foreach ( qw(user_data obj_data default) ) {
-      next unless exists $self->{$_} && defined $self->{$_} && @{$self->{$_}} && exists $self->{$_}[0]{$k} && defined $self->{$_}[0]{$k};
+      next unless exists  $self->{$_} &&
+                  defined $self->{$_} &&
+                        @{$self->{$_}} &&
+                  exists $self->{$_}[0]{$k} &&
+                  defined $self->{$_}[0]{$k};
       $return->{$k} = $self->{$_}[0]{$k};
       last;
     }
@@ -154,6 +164,26 @@ sub get_date_array {
   return pairwise { defined $a ? $a : $b } @time,@now;
 }
 
+sub limit_day {
+  my ($self,$d,$m,$y) = @_;
+  return $d if ! defined $d || $d eq q();
+
+  $d = 1              if $d < 1;
+  $d = $MAX_MONTH     if $d > $MAX_MONTH;
+
+  return $d unless defined $m && exists $MONTH_MAX{$m};
+
+  $d = $MONTH_MAX{$m} if $d>$MONTH_MAX{$m}; ## Limit to days of month;
+  return $d   unless $y; ## No year defined so can't limit!
+
+  return $d   unless $m == $FEB;           ## Not feb so we know w have it right!
+  return $d   unless $d == $MONTH_MAX{$m}; ## Not the 29th!
+  return $d   unless $y % $QUADCENTURY;    ## Divisible by 400 so leap year!
+  return $d-1 unless $y % $CENTURY;        ## Divisible by 100 so not leap year
+  return $d   unless $y % $FOUR;           ## Divisible by 4 so leap year!
+  return $d-1;                             ## Not leap year!
+}
+
 sub update_from_apr {
   my( $self, $apr ) = @_;
   my $d = $apr->param( $self->code.'_d' );
@@ -175,6 +205,7 @@ sub update_from_apr {
       $s ||= $x_s;
     }
   }
+  $d = $self->limit_day( $d,$m,$y );
 
   $self->{'user_data'} = [{
     'day'     => defined $d ? $d : undef,

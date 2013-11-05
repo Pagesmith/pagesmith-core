@@ -100,6 +100,11 @@ sub current_group {
   return $self->{'current_group'};
 }
 
+sub current_element {
+  my $self = shift;
+  return $self->{'current_element'};
+}
+
 sub classes {
 #@param (self)
 #@return (string+) list of classes
@@ -142,11 +147,16 @@ sub caption {
 
 #= Element manipulation functions
 
-sub elements {
+sub renderable_elements {
 #@param (self)
 #@return (Pagesmith::Form::Element::+) Array of elements!
   my $self = shift;
   return map { $self->{'elements'}{$_} } @{ $self->{'element_order'} };
+}
+
+sub elements {
+  my $self = shift;
+  return values %{$self->{'elements'}}; ## return all values including those in children!
 }
 
 sub has_file {
@@ -236,7 +246,58 @@ sub add {
 
     push @{ $self->{'groups'}{$self->current_group} }, $element; ## Push element onto group!
 
-    return $self->{'elements'}{$id};
+    $self->{'current_element'} = $self->{'elements'}{$id};
+    return $element;
+  } else {
+    carp "Unable to dynamically use module $module. Have you spelt the element type correctly?";
+    return;
+  }
+}
+
+sub add_to_composite {
+
+#@param (self)
+#@param (string) $type Type of element to add
+#@param (hashref) $options Configuration of the new element
+#@return (Pagesmith::Form::Element::*) form element added
+## Add a new element to the section
+
+  my ( $self, $type_in, $id ) = @_;
+
+  my $element_data = $type_in;
+
+  unless( ref $element_data eq 'HASH' ) {
+    $id ||= $self->config->next_id;
+    $element_data = {
+      'type'      => $type_in,
+      'id'        => $id,
+      'code'      => $id,
+      'getter'    => "get_$id",
+      'setter'    => "set_$id",
+      'required'  => 'yes',
+    };
+  }
+  my $type = $self->safe_module_name( $element_data->{'type'} );
+
+  my $module = "Pagesmith::Form::Element::$type";
+
+  if ( $self->dynamic_use($module) ) {
+    $element_data = { 'id' => $element_data } unless ref $element_data;
+    $element_data->{'id'} ||= $self->config->next_id;
+    $id = $element_data->{'id'};
+
+    my $flag_exists = exists $self->{'elements'}{$id};
+    my $element = $module->new( $self, $element_data );
+    unless( $element ) {
+      carp "Unable to generate an element of module $module";
+      return;
+    }
+    $self->current_element->add( $element );
+    $self->{'elements'}{$id} = $element;
+    ##push @{ $self->{'element_order'} }, $id unless $flag_exists;
+    ##push @{ $self->{'groups'}{$self->current_group} }, $element; ## Push element onto group!
+
+    return $element;
   } else {
     carp "Unable to dynamically use module $module. Have you spelt the element type correctly?";
     return;
@@ -297,7 +358,7 @@ sub render {
   return q() if $status eq 'disabled';
 ## Grab all the hidden elements....
 ## Now loop through the "groups" to generate the non-hidden elements HTML...
-  my $hidden     = join q(), map { $_->render( $form ) } grep { ref($_) =~ m{Hidden}mxs } $self->elements;
+  my $hidden     = join q(), map { $_->render( $form ) } grep { ref($_) =~ m{Hidden}mxs } $self->renderable_elements;
   my $not_hidden = $self->render_group( q(-), $form ); ## Render the top level group....
   my $t = $self->base_render( $not_hidden, $hidden );
   return $t;
@@ -355,7 +416,7 @@ sub render_paper {
 ## Render the section of the form.
   my( $self, $form ) = @_;
   return q() if $self->has_logic && ! $form->evaluate_logic( $self ); #??#
-  my $not_hidden = join q(), map { $_->render_paper( $form ) } grep { ref($_)!~ m{Hidden}mxs } $self->elements;
+  my $not_hidden = join q(), map { $_->render_paper( $form ) } grep { ref($_)!~ m{Hidden}mxs } $self->renderable_elements;
 
   return $self->base_render( $not_hidden, q(), ' class="twocol"' );
 }
