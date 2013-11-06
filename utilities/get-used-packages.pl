@@ -34,18 +34,19 @@ BEGIN {
 }
 use lib "$ROOT_PATH/lib";
 
-use strict;
-use warnings;
-use Data::Dumper;
-
 my( $lib_paths, $scr_paths ) = get_dirs();
+my $UTILS_PATH = dirname($ROOT_PATH);
+push @{$lib_paths}, "$UTILS_PATH/utilities/lib";
+push @{$scr_paths}, "$UTILS_PATH/utilities";
 ## make this global
 my @libs;
 my @scrs;
 my $mod_list = {};
 get_libs( $lib_paths );
+#warn "@libs\n\n";
 get_details( 'lib', @libs );
 get_scripts( $scr_paths );
+#warn "@scrs\n\n";
 get_details( 'scr', @scrs );
 dump_output();
 ## end of main!
@@ -94,6 +95,8 @@ sub get_scripts {
   my $scrs = shift;
   find( sub {
     return if exc($File::Find::name);
+    warn 'LIB IN SCRIPTS ',$File::Find::name,"\n" if $File::Find::name =~ m{[.]pm\Z}mxs;
+    return if $File::Find::name =~ m{[.]pm\Z}mxs;
     push @scrs, $File::Find::name;
   }, $_ ) foreach @{$scrs};
   return;
@@ -112,12 +115,18 @@ sub exc {
 ## no critic (ExcessComplexity)
 sub get_details {
   my ( $lib_flag, @files ) = @_;
-  my $lr = 1 + length $ROOT_PATH;
+  my $lr  = 1 + length $ROOT_PATH;
+  my $lur = 1 + length $UTILS_PATH;
   foreach my $fn (@files) {
     ## no critic (RequireChecked BriefOpen)
     open my $fh,q(<),$fn;
     my $pod = 0;
     my $raw = 0;
+    unless( $fn =~ m{[.]pm\Z}mxs ) {
+      my $hash_bang = <$fh>;
+warn "NOT PERL [$fn]\n" unless $hash_bang =~ m{[#]!/.*/perl}mxs;
+      next unless $hash_bang =~ m{[#]!/.*/perl}mxs;
+    }
     my @lines;
     while (<$fh>) {
       ## no critic (CascadingIfElse)
@@ -140,7 +149,9 @@ sub get_details {
     close $fh;
     ## use critic
     my @use_lines = map { m{\A\s*use\s+(.*)}mxs ? $1 : () } @lines;
-    my $path = substr $fn, $lr;
+    my $path = $fn;
+       $path =          substr $fn, $lr  if "$ROOT_PATH/"  eq substr $fn,0,$lr;
+       $path = 'UTILS/'.substr $fn, $lur if "$UTILS_PATH/" eq substr $fn,0,$lur;
     my $source;
     my $mpath = q();
     if( $path =~ m{\A(?:.*/)?lib/(.*)}mxs ||
