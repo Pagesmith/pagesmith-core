@@ -121,7 +121,7 @@ sub new {
 
   undef $self->{'object_id'} if $self->{'object_id'} && !$self->fetch_object(); ## Returns
 
-  $self->add_attribute( 'ref', $self->apr->param( '__ref' ) || $self->r->headers_in->{'Referer'} );  ## Set the refererer
+  $self->add_attribute( 'ref', $self->apr->param( '__ref' ) || $self->r->headers_in->{'Referer'} ) if $self->apr;  ## Set the refererer
 
   $self->initialize_form         # Create form elements
        ->populate_object_values  # Load values from the object if it exists
@@ -238,6 +238,7 @@ sub apr {
 
 sub param {
   my( $self, @attrs) = @_;
+  return unless $self->apr;
   return $self->apr->param( @attrs );
 }
 
@@ -287,6 +288,23 @@ sub validate {
   $_->validate( $self ) foreach $self->stages;
   $self->extra_validation; ## This is what is usually done "on-next!"
   return;
+}
+
+sub dump_invalid_states {
+  my $self = shift;
+  ## no critic (RequireCarping)
+  warn sprintf "!raw!%s\n", join qq(\n),
+    map {(
+      'Stage       '.($_->is_invalid||q(-)).q( > ).($_->caption||q(-)),
+      map {(
+        '`-Section   '.($_->is_invalid||q(-)).q( > ).($_->caption||q(-)),
+        map {(
+          '  `-Element '.($_->is_invalid||q(-)).q( > ).($_->caption||q(-)),
+        )} $_->elements,
+      )} $_->sections,
+    )} $self->stages;
+  return $self;
+  ## use critic;
 }
 
 sub first_invalid_stage {
