@@ -84,6 +84,7 @@ sub referer {
 
 sub set_navigation_path {
   my( $self, $path ) = @_;
+  return unless $self->r;
   $self->r->headers_out->set( 'X-Pagesmith-NavPath', $path );
   return $self;
 }
