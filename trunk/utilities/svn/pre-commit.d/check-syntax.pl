@@ -480,6 +480,14 @@ sub _check_lower {
   return 1;
 }
 
+sub check_fonts {
+  my $params = shift;
+  return 0 if $params->{'filename'} =~ m{\A[^/]+/fonts/}mxs;
+  return 0 if $params->{'filename'} =~ m{\A[^/]+/data/fonts/}mxs;
+  printf {*STDERR} "Include file '%s' should be in a /fonts/ directory\n", $params->{'filename'};
+  return 1;
+}
+
 sub check_html_inc {
 #@param $params (hashref) of parameters
 #@return (boolean) false as can't check syntax of inc files
