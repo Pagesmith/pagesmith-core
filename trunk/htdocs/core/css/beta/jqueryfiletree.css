@@ -1,7 +1,7 @@
 @charset "UTF-8";
 #jqfTree  { overflow: auto; }
 
-#jqfBox   { border: 1px dotted red; border-top: 1px solid #666; clear: both; padding: 0 5px }
+#jqfBox   { border-top: 1px solid #666; clear: both; padding: 0 5px }
 
 
 ul.jft{font-family:Verdana, sans-serif; font-size:11px; line-height:18px; padding:0; margin:0}
