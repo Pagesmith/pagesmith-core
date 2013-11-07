@@ -119,6 +119,9 @@
 $(document).ready(function () {
   var domain = window.location.protocol + '//' + window.location.hostname + '/';
   $('#jqfTree').fileTree({multiFolder: true}, function (file) {
+    $('#jqfTop').html('<h4>/' + escape(file) + '</h4>').load('/action/Jft?dir=' + encodeURI(file));
+    /* We need to look at the file-extn here and see what to do
+
     $('#jqfTop').html('<h4>/' + escape(file) + '</h4>').load(
       '/action/Edit_File?dir=' + encodeURI(file),
       function() {
@@ -127,7 +130,6 @@ $(document).ready(function () {
           document.getElementById('pg').src = domain + file;
         }
       } );
-    /* We need to look at the file-extn here and see what to do
       html files load!
       img  files load!
       js/css <- markup
@@ -135,14 +137,11 @@ $(document).ready(function () {
       docs/pdfs <- include a link to download in the header block (don't load into content until requested!)
       archive files <- include a link in top to download and to list contents.. if list contents -> push these into body....
     */
-    /** WE WILL REMOVE THIS LATER! and do in perl layer which is sensible! **/
-/*
     if( file.match(/[.](html|png|pdf|gif)$/) ) {
       document.getElementById('pg').src = domain + file;
     } else {
       document.getElementById('pg').src = '/core/gfx/blank.gif';
     }
-*/
     /* Need to add directory code to be able to open a directory and see full listing of contents
        Option to delete a file using this....!
        Option to edit a file, stage + publish it
