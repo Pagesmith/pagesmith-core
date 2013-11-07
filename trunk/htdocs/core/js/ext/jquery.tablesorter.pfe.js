@@ -76,13 +76,20 @@
       },
 
       get_json: function (table, format) {
-        var c = table.config, table_data = { head: [],  body: [] }, th = table.tHead, i, row, r, j;
+        var c = table.config, table_data = { head: [],  body: [] }, th = table.tHead, i, row, r, j,cls,k;
         for (i = table.tHead.rows.length;  i; i) {
           i--;
           row = table.tHead.rows[i].cells;
           r = [];
           for (j = row.length; j; j) {
             j--;
+            cls = $(row[j]).prop('colspan');
+            if( cls > 1 ) {
+              for (k = cls-1;k;k){
+                k--;
+                r.unshift('');
+              }
+            }
             r.unshift($.trim($(row[j]).text()));
           }
           table_data.head.unshift(r);
