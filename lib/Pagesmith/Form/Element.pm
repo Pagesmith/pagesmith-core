@@ -24,7 +24,6 @@ use English qw(-no_match_vars $PID);
 use Pagesmith::ConfigHash qw(get_config);
 use Text::Wrap qw(wrap $columns $huge);
 use Encode qw(decode_utf8 encode_utf8);
-use Data::Dumper;
 use Const::Fast qw(const);
 
 const my $LONG_LINE_LENGTH  => 72;
