@@ -407,16 +407,10 @@ sub parse_parameters {
 sub checksum_parameters {
   my $self = shift;
 ## Dumper in object mode returns self from config functions so the following is safe!
-##no critic (LongChainsOfMethodCalls)
   return (
-    @{ $self->{'_pars'} }
-    ? safe_md5( Data::Dumper->new( [$self->{'_pars'}], ['pars'] )->Terse(1)->Indent(0)->Dump() )
-    : q(),
-    %{ $self->{'_options'} }
-    ? safe_md5( Data::Dumper->new( [$self->{'_options'}], ['options'] )->Terse(1)->Indent(0)->Sortkeys(1)->Dump() )
-    : q(),
+    @{ $self->{'_pars'}    } ? safe_md5( $self->raw_dumper( $self->{'_pars'},    ['pars']   ) ) : q(),
+    %{ $self->{'_options'} } ? safe_md5( $self->raw_dumper( $self->{'_options'}, ['options']) ) : q(),
   );
-##use critic (LongChainsOfMethodCalls)
 }
 
 sub option {
