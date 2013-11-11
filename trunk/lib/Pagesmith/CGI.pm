@@ -17,7 +17,6 @@ use version qw(qv); our $VERSION = qv('0.1.0');
 use base qw(CGI);
 
 use Crypt::CBC;
-use Data::Dumper;
 use Digest::MD5 qw(md5_hex);
 use English qw(-no_match_vars $PID);
 use HTML::Entities qw(encode_entities);
