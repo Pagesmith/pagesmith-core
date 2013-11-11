@@ -82,7 +82,7 @@ use Carp;
 use URI::Escape;
 #use CSS::Minifier;        ## To compress CSS
 use Cwd;
-use Data::Dumper;         ## To dump data structures for Debug
+use Data::Dumper;         ## no xcritic (DebuggingModules) ## To dump data structures for Debug
 use Date::Format;         ## For displaying last modified information
 use DBI;
 use DBIx::Connector;
