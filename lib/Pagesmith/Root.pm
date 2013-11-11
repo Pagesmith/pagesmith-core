@@ -24,7 +24,7 @@ const my $MAX_VIS_LENGTH        => 80;
 const my $DOFF                  => 1_900;
 
 use Carp qw(cluck carp);
-use Data::Dumper;
+use Data::Dumper; ## no xcritic (DebuggingModules)
 use Data::UUID;
 use Date::Format qw(time2str);
 use English qw(-no_match_vars $EVAL_ERROR $CHILD_ERROR);
@@ -330,7 +330,7 @@ sub safe_email {
 
 sub raw_dumper {
   my( $self, $data_to_dump, $name_of_data ) = @_;
-  return Data::Dumper->new( [ $data_to_dump ], [ $name_of_data ] )->Sortkeys(1)->Indent(1)->Terse(1)->Dump();
+  return Data::Dumper->new( [ $data_to_dump ], [ $name_of_data ] )->Sortkeys(1)->Indent(1)->Terse(1)->Dump;
 }
 
 sub pre_dumper {
