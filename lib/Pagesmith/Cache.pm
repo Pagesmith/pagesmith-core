@@ -24,7 +24,7 @@ use version qw(qv); our $VERSION = qv('0.1.0');
 #* tmpfile - storage of a file which is accessible through the webserver URL - handled by Pagesmith::Apache::TmpFile
 #* tmpdata - storage of arbitrary data structures
 
-use Data::Dumper;
+use Data::Dumper; ## no xcritic (DebuggingModules)
 
 use Pagesmith::Cache::Memcache;
 use Pagesmith::Cache::SQL;
@@ -267,7 +267,7 @@ sub _freeze {
 
   my ( $self, $content ) = @_;
   return ref($content)
-    ? '1' . Data::Dumper->new( [$content], ['content'] )->Terse(1)->Indent(0)->Dump()
+    ? '1' . Data::Dumper->new( [$content], ['content'] )->Terse(1)->Indent(0)->Dump
     : '0' . $content;
 }
 
