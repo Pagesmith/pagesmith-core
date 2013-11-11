@@ -18,7 +18,6 @@ use version qw(qv); our $VERSION = qv('0.1.0');
 use base qw(Pagesmith::Support);
 
 use URI::Escape qw(uri_escape_utf8);
-use Data::Dumper;
 use English qw(-no_match_vars $EVAL_ERROR);
 use HTML::Entities qw(encode_entities decode_entities);
 use Text::ParseWords qw(shellwords);    ## Parsing parameters for components
@@ -406,7 +405,6 @@ sub parse_parameters {
 
 sub checksum_parameters {
   my $self = shift;
-## Dumper in object mode returns self from config functions so the following is safe!
   return (
     @{ $self->{'_pars'}    } ? safe_md5( $self->raw_dumper( $self->{'_pars'},    ['pars']   ) ) : q(),
     %{ $self->{'_options'} } ? safe_md5( $self->raw_dumper( $self->{'_options'}, ['options']) ) : q(),
