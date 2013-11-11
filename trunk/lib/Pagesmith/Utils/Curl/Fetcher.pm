@@ -25,8 +25,6 @@ const my $MILLISECOND   => 1_000;
 
 use Time::HiRes qw(sleep);
 
-use Data::Dumper qw(Dumper);
-
 sub short_sleep {
   my( $self, $dur ) = @_;
   $dur ||= $DEFAULT_SLEEP;

@@ -13,7 +13,6 @@ package Pagesmith::Action::RequestCreate;
 use strict;
 use warnings;
 use utf8;
-use Data::Dumper qw(Dumper);
 
 use version qw(qv); our $VERSION = qv('0.1.0');
 
@@ -37,14 +36,13 @@ sub run {
   if ($user && $password) {
     my $acct = Pagesmith::Utils::NewAccount->new({'user'=>$user,'password'=>$password});
     my $result = $acct->check_new_user();
-# warn Dumper($result);
     if (!ref $result) {
       $string .= qq(<font color="red">$result</font>);
     } else {
-      $string .='<pre>'.Dumper($acct->{'details'}).'</pre>';
+      $string .= $self->per_dumper( $act->{'details'} );
     }
   }
-
   return $self->html->print( $string )->ok;
-  }
+}
+
 1;

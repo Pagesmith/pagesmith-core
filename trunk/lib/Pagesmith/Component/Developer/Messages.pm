@@ -19,7 +19,6 @@ use base qw(Pagesmith::Component);
 
 use HTML::Entities qw(encode_entities);
 use English qw(-no_match_vars $PID);
-use Data::Dumper qw(Dumper);
 use Socket qw(inet_aton AF_INET);
 
 use Pagesmith::Message;
