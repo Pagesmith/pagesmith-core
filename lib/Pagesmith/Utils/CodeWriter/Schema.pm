@@ -22,7 +22,6 @@ use Const::Fast qw(const);
 const my $ONE_BYTE => 256;
 
 use base qw(Pagesmith::Utils::CodeWriter);
-use Data::Dumper qw(Dumper);
 
 ## no critic (ExcessComplexity)
 sub create {

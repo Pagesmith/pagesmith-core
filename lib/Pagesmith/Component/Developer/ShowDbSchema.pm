@@ -15,7 +15,6 @@ use utf8;
 
 use version qw(qv); our $VERSION = qv('0.1.0');
 
-use Data::Dumper qw(Dumper);
 use HTML::Entities qw(encode_entities);
 use Const::Fast qw(const);
 
