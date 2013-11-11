@@ -366,6 +366,15 @@ sub next_path_info {
   return shift @{ $self->{'_path_info'} };
 }
 
+sub next_path_int {
+  my( $self, $default ) = @_;
+  my $t = $self->next_path_info;
+     $t = q()             unless defined $t;
+     $t =~ tr{0-9}{}cd;
+     $t = $default if     $t eq q();
+  return $t;
+}
+
 sub path_info {
   my $self = shift;
   return @{ $self->{'_path_info'} };
