@@ -402,7 +402,7 @@ sub fetch_from_db {
          e.pub_date, e._title, e.author_list, e.affiliation,
          e.publication, e.links, e.issn, e.abstract, e.grants, e.class_id,
          c.code as class_code, c.name as class_name, e.url
-    from entry e left join class c on e.class_id = class_id
+    from entry e left join class c on e.class_id = c.class_id
    where $type in ($qs)", @ids );
   ##use critic (ImplicitNewlines)
   my $return = {};
