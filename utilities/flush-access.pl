@@ -22,7 +22,6 @@ const my $LINE_LENGTH => 78;
 use Cwd            qw(abs_path);
 use English        qw(-no_match_vars $EVAL_ERROR $PROGRAM_NAME $INPUT_RECORD_SEPARATOR);
 use File::Basename qw(dirname);
-use Data::Dumper;
 
 my $ROOT_PATH;
 
@@ -40,7 +39,7 @@ set_site_key( 'no-site' );
 
 my $rv = eval {
   my $conf = Pagesmith::Utils::SVN::Config->new( $ROOT_PATH, 'IPC', 1 );
-  print Data::Dumper->new( [ $conf ], [ 'conf' ] )->Sortkeys(1)->Indent(1)->Terse(1)->Dump() if $ARGV[0]; ## no critic (CheckedSyscalls)
+  print $conf->raw_dumper( [ $conf ], [ 'conf' ] ) if $ARGV[0]; ## no critic (CheckedSyscalls)
 };
 printf "%s\n" , $EVAL_ERROR || 'Successfully written';
 ## We need to flush the memcached versions on the "editing servers"...
