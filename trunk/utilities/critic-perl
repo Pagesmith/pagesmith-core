@@ -18,7 +18,7 @@ use version qw(qv); our $VERSION = qv('0.1.0');
 use HTML::Entities qw(encode_entities);
 
 use Perl::Critic;
-use Data::Dumper;
+use Data::Dumper; ## no xcritic (DebuggingModules)
 use Getopt::Long qw(GetOptions);
 use Time::HiRes qw(time);
 use English qw(-no_match_vars $INPUT_RECORD_SEPARATOR $PROGRAM_NAME $EVAL_ERROR);
@@ -57,11 +57,12 @@ my %dir_map;
 
 # --------------------------------------
 
-_init();
+_get_options();
+_get_lib_paths();
 _get();
 _run();
 
-sub _init {
+sub _get_options {
   GetOptions(
     'quiet'   => \$quiet,
     'root=s'  => \$dir_root,
@@ -70,11 +71,29 @@ sub _init {
     'lib=s'   => \@lib_paths,
   );
 
-  die "You must specify a site or out path to generate the HTML into\n" unless $site || $html_path;
   $dir_root  ||= $ROOT_PATH;
-
-  $html_path ||= "$dir_root/sites/$site/htdocs/docs/critic";
   $cache_filename = $dir_root.'/tmp/packed/critic-perl';
+  if( -e $cache_filename ) {
+    if( open my $fh, '<', $cache_filename ) {
+      msg( "Cache file $cache_filename read" );
+      local $INPUT_RECORD_SEPARATOR = undef;
+      $t = eval <$fh>; ## no critic (StringyEval)
+      close $fh; ## no critic (RequireChecked)
+    }
+  }
+  unless( $site || $html_path ) {
+    $site      = exists $t->{'options'}{'site'}      ? $t->{'options'}{'site'}      : q();
+    $html_path = exists $t->{'options'}{'html_path'} ? $t->{'options'}{'html_path'} : q();
+  } else {
+    $html_path = "$dir_root/sites/$site/htdocs/docs/critic";
+  }
+  $t->{'options'} = { 'site' => $site, 'html_path' => $html_path };
+
+  die "You must specify a site or out path to generate the HTML into\n" unless $site || $html_path;
+  return;
+}
+
+sub _get_lib_paths {
   if( @lib_paths ) {
     %dir_map = map { ($_ => $_) } @lib_paths;
   } else {
@@ -110,14 +129,6 @@ sub _init {
   }
 
   push @INC, @lib_paths;
-  if( -e $cache_filename ) {
-    if( open my $fh, '<', $cache_filename ) {
-      msg( "Cache file $cache_filename read" );
-      local $INPUT_RECORD_SEPARATOR = undef;
-      $t = eval <$fh>; ## no critic (StringyEval)
-      close $fh; ## no critic (RequireChecked)
-    }
-  }
   return;
 }
 
@@ -238,7 +249,7 @@ sub __generate {
 sub _push_cache {
   if( open my $fh, '>', $cache_filename ) {
     msg( "Cache file $cache_filename written" );
-    my $d = Data::Dumper->new([$t], [qw(t)])->Terse(1)->Indent(1)->Sortkeys(1)->Dump(); ## no critic (LongChainsOfMethodCalls)
+    my $d = Data::Dumper->new([$t], [qw(t)])->Sortkeys(1)->Indent(1)->Terse(1)->Dump; ## no critic (LongChainsOfMethodCalls)
     print {$fh} $d; ## no critic (CheckedSyscalls)
     close $fh; ## no critic (RequireChecked)
   }
@@ -387,7 +398,7 @@ sub _generate_module_html {
 <head>
   <title>Perl::Critic: %s</title>
   <meta http-equiv="X-Pagesmith-NoSpell" content="2" /><!-- Do not include the source in the page -->
-  <%% CssFile /core/css/developer/critic.css %%>
+  <%% CssFile /core/css/pagesmith/critic.css %%>
 </head>
 <body id="faculty">
 <div id="main">
@@ -565,7 +576,7 @@ sub _generate_module_html {
   <% File /docs/critic/inc/perl-modules.inc %>
 </div>
 </div>
-<% JsFile /core/js/developer/critic.js %>
+<% JsFile /core/js/pagesmith/critic.js %>
 </body>
 </html>);
   ## use critic
@@ -584,7 +595,7 @@ sub _generate_index_html {
 <head>
   <title>Perl::Critic</title>
   <meta http-equiv="X-Pagesmith-NoSpell" content="2" /><!-- Do not include the source in the page -->
-  <% CssFile /core/css/developer/critic.css %>
+  <% CssFile /core/css/pagesmith/critic.css %>
 </head>
 <body id="faculty">
 <div id="main">
@@ -662,7 +673,7 @@ sub _generate_index_html {
   <% File /docs/critic/inc/perl-modules.inc %>
 </div>
 </div>
-<% JsFile /core/js/developer/critic.js %>
+<% JsFile /core/js/pagesmith/critic.js %>
 </body>
 </html>';
   ##use critic
