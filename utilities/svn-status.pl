@@ -25,7 +25,6 @@ use Date::Format qw(time2str);
 use File::Basename qw(dirname);
 use Sys::Hostname::Long qw(hostname_long);
 use Cwd qw(abs_path);
-use Data::Dumper qw(Dumper);
 use Const::Fast qw(const);
 use Getopt::Long qw(GetOptions);
 
