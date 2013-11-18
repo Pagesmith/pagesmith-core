@@ -17,18 +17,22 @@ use utf8;
 use version qw(qv); our $VERSION = qv('0.1.0');
 
 use LWP::Simple qw(get);
-use Data::Dumper qw(Dumper);
+use Data::Dumper; ## no xcritic (DebuggingModules)
+
 
 foreach my $doi ( @ARGV ) {
   my $ref = process($doi);
-  print Dumper( $ref ); ## no critic (RequireChecked)
+  ## no critic (LongChainsOfMethodCalls)
+  print Data::Dumper->new( [ $ref ], [ 'ref' ] )->Sortkeys(1)->Indent(1)->Terse(1)->Dump; ## no critic (RequireChecked)
+  ## use critic
 }
 
+## use critic (ExcessComplexity)
 sub process {
   my $doi = shift;
+  my %simple_map = qw(pmid pubmed doi doi issn issn isbn issn title title);
   my @html = grep { m{\Ameta}mxs } split m{<}mxs, get 'http://dx.doi.org/'.$doi;
   my $reference = { 'doi' => $doi };
-  my %simple_map = qw(pmid pubmed doi doi issn issn isbn issn title title);
   my @authors;
   my $pub = { map {$_=>undef} qw(
     issue firstpage lastpage volume journal_title publication_date online_date
@@ -58,7 +62,13 @@ sub process {
     }
   }
 
-  my $pub_date = $pub->{'publication_date'} || $pub->{'online_date'} || $pub->{'date'}, q(-);
+  augment_reference( $reference, $pub, @authors );
+  return $reference;
+}
+
+sub augment_reference {
+  my ($reference, $pub, @authors ) = @_;
+  my $pub_date = $pub->{'publication_date'} || $pub->{'online_date'} || $pub->{'date'} || q(-);
 
   $reference->{'publication'} = sprintf '%s %s; %s',
     $pub->{'journal_title'}||$pub->{'conference_title'} || $pub->{'inbook_title'} || q(-),
@@ -72,8 +82,8 @@ sub process {
   $reference->{'author_list'} = join q(, ), @authors;
   $reference->{'author_list'} = $pub->{'authors'} if exists $pub->{'authors'} && !@authors;
   $reference->{'pub_date'}    = $pub_date;
-
-  return $reference;
+  return;
 }
+## use critic
 
 1;
