@@ -28,14 +28,16 @@ use Time::HiRes qw(time);
 use base qw(Pagesmith::Utils::Core);
 
 sub log_trans {
-  my( $self, $trans_id ) = @_;
-  $self->{'log_file'} = '/www/tmp/svn-activity/transaction-'.$trans_id;
+  my( $self, $repos, $trans_id ) = @_;
+  $repos =~ s{/}{-}mxsg;
+  $self->{'log_file'} = "/www/tmp/svn-activity/transaction-$repos-$trans_id";
   return $self;
 }
 
 sub log_revision {
-  my( $self, $rev_id ) = @_;
-  $self->{'log_file'} = '/www/tmp/svn-activity/revision-'.$rev_id;
+  my( $self, $repos, $rev_id ) = @_;
+  $repos =~ s{/}{-}mxsg;
+  $self->{'log_file'} = "/www/tmp/svn-activity/revision-$repos-$rev_id";
   return $self;
 }
 
@@ -93,7 +95,7 @@ sub clean_log {
 sub clean_up {
   my $self = shift;
   printf {*STDERR} "\n%s\n\n", $SPACER if $self->{'message_sent'};
-  return $self;
+  return 1;
 }
 
 sub send_message {
