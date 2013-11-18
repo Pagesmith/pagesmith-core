@@ -26,7 +26,6 @@ use Readonly qw(Readonly);
 use Getopt::Long qw(GetOptions);
 use Time::HiRes qw(time sleep);
 use YAML::Loader;
-use Data::Dumper qw(Dumper);
 
 # Define constants and data-structures
 
