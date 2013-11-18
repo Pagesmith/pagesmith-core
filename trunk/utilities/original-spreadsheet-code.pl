@@ -18,10 +18,7 @@ use version qw(qv); our $VERSION = qv('0.1.0');
 use Const::Fast qw(const);
 
 const my $MAX_VALUE => 10;
-use DBI;
-use Data::Dumper;
 
-my $dbh = DBI->connect('dbi:mysql:homo_sapiens_lite_16_33:ensembldb.ensembl.org:3306','anonymous');
 sub FORMAT_BOLD       { return 'format' => sub { return "<b>$_[0]</b>" } }
 sub FORMAT_ITALIC     { return 'format' => sub { return "<i>$_[0]</i>" } }
 sub FORMAT_BOLDITALIC { return 'format' => sub { return "<b><i>$_[0]</i></b>" } }
@@ -89,41 +86,6 @@ print produce_table(
     { 'key'=>'z', 'title'=>'x^4',    'align' => 'right' , TOTAL_BOLD, 'width' => '10%' },
   ],
   [ map {{'z'=>$_*$_*$_*$_,'a'=>$_,'b'=>$_*$_,'c'=>"$_",'d'=>$_*$_*$_}} 0..$MAX_VALUE ],
-);
-
-my $DATA = [];
-my $sth = $dbh->prepare( 'select gene_name, external_db, external_name, external_status, chr_name, chr_start, chr_end from gene where db="core" and chr_name="X" and chr_start < 10e6 order by chr_start asc' );
-$sth->execute();
-while( my $f = $sth->fetchrow_hashref ) { push @{$DATA}, $f; }
-
-print produce_table(
-  [
-    { 'key'=>'gene_name',       'title'=>'Gene',    'format' => sub { sprintf '<a target="_blank" href="http://www.ensembl.org/perl/geneview?gene=%s">%s</a>', $_[0], $_[0]}  } ,
-    { 'key'=>'chr_name',        'title'=>'Chr.',    'align' => 'center' , 'format' =>  sub { sprintf '<a target="_blank" href="http://www.ensembl.org/perl/contigview?l=%s:%d-%d">%s</a>', $_[0], $_[1]{'chr_start'}, $_[1]{'chr_end'}, $_[0]}  }
-,
-    { 'key'=>'chr_start',       'title'=>'Start',   'align' => 'right', 'format' => sub { "$_[0]&nbsp;-" } },
-    { 'key'=>'chr_end',         'title'=>'End',     },
-    { 'key'=>'external_db',     'title'=>'Database' },
-    { 'key'=>'external_name',   'title'=>'Synonym', 'format' => sub { sprintf '<a target="_blank" href="http://www.ensembl.org/perl/r?d=%s&ID=%s">%s</a>', $_[1]{'external_db'}, $_[0], $_[0]}  },
-    { 'key'=>'external_status', 'title'=>'Status',  },
-  ],
-  $DATA,
-  { 'rows' => [qw(c1 c2)] },
-);
-
-print produce_table(
-  [
-    { 'title'=>'Gene',    'format' => sub { sprintf '<a target="_blank" href="http://www.ensembl.org/perl/geneview?gene=%s">%s</a>', $_[0], $_[0]}  } ,
-    { 'title'=>'Chr.',    'align' => 'center' , 'format' =>  sub { sprintf '<a target="_blank" href="http://www.ensembl.org/perl/contigview?l=%s:%d-%d">%s</a>', $_[0], $_[1][2], $_[1][1+2], $_[0]}  }
-,
-    { 'title'=>'Start',   'align' => 'right', 'format' => sub { "$_[0]&nbsp;-" } },
-    { 'title'=>'End',     },
-    { 'title'=>'Database' },
-    { 'title'=>'Synonym', 'format' => sub { sprintf '<a target="_blank" href="http://www.ensembl.org/perl/r?d=%s&ID=%s">%s</a>', $_[1][2+2], $_[0], $_[0]}  },
-    { 'title'=>'Status',  },
-  ],
-  $dbh->selectall_arrayref( 'select gene_name, chr_name, chr_start, chr_end, external_db, external_name, external_status from  gene where db="core" and chr_name="X" and chr_start < 10e6 order by chr_start asc' ),
-  { 'rows' => [qw(c1 c1 c2 c2 c1 c1 c1 c1 c1 c1 c2 )] },
 );
 
 print '</body></html>';
