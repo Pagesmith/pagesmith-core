@@ -20,7 +20,6 @@ use HTML::Entities qw(encode_entities);
 use English qw(-no_match_vars $PROGRAM_NAME $EVAL_ERROR);
 use File::Basename qw(dirname basename);
 use Cwd qw(abs_path);
-use Data::Dumper;
 use Carp qw(croak);
 use Const::Fast qw(const);
 use Getopt::Long qw(GetOptions);
