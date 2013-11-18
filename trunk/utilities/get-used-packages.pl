@@ -23,7 +23,7 @@ use Time::HiRes    qw(time);
 use English        qw(-no_match_vars $PROGRAM_NAME $EVAL_ERROR $OUTPUT_AUTOFLUSH);
 use File::Basename qw(dirname);
 use Cwd            qw(abs_path);
-use Data::Dumper   qw(Dumper);
+use Data::Dumper; ## no xcritic (DebuggingModules)
 use File::Find     qw(find);
 use Compress::Zlib qw(gzopen);
 
@@ -271,9 +271,7 @@ sub dump_output {
   close $fh;
 
   open $fh, '>', "$ROOT_PATH/tmp/package-details-dump.txt";
-  local $Data::Dumper::Sortkeys = 1;
-  local $Data::Dumper::Indent   = 1;
-  print {$fh} Dumper( $mod_list );
+  print {$fh} Data::Dumper->new( [ $mod_list ], [ 'mod_list' ] )->Sortkeys(1)->Indent(1)->Terse(1)->Dump; ## no critic (LongChainsOfMethodCalls)
   close $fh;
 
   my @output;
@@ -330,29 +328,3 @@ sub get_cpan {
   return $cpan;
 }
 
-#print Dumper($mod_list);
-__END__
-#print join "\n", @scrs;
-#warn "@libs\n\n@scrs\n\n";
-__END__
-opendir my $dh, "$ROOT_PATH/sites";
-
-my $mods = {};
-while(<>) {
-  my( $fn, $line ) = split m{:}mxs, $_, 2;
-  my $ext = $fn =~ m{\A(.*?)/ext-lib/([^/]+)}mxs ? "$1 $2" : q(core);
-  my @modules;
-  if( $line =~ m{\A\s*use\s+base+(.*)} ) {
-    if(m{qw\*\((.*\?)\)}mxs) {
-      @modules = split m{\s+}mxs, $1;
-    }
-  } elsif( $line =~ m{\A\s*use\s+(\S+)} ) {
-    @modules = ($1);
-  } else {
-    warn ">> $line <<";
-  }
-  $mods->{$_}{$ext}++ foreach @modules;
-  # print "## @modules ##\n";
-}
-
-print Dumper( $mods );
