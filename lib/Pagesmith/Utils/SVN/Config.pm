@@ -314,6 +314,8 @@ sub can_perform {
 
 sub info {
   my( $self, @keys ) = @_;
+  return unless $self->type && $self->key &&
+         exists $self->{'raw'}{ $self->type } && exists $self->{'raw'}{ $self->type }{ $self->key };
   my $t = $self->{'raw'}{ $self->type }{ $self->key };
   foreach( @keys ) {
     if( ref $t eq 'HASH' ) {
