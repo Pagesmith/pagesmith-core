@@ -16,7 +16,6 @@ use utf8;
 use version qw(qv); our $VERSION = qv('0.1.0');
 
 use Cwd qw(abs_path);
-use Data::Dumper qw(Dumper);
 use English qw(-no_match_vars $PROGRAM_NAME);
 use File::Basename qw(dirname);
 use Time::HiRes qw(time);
