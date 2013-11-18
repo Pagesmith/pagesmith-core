@@ -23,7 +23,6 @@ use English qw(-no_match_vars $UID $PROGRAM_NAME $EVAL_ERROR $OUTPUT_AUTOFLUSH);
 use Date::Format qw(time2str);
 use File::Basename qw(dirname);
 use Cwd qw(abs_path);
-use Data::Dumper qw(Dumper);
 use Const::Fast qw(const);
 use Getopt::Long qw(GetOptions);
 use Sys::Hostname qw(hostname);
@@ -138,10 +137,10 @@ while( 1 ) {
         _prune( $tree );
         my @minimal_paths = _get_minimal_paths( $sub_directory, $tree );
         my $count = @minimal_paths * @{$repositories->{$repos}{$branch}{$sub_directory}};
-        printf {$efh} "%s\n", Dumper ( \@minimal_paths ) if $DEBUG > 2;
+        printf {$efh} "%s\n", $adap->raw_dumper( \@minimal_paths ) if $DEBUG > 2;
         next unless $count;
         $count_t += $count;
-        printf {$efh} "%s\n", Dumper( $repositories->{$repos}{$branch} ) if $DEBUG > 2;
+        printf {$efh} "%s\n", $adap->raw_dumper( $repositories->{$repos}{$branch} ) if $DEBUG > 2;
         ## Now we have to perform the svn updates....
         $success *= _update_files( $support, $sub_directory, $repositories->{$repos}{$branch}{$sub_directory}, @minimal_paths);
       }
