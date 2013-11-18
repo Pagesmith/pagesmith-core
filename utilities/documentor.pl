@@ -17,7 +17,7 @@ use utf8;
 use version qw(qv); our $VERSION = qv('0.1.0');
 
 use Perl::Critic;
-use Data::Dumper    qw(Dumper);
+use Data::Dumper;     ## no xcritic (DebuggingModules)
 use Getopt::Long    qw(GetOptions);
 use Time::HiRes     qw(time);
 use English         qw(-no_match_vars $INPUT_RECORD_SEPARATOR $PROGRAM_NAME $EVAL_ERROR);
@@ -43,7 +43,9 @@ use Pagesmith::Utils::Documentor::File;
 use Pagesmith::HTML::Tabs;
 use Pagesmith::HTML::TwoCol;
 use Pagesmith::HTML::Table;
+use Pagesmith::Root;
 
+my $root      = Pagesmith::Root->new;
 my $site      = 'apps.sanger.ac.uk';
 my $html_path = 'docs/perl';
 
@@ -99,7 +101,7 @@ foreach my $path ( sort keys %{$files} ) {
 dump_timer( 'Parsed', $cc );
 
 my ( $used_by_packages, $method_details, $descendants, @packages ) = invert_lists();
-write_file( 'inc/used.inc', raw_dumper( $used_by_packages ) );
+write_file( 'inc/used.inc', $root->raw_dumper( $used_by_packages ) );
 
 dump_timer( 'Generated inverted index' );
 
@@ -395,7 +397,7 @@ sub get_perl_files {
 ## Gets a list of all perl files in "root" directory
 ## * files hash is a hashref of hashrefs keyed by root directory & "package name" i.e. path separated by "::"
 ## * looks for all .pm/.pl files as well as files whose first lines starts #!/....perl
-  my( $l_files, $path, $prefix, $root ) = @_;
+  my( $l_files, $path, $prefix, $lroot ) = @_;
   return unless -e $path && -d $path && -r $path;
   my $dh;
   return unless opendir $dh, $path;
@@ -405,15 +407,15 @@ sub get_perl_files {
     next if $file =~ m{([.]b[ac]k|~)$}mxs;
     if( -f $new_path ) { ## no critic (Filetest_f)
       if( $file =~ m{^(.*)[.]p[ml]$}mxs ) { ## .pl || .pm files
-        $l_files->{$root}{ "$prefix$1" } = $new_path;
+        $l_files->{$lroot}{ "$prefix$1" } = $new_path;
       } else { ## Check other files to see if have #! line...
         next unless open my $in_fh, '<', $new_path;
         my $first_line = <$in_fh>;
         close $in_fh; ## no critic (RequireChecked)
-        $l_files->{$root}{ "$prefix$file" } = $new_path if $first_line && $first_line =~ m{^\#!.*perl}mxs;
+        $l_files->{$lroot}{ "$prefix$file" } = $new_path if $first_line && $first_line =~ m{^\#!.*perl}mxs;
       }
     } elsif( -d $new_path ) {
-      get_perl_files( $l_files, $new_path, "$prefix$file".q(::), $root );
+      get_perl_files( $l_files, $new_path, "$prefix$file".q(::), $lroot );
     }
   }
   return;
@@ -579,7 +581,7 @@ sub get_details_file {
       $file_object->empty_line;
       next;
     }
-    # Format of #@return line is (TYPE)OPT? DESC 
+    # Format of #@return line is (TYPE)OPT? DESC
     #  - TYPE is a non-white space string { can be postfixed with [] or {} to indicate an arrayref/hashref
     #  - DESC is a string (optional)
     #  - OPT  is a flag (*+?) to represent 0+, 1+ or 0/1 respectively
@@ -654,13 +656,6 @@ sub isa_list {
     }
   }
   return;
-}
-
-sub raw_dumper {
-#@params (hashref|arrayref object to dump) (string name of object)?
-#@return (string) compact sorted Data::Dumper output
-  my( $data_to_dump, $name_of_data ) = @_;
-  return Data::Dumper->new( [ $data_to_dump ], [ $name_of_data ] )->Sortkeys(1)->Indent(1)->Terse(1)->Dump();
 }
 
 sub write_docs_file {
@@ -1101,7 +1096,7 @@ Function documentation is in the form of #@/## comments just after the "sub name
         + #@param (Pagesmith::Adaptor) DB adaptor
         + #@param (int)? user id - User's ID from session cookie
     * as above
-* #@returns (type description)[?+*] 
+* #@returns (type description)[?+*]
     * Value/object returned
     * e.g.
         + #@returns (Pagesmith::Adaptor DB adaptor) (int User's ID from session cookie)
