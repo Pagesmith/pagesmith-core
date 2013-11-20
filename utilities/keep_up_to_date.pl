@@ -28,7 +28,7 @@ use Getopt::Long qw(GetOptions);
 use Sys::Hostname qw(hostname);
 use List::MoreUtils qw(uniq);
 use IO::Handle;
-use Socket qw(inet_ntoa);
+use Socket qw(inet_ntoa AF_INET);
 
 const my $TO_MERGE       => 10;
 const my $UPDATE_NO      => 50;
@@ -85,7 +85,8 @@ my $adap    = Pagesmith::Adaptor::PubQueue->new;
 my $support = Pagesmith::Utils::SVN::Support->new;
 
 my $host = hostname() || 'localhost';
-   $host = inet_ntoa( scalar gethostbyname $host );
+   $host = gethostbyname $host;
+   $host = gethostbyaddr $host, AF_INET;
 
 my $checkout_id = $adap->set_checkout( $host, $ROOT_PATH );
 
