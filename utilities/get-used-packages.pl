@@ -26,6 +26,11 @@ use Cwd            qw(abs_path);
 use Data::Dumper; ## no xcritic (DebuggingModules)
 use File::Find     qw(find);
 use Compress::Zlib qw(gzopen);
+use Const::Fast qw(const);
+use LWP::UserAgent;
+use List::MoreUtils qw(uniq);
+
+const my $CPAN_PACKAGES => 'http://www.cpan.org/modules/02packages.details.txt';
 
 my $pragmas = { map { $_ => 1 } qw(strict warnings utf8 version feature integer lib vars) };
 my $ROOT_PATH;
@@ -34,10 +39,24 @@ BEGIN {
 }
 use lib "$ROOT_PATH/lib";
 
+my $package_path = {
+  'ubuntu' => 'aptitude -q -q -q -y install',
+  'redhat' => 'yum -q -y install',
+  'cpan'   => 'cpan',
+  'other'  => '## MANUAL INSTALL: ',
+};
+my $package_manager_type = -e '/usr/bin/dpkg' ? 'ubuntu'
+                         : -e '/usr/bin/rpm'  ? 'redhat'
+                         :                      'other'
+                         ;
+
 my( $lib_paths, $scr_paths ) = get_dirs();
-my $UTILS_PATH = dirname($ROOT_PATH);
-push @{$lib_paths}, "$UTILS_PATH/utilities/lib";
-push @{$scr_paths}, "$UTILS_PATH/utilities";
+
+my @munged_inc = uniq map { ($_,abs_path($_)) } @INC;
+
+my $UTILS_PATH = dirname($ROOT_PATH).'/utilities';
+push @{$lib_paths}, "$UTILS_PATH/lib";
+push @{$scr_paths}, $UTILS_PATH;
 ## make this global
 my @libs;
 my @scrs;
@@ -117,6 +136,7 @@ sub get_details {
   my ( $lib_flag, @files ) = @_;
   my $lr  = 1 + length $ROOT_PATH;
   my $lur = 1 + length $UTILS_PATH;
+
   foreach my $fn (@files) {
     ## no critic (RequireChecked BriefOpen)
     open my $fh,q(<),$fn;
@@ -124,7 +144,7 @@ sub get_details {
     my $raw = 0;
     unless( $fn =~ m{[.]pm\Z}mxs ) {
       my $hash_bang = <$fh>;
-warn "NOT PERL [$fn]\n" unless $hash_bang =~ m{[#]!/.*/perl}mxs;
+      warn "NOT PERL [$fn]\n" unless $hash_bang =~ m{[#]!/.*/perl}mxs;
       next unless $hash_bang =~ m{[#]!/.*/perl}mxs;
     }
     my @lines;
@@ -150,22 +170,25 @@ warn "NOT PERL [$fn]\n" unless $hash_bang =~ m{[#]!/.*/perl}mxs;
     ## use critic
     my @use_lines = map { m{\A\s*use\s+(.*)}mxs ? $1 : () } @lines;
     my $path = $fn;
+#print ">> $path ($ROOT_PATH|$UTILS_PATH)<<\n";
        $path =          substr $fn, $lr  if "$ROOT_PATH/"  eq substr $fn,0,$lr;
        $path = 'UTILS/'.substr $fn, $lur if "$UTILS_PATH/" eq substr $fn,0,$lur;
     my $source;
     my $mpath = q();
-    if( $path =~ m{\A(?:.*/)?lib/(.*)}mxs ||
-        $path =~ m{\A(?:.*/)?utilities/(.*)}mxs
-    ) {
-      $source = 'svn';
-      $mpath  = $1;
-    } elsif( $path =~ m{\A(.*/)?ext-lib/(.*)}mxs ) {
+#print "## $path <<\n";
+    if( $path =~ m{\A(.*/)?ext-lib/(.*)}mxs ) {
       $source = $1;
       $mpath  = $2;
       if( $mpath =~ m{\A((?:Bio/)?[^/]+)}mxs ) {
         (my $extra = $1)=~s{[.]pm\Z}{}mxs;
         $source.= "/$extra";
       }
+    } elsif( $path =~ m{\A(?:.*/)?lib/(.*)}mxs ) {
+      $source = 'svn';
+      $mpath  = $1;
+    } else {
+      $source = 'svn-utils';
+      $mpath  = $path;
     }
     $source =~ s{\Asites/([^/]+)[.]sanger[.]ac[.]uk/}{$1}mxs;
     $source =~ s{\Asites/([^/]+)/}{$1}mxs;
@@ -173,7 +196,6 @@ warn "NOT PERL [$fn]\n" unless $hash_bang =~ m{[#]!/.*/perl}mxs;
     if( $lib_flag eq 'lib' ) {
       $mod_name = join q(::), split m{/}mxs, $mod_name;
     }
-    #printf "%3d %s                                       [%s]\n", scalar @use_lines, $mod_name, $source;
     $mod_list->{$mod_name}{'in'} ||= $source if $lib_flag eq 'lib';
     my %modules;
     foreach my $l (@use_lines) {
@@ -216,26 +238,28 @@ sub dump_output {
     next if exists $mod_list->{$module}{'in'};
     next if exists $pragmas->{$module};
     my $fn = join q(/), split m{::}mxs, "$module.pm";
-    my @details = `dpkg -S $fn 2>/dev/null`; ## no critic (BackTickOperators)
+    my @files = map { "$_/$fn" } @munged_inc;
+    ## no critic (BackTickOperators)
+    my @details = $package_manager_type eq 'ubuntu' ? `dpkg -S @files 2>/dev/null`
+                : $package_manager_type eq 'redhat' ? `rpm -qf @files 2>/dev/null`
+                :                                      ()
+                ;
+    ## use critic
     my @package;
     foreach ( @details ) {
-      chomp;
-      s{\s+\Z}{}mxs;
-      my( $pck, $pth ) = split m{:[ ]}mxs, $_;
-      $pth =~ s{\A.*?/perl\d*/}{}mxs;
-      $pth =~ s{\A\d+[.]\d+[.]\d+/}{}mxs;
-      if( $pth eq $fn ) {
-        push @package, $pck;
-      }
+      my ($pck) = $_ =~ m{\A(\S*)}mxs;
+      $pck =~ s{:\Z}{}mxs;
+      push @package, $pck;
+    }
+    if( @package ) {
       if( exists $mod_list->{$module}{'used'}{'svn'} ) {
-        $sources->{'ubuntu'}{'svn'}{$_}++ foreach @package;
+        $sources->{$package_manager_type}{'svn'}{$_}++ foreach @package;
       } else {
         foreach my $s ( keys %{$mod_list->{$module}{'used'}} ) {
-          $sources->{'ubuntu'}{$s}{$_}++ foreach @package;
+          $sources->{$package_manager_type}{$s}{$_}++ foreach @package;
         }
       }
-    }
-    unless( @package ) {
+    } else {
       @package = map { cpan_pack( $_ ) } @{$cpan->{$module}||[]};
       if( exists $mod_list->{$module}{'used'}{'svn'} ) {
         $sources->{'cpan'}{'svn'}{$_}++ foreach @package;
@@ -276,7 +300,7 @@ sub dump_output {
 
   my @output;
   push @output, "CORE\n==========================\n";
-  foreach my $type ( qw(ubuntu cpan other) ) {
+  foreach my $type ( $package_manager_type, qw(cpan other) ) {
     my @packages = sort keys %{$sources->{$type}{'svn'}};
     if( @packages ) {
       push @output, join "\n\t", $type, @packages;
@@ -284,7 +308,7 @@ sub dump_output {
   }
   foreach my $ext ( sort keys %{$non_core} ) {
     my @t_out;
-    foreach my $type ( qw(ubuntu cpan other) ) {
+    foreach my $type ( $package_manager_type, qw(cpan other) ) {
       my @packages = sort
                      grep { !exists $sources->{$type}{'svn'}{$_} }
                      keys %{$sources->{$type}{$ext}||{}};
@@ -300,6 +324,24 @@ sub dump_output {
   open $fh, '>', "$ROOT_PATH/tmp/package-by-source.txt";
   print {$fh} join "\n", @output;
   close $fh;
+  ## Now write the bash script...
+  open $fh, '>', "$ROOT_PATH/tmp/package-install.bash";
+  print {$fh}  "## core\n##----------------------------------------\n\n";
+  foreach my $type ( $package_manager_type, qw(cpan other) ) {
+    my @packages = sort keys %{$sources->{$type}{'svn'}};
+    printf {$fh} "%s %s\n\n", $package_path->{$type}, "@packages" if @packages
+  }
+  foreach my $ext ( sort keys %{$non_core} ) {
+    my @t_out;
+    print {$fh} "## $ext\n##----------------------------------------\n\n";
+    foreach my $type ( $package_manager_type, qw(cpan other) ) {
+      my @packages = sort
+                     grep { !exists $sources->{$type}{'svn'}{$_} }
+                     keys %{$sources->{$type}{$ext}||{}};
+      printf {$fh} "%s %s\n\n", $package_path->{$type}, "@packages" if @packages;
+    }
+  }
+  close $fh;
   ## use critic
   return;
 }
@@ -313,18 +355,19 @@ sub cpan_pack {
 }
 
 sub get_cpan {
-  my $gz   = gzopen( '/nfs/users/nfs_j/js5/.cpan/sources/modules/02packages.details.txt.gz', 'r' );
   my $cpan = {};
-  my $line;
-  while( $gz->gzreadline( $line ) ) {
-    last if $line =~m{\A\s*\Z}mxs;
+  my $ua = LWP::UserAgent->new;
+     $ua->env_proxy;
+  my $contents = $ua->get( $CPAN_PACKAGES )->content;
+  my @lines = split m{[\r\n]}mxs, $contents;
+  while( $_ = shift @lines ) {
+    last if m{\A\s*\Z}mxs;
   }
-  while( $gz->gzreadline( $line ) ) {
-    chomp $line;
-    my( $pkg, $version, $file ) = split m{\s+}mxs, $line;
+  while( $_ = shift @lines ) {
+    chomp;
+    my( $pkg, $version, $file ) = split m{\s+}mxs;
     push @{$cpan->{$pkg}}, $file;
   }
-  $gz->gzclose;
   return $cpan;
 }
 
