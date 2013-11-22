@@ -107,7 +107,8 @@ _rotate_logs() if $access || $error;
 
   $ENV{'APACHE_ULIMIT_MAX_FILES'} = $now_hard == $now_soft ? q(:) : qq(ulimit -S -n $now_hard) unless $user_is_root;
   ## use critic
-  my $return = system '/usr/sbin/apache2ctl', '-DPAGESMITH_'.uc $flag, @extra_params, '-d', "$path/apache2", '-f', 'core.d/httpd.conf', '-k', $command;
+  my $apache_command = -e '/usr/sbin/apache2ctl' ? '/usr/sbin/apache2ctl' : '/usr/sbin/httpd';
+  my $return = system $apache_command, '-DPAGESMITH_'.uc $flag, @extra_params, '-d', "$path/apache2", '-f', 'core.d/httpd.conf', '-k', $command;
   if( $return ) {
     printf {*STDERR} "  Returned result: %s\n", $return;
   } else {
