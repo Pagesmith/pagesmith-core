@@ -40,14 +40,14 @@ BEGIN {
 use lib "$ROOT_PATH/lib";
 
 my $package_path = {
-  'ubuntu' => 'aptitude -q -q -q -y install',
+  'debian' => 'aptitude -q -q -q -y install',
   'redhat' => 'yum -q -y install',
   'cpan'   => 'cpan',
-  'other'  => '## MANUAL INSTALL: ',
+  'source'  => '## MANUAL INSTALL: ',
 };
-my $package_manager_type = -e '/usr/bin/dpkg' ? 'ubuntu'
+my $package_manager_type = -e '/usr/bin/dpkg' ? 'debian'
                          : -e '/usr/bin/rpm'  ? 'redhat'
-                         :                      'other'
+                         :                      'source'
                          ;
 
 my( $lib_paths, $scr_paths ) = get_dirs();
@@ -234,13 +234,31 @@ sub dump_output {
   my $non_core = {};
   my $cpan = get_cpan();
   my $sources = {};
+  my $inst_flag = {};
+
   foreach my $module ( sort keys %{$mod_list} ) {
     next if exists $mod_list->{$module}{'in'};
     next if exists $pragmas->{$module};
+
+## Is it installed
     my $fn = join q(/), split m{::}mxs, "$module.pm";
+
+    my $flag = eval "require $module"; ## no critic (StringyEval)
+    my $eval_error = $EVAL_ERROR || q();
+    $flag ||= 0;
+    my $installed = q(..);
+    unless($flag) {
+      if($eval_error =~m {\ACan't[ ]locate[ ](\S+)[ ]in[ ][@]INC}mxs ) {
+        $installed = $1 eq $fn ? q(==) : q(??);
+      } else {
+        $installed = q(??);
+      }
+    }
+    $mod_list->{$module}{'installed'} = $installed;
+
     my @files = map { "$_/$fn" } @munged_inc;
     ## no critic (BackTickOperators)
-    my @details = $package_manager_type eq 'ubuntu' ? `dpkg -S @files 2>/dev/null`
+    my @details = $package_manager_type eq 'debian' ? `dpkg -S @files 2>/dev/null`
                 : $package_manager_type eq 'redhat' ? `rpm -qf @files 2>/dev/null`
                 :                                      ()
                 ;
@@ -251,7 +269,9 @@ sub dump_output {
       $pck =~ s{:\Z}{}mxs;
       push @package, $pck;
     }
+    my $install_type = q(source);
     if( @package ) {
+      $install_type = $package_manager_type;
       if( exists $mod_list->{$module}{'used'}{'svn'} ) {
         $sources->{$package_manager_type}{'svn'}{$_}++ foreach @package;
       } else {
@@ -261,32 +281,61 @@ sub dump_output {
       }
     } else {
       @package = map { cpan_pack( $_ ) } @{$cpan->{$module}||[]};
-      if( exists $mod_list->{$module}{'used'}{'svn'} ) {
-        $sources->{'cpan'}{'svn'}{$_}++ foreach @package;
-      } else {
-        foreach my $s ( keys %{$mod_list->{$module}{'used'}} ) {
-          $sources->{'cpan'}{$s}{$_}++ foreach @package;
+      if( @package ) {
+        $install_type = 'cpan';
+        if( exists $mod_list->{$module}{'used'}{'svn'} ) {
+          $sources->{'cpan'}{'svn'}{$_}++ foreach @package;
+        } else {
+          foreach my $s ( keys %{$mod_list->{$module}{'used'}} ) {
+            $sources->{'cpan'}{$s}{$_}++ foreach @package;
+          }
         }
       }
     }
     unless( @package ) {
       if( exists $mod_list->{$module}{'used'}{'svn'} ) {
-        $sources->{'other'}{'svn'}{$module}++;
+        $sources->{'source'}{'svn'}{$module}++;
       } else {
         foreach my $s ( keys %{$mod_list->{$module}{'used'}} ) {
-          $sources->{'other'}{$s}{$module}++;
+          $sources->{'source'}{$s}{$module}++;
         }
       }
     }
-    my $package = @package ? join q(; ),@package : '###############';
-    my $line = sprintf "%-40s %-40s\t%s\n", $package, $module, join q(, ), grep { $_ ne 'svn' } sort keys %{$mod_list->{$module}{'used'}};
+    ## Push output for placing in package-summary.txt file...
+    @package = ($module) unless @package;
+    my $package = join q(; );
+    my $line = sprintf "%2s %-6s %-40s %-40s\t%s\n",
+      $mod_list->{$module}{'installed'}||q(XX),
+      $install_type, $package, $module, join q(, ), grep { $_ ne 'svn' } sort keys %{$mod_list->{$module}{'used'}};
     if( exists $mod_list->{$module}{'used'}{'svn'} ) {
       $core .= $line;
     } else {
       $non_core->{$_} .= $line foreach keys %{$mod_list->{$module}{'used'}};
     }
+    if( $mod_list->{$module}{'installed'} eq q(==) ) {
+      $inst_flag->{ $install_type }{$_}=1 foreach @package;
+    }
   }
   ## no critic (BriefOpen RequireChecked)
+
+## File 1: package-summary.txt
+## Split into sections for core and one each sub area of externals...
+## Columns are
+##  * state:
+##     * ".." installed
+##     * "??" installed but gives error
+##     * "==" missing
+##  * install type:
+##     * debian/redhat
+##     * cpan
+##     * source
+##  * source package - either:
+##     * debian/redhat package name
+##     * cpan install module name
+##     * module name if source
+##  * module name
+##  * list of non-core directories the is used in
+
   open my $fh, q(>), "$ROOT_PATH/tmp/package-summary.txt";
   print {$fh} "CORE\n==========================\n\n$core\n\n";
   foreach (sort keys %{$non_core}) {
@@ -294,13 +343,16 @@ sub dump_output {
   }
   close $fh;
 
+## File 2: package-details-dump.txt
+## This is a Data dumper structure which can be loaded
   open $fh, '>', "$ROOT_PATH/tmp/package-details-dump.txt";
   print {$fh} Data::Dumper->new( [ $mod_list ], [ 'mod_list' ] )->Sortkeys(1)->Indent(1)->Terse(1)->Dump; ## no critic (LongChainsOfMethodCalls)
   close $fh;
 
+## Now provide data for the packages-by-source & package-install.bash files!
   my @output;
   push @output, "CORE\n==========================\n";
-  foreach my $type ( $package_manager_type, qw(cpan other) ) {
+  foreach my $type ( $package_manager_type, qw(cpan source) ) {
     my @packages = sort keys %{$sources->{$type}{'svn'}};
     if( @packages ) {
       push @output, join "\n\t", $type, @packages;
@@ -308,7 +360,7 @@ sub dump_output {
   }
   foreach my $ext ( sort keys %{$non_core} ) {
     my @t_out;
-    foreach my $type ( $package_manager_type, qw(cpan other) ) {
+    foreach my $type ( $package_manager_type, qw(cpan source) ) {
       my @packages = sort
                      grep { !exists $sources->{$type}{'svn'}{$_} }
                      keys %{$sources->{$type}{$ext}||{}};
@@ -321,24 +373,46 @@ sub dump_output {
     }
   }
   push @output,q();
+
+## File 3: package-by-source.txt
+## This is a Data dumper structure which can be loaded
+
   open $fh, '>', "$ROOT_PATH/tmp/package-by-source.txt";
   print {$fh} join "\n", @output;
   close $fh;
+
+## File 4/5: package-install.bash && package-patch.bash
+## A bash script which can be run to indicate which modules need to be installed!
   ## Now write the bash script...
-  open $fh, '>', "$ROOT_PATH/tmp/package-install.bash";
+  open $fh, '>',  "$ROOT_PATH/tmp/package-install.bash";
+  open my $pfh, '>', "$ROOT_PATH/tmp/package-patch.bash";
   print {$fh}  "## core\n##----------------------------------------\n\n";
-  foreach my $type ( $package_manager_type, qw(cpan other) ) {
+  print {$pfh} "## core\n##----------------------------------------\n\n";
+  foreach my $type ( $package_manager_type, qw(cpan source) ) {
     my @packages = sort keys %{$sources->{$type}{'svn'}};
-    printf {$fh} "%s %s\n\n", $package_path->{$type}, "@packages" if @packages
+    printf {$fh} "%s %s\n\n", $package_path->{$type}, "@packages" if @packages;
+    my @t = grep { ! exists $inst_flag->{$type}{$_} } @packages;
+    warn "core - $type - @t\n" if @t;
+    @packages = grep { $inst_flag->{$type}{$_} }
+                grep { exists $inst_flag->{$type}{$_} }
+                @packages;
+    printf {$pfh} "%s %s\n\n", $package_path->{$type}, "@packages" if @packages;
   }
   foreach my $ext ( sort keys %{$non_core} ) {
     my @t_out;
     print {$fh} "## $ext\n##----------------------------------------\n\n";
-    foreach my $type ( $package_manager_type, qw(cpan other) ) {
+    print {$pfh} "## $ext\n##----------------------------------------\n\n";
+    foreach my $type ( $package_manager_type, qw(cpan source) ) {
       my @packages = sort
                      grep { !exists $sources->{$type}{'svn'}{$_} }
                      keys %{$sources->{$type}{$ext}||{}};
       printf {$fh} "%s %s\n\n", $package_path->{$type}, "@packages" if @packages;
+      my @t = grep { ! exists $inst_flag->{$type}{$_} } @packages;
+      warn "$ext - $type - @t\n" if @t;
+      @packages = grep { $inst_flag->{$type}{$_} }
+                  grep { exists $inst_flag->{$type}{$_} }
+                  @packages;
+      printf {$pfh} "%s %s\n\n", $package_path->{$type}, "@packages" if @packages;
     }
   }
   close $fh;
