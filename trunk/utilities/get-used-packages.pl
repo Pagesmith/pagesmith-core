@@ -313,9 +313,33 @@ sub dump_output {
       $non_core->{$_} .= $line foreach keys %{$mod_list->{$module}{'used'}};
     }
     if( $mod_list->{$module}{'installed'} eq q(==) ) {
-      $inst_flag->{ $install_type }{$_}=1 foreach @package;
+      $inst_flag->{ $install_type }{$_}=1 foreach @package; ## Set true if package needs installing!
     }
   }
+## Now provide data for the packages-by-source & package-install.bash files!
+  my @output;
+  push @output, "CORE\n==========================\n";
+  foreach my $type ( $package_manager_type, qw(cpan source) ) {
+    my @packages = sort keys %{$sources->{$type}{'svn'}};
+    if( @packages ) {
+      push @output, join "\n\t", $type, @packages;
+    }
+  }
+  foreach my $ext ( sort keys %{$non_core} ) {
+    my @t_out;
+    foreach my $type ( $package_manager_type, qw(cpan source) ) {
+      my @packages = sort
+                     grep { !exists $sources->{$type}{'svn'}{$_} }
+                     keys %{$sources->{$type}{$ext}||{}};
+      if( @packages ) {
+        push @t_out, join "\n\t", $type, @packages;
+      }
+    }
+    if( @t_out ) {
+      push @output, "\n\nNON-CORE: $ext\n==========================\n", @t_out;
+    }
+  }
+
   ## no critic (BriefOpen RequireChecked)
 
 ## File 1: package-summary.txt
@@ -345,57 +369,30 @@ sub dump_output {
 
 ## File 2: package-details-dump.txt
 ## This is a Data dumper structure which can be loaded
-  open $fh, '>', "$ROOT_PATH/tmp/package-details-dump.txt";
+  open $fh, q(>), "$ROOT_PATH/tmp/package-details-dump.txt";
   print {$fh} Data::Dumper->new( [ $mod_list ], [ 'mod_list' ] )->Sortkeys(1)->Indent(1)->Terse(1)->Dump; ## no critic (LongChainsOfMethodCalls)
   close $fh;
-
-## Now provide data for the packages-by-source & package-install.bash files!
-  my @output;
-  push @output, "CORE\n==========================\n";
-  foreach my $type ( $package_manager_type, qw(cpan source) ) {
-    my @packages = sort keys %{$sources->{$type}{'svn'}};
-    if( @packages ) {
-      push @output, join "\n\t", $type, @packages;
-    }
-  }
-  foreach my $ext ( sort keys %{$non_core} ) {
-    my @t_out;
-    foreach my $type ( $package_manager_type, qw(cpan source) ) {
-      my @packages = sort
-                     grep { !exists $sources->{$type}{'svn'}{$_} }
-                     keys %{$sources->{$type}{$ext}||{}};
-      if( @packages ) {
-        push @t_out, join "\n\t", $type, @packages;
-      }
-    }
-    if( @t_out ) {
-      push @output, "\n\nNON-CORE: $ext\n==========================\n", @t_out;
-    }
-  }
-  push @output,q();
 
 ## File 3: package-by-source.txt
 ## This is a Data dumper structure which can be loaded
 
-  open $fh, '>', "$ROOT_PATH/tmp/package-by-source.txt";
-  print {$fh} join "\n", @output;
+  open $fh, q(>), "$ROOT_PATH/tmp/package-by-source.txt";
+  print {$fh} join "\n", @output, q();
   close $fh;
 
 ## File 4/5: package-install.bash && package-patch.bash
 ## A bash script which can be run to indicate which modules need to be installed!
   ## Now write the bash script...
-  open $fh, '>',  "$ROOT_PATH/tmp/package-install.bash";
-  open my $pfh, '>', "$ROOT_PATH/tmp/package-patch.bash";
+  open $fh, q(>),  "$ROOT_PATH/tmp/package-install.bash";
+  open my $pfh, q(>), "$ROOT_PATH/tmp/package-patch.bash";
   print {$fh}  "## core\n##----------------------------------------\n\n";
   print {$pfh} "## core\n##----------------------------------------\n\n";
   foreach my $type ( $package_manager_type, qw(cpan source) ) {
     my @packages = sort keys %{$sources->{$type}{'svn'}};
-    printf {$fh} "%s %s\n\n", $package_path->{$type}, "@packages" if @packages;
-    my @t = grep { ! exists $inst_flag->{$type}{$_} } @packages;
-    warn "core - $type - @t\n" if @t;
-    @packages = grep { $inst_flag->{$type}{$_} }
-                grep { exists $inst_flag->{$type}{$_} }
-                @packages;
+    next unless @packages;
+    printf {$fh}  "%s %s\n\n", $package_path->{$type}, "@packages";
+    ## Just get all those that need installing!
+    @packages = grep { exists $inst_flag->{$type}{$_} && $inst_flag->{$type}{$_} } @packages;
     printf {$pfh} "%s %s\n\n", $package_path->{$type}, "@packages" if @packages;
   }
   foreach my $ext ( sort keys %{$non_core} ) {
@@ -403,15 +400,12 @@ sub dump_output {
     print {$fh} "## $ext\n##----------------------------------------\n\n";
     print {$pfh} "## $ext\n##----------------------------------------\n\n";
     foreach my $type ( $package_manager_type, qw(cpan source) ) {
-      my @packages = sort
-                     grep { !exists $sources->{$type}{'svn'}{$_} }
+      my @packages = sort grep { !exists $sources->{$type}{'svn'}{$_} }
                      keys %{$sources->{$type}{$ext}||{}};
-      printf {$fh} "%s %s\n\n", $package_path->{$type}, "@packages" if @packages;
-      my @t = grep { ! exists $inst_flag->{$type}{$_} } @packages;
-      warn "$ext - $type - @t\n" if @t;
-      @packages = grep { $inst_flag->{$type}{$_} }
-                  grep { exists $inst_flag->{$type}{$_} }
-                  @packages;
+      next unless @packages;
+      printf {$fh}  "%s %s\n\n", $package_path->{$type}, "@packages";
+      ## Just all those that need installing!
+      @packages = grep { exists $inst_flag->{$type}{$_} && $inst_flag->{$type}{$_} } @packages;
       printf {$pfh} "%s %s\n\n", $package_path->{$type}, "@packages" if @packages;
     }
   }
