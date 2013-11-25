@@ -100,7 +100,7 @@ use Image::Size;
 use POSIX qw(floor ceil);
 use Syntax::Highlight::HTML;
 use Sys::Hostname;
-use Text::Markdown;
+use Text::MultiMarkdown;
 use Text::MediawikiFormat;
 use Text::ParseWords;
 use Time::HiRes; ## Used in diagnostic timers...

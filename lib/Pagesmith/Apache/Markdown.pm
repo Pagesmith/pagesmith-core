@@ -15,7 +15,7 @@ use utf8;
 
 use version qw(qv); our $VERSION = qv('0.1.0');
 
-use Text::Markdown 'markdown';
+use Text::MultiMarkdown;
 
 use Pagesmith::Apache::Base qw(my_handler expand_content);
 
@@ -25,7 +25,8 @@ sub handler {
     sub {
       my ( $content, $uri, $author ) = @_;
 
-      my $html = markdown(${$content});
+      my $m    = Text::MultiMarkdown->new( 'heading_ids' => 0, 'img_ids' => 0 );
+      my $html = $m->markdown(${$content});
 
       return expand_content( \$html, $html =~ m{<(h\d)>(.*)</\1>}mxs ? $2 : $uri, $author );
     },
