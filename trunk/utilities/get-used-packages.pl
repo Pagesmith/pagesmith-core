@@ -1,4 +1,5 @@
 #!/usr/bin/perl
+#!/usr/bin/perl
 
 ## Keeps a serve up to date - BUT not using keep uptodate - basically runs svn up on each repository
 
@@ -17,55 +18,54 @@ use feature qw(switch);
 
 use version qw(qv); our $VERSION = qv('0.1.0');
 
-use HTML::Entities qw(encode_entities);
-
-use Time::HiRes    qw(time);
-use English        qw(-no_match_vars $PROGRAM_NAME $EVAL_ERROR $OUTPUT_AUTOFLUSH);
+use English        qw(-no_match_vars $PROGRAM_NAME $EVAL_ERROR);
 use File::Basename qw(dirname);
 use Cwd            qw(abs_path);
 use Data::Dumper; ## no xcritic (DebuggingModules)
 use File::Find     qw(find);
-use Compress::Zlib qw(gzopen);
-use Const::Fast qw(const);
 use LWP::UserAgent;
-use List::MoreUtils qw(uniq);
 
-const my $CPAN_PACKAGES => 'http://www.cpan.org/modules/02packages.details.txt';
-
-my $pragmas = { map { $_ => 1 } qw(strict warnings utf8 version feature integer lib vars) };
-my $ROOT_PATH;
-BEGIN {
-  $ROOT_PATH = dirname(dirname(abs_path($PROGRAM_NAME)));
-}
-use lib "$ROOT_PATH/lib";
-
-my $package_path = {
+## Set up constants!
+my $CPAN_PACKAGES = 'http://www.cpan.org/modules/02packages.details.txt';
+my $PACKAGE_PATH  = {
   'debian' => 'aptitude -q -q -q -y install',
   'redhat' => 'yum -q -y install',
   'cpan'   => 'cpan',
-  'source'  => '## MANUAL INSTALL: ',
+  'source' => '## MANUAL INSTALL: ',
 };
+my $PRAGMAS       = { map { $_ => 1 } qw(strict warnings utf8 version feature integer lib vars) };
+
+## get root path...
+my $ROOT_PATH     = dirname(dirname(abs_path($PROGRAM_NAME)));
+my $UTILS_PATH    = dirname($ROOT_PATH).'/utilities';
+
 my $package_manager_type = -e '/usr/bin/dpkg' ? 'debian'
                          : -e '/usr/bin/rpm'  ? 'redhat'
                          :                      'source'
                          ;
+my @munged_inc;
+my %seen;
+foreach ( map { ($_,abs_path($_)) } @INC ) {
+  next if $seen{$_};
+  $seen{$_}++;
+  push @munged_inc, $_;
+}
+
+## This bit of code will get the list of paths
+## Both script and lib... if you wish to pick up other paths
+## then this is the bit of code that you will need to extend
 
 my( $lib_paths, $scr_paths ) = get_dirs();
+push @{$lib_paths}, "$UTILS_PATH/lib" if -d "$UTILS_PATH/lib";
+push @{$scr_paths}, $UTILS_PATH       if -d $UTILS_PATH;
 
-my @munged_inc = uniq map { ($_,abs_path($_)) } @INC;
-
-my $UTILS_PATH = dirname($ROOT_PATH).'/utilities';
-push @{$lib_paths}, "$UTILS_PATH/lib";
-push @{$scr_paths}, $UTILS_PATH;
 ## make this global
 my @libs;
 my @scrs;
 my $mod_list = {};
 get_libs( $lib_paths );
-#warn "@libs\n\n";
 get_details( 'lib', @libs );
 get_scripts( $scr_paths );
-#warn "@scrs\n\n";
 get_details( 'scr', @scrs );
 dump_output();
 ## end of main!
@@ -74,16 +74,15 @@ sub get_dirs {
   my( @lib_paths, @scr_paths );
   push @lib_paths, "$ROOT_PATH/lib";
   push @scr_paths, "$ROOT_PATH/utilities";
-  push @lib_paths, "$ROOT_PATH/ext-lib" if -d "$ROOT_PATH/ext-lib";
+  push @lib_paths, "$ROOT_PATH/ext-lib"                   if -d "$ROOT_PATH/ext-lib";
 
-## First loop through all site-level modules;
   my $dh;
   if( opendir $dh, "$ROOT_PATH" ) {
     while ( defined (my $file = readdir $dh) ) {
       next if $file =~ m{\A[.]}mxs;
-      push @lib_paths, "$ROOT_PATH/$file/lib"       if -d "$ROOT_PATH/$file/lib";
-      push @lib_paths, "$ROOT_PATH/$file/ext-lib"   if -d "$ROOT_PATH/$file/ext-lib";
-      push @scr_paths, "$ROOT_PATH/$file/utilities" if -d "$ROOT_PATH/$file/utilities";
+      push @lib_paths, "$ROOT_PATH/$file/lib"             if -d "$ROOT_PATH/$file/lib";
+      push @lib_paths, "$ROOT_PATH/$file/ext-lib"         if -d "$ROOT_PATH/$file/ext-lib";
+      push @scr_paths, "$ROOT_PATH/$file/utilities"       if -d "$ROOT_PATH/$file/utilities";
     }
     closedir $dh;
   }
@@ -121,7 +120,7 @@ sub get_scripts {
   return;
 }
 
-
+## Function return true if skipping directory or file!
 sub exc {
   my $fn = shift;
   return 1 if -d $fn;
@@ -238,7 +237,7 @@ sub dump_output {
 
   foreach my $module ( sort keys %{$mod_list} ) {
     next if exists $mod_list->{$module}{'in'};
-    next if exists $pragmas->{$module};
+    next if exists $PRAGMAS->{$module};
 
 ## Is it installed
     my $fn = join q(/), split m{::}mxs, "$module.pm";
@@ -257,18 +256,48 @@ sub dump_output {
     $mod_list->{$module}{'installed'} = $installed;
 
     my @files = map { "$_/$fn" } @munged_inc;
-    ## no critic (BackTickOperators)
-    my @details = $package_manager_type eq 'debian' ? `dpkg -S @files 2>/dev/null`
-                : $package_manager_type eq 'redhat' ? `rpm -qf @files 2>/dev/null`
-                :                                      ()
-                ;
-    ## use critic
     my @package;
-    foreach ( @details ) {
-      my ($pck) = $_ =~ m{\A(\S*)}mxs;
-      $pck =~ s{:\Z}{}mxs;
-      push @package, $pck;
+    ## no critic (BackTickOperators)
+    if( $package_manager_type eq 'debian' ) {
+      my @details = `dpkg -S @files 2>/dev/null`;
+      if( @details ) {
+        foreach (@details) {
+          if( m{^(\S+?):}mxs ) {
+            push @package, $1;
+          }
+        }
+      } else {
+        @details = `apt-file search $fn 2>/dev/null`;
+        my %mp = map { ($_,1) } @files;
+        foreach (@details) {
+          chomp;
+          s{\s+\Z}{}mxs;
+          my($pk, $file) = split m{:\s+}mxs;
+          push @package, $pk if $mp{$file};
+        }
+      }
+warn ">> $fn :: @package <<\n";
+    } elsif( $package_manager_type eq 'redhat' ) {
+      my @details = `rpm -qf @files 2>/dev/null`;
+      if( @details ) {
+        foreach (@details) {
+          chomp;
+          push @package, $_;
+        }
+      } else {
+        @details = `yum -q provides @files 2>/dev/null`;
+        while( my $line = shift @details ) {
+          next unless $line =~ m{\S}mxs;
+          if( $line =~ m{\A(\S+?)\s*:}mxs ) {
+            push @package, $1;
+          }
+          while( $line = shift @details ) {
+            last unless $line =~ m{\S}mxs;
+          }
+        }
+      }
     }
+    ## use critic
     my $install_type = q(source);
     if( @package ) {
       $install_type = $package_manager_type;
@@ -390,10 +419,10 @@ sub dump_output {
   foreach my $type ( $package_manager_type, qw(cpan source) ) {
     my @packages = sort keys %{$sources->{$type}{'svn'}};
     next unless @packages;
-    printf {$fh}  "%s %s\n\n", $package_path->{$type}, "@packages";
+    printf {$fh}  "%s %s\n\n", $PACKAGE_PATH->{$type}, "@packages";
     ## Just get all those that need installing!
     @packages = grep { exists $inst_flag->{$type}{$_} && $inst_flag->{$type}{$_} } @packages;
-    printf {$pfh} "%s %s\n\n", $package_path->{$type}, "@packages" if @packages;
+    printf {$pfh} "%s %s\n\n", $PACKAGE_PATH->{$type}, "@packages" if @packages;
   }
   foreach my $ext ( sort keys %{$non_core} ) {
     my @t_out;
@@ -403,10 +432,10 @@ sub dump_output {
       my @packages = sort grep { !exists $sources->{$type}{'svn'}{$_} }
                      keys %{$sources->{$type}{$ext}||{}};
       next unless @packages;
-      printf {$fh}  "%s %s\n\n", $package_path->{$type}, "@packages";
+      printf {$fh}  "%s %s\n\n", $PACKAGE_PATH->{$type}, "@packages";
       ## Just all those that need installing!
       @packages = grep { exists $inst_flag->{$type}{$_} && $inst_flag->{$type}{$_} } @packages;
-      printf {$pfh} "%s %s\n\n", $package_path->{$type}, "@packages" if @packages;
+      printf {$pfh} "%s %s\n\n", $PACKAGE_PATH->{$type}, "@packages" if @packages;
     }
   }
   close $fh;
