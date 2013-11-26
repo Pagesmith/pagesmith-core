@@ -46,6 +46,7 @@ my $package_manager_type = -e '/usr/bin/dpkg' ? 'debian'
 my @munged_inc;
 my %seen;
 foreach ( map { ($_,abs_path($_)) } @INC ) {
+  next unless defined $_;
   next if $seen{$_};
   $seen{$_}++;
   push @munged_inc, $_;
@@ -234,7 +235,7 @@ sub dump_output {
   my $cpan = get_cpan();
   my $sources = {};
   my $inst_flag = {};
-
+  my %package_dupes;
   foreach my $module ( sort keys %{$mod_list} ) {
     next if exists $mod_list->{$module}{'in'};
     next if exists $PRAGMAS->{$module};
@@ -276,7 +277,6 @@ sub dump_output {
           push @package, $pk if $mp{$file};
         }
       }
-warn ">> $fn :: @package <<\n";
     } elsif( $package_manager_type eq 'redhat' ) {
       my @details = `rpm -qf @files 2>/dev/null`;
       if( @details ) {
@@ -299,34 +299,47 @@ warn ">> $fn :: @package <<\n";
     }
     ## use critic
     my $install_type = q(source);
+## This is a package manager installation!
     if( @package ) {
       $install_type = $package_manager_type;
-      if( exists $mod_list->{$module}{'used'}{'svn'} ) {
-        $sources->{$package_manager_type}{'svn'}{$_}++ foreach @package;
+      if(@package > 1) {
+        warn qq(MODULE $module is provided by more than 1 package "@package"\n);
+        $package_dupes{$_}++ foreach @package;
+      }
+      if( exists $mod_list->{$module}{'used'}{'svn'} ) { ## Only report core modules once!
+        $sources->{$package_manager_type}{'svn'}{$_}{$module}=1 foreach @package;
       } else {
-        foreach my $s ( keys %{$mod_list->{$module}{'used'}} ) {
-          $sources->{$package_manager_type}{$s}{$_}++ foreach @package;
+        foreach my $s ( keys %{$mod_list->{$module}{'used'}} ) { ## But report non-core modules for each group included in!
+          $sources->{$package_manager_type}{$s}{$_}{$module}=1 foreach @package;
         }
       }
     } else {
       @package = map { cpan_pack( $_ ) } @{$cpan->{$module}||[]};
       if( @package ) {
+## This is a cpan package!
         $install_type = 'cpan';
+        if(@package > 1) {
+          warn qq(MODULE $module is provided by more than 1 package "@package"\n);
+          $package_dupes{$_}++ foreach @package;
+        }
         if( exists $mod_list->{$module}{'used'}{'svn'} ) {
-          $sources->{'cpan'}{'svn'}{$_}++ foreach @package;
+          $sources->{'cpan'}{'svn'}{$_}{$module}=1 foreach @package;
         } else {
           foreach my $s ( keys %{$mod_list->{$module}{'used'}} ) {
-            $sources->{'cpan'}{$s}{$_}++ foreach @package;
+            $sources->{'cpan'}{$s}{$_}{$module}=1 foreach @package;
           }
         }
       }
     }
-    unless( @package ) {
+## These are "custom packages!"
+    if( @package ) {
+      $mod_list->{$module}{'packages'} = \@package;
+    } else {
       if( exists $mod_list->{$module}{'used'}{'svn'} ) {
-        $sources->{'source'}{'svn'}{$module}++;
+        $sources->{'source'}{'svn'}{$module}{$module}=1;
       } else {
         foreach my $s ( keys %{$mod_list->{$module}{'used'}} ) {
-          $sources->{'source'}{$s}{$module}++;
+          $sources->{'source'}{$s}{$module}{$module}=1;
         }
       }
     }
@@ -349,20 +362,32 @@ warn ">> $fn :: @package <<\n";
   my @output;
   push @output, "CORE\n==========================\n";
   foreach my $type ( $package_manager_type, qw(cpan source) ) {
-    my @packages = sort keys %{$sources->{$type}{'svn'}};
+    next unless exists $sources->{$type}{'svn'};
+    my @all_packages = sort keys %{$sources->{$type}{'svn'}};
+    next unless @all_packages;
+    my @packages = grep { !exists $package_dupes{$_} } @all_packages;
     if( @packages ) {
       push @output, join "\n\t", $type, @packages;
     }
+    my @dupes = grep { exists $package_dupes{$_} } @all_packages;
+    next unless @dupes;
+    push @output, join "\n\t", '--- dupe ---', @dupes;
   }
   foreach my $ext ( sort keys %{$non_core} ) {
     my @t_out;
     foreach my $type ( $package_manager_type, qw(cpan source) ) {
-      my @packages = sort
+      next unless exists $sources->{$type}{$ext};
+      my @all_packages = sort
                      grep { !exists $sources->{$type}{'svn'}{$_} }
                      keys %{$sources->{$type}{$ext}||{}};
+      next unless @all_packages;
+      my @packages = grep { !exists $package_dupes{$_} } @all_packages;
       if( @packages ) {
         push @t_out, join "\n\t", $type, @packages;
       }
+      my @dupes = grep { exists $package_dupes{$_} } @all_packages;
+      next unless @dupes;
+      push @t_out, join "\n\t", '--- dupe ---', @dupes;
     }
     if( @t_out ) {
       push @output, "\n\nNON-CORE: $ext\n==========================\n", @t_out;
@@ -401,6 +426,9 @@ warn ">> $fn :: @package <<\n";
   open $fh, q(>), "$ROOT_PATH/tmp/package-details-dump.txt";
   print {$fh} Data::Dumper->new( [ $mod_list ], [ 'mod_list' ] )->Sortkeys(1)->Indent(1)->Terse(1)->Dump; ## no critic (LongChainsOfMethodCalls)
   close $fh;
+  open $fh, q(>), "$ROOT_PATH/tmp/package-sources.txt";
+  print {$fh} Data::Dumper->new( [ $sources ], [ 'sources' ] )->Sortkeys(1)->Indent(1)->Terse(1)->Dump; ## no critic (LongChainsOfMethodCalls)
+  close $fh;
 
 ## File 3: package-by-source.txt
 ## This is a Data dumper structure which can be loaded
@@ -414,15 +442,15 @@ warn ">> $fn :: @package <<\n";
   ## Now write the bash script...
   open $fh, q(>),  "$ROOT_PATH/tmp/package-install.bash";
   open my $pfh, q(>), "$ROOT_PATH/tmp/package-patch.bash";
+## NEED TO CHECK FOR DUPLICATES HERE TO SEE IF WE HAVE PACKAGES WHICH
+## PUSH SAME MODULE!!!!
   print {$fh}  "## core\n##----------------------------------------\n\n";
   print {$pfh} "## core\n##----------------------------------------\n\n";
   foreach my $type ( $package_manager_type, qw(cpan source) ) {
     my @packages = sort keys %{$sources->{$type}{'svn'}};
-    next unless @packages;
-    printf {$fh}  "%s %s\n\n", $PACKAGE_PATH->{$type}, "@packages";
+    print {$fh}  bash_line( $type, \%package_dupes, @packages );
     ## Just get all those that need installing!
-    @packages = grep { exists $inst_flag->{$type}{$_} && $inst_flag->{$type}{$_} } @packages;
-    printf {$pfh} "%s %s\n\n", $PACKAGE_PATH->{$type}, "@packages" if @packages;
+    print {$pfh} bash_line( $type, \%package_dupes, grep { exists $inst_flag->{$type}{$_} && $inst_flag->{$type}{$_} } @packages );
   }
   foreach my $ext ( sort keys %{$non_core} ) {
     my @t_out;
@@ -431,11 +459,9 @@ warn ">> $fn :: @package <<\n";
     foreach my $type ( $package_manager_type, qw(cpan source) ) {
       my @packages = sort grep { !exists $sources->{$type}{'svn'}{$_} }
                      keys %{$sources->{$type}{$ext}||{}};
-      next unless @packages;
-      printf {$fh}  "%s %s\n\n", $PACKAGE_PATH->{$type}, "@packages";
-      ## Just all those that need installing!
-      @packages = grep { exists $inst_flag->{$type}{$_} && $inst_flag->{$type}{$_} } @packages;
-      printf {$pfh} "%s %s\n\n", $PACKAGE_PATH->{$type}, "@packages" if @packages;
+      print {$fh}  bash_line( $type, \%package_dupes, @packages );
+      ## Just get all those that need installing!
+      print {$pfh} bash_line( $type, \%package_dupes, grep { exists $inst_flag->{$type}{$_} && $inst_flag->{$type}{$_} } @packages );
     }
   }
   close $fh;
@@ -443,6 +469,18 @@ warn ">> $fn :: @package <<\n";
   return;
 }
 
+sub bash_line {
+  my ($type, $package_dupes, @all_packages ) = @_;
+  return unless @all_packages;
+  my @out;
+  my @packages = grep { !exists $package_dupes->{$_} } @all_packages;
+  push @out, sprintf "%s %s\n\n", $PACKAGE_PATH->{$type}, "@packages" if @packages;
+  my @dupes    = grep { exists $package_dupes->{$_} } @all_packages;
+  if( @dupes ) {
+    push @out, sprintf "# The following packages include the same module\n# %s %s\n\n", $PACKAGE_PATH->{$type}, "@dupes";
+  }
+  return join q(), @out;
+}
 sub cpan_pack {
   ( my $x = shift ) =~ s{^.*/}{}mxs;
   $x =~ s{[.].*}{}mxs;
