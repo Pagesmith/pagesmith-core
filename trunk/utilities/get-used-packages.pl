@@ -31,113 +31,54 @@ my $PACKAGE_PATH  = {
   'debian' => 'aptitude -q -q -q -y install',
   'redhat' => 'yum -q -y install',
   'cpan'   => 'cpan',
-  'source' => '## MANUAL INSTALL: ',
+  'source' => '## MANUAL INSTALL:',
 };
 my $PRAGMAS       = { map { $_ => 1 } qw(strict warnings utf8 version feature integer lib vars) };
-
 ## get root path...
 my $ROOT_PATH     = dirname(dirname(abs_path($PROGRAM_NAME)));
 my $UTILS_PATH    = dirname($ROOT_PATH).'/utilities';
 
-my $package_manager_type = -e '/usr/bin/dpkg' ? 'debian'
-                         : -e '/usr/bin/rpm'  ? 'redhat'
-                         :                      'source'
-                         ;
-my @munged_inc;
-my %seen;
-foreach ( map { ($_,abs_path($_)) } @INC ) {
-  next unless defined $_;
-  next if $seen{$_};
-  $seen{$_}++;
-  push @munged_inc, $_;
-}
+my $PACKMAN_TYPE  = -e '/usr/bin/dpkg' ? 'debian'
+                  : -e '/usr/bin/rpm'  ? 'redhat'
+                  :                      'source'
+                  ;
+my @MUNGED_INC    = get_munged_inc();
 
 ## This bit of code will get the list of paths
 ## Both script and lib... if you wish to pick up other paths
 ## then this is the bit of code that you will need to extend
 
-my( $lib_paths, $scr_paths ) = get_dirs();
-push @{$lib_paths}, "$UTILS_PATH/lib" if -d "$UTILS_PATH/lib";
-push @{$scr_paths}, $UTILS_PATH       if -d $UTILS_PATH;
+my @dirs = get_dirs();
+my @lib_paths = grep { -d $_ } "$UTILS_PATH/lib", map { ( "$_/lib", "$_/ext-lib" ) } @dirs;
+my @scr_paths = grep { -d $_ } $UTILS_PATH,       map { "$_/utilities"             } @dirs;
 
-## make this global
+## Get details of scripts (this uses find so need a global variable!)
 my @libs;
-my @scrs;
 my $mod_list = {};
-get_libs( $lib_paths );
-get_details( 'lib', @libs );
-get_scripts( $scr_paths );
-get_details( 'scr', @scrs );
-dump_output();
+
+get_libs(     \@lib_paths   );
+get_details(  'lib', @libs  );
+
+## Get details of scripts (this uses find so need a global variable!)
+my @scrs;
+get_scripts(  \@scr_paths   );
+get_details(  'scr', @scrs  );
+
+my ($x_sources,$x_core,$x_non_core,$x_package_dupes,$x_inst_flag) = get_module_source();
+dump_output($x_sources,$x_core,$x_non_core,$x_package_dupes);
+dump_structures( $x_sources );
+dump_install_scripts($x_sources,[ sort keys %{$x_non_core}],$x_package_dupes,$x_inst_flag);
 ## end of main!
 
-sub get_dirs {
-  my( @lib_paths, @scr_paths );
-  push @lib_paths, "$ROOT_PATH/lib";
-  push @scr_paths, "$ROOT_PATH/utilities";
-  push @lib_paths, "$ROOT_PATH/ext-lib"                   if -d "$ROOT_PATH/ext-lib";
-
-  my $dh;
-  if( opendir $dh, "$ROOT_PATH" ) {
-    while ( defined (my $file = readdir $dh) ) {
-      next if $file =~ m{\A[.]}mxs;
-      push @lib_paths, "$ROOT_PATH/$file/lib"             if -d "$ROOT_PATH/$file/lib";
-      push @lib_paths, "$ROOT_PATH/$file/ext-lib"         if -d "$ROOT_PATH/$file/ext-lib";
-      push @scr_paths, "$ROOT_PATH/$file/utilities"       if -d "$ROOT_PATH/$file/utilities";
-    }
-    closedir $dh;
-  }
-
-  if( opendir $dh, "$ROOT_PATH/sites" ) {
-    while ( defined (my $file = readdir $dh) ) {
-      next if $file =~ m{\A[.]}mxs;
-      push @lib_paths, "$ROOT_PATH/sites/$file/lib"       if -d "$ROOT_PATH/sites/$file/lib";
-      push @lib_paths, "$ROOT_PATH/sites/$file/ext-lib"   if -d "$ROOT_PATH/sites/$file/ext-lib";
-      push @scr_paths, "$ROOT_PATH/sites/$file/utilities" if -d "$ROOT_PATH/sites/$file/utilities";
-  }
-    closedir $dh;
-  }
-  return \@lib_paths, \@scr_paths;
-}
-
-sub get_libs {
-  my $libs = shift;
-  find( sub {
-    return if exc($File::Find::name);
-    return unless $File::Find::name =~ m{[.]pm\Z}mxs;
-    push @libs, $File::Find::name;
-  }, $_ ) foreach @{$libs};
-  return;
-}
-
-sub get_scripts {
-  my $scrs = shift;
-  find( sub {
-    return if exc($File::Find::name);
-    warn 'LIB IN SCRIPTS ',$File::Find::name,"\n" if $File::Find::name =~ m{[.]pm\Z}mxs;
-    return if $File::Find::name =~ m{[.]pm\Z}mxs;
-    push @scrs, $File::Find::name;
-  }, $_ ) foreach @{$scrs};
-  return;
-}
-
-## Function return true if skipping directory or file!
-sub exc {
-  my $fn = shift;
-  return 1 if -d $fn;
-  return 1 if $fn =~ m{/.svn/}mxs || $fn =~ m{/CVS/}mxs;
-  return 1 if $fn =~ m{/[.]}mxs;
-  return 1 if $fn =~ m{~\Z}mxs;
-  return 0;
-}
+### Get details of all files in list
+### and the perl modules they are using!
 
 ## no critic (ExcessComplexity)
 sub get_details {
   my ( $lib_flag, @files ) = @_;
-  my $lr  = 1 + length $ROOT_PATH;
-  my $lur = 1 + length $UTILS_PATH;
 
   foreach my $fn (@files) {
+    next if -d $fn;
     ## no critic (RequireChecked BriefOpen)
     open my $fh,q(<),$fn;
     my $pod = 0;
@@ -148,6 +89,8 @@ sub get_details {
       next unless $hash_bang =~ m{[#]!/.*/perl}mxs;
     }
     my @lines;
+    ## Grab the lines of the file 1-by-one skipping "raw" blocks in codewriter core
+    ## and bits cut out with POD!
     while (<$fh>) {
       ## no critic (CascadingIfElse)
       if(m{\A[#][@]raw}mxs) {
@@ -168,55 +111,32 @@ sub get_details {
     }
     close $fh;
     ## use critic
+    ## Now filter out the use lines....
     my @use_lines = map { m{\A\s*use\s+(.*)}mxs ? $1 : () } @lines;
-    my $path = $fn;
-#print ">> $path ($ROOT_PATH|$UTILS_PATH)<<\n";
-       $path =          substr $fn, $lr  if "$ROOT_PATH/"  eq substr $fn,0,$lr;
-       $path = 'UTILS/'.substr $fn, $lur if "$UTILS_PATH/" eq substr $fn,0,$lur;
-    my $source;
-    my $mpath = q();
-#print "## $path <<\n";
-    if( $path =~ m{\A(.*/)?ext-lib/(.*)}mxs ) {
-      $source = $1;
-      $mpath  = $2;
-      if( $mpath =~ m{\A((?:Bio/)?[^/]+)}mxs ) {
-        (my $extra = $1)=~s{[.]pm\Z}{}mxs;
-        $source.= "/$extra";
-      }
-    } elsif( $path =~ m{\A(?:.*/)?lib/(.*)}mxs ) {
-      $source = 'svn';
-      $mpath  = $1;
-    } else {
-      $source = 'svn-utils';
-      $mpath  = $path;
-    }
-    $source =~ s{\Asites/([^/]+)[.]sanger[.]ac[.]uk/}{$1}mxs;
-    $source =~ s{\Asites/([^/]+)/}{$1}mxs;
-    ( my $mod_name = $mpath ) =~ s{[.]pm\Z}{}mxs;
-    if( $lib_flag eq 'lib' ) {
-      $mod_name = join q(::), split m{/}mxs, $mod_name;
-    }
+
+    ## This block is getting "source" and "path" of the current file
+    my ($source,$mod_name) = get_source_and_module_name( $lib_flag, $fn );
     $mod_list->{$mod_name}{'in'} ||= $source if $lib_flag eq 'lib';
     my %modules;
-    foreach my $l (@use_lines) {
-      next if $l =~ m{::%}mxs;
-      next if $l =~ m{\A%}mxs;
-      next if $l =~ m{\s\d}mxs;
-      if( $l =~ m{base\s+(.*)}mxs || $l=~ m{base([(].*)}mxs ) {
-        my $p = $1;
-        if( $p =~ m{qw\s*[(](.*?)[)]}mxs ||
-            $p =~ m{qw\s*[{](.*?)[}]}mxs ||
-            $p =~ m{qw\s*\[(.*?)\]}mxs
+    foreach my $line (@use_lines) {
+      next if $line =~ m{::%}mxs;
+      next if $line =~ m{\A%}mxs;
+      next if $line =~ m{\s\d}mxs;
+      if( $line =~ m{base\s+(.*)}mxs || $line=~ m{base([(].*)}mxs ) {
+        my $list = $1;
+        if( $list =~ m{qw\s*[(](.*?)[)]}mxs ||
+            $list =~ m{qw\s*[{](.*?)[}]}mxs ||
+            $list =~ m{qw\s*\[(.*?)\]}mxs
           ) {
           my $x = $1;
           $x =~s{\A\s+}{}mxs;
           $x =~s{\s+\Z}{}mxs;
           $modules{$_}++ foreach split m{\s+}mxs, $x;
         } else {
-          $p =~ s{[^\w:]}{}mxsg;
-          $modules{$p}++;
+          $list =~ s{[^\w:]}{}mxsg;
+          $modules{$list}++;
         }
-      } elsif( $l =~ m{([\w:]+)}mxs ) {
+      } elsif( $line =~ m{([\w:]+)}mxs ) {
         $modules{$1}++;
       }
     }
@@ -225,16 +145,49 @@ sub get_details {
   return $mod_list;
 }
 
+sub get_source_and_module_name {
+  my ($lib_flag,$fn ) = @_;
+  my $lr  = 1 + length $ROOT_PATH;
+  my $lur = 1 + length $UTILS_PATH;
+  my $path = $fn;
+     $path =          substr $fn, $lr  if "$ROOT_PATH/"  eq substr $fn,0,$lr;
+     $path = 'UTILS/'.substr $fn, $lur if "$UTILS_PATH/" eq substr $fn,0,$lur;
 
-sub dump_output {
+  my $source;
+  my $mpath = q();
+  if( $path =~ m{\A(.*/)?ext-lib/(.*)}mxs ) {
+    $source = $1;
+    $mpath  = $2;
+    if( $mpath =~ m{\A((?:Bio/)?[^/]+)}mxs ) {
+      (my $extra = $1)=~s{[.]pm\Z}{}mxs;
+      $source.= "/$extra";
+    }
+  } elsif( $path =~ m{\A(?:.*/)?lib/(.*)}mxs ) {
+    $source = 'svn';
+    $mpath  = $1;
+  } else {
+    $source = 'svn-utils';
+    $mpath  = $path;
+  }
+  $source =~ s{\Asites/([^/]+)[.]sanger[.]ac[.]uk/}{$1}mxs;
+  $source =~ s{\Asites/([^/]+)/}{$1}mxs;
+
+  ( my $mod_name = $mpath ) =~ s{[.]pm\Z}{}mxs;
+  if( $lib_flag eq 'lib' ) {
+    $mod_name = join q(::), split m{/}mxs, $mod_name;
+  }
+  return ($source,$mod_name);
+}
+
+sub get_module_source {
 ## Dump the output...
 ## for summary we want core {stuff in pagesmith}
 ## and stuff not-in pagesmith separated
   my $core;
-  my $non_core = {};
-  my $cpan = get_cpan();
-  my $sources = {};
-  my $inst_flag = {};
+  my $non_core    = {};
+  my $cpan        = get_cpan();
+  my $sources     = {};
+  my $inst_flag   = {};
   my %package_dupes;
   foreach my $module ( sort keys %{$mod_list} ) {
     next if exists $mod_list->{$module}{'in'};
@@ -256,10 +209,10 @@ sub dump_output {
     }
     $mod_list->{$module}{'installed'} = $installed;
 
-    my @files = map { "$_/$fn" } @munged_inc;
+    my @files = map { "$_/$fn" } @MUNGED_INC;
     my @package;
     ## no critic (BackTickOperators)
-    if( $package_manager_type eq 'debian' ) {
+    if( $PACKMAN_TYPE eq 'debian' ) {
       my @details = `dpkg -S @files 2>/dev/null`;
       if( @details ) {
         foreach (@details) {
@@ -277,7 +230,7 @@ sub dump_output {
           push @package, $pk if $mp{$file};
         }
       }
-    } elsif( $package_manager_type eq 'redhat' ) {
+    } elsif( $PACKMAN_TYPE eq 'redhat' ) {
       my @details = `rpm -qf @files 2>/dev/null`;
       if( @details ) {
         foreach (@details) {
@@ -301,16 +254,16 @@ sub dump_output {
     my $install_type = q(source);
 ## This is a package manager installation!
     if( @package ) {
-      $install_type = $package_manager_type;
+      $install_type = $PACKMAN_TYPE;
       if(@package > 1) {
         warn qq(MODULE $module is provided by more than 1 package "@package"\n);
         $package_dupes{$_}++ foreach @package;
       }
       if( exists $mod_list->{$module}{'used'}{'svn'} ) { ## Only report core modules once!
-        $sources->{$package_manager_type}{'svn'}{$_}{$module}=1 foreach @package;
+        $sources->{$PACKMAN_TYPE}{'svn'}{$_}{$module}=1 foreach @package;
       } else {
         foreach my $s ( keys %{$mod_list->{$module}{'used'}} ) { ## But report non-core modules for each group included in!
-          $sources->{$package_manager_type}{$s}{$_}{$module}=1 foreach @package;
+          $sources->{$PACKMAN_TYPE}{$s}{$_}{$module}=1 foreach @package;
         }
       }
     } else {
@@ -345,7 +298,7 @@ sub dump_output {
     }
     ## Push output for placing in package-summary.txt file...
     @package = ($module) unless @package;
-    my $package = join q(; );
+    my $package = join q(; ), @package;
     my $line = sprintf "%2s %-6s %-40s %-40s\t%s\n",
       $mod_list->{$module}{'installed'}||q(XX),
       $install_type, $package, $module, join q(, ), grep { $_ ne 'svn' } sort keys %{$mod_list->{$module}{'used'}};
@@ -359,42 +312,11 @@ sub dump_output {
     }
   }
 ## Now provide data for the packages-by-source & package-install.bash files!
-  my @output;
-  push @output, "CORE\n==========================\n";
-  foreach my $type ( $package_manager_type, qw(cpan source) ) {
-    next unless exists $sources->{$type}{'svn'};
-    my @all_packages = sort keys %{$sources->{$type}{'svn'}};
-    next unless @all_packages;
-    my @packages = grep { !exists $package_dupes{$_} } @all_packages;
-    if( @packages ) {
-      push @output, join "\n\t", $type, @packages;
-    }
-    my @dupes = grep { exists $package_dupes{$_} } @all_packages;
-    next unless @dupes;
-    push @output, join "\n\t", '--- dupe ---', @dupes;
-  }
-  foreach my $ext ( sort keys %{$non_core} ) {
-    my @t_out;
-    foreach my $type ( $package_manager_type, qw(cpan source) ) {
-      next unless exists $sources->{$type}{$ext};
-      my @all_packages = sort
-                     grep { !exists $sources->{$type}{'svn'}{$_} }
-                     keys %{$sources->{$type}{$ext}||{}};
-      next unless @all_packages;
-      my @packages = grep { !exists $package_dupes{$_} } @all_packages;
-      if( @packages ) {
-        push @t_out, join "\n\t", $type, @packages;
-      }
-      my @dupes = grep { exists $package_dupes{$_} } @all_packages;
-      next unless @dupes;
-      push @t_out, join "\n\t", '--- dupe ---', @dupes;
-    }
-    if( @t_out ) {
-      push @output, "\n\nNON-CORE: $ext\n==========================\n", @t_out;
-    }
-  }
+  return ($sources,$core,$non_core,\%package_dupes,$inst_flag);
+}
 
-  ## no critic (BriefOpen RequireChecked)
+sub dump_output {
+  my ($sources,$core,$non_core,$package_dupes) = @_;
 
 ## File 1: package-summary.txt
 ## Split into sections for core and one each sub area of externals...
@@ -414,57 +336,103 @@ sub dump_output {
 ##  * module name
 ##  * list of non-core directories the is used in
 
-  open my $fh, q(>), "$ROOT_PATH/tmp/package-summary.txt";
-  print {$fh} "CORE\n==========================\n\n$core\n\n";
-  foreach (sort keys %{$non_core}) {
-    print {$fh} "NON-CORE: $_\n==========================\n\n$non_core->{$_}\n\n";
-  }
-  close $fh;
 
-## File 2: package-details-dump.txt
-## This is a Data dumper structure which can be loaded
-  open $fh, q(>), "$ROOT_PATH/tmp/package-details-dump.txt";
-  print {$fh} Data::Dumper->new( [ $mod_list ], [ 'mod_list' ] )->Sortkeys(1)->Indent(1)->Terse(1)->Dump; ## no critic (LongChainsOfMethodCalls)
-  close $fh;
-  open $fh, q(>), "$ROOT_PATH/tmp/package-sources.txt";
-  print {$fh} Data::Dumper->new( [ $sources ], [ 'sources' ] )->Sortkeys(1)->Indent(1)->Terse(1)->Dump; ## no critic (LongChainsOfMethodCalls)
-  close $fh;
-
-## File 3: package-by-source.txt
-## This is a Data dumper structure which can be loaded
-
-  open $fh, q(>), "$ROOT_PATH/tmp/package-by-source.txt";
-  print {$fh} join "\n", @output, q();
-  close $fh;
-
-## File 4/5: package-install.bash && package-patch.bash
-## A bash script which can be run to indicate which modules need to be installed!
-  ## Now write the bash script...
-  open $fh, q(>),  "$ROOT_PATH/tmp/package-install.bash";
-  open my $pfh, q(>), "$ROOT_PATH/tmp/package-patch.bash";
-## NEED TO CHECK FOR DUPLICATES HERE TO SEE IF WE HAVE PACKAGES WHICH
-## PUSH SAME MODULE!!!!
-  print {$fh}  "## core\n##----------------------------------------\n\n";
-  print {$pfh} "## core\n##----------------------------------------\n\n";
-  foreach my $type ( $package_manager_type, qw(cpan source) ) {
-    my @packages = sort keys %{$sources->{$type}{'svn'}};
-    print {$fh}  bash_line( $type, \%package_dupes, @packages );
-    ## Just get all those that need installing!
-    print {$pfh} bash_line( $type, \%package_dupes, grep { exists $inst_flag->{$type}{$_} && $inst_flag->{$type}{$_} } @packages );
+## File 2: package-by-source.txt
+  my @output;
+  push @output, "CORE\n==========================\n";
+  foreach my $type ( $PACKMAN_TYPE, qw(cpan source) ) {
+    next unless exists $sources->{$type}{'svn'};
+    my @all_packages = sort keys %{$sources->{$type}{'svn'}};
+    next unless @all_packages;
+    my @packages = grep { !exists $package_dupes->{$_} } @all_packages;
+    push @packages, '*** dupes ***', grep { exists $package_dupes->{$_} } @all_packages;
+    push @output, join "\n\t", $type, @packages;
   }
   foreach my $ext ( sort keys %{$non_core} ) {
     my @t_out;
-    print {$fh} "## $ext\n##----------------------------------------\n\n";
-    print {$pfh} "## $ext\n##----------------------------------------\n\n";
-    foreach my $type ( $package_manager_type, qw(cpan source) ) {
-      my @packages = sort grep { !exists $sources->{$type}{'svn'}{$_} }
+    foreach my $type ( $PACKMAN_TYPE, qw(cpan source) ) {
+      next unless exists $sources->{$type}{$ext};
+      my @all_packages = sort
+                     grep { !exists $sources->{$type}{'svn'}{$_} }
                      keys %{$sources->{$type}{$ext}||{}};
-      print {$fh}  bash_line( $type, \%package_dupes, @packages );
-      ## Just get all those that need installing!
-      print {$pfh} bash_line( $type, \%package_dupes, grep { exists $inst_flag->{$type}{$_} && $inst_flag->{$type}{$_} } @packages );
+      next unless @all_packages;
+      my @packages = grep { !exists $package_dupes->{$_} } @all_packages;
+      push @packages, '*** dupes ***', grep { exists $package_dupes->{$_} } @all_packages;
+      push @t_out,  join "\n\t", $type, @packages;
+    }
+    if( @t_out ) {
+      push @output, "\n\nNON-CORE: $ext\n==========================\n", @t_out;
     }
   }
-  close $fh;
+## no critic (RequireChecked)
+  if( open my $fh, q(>), "$ROOT_PATH/tmp/package-summary.txt" ) {
+    print {$fh} "CORE\n==========================\n\n$core\n\n",
+      map { "NON-CORE: $_\n==========================\n\n$non_core->{$_}\n\n" } sort keys %{$non_core};
+    close $fh;
+  }
+  if( open my $fh, q(>), "$ROOT_PATH/tmp/package-by-source.txt" ) {
+    print {$fh} join "\n", @output, q();
+    close $fh;
+  }
+## use critic
+  return;
+}
+
+sub dump_structures {
+  my $sources = shift;
+## File 3/4: Dumprs of mod_list & sources structures...
+## This is a Data dumper structure which can be loaded
+## no critic (RequireChecked LongChainsOfMethodCalls)
+  if( open my $fh, q(>), "$ROOT_PATH/tmp/package-dump-mod_list.txt" ) {
+    print {$fh} Data::Dumper->new( [ $mod_list ], [ 'mod_list' ] )
+      ->Sortkeys(1)->Indent(1)->Terse(1)->Dump;
+    close $fh;
+  }
+  if( open my $fh,    q(>), "$ROOT_PATH/tmp/package-dump-sources.txt"; ) {
+    print {$fh} Data::Dumper->new( [ $sources  ], [ 'sources'  ] )
+      ->Sortkeys(1)->Indent(1)->Terse(1)->Dump;
+    close $fh;
+  }
+## use critic
+  return;
+}
+sub dump_install_scripts {
+  my ($sources,$extra_paths,$package_dupes, $inst_flag) = @_;
+
+## File 5/6: package-install.bash && package-patch.bash
+## A bash script which can be run to indicate which modules need to be installed!
+  ## Now write the bash script...
+## NEED TO CHECK FOR DUPLICATES HERE TO SEE IF WE HAVE PACKAGES WHICH
+## PUSH SAME MODULE!!!!
+  my @out  = "## core\n##----------------------------------------\n\n";
+  my @pout = "## core\n##----------------------------------------\n\n";
+  foreach my $type ( $PACKMAN_TYPE, qw(cpan source) ) {
+    my @packages = sort keys %{$sources->{$type}{'svn'}};
+    push @out,  bash_line( $type, $package_dupes, @packages );
+    ## Just get all those that need installing!
+    push @pout, bash_line( $type, $package_dupes, grep { exists $inst_flag->{$type}{$_} && $inst_flag->{$type}{$_} } @packages );
+  }
+  foreach my $ext ( @{$extra_paths} ) {
+    push @out,  "## $ext\n##----------------------------------------\n\n";
+    push @pout, "## $ext\n##----------------------------------------\n\n";
+    foreach my $type ( $PACKMAN_TYPE, qw(cpan source) ) {
+      my @packages = sort grep { !exists $sources->{$type}{'svn'}{$_} }
+                     keys %{$sources->{$type}{$ext}||{}};
+      push @out,  bash_line( $type, $package_dupes, @packages );
+      ## Just get all those that need installing!
+      push @pout, bash_line( $type, $package_dupes, grep { exists $inst_flag->{$type}{$_} && $inst_flag->{$type}{$_} } @packages );
+    }
+  }
+
+  ## no critic (RequireChecked)
+  if( open my $fh,  q(>), "$ROOT_PATH/tmp/package-install.bash" ) {
+    print {$fh}  @out;
+    close $fh;
+  }
+  if( open my $fh, q(>), "$ROOT_PATH/tmp/package-patch.bash" ) {
+    print {$fh} @pout;
+    close $fh;
+  }
   ## use critic
   return;
 }
@@ -481,6 +449,64 @@ sub bash_line {
   }
   return join q(), @out;
 }
+
+## These four function get information
+sub get_munged_inc {
+  my %seen;
+  my @paths;
+  foreach ( map { ($_,abs_path($_)) } @INC ) {
+    next unless defined $_;
+    next if $seen{$_};
+    $seen{$_}++;
+    push @paths, $_;
+  }
+  return grep { -d _ } @paths;
+}
+
+sub get_dirs {
+  ## Returns array of paths....
+  my @ldirs   = ($ROOT_PATH);
+  my $dh;
+  if( opendir $dh, "$ROOT_PATH" ) {
+    push @ldirs, map { "$ROOT_PATH/$_" } grep { !m{^[.]}mxs && -d "$ROOT_PATH/$_" } readdir $dh;
+  }
+  if( opendir $dh, "$ROOT_PATH/sites" ) {
+    push @ldirs, map { "$ROOT_PATH/sites/$_" } grep { !m{^[.]}mxs && -d "$ROOT_PATH/sites/$_" } readdir $dh;
+  }
+  return @ldirs;
+}
+
+sub get_libs {
+  my $libs = shift;
+  find( sub {
+    return if exc($File::Find::name);
+    return unless $File::Find::name =~ m{[.]pm\Z}mxs;
+    push @libs, $File::Find::name;
+  }, $_ ) foreach @{$libs};
+  return;
+}
+
+sub get_scripts {
+  my $scrs = shift;
+  find( sub {
+    return if exc($File::Find::name);
+    warn 'LIB IN SCRIPTS ',$File::Find::name,"\n" if $File::Find::name =~ m{[.]pm\Z}mxs;
+    return if $File::Find::name =~ m{[.]pm\Z}mxs;
+    push @scrs, $File::Find::name;
+  }, $_ ) foreach @{$scrs};
+  return;
+}
+
+## Function return true if skipping directory or file!
+sub exc {
+  my $fn = shift;
+  return 1 if -d $fn;
+  return 1 if $fn =~ m{/.svn/}mxs || $fn =~ m{/CVS/}mxs;
+  return 1 if $fn =~ m{/[.]}mxs;
+  return 1 if $fn =~ m{~\Z}mxs;
+  return 0;
+}
+
 sub cpan_pack {
   ( my $x = shift ) =~ s{^.*/}{}mxs;
   $x =~ s{[.].*}{}mxs;
