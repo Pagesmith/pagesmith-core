@@ -315,9 +315,6 @@ sub get_module_source {
   return ($sources,$core,$non_core,\%package_dupes,$inst_flag);
 }
 
-sub dump_output {
-  my ($sources,$core,$non_core,$package_dupes) = @_;
-
 ## File 1: package-summary.txt
 ## Split into sections for core and one each sub area of externals...
 ## Columns are
@@ -338,6 +335,9 @@ sub dump_output {
 
 
 ## File 2: package-by-source.txt
+sub dump_output {
+  my ($sources,$core,$non_core,$package_dupes) = @_;
+
   my @output;
   push @output, "CORE\n==========================\n";
   foreach my $type ( $PACKMAN_TYPE, qw(cpan source) ) {
@@ -388,7 +388,7 @@ sub dump_structures {
       ->Sortkeys(1)->Indent(1)->Terse(1)->Dump;
     close $fh;
   }
-  if( open my $fh,    q(>), "$ROOT_PATH/tmp/package-dump-sources.txt"; ) {
+  if( open my $fh,    q(>), "$ROOT_PATH/tmp/package-dump-sources.txt" ) {
     print {$fh} Data::Dumper->new( [ $sources  ], [ 'sources'  ] )
       ->Sortkeys(1)->Indent(1)->Terse(1)->Dump;
     close $fh;
@@ -396,6 +396,7 @@ sub dump_structures {
 ## use critic
   return;
 }
+
 sub dump_install_scripts {
   my ($sources,$extra_paths,$package_dupes, $inst_flag) = @_;
 
