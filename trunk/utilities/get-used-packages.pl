@@ -232,20 +232,35 @@ sub get_module_source {
       }
     } elsif( $PACKMAN_TYPE eq 'redhat' ) {
       my @details = `rpm -qf @files 2>/dev/null`;
+      my %s;
       if( @details ) {
         foreach (@details) {
           chomp;
+          next if m{\Afile[ ]}mxs;
+          s{-\d+(?:[.]\d+)*-\d+(?:[.]\w+){1,3}\Z}{}mxs;
+          next if exists $s{$_};
+          $s{$_}++;
           push @package, $_;
         }
       } else {
-        @details = `yum -q provides @files 2>/dev/null`;
+        @details = `yum whatprovides @files 2>/dev/null`;
+warn ">> @files\n
+@details
+
+";
         while( my $line = shift @details ) {
           next unless $line =~ m{\S}mxs;
-          if( $line =~ m{\A(\S+?)\s*:}mxs ) {
-            push @package, $1;
-          }
-          while( $line = shift @details ) {
-            last unless $line =~ m{\S}mxs;
+          next if $line =~ m{\A\s}mxs;
+          next if $line =~ m{\ARepo\s+:\s}mxs;
+          next if $line =~ m{\AMatched\s+from:}mxs;
+          next if $line =~ m{\AFilename\s+:\s}mxs;
+          if( $line =~ m{\A(\S+?)\s+:\s*}mxs ) {
+            my $pck = $1;
+            $pck =~ s{\A\d+:}{}mxs;
+            $pck =~ s{-\d+(?:[.]\d+)*-\d+(?:[.]\w+){1,3}\Z}{}mxs;
+            next if exists $s{$pck};
+            $s{$pck}++;
+            push @package, $pck;
           }
         }
       }
@@ -267,7 +282,7 @@ sub get_module_source {
         }
       }
     } else {
-      @package = map { cpan_pack( $_ ) } @{$cpan->{$module}||[]};
+      push @package, $cpan->{$module} if exists $cpan->{$module};
       if( @package ) {
 ## This is a cpan package!
         $install_type = 'cpan';
@@ -461,7 +476,7 @@ sub get_munged_inc {
     $seen{$_}++;
     push @paths, $_;
   }
-  return grep { -d _ } @paths;
+  return grep { -d $_ } @paths;
 }
 
 sub get_dirs {
@@ -508,16 +523,9 @@ sub exc {
   return 0;
 }
 
-sub cpan_pack {
-  ( my $x = shift ) =~ s{^.*/}{}mxs;
-  $x =~ s{[.].*}{}mxs;
-  $x =~ s{-\d+}{}mxs;
-  $x =~ s{-}{::}mxsg;
-  return $x;
-}
-
 sub get_cpan {
-  my $cpan = {};
+  my $cpan      = {};
+  my $cpan_file = {};
   my $ua = LWP::UserAgent->new;
      $ua->env_proxy;
   my $contents = $ua->get( $CPAN_PACKAGES )->content;
@@ -528,7 +536,7 @@ sub get_cpan {
   while( $_ = shift @lines ) {
     chomp;
     my( $pkg, $version, $file ) = split m{\s+}mxs;
-    push @{$cpan->{$pkg}}, $file;
+    $cpan->{$pkg} = $cpan_file->{$file}||=$pkg;
   }
   return $cpan;
 }
