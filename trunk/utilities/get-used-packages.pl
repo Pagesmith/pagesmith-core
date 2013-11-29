@@ -1,5 +1,4 @@
 #!/usr/bin/perl
-#!/usr/bin/perl
 
 ## Keeps a serve up to date - BUT not using keep uptodate - basically runs svn up on each repository
 
@@ -26,6 +25,24 @@ use File::Find     qw(find);
 use LWP::UserAgent;
 
 ## Set up constants!
+my @REQUIRED_BINARIES =qw(
+  make gcc
+  pngcrush jpegoptim advpng optipng qrencode
+  java mysql 
+  multitail tidy
+  memcached php5  mysqld
+  alien
+);
+
+my %OTHER_PACKAGES = (
+  'debian' => [qw(php5-imagick php5-mysql php5-gd tomcat7 libapache2-mod-jk
+                  libevent-dev libssl-dev )],
+  'redhat' => [qw(php-magickwand php-mysqlnd php-gd tomcat 
+                  openssl-devel libevent-devel)],
+);
+
+my $ignore_whats_installed = (@ARGV && $ARGV[0] eq '-i') ? 1 : 0;
+
 my $CPAN_PACKAGES = 'http://www.cpan.org/modules/02packages.details.txt';
 my $PACKAGE_PATH  = {
   'debian' => 'aptitude -q -q -q -y install',
@@ -43,7 +60,7 @@ my $PACKMAN_TYPE  = -e '/usr/bin/dpkg' ? 'debian'
                   :                      'source'
                   ;
 my @MUNGED_INC    = get_munged_inc();
-
+my @MUNGED_PATH   = get_munged_path();
 ## This bit of code will get the list of paths
 ## Both script and lib... if you wish to pick up other paths
 ## then this is the bit of code that you will need to extend
@@ -56,7 +73,11 @@ my @scr_paths = grep { -d $_ } $UTILS_PATH,       map { "$_/utilities"          
 my @libs;
 my $mod_list = {};
 
-get_libs(     \@lib_paths   );
+my ($bin_info, $bin_dupes) = get_binary_sources( @REQUIRED_BINARIES );
+dump_bin_structures( $bin_info, $bin_dupes );
+dump_bin_install_scripts( $bin_info, $bin_dupes );
+
+get_libs(      \@lib_paths   );
 get_details(  'lib', @libs  );
 
 ## Get details of scripts (this uses find so need a global variable!)
@@ -179,6 +200,83 @@ sub get_source_and_module_name {
   return ($source,$mod_name);
 }
 
+sub get_binary_sources {
+  my @commands = @_;
+
+  my $command_dupes = {};
+  my $command_info  = {};
+  ## no critic (BackTickOperators)
+  foreach my $command ( @commands ) {
+    my @package;
+    $command_info->{$command} ={
+      'packages'  => [],
+      'installed' => [ map { m{(\S+)}mxs ? $1 : () } `which $command` ],
+    };
+    my @files = map { $_->[0] eq $_->[1] ? $_->[0] : @{$_} }
+                map { [$_,abs_path($_)] }
+                map { "$_/$command" }
+                @MUNGED_PATH;
+    if( $PACKMAN_TYPE eq 'debian' ) {
+      my @details = $ignore_whats_installed ? () : `dpkg -S @files 2>/dev/null`;
+      if( @details ) {
+        foreach (@details) {
+          if( m{^(\S+?):}mxs ) {
+            push @package, $1;
+          }
+        }
+      } else {
+        @details = `apt-file search $command 2>/dev/null`;
+        my %mp = map { ($_,1) } @files;
+        foreach (@details) {
+          chomp;
+          s{\s+\Z}{}mxs;
+          my($pk, $file) = split m{:\s+}mxs;
+          push @package, $pk if $mp{$file};
+        }
+      }
+    } elsif( $PACKMAN_TYPE eq 'redhat' ) {
+      my @details = $ignore_whats_installed ? () : `rpm -qf @files 2>/dev/null`;
+      my %s;
+      if( @details ) {
+        foreach (@details) {
+          chomp;
+          next if m{\Afile[ ]}mxs;
+          s{-\d+(?:[.]\d+)*-\d+(?:[.]\w+){1,3}\Z}{}mxs;
+          next if exists $s{$_};
+          $s{$_}++;
+          push @package, $_;
+        }
+      } else {
+        @details = `yum whatprovides @files 2>/dev/null`;
+        while( my $line = shift @details ) {
+          next unless $line =~ m{\S}mxs;
+          next if $line =~ m{\A\s}mxs;
+          next if $line =~ m{\ARepo\s+:\s}mxs;
+          next if $line =~ m{\AMatched\s+from:}mxs;
+          next if $line =~ m{\AFilename\s+:\s}mxs;
+          if( $line =~ m{\A(\S+?)\s+:\s*}mxs ) {
+            my $pck = $1;
+            $pck =~ s{\A\d+:}{}mxs;
+            $pck =~ s{-\d+(?:[.]\d+)*-\d+(?:[.]\w+){1,3}\Z}{}mxs;
+            next if exists $s{$pck};
+            $s{$pck}++;
+            push @package, $pck;
+          }
+        }
+      }
+    }
+    if( @package ) {
+      if(@package > 1) {
+        warn qq(Command $command is provided by more than 1 package "@package"\n);
+        $command_dupes->{$_}++ foreach @package;
+      }
+      push @{$command_info->{$command}{'packages'}}, @package;
+    }
+  }
+  ## use critic
+  return ($command_info, $command_dupes);
+}
+
 sub get_module_source {
 ## Dump the output...
 ## for summary we want core {stuff in pagesmith}
@@ -213,7 +311,7 @@ sub get_module_source {
     my @package;
     ## no critic (BackTickOperators)
     if( $PACKMAN_TYPE eq 'debian' ) {
-      my @details = `dpkg -S @files 2>/dev/null`;
+      my @details = $ignore_whats_installed ? () : `dpkg -S @files 2>/dev/null`;
       if( @details ) {
         foreach (@details) {
           if( m{^(\S+?):}mxs ) {
@@ -231,7 +329,7 @@ sub get_module_source {
         }
       }
     } elsif( $PACKMAN_TYPE eq 'redhat' ) {
-      my @details = `rpm -qf @files 2>/dev/null`;
+      my @details = $ignore_whats_installed ? () : `rpm -qf @files 2>/dev/null`;
       my %s;
       if( @details ) {
         foreach (@details) {
@@ -244,10 +342,6 @@ sub get_module_source {
         }
       } else {
         @details = `yum whatprovides @files 2>/dev/null`;
-warn ">> @files\n
-@details
-
-";
         while( my $line = shift @details ) {
           next unless $line =~ m{\S}mxs;
           next if $line =~ m{\A\s}mxs;
@@ -393,6 +487,17 @@ sub dump_output {
   return;
 }
 
+sub dump_bin_structures {
+  my( $command_info, $command_dupes ) = @_;
+## no critic (RequireChecked LongChainsOfMethodCalls)
+  if( open my $fh, q(>), "$ROOT_PATH/tmp/package-dump-bin.txt" ) {
+    print {$fh} Data::Dumper->new( [ {'info'=>$command_info,'dupes'=>$command_dupes} ], [ 'bin_info' ] )
+      ->Sortkeys(1)->Indent(1)->Terse(1)->Dump;
+    close $fh;
+  }
+## use critic
+  return;
+}
 sub dump_structures {
   my $sources = shift;
 ## File 3/4: Dumprs of mod_list & sources structures...
@@ -409,6 +514,47 @@ sub dump_structures {
     close $fh;
   }
 ## use critic
+  return;
+}
+
+sub dump_bin_install_scripts {
+  my( $command_info, $command_dupes ) = @_;
+  my @out  = "## bin/lib\n##----------------------------------------\n\n";
+  my @pout = "## bin/lib\n##----------------------------------------\n\n";
+  my @packages            = map { @{$_->{'packages'}||[]} } values %{$command_info};
+
+  push @packages, @{$OTHER_PACKAGES{$PACKMAN_TYPE}} if exists $OTHER_PACKAGES{$PACKMAN_TYPE};
+  my @manual_installed  = grep { !@{$command_info->{$_}{'packages'}}  } keys %{$command_info};
+  my @manual_to_install = grep { !@{$command_info->{$_}{'installed'}} } @manual_installed;
+  my %packages = map { ($_,1) } @packages;
+  @packages = sort keys %packages;
+  my @uninstalled_packages;
+  foreach (@packages) {
+    ## no critic (BackTickOperators)
+    if( $PACKMAN_TYPE eq 'debian' ) {
+      my @cache_res = `apt-cache search '^$_\$'`;
+      next if @cache_res;
+    } elsif( $PACKMAN_TYPE eq 'redhat' ) {
+      my @cache_res = `rpm -q $_`;
+      next if @cache_res && $cache_res[0]=~m{[ ]is[ ]not[ ]installed}mxs;
+    }
+    ## use critic
+    push @uninstalled_packages, $_;
+  }
+  push @out,    bash_line( $PACKMAN_TYPE, $command_dupes, @packages             );
+  push @pout,   bash_line( $PACKMAN_TYPE, $command_dupes, @uninstalled_packages );
+  push @out,    bash_line( 'source', $command_dupes, @manual_installed          );
+  push @pout,   bash_line( 'source', $command_dupes, @manual_to_install         );
+  ## no critic (RequireChecked)
+  if( open my $fh, q(>), "$ROOT_PATH/tmp/package-install.bash" ) {
+    print {$fh}  @out;
+    close $fh;
+  }
+  if( open my $fh, q(>), "$ROOT_PATH/tmp/package-patch.bash" ) {
+    print {$fh} @pout;
+    close $fh;
+  }
+  ## use critic
   return;
 }
 
@@ -441,11 +587,11 @@ sub dump_install_scripts {
   }
 
   ## no critic (RequireChecked)
-  if( open my $fh,  q(>), "$ROOT_PATH/tmp/package-install.bash" ) {
+  if( open my $fh, q(>>), "$ROOT_PATH/tmp/package-install.bash" ) {
     print {$fh}  @out;
     close $fh;
   }
-  if( open my $fh, q(>), "$ROOT_PATH/tmp/package-patch.bash" ) {
+  if( open my $fh, q(>>), "$ROOT_PATH/tmp/package-patch.bash" ) {
     print {$fh} @pout;
     close $fh;
   }
@@ -471,6 +617,18 @@ sub get_munged_inc {
   my %seen;
   my @paths;
   foreach ( map { ($_,abs_path($_)) } @INC ) {
+    next unless defined $_;
+    next if $seen{$_};
+    $seen{$_}++;
+    push @paths, $_;
+  }
+  return grep { -d $_ } @paths;
+}
+
+sub get_munged_path {
+  my %seen;
+  my @paths;
+  foreach ( map { ($_,abs_path($_)) } split m{:}mxs, $ENV{'PATH'} ) {
     next unless defined $_;
     next if $seen{$_};
     $seen{$_}++;
