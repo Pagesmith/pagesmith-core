@@ -70,10 +70,10 @@ sub run {
       }
       $form_object  = $self->form( $module_name, $self->next_path_info ); ## This is the ID!
     }
-    return $self->redirect( $form_object->action_url_get ) if $form_object->code; ## This has a forced code so actually just redirect!
     return $self->wrap( 'Form error',
       sprintf q(<p>Unable to generate form object of type '%s'</p>),
       encode_entities( $form_type ) )->ok unless $form_object; ## We can't create a new object!
+    return $self->redirect( $form_object->action_url_get ) if $form_object->code; ## This has a forced code so actually just redirect!
 
     my $msg = $form_object->cant_create;                ## See if the user can edit this stage!
     $form_object->set_stage_by_name( $msg ) if $msg;    ## CAN'T
