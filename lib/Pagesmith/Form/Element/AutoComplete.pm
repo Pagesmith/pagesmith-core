@@ -51,6 +51,11 @@ sub element_class {
   return;
 }
 
+sub extra_markup {
+  my $self = shift;
+  return 'autocomplete="off"';
+}
+
 sub render_widget {
   my $self = shift;
   return $self->add_class( q(james), $self->encode($self->json_encode( {
