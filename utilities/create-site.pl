@@ -39,8 +39,6 @@ my $domain_name = shift @ARGV;
 
 die "MUST GIVE DOMAIN NAME\n" unless $domain_name;
 
-
-
 ## Read files from __DATA__ section of file...
 my $file_contents = {};
 get_templates();
@@ -56,7 +54,11 @@ my $user = sprintf '%s (%s)',        @{[getpwuid $UID]}[qw(0 6)];
 create_files();
 
 ## And if required write back to the SVN repository with pass 1!
-write_svn() unless $from_svn && $commit_svn;
+if( $from_svn ) {
+  write_svn();
+} else {
+  checkout_core();
+}
 
 sub get_templates {
   ## no critic (RequireChecked)
@@ -92,13 +94,19 @@ sub create_directories {
   return;
 }
 
+sub checkout_core {
+  ## no critic (BacktickOperators)
+  `svn co http://websvn.europe.sanger.ac.uk/svn/pagesmith-core/trunk/htdocs/core $ROOT_PATH/sites/$domain_name/htdocs`;
+  ## use critic
+  return;
+}
 sub write_svn {
   ## no critic (BacktickOperators)
   `svn add $ROOT_PATH/sites/$domain_name/*`;
   `svn ps svn:externals 'core http://websvn.europe.sanger.ac.uk/svn/pagesmith-core/trunk/htdocs/core' $ROOT_PATH/sites/$domain_name/htdocs`;
   `svn ps svn:ignore '*' $ROOT_PATH/sites/$domain_name/ext-lib`;
-  `svn ci -m 'creating initial site structure' $ROOT_PATH/sites/$domain_name`;
-  if( $apache_dir ) {
+  `svn ci -m 'creating initial site structure' $ROOT_PATH/sites/$domain_name` if $commit_svn;
+  if( $apache_dir && $commit_svn ) {
     `svn add $conf_file`;
     `svn ci -m 'adding site config' $conf_file`;
   }
