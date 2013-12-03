@@ -83,33 +83,51 @@ sub create_directories {
   (my $repos_name = $domain_name) =~ s{[.]}{-}mxsg;
 
   ### Create root directory of site either from SVN or just with mkdir.!
-  if( $from_svn ) {
-    `svn co $from_svn/sites/$repos_name/trunk $ROOT_PATH/sites/$domain_name`; ## no critic (BacktickOperators)
+  if( -d "$ROOT_PATH/sites/$domain_name" ) {
+    if( $options{ 's' } ) {
+      `svn up $ROOT_PATH/sites/$domain_name`; ## no critic (BacktickOperators)
+    }
   } else {
-    mkdir "$ROOT_PATH/sites/$domain_name", $DIR_PERM;
+    if( $from_svn ) {
+      `svn co $from_svn/sites/$repos_name/trunk $ROOT_PATH/sites/$domain_name`; ## no critic (BacktickOperators)
+    } else {
+      mkdir "$ROOT_PATH/sites/$domain_name", $DIR_PERM;
+    }
   }
 
   ## Make site directories....
-
-  mkdir "$ROOT_PATH/sites/$domain_name/$_", $DIR_PERM foreach @paths;
+  foreach( @paths ) {
+    mkdir "$ROOT_PATH/sites/$domain_name/$_", $DIR_PERM unless -e "$ROOT_PATH/sites/$domain_name/$_";
+  }
   return;
 }
 
 sub checkout_core {
   ## no critic (BacktickOperators)
-  `svn co http://websvn.europe.sanger.ac.uk/svn/pagesmith-core/trunk/htdocs/core $ROOT_PATH/sites/$domain_name/htdocs`;
+  if( -e "$ROOT_PATH/sites/$domain_name/htdocs" ) {
+    `svn up $ROOT_PATH/sites/$domain_name/htdocs`;
+  } else {
+    `svn co http://websvn.europe.sanger.ac.uk/svn/pagesmith-core/trunk/htdocs/core $ROOT_PATH/sites/$domain_name/htdocs`;
+  }
   ## use critic
   return;
 }
 
 sub write_svn {
   ## no critic (BacktickOperators)
-  `svn add $ROOT_PATH/sites/$domain_name/*`;
-  `svn ps svn:externals 'core http://websvn.europe.sanger.ac.uk/svn/pagesmith-core/trunk/htdocs/core' $ROOT_PATH/sites/$domain_name/htdocs`;
-  `svn ps svn:ignore '*' $ROOT_PATH/sites/$domain_name/ext-lib`;
-  `svn ci -m 'creating initial site structure' $ROOT_PATH/sites/$domain_name` if $commit_svn;
+  `svn add -q $ROOT_PATH/sites/$domain_name/*`;
+  my @Q = `svn pg svn:externals $ROOT_PATH/sites/$domain_name/htdocs`;
+  `svn ps svn:externals 'core http://websvn.europe.sanger.ac.uk/svn/pagesmith-core/trunk/htdocs/core' $ROOT_PATH/sites/$domain_name/htdocs` unless @Q;
+     @Q = `svn pg svn:ignore $ROOT_PATH/sites/$domain_name/ext-lib`;
+  `svn ps svn:ignore '*' $ROOT_PATH/sites/$domain_name/ext-lib` unless @Q;
+     @Q = `svn info $ROOT_PATH/sites/$domain_name | grep Revision`;
+  if( $Q[0] =~ m{\ARevision:[ ]1}mxs ) {
+    `svn ci -m 'creating initial site structure' $ROOT_PATH/sites/$domain_name` if $commit_svn;
+  } else {
+    `svn ci -m 'patching site  structure' $ROOT_PATH/sites/$domain_name` if $commit_svn;
+  }
   if( $apache_dir && $commit_svn ) {
-    `svn add $conf_file`;
+    `svn add -q $conf_file`;
     `svn ci -m 'adding site config' $conf_file`;
   }
   `svn up $ROOT_PATH/sites/$domain_name`;
@@ -117,49 +135,59 @@ sub write_svn {
   return;
 }
 
+my $directories_to_skip = map {($_,1)} qw(Startup Support Apache Apache/Action);
+
 sub create_files {
   ## Create standard html pages, index, legal, cookiespolicy, contact
   ## no critic (RequireChecked)
   foreach (qw(index contact cookiespolicy legal)) {
     next unless exists $file_contents->{"$_.html"};
+    next if -e "$ROOT_PATH/sites/$domain_name/htdocs/$_.html";
     open my $fh, q(>), "$ROOT_PATH/sites/$domain_name/htdocs/$_.html";
     print {$fh} expand_parts( $file_contents->{"$_.html"} );
     close $fh;
   }
   foreach (qw(css js)) {
     next unless exists $file_contents->{$_};
+    next if -e "$ROOT_PATH/sites/$domain_name/htdocs/$htdocs_sub_dir/$_/$htdocs_sub_dir.$_";
     open my $fh, q(>), "$ROOT_PATH/sites/$domain_name/htdocs/$htdocs_sub_dir/$_/$htdocs_sub_dir.$_";
     print {$fh} expand_parts( $file_contents->{$_} );
     close $fh;
   }
 
   ## Create template page...
-  open my $ti_fh, q(>), "$ROOT_PATH/sites/$domain_name/data/templates/normal/$domain_name.tmpl";
-  print {$ti_fh} expand_parts( $file_contents->{ $template_name.'-template' } );
-  close $ti_fh;
-
-  open my $d_fh, q(>), "$ROOT_PATH/sites/$domain_name/data/config/databases.yaml";
-  print {$d_fh} $file_contents->{'databases.yaml'};
-  close $d_fh;
+  unless( -e "$ROOT_PATH/sites/$domain_name/data/templates/normal/$domain_name.tmpl" ) {
+    open my $ti_fh, q(>), "$ROOT_PATH/sites/$domain_name/data/templates/normal/$domain_name.tmpl";
+    print {$ti_fh} expand_parts( $file_contents->{ $template_name.'-template' } );
+    close $ti_fh;
+  }
+  unless( -e "$ROOT_PATH/sites/$domain_name/data/config/databases.yaml" ) {
+    open my $d_fh, q(>), "$ROOT_PATH/sites/$domain_name/data/config/databases.yaml";
+    print {$d_fh} $file_contents->{'databases.yaml'};
+    close $d_fh;
+  }
   ## Write the apache configuration file....
-  open my $conf_fh, q(>), $conf_file;
-  print {$conf_fh} expand_parts($file_contents->{'apache.conf'});
-  close $conf_fh;
-  `ln -s $rel_conf_file $ROOT_PATH/apache2/sites-enabled`; ## no critic (BacktickOperators)
-
+  unless( -e "$ROOT_PATH/sites/$domain_name/data/config/databases.yaml" ) {
+    open my $conf_fh, q(>), $conf_file;
+    print {$conf_fh} expand_parts($file_contents->{'apache.conf'});
+    close $conf_fh;
+  }
+  unless( -e "$ROOT_PATH/apache2/sites-enabled" ) {
+    `ln -s $rel_conf_file $ROOT_PATH/apache2/sites-enabled`; ## no critic (BacktickOperators)
+  }
   ## Create lib directories, and insert boiler plate modules!
   if( $name_space ) {
     foreach (qw(Apache Apache/Action Adaptor Object Component Action Startup Support)) {
-      mkdir "$ROOT_PATH/sites/$domain_name/lib/Pagesmith/$_", $DIR_PERM;
+      mkdir "$ROOT_PATH/sites/$domain_name/lib/Pagesmith/$_", $DIR_PERM unless -e "$ROOT_PATH/sites/$domain_name/lib/Pagesmith/$_";
       if( exists $file_contents->{$_} ) {
-        open my $fh, q(>), "$ROOT_PATH/sites/$domain_name/lib/Pagesmith/$_/$name_space.pm";
-        print {$fh} expand_parts( $file_contents->{$_} );
-        close $fh;
+        unless( -e "$ROOT_PATH/sites/$domain_name/lib/Pagesmith/$_/$name_space.pm" ) {
+          open my $fh, q(>), "$ROOT_PATH/sites/$domain_name/lib/Pagesmith/$_/$name_space.pm";
+          print {$fh} expand_parts( $file_contents->{$_} );
+          close $fh;
+        }
       }
-      next if $_ eq 'Startup';
-      next if $_ eq 'Support';
-      next if $_ eq 'Apache';
-      next if $_ eq 'Apache/Action';
+      next if exists $directories_to_skip{$_};
+      next if -e "sites/$domain_name/lib/Pagesmith/$_/$name_space";
       mkdir "sites/$domain_name/lib/Pagesmith/$_/$name_space", $DIR_PERM;
     }
   }
