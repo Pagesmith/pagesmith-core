@@ -1,4 +1,4 @@
-#!/usr/bin/perl ## no critic (UseUTF8 VersionVar)
+#!/usr/bin/perl -F'## no critic (UseUTF8 VersionVar)'
 
 use strict;
 use warnings;
