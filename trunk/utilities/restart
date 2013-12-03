@@ -28,6 +28,7 @@ use File::Basename qw(dirname basename);
 use Cwd qw(abs_path);
 use Getopt::Long qw(GetOptions);
 use POSIX qw(strftime);
+use IPC::Run3 qw(run3);
 
 my $path    = dirname(dirname(abs_path($PROGRAM_NAME)));
 
@@ -106,8 +107,12 @@ _rotate_logs() if $access || $error;
   my($now_soft,$now_hard) = getrlimit( 'RLIMIT_NOFILE' );
 
   $ENV{'APACHE_ULIMIT_MAX_FILES'} = $now_hard == $now_soft ? q(:) : qq(ulimit -S -n $now_hard) unless $user_is_root;
-  ## use critic
   my $apache_command = -e '/usr/sbin/apache2ctl' ? '/usr/sbin/apache2ctl' : '/usr/sbin/httpd';
+  my $stdout;
+  run3 [$apache_command, '-v'], undef, $stdout;
+  $ENV{'PAGESMITH_SERVER_VERSION'} = $stdout =~ m{Apache/(\d[.]\d)}mxs ? $1 : q(-);
+  ## use critic
+
   my $return = system $apache_command, '-DPAGESMITH_'.uc $flag, @extra_params, '-d', "$path/apache2", '-f', 'core.d/httpd.conf', '-k', $command;
   if( $return ) {
     printf {*STDERR} "  Returned result: %s\n", $return;
