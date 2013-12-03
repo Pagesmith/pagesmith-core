@@ -47,7 +47,8 @@ get_templates();
 create_directories();
 
 ## and files within them
-my $conf_file = $apache_dir ? "$ROOT_PATH/apache2/$apache_dir/sites-available/$domain_name" : "$ROOT_PATH/apache2/sites-enabled/$domain_name";
+my $conf_file     = $apache_dir ? "$ROOT_PATH/apache2/$apache_dir/sites-available/$domain_name" : "$ROOT_PATH/apache2/sites-enabled/$domain_name";
+my $rel_conf_file = $apache_dir ? "../$apache_dir/sites-available/$domain_name" : q();
 my @date = gmtime;
 my $date = sprintf '%04d-%02d-%02d', $date[5]+1900,$date[4]+1,$date[3]; ## no critic (MagicNumbers)
 my $user = sprintf '%s (%s)',        @{[getpwuid $UID]}[qw(0 6)];
@@ -100,6 +101,7 @@ sub checkout_core {
   ## use critic
   return;
 }
+
 sub write_svn {
   ## no critic (BacktickOperators)
   `svn add $ROOT_PATH/sites/$domain_name/*`;
@@ -139,11 +141,11 @@ sub create_files {
   open my $d_fh, q(>), "$ROOT_PATH/sites/$domain_name/data/config/databases.yaml";
   print {$d_fh} $file_contents->{'databases.yaml'};
   close $d_fh;
-
   ## Write the apache configuration file....
   open my $conf_fh, q(>), $conf_file;
   print {$conf_fh} expand_parts($file_contents->{'apache.conf'});
   close $conf_fh;
+  `ln -s $rel_conf_file $ROOT_PATH/apache2/sites-enabled`; ## no critic (BacktickOperators)
 
   ## Create lib directories, and insert boiler plate modules!
   if( $name_space ) {
