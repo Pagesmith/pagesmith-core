@@ -70,7 +70,7 @@ Notes:
 
 ## Default to logs in server root directory!
 
-my $lr = $path.'/logs';
+my $lr = $path.'/tmp/logs';
 
 ## If it is www-.... then look for 
 $lr = "/www/tmp/$1/logs" if $path =~ m{^\/www\/(([-\w]+\/)?www-\w+)}mxs;
