@@ -47,8 +47,8 @@ get_templates();
 create_directories();
 
 ## and files within them
-my $conf_file     = $apache_dir ? "$ROOT_PATH/apache2/$apache_dir/sites-available/$domain_name" : "$ROOT_PATH/apache2/sites-enabled/$domain_name";
-my $rel_conf_file = $apache_dir ? "../$apache_dir/sites-available/$domain_name" : q();
+my $conf_file     = $apache_dir ? "$ROOT_PATH/apache2/$apache_dir/sites-available/$domain_name.conf" : "$ROOT_PATH/apache2/sites-enabled/$domain_name.conf";
+my $rel_conf_file = $apache_dir ? "../$apache_dir/sites-available/$domain_name.conf" : q();
 my @date = gmtime;
 my $date = sprintf '%04d-%02d-%02d', $date[5]+1900,$date[4]+1,$date[3]; ## no critic (MagicNumbers)
 my $user = sprintf '%s (%s)',        @{[getpwuid $UID]}[qw(0 6)];
