@@ -94,7 +94,11 @@ sub create_directories {
     }
   } else {
     if( $options{ 's' } ) {
-      `svn co $options{'s'}/pagesmith/$setup_key-core/trunk www-dev`; ## no critic (BacktickOperators)
+      @Q = `svn info $options{'s'}/pagesmith/$setup_key-core | grep Revision`;             ## no critic (BacktickOperators)
+      if( $Q[0] =~ m{\ARevision:[ ]0}mxs ) {
+        `svn mkdir -m 'adding trunk branch $options{'s'}/pagesmith/$setup_key-core/trunk`; ## no critic (BacktickOperators)
+      }
+      `svn co $options{'s'}/pagesmith/$setup_key-core/trunk www-dev`;                      ## no critic (BacktickOperators)
     } else {
       mkdir 'www-dev', $DIR_PERM;
     }
