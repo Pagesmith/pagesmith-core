@@ -6,8 +6,14 @@ use warnings;
 my $DIR_PERM       = 0755; ## no critic (LeadingZeros MagicNumbers)
 my $SOURCE_REPOS   = 'http://websvn.europe.sanger.ac.uk/svn';
 my %option_def     = qw(s s c + p s d s);
-my $linux_version  = -e '/usr/sbin/apache2' ? 'debian' : 'redhat';
-my $apache_version = `apache2 -v` =~ m{Apache/(\d[.]\d)}mxs ? $1 : q(0.0); ## no critic (BacktickOperators)
+
+my ( $linux_version, $apache_command, $module_path ) = get_versions();
+
+die "PANIC! - Unknown apache binary - can't find either apache2 or httpd\n" if $apache_command eq 'unknown';
+
+## If can't get version then we will assume it's 2.4!
+
+my $apache_version = `/usr/sbin/$apache_command -v` =~ m{Apache/(\d[.]\d)}mxs ? $1 : q(2.4); ## no critic (BacktickOperators)
 
 my @params = @ARGV;
 die "Missing options/parameters\n" unless @params;
@@ -52,6 +58,20 @@ if( $options{'s'} ) {
   write_svn();
 } else {
   checkout_core();
+}
+
+sub get_versions {
+  return (
+       -e '/usr/bin/dpkg'                 ? 'debian'
+     : -e '/usr/bin/rpm'                  ? 'redhat'
+     :                                      'unknown',
+       -e '/usr/sbin/apache2'             ? 'apache2'
+     : -e '/usr/sbin/httpd'               ? 'httpd'
+     :                                      'unknown',
+       -e '/etc/apache2/mods-available/'  ? '/etc/apache2/mods-available/'
+     : -e '/etc/httpd/mods-available/'    ? '/etc/httpd/mods-available/'
+     :                                      q(),
+  );
 }
 
 sub get_templates {
@@ -167,11 +187,11 @@ my %mod_symlinks = (
 
 
 sub create_symlinks {
-  my $available_path = $linux_version eq 'debian' ? 'mods-available' : 'mods-available-redhat';
-  foreach ( @{$mod_symlinks{$linux_version}{$apache_version}} ) {
-    ## Check to see if link exists if so do not create
-    next if -e "www-dev/apache2/mods-enabled/$_";
-    `ln -s ../core.d/$available_path/$_ www-dev/apache2/mods-enabled`; ## no critic (BacktickOperators)
+  if( $module_path ) {
+    foreach ( @{$mod_symlinks{$linux_version}{$apache_version}} ) {
+      ## Check to see if link exists if so do not create
+      `ln -s $module_path/$_ www-dev/apache2/mods-enabled`; ## no critic (BacktickOperators)
+    }
   }
   my %other_symlinks = qw(
     sites-enabled/000-default.conf                 ../core.d/sites-available/000-default.conf.conf
