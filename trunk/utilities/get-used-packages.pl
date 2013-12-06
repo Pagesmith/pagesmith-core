@@ -28,16 +28,19 @@ use LWP::UserAgent;
 my @REQUIRED_BINARIES =qw(
   make gcc
   pngcrush jpegoptim advpng optipng qrencode
-  java mysql 
-  multitail tidy
-  memcached php5  mysqld
-  alien
+  java mysql
+  multitail memcached mysqld
+);
+
+my %REQUIRED_BY_TYPE = (
+  'debian' => [qw(alien php5 tidy)],
+  'redhat' => [qw(php tidyp)],
 );
 
 my %OTHER_PACKAGES = (
   'debian' => [qw(php5-imagick php5-mysql php5-gd tomcat7 libapache2-mod-jk
                   libevent-dev libssl-dev )],
-  'redhat' => [qw(php-magickwand php-mysqlnd php-gd tomcat 
+  'redhat' => [qw(php-magickwand php-mysqlnd php-gd tomcat
                   openssl-devel libevent-devel)],
 );
 
@@ -73,7 +76,8 @@ my @scr_paths = grep { -d $_ } $UTILS_PATH,       map { "$_/utilities"          
 my @libs;
 my $mod_list = {};
 
-my ($bin_info, $bin_dupes) = get_binary_sources( @REQUIRED_BINARIES );
+my ( $bin_info,    $bin_dupes    ) = get_binary_sources( @REQUIRED_BINARIES );
+get_apache_sources();
 dump_bin_structures( $bin_info, $bin_dupes );
 dump_bin_install_scripts( $bin_info, $bin_dupes );
 
@@ -200,80 +204,103 @@ sub get_source_and_module_name {
   return ($source,$mod_name);
 }
 
+sub search_distro {
+  my ($file_name, @files ) = @_;
+  my @package;
+  if( $PACKMAN_TYPE eq 'debian' ) {
+    my @details = $ignore_whats_installed ? () : `dpkg -S @files 2>/dev/null`; ## no critic (BackTickOperators)
+    if( @details ) {
+      foreach (@details) {
+        if( m{^(\S+?):}mxs ) {
+          push @package, $1;
+        }
+      }
+    } else {
+      @details = `apt-file search $file_name 2>/dev/null`; ## no critic (BackTickOperators)
+      my %mp = map { ($_,1) } @files;
+      foreach (@details) {
+        chomp;
+        s{\s+\Z}{}mxs;
+        my($pk, $file) = split m{:\s+}mxs;
+        push @package, $pk if $mp{$file};
+      }
+    }
+  } elsif( $PACKMAN_TYPE eq 'redhat' ) {
+    my @details = $ignore_whats_installed ? () : `rpm -qf @files 2>/dev/null`; ## no critic (BackTickOperators)
+    my %s;
+    if( @details ) {
+      foreach (@details) {
+        chomp;
+        next if m{\Afile[ ]}mxs;
+        s{-\d+(?:[.]\d+)*-\d+(?:[.]\w+){1,3}\Z}{}mxs;
+        next if exists $s{$_};
+        $s{$_}++;
+        push @package, $_;
+      }
+    } else {
+      @details = `yum whatprovides @files 2>/dev/null`; ## no critic (BackTickOperators)
+      while( my $line = shift @details ) {
+        next unless $line =~ m{\S}mxs;
+        next if $line =~ m{\A\s}mxs;
+        next if $line =~ m{\ARepo\s+:\s}mxs;
+        next if $line =~ m{\AMatched\s+from:}mxs;
+        next if $line =~ m{\AFilename\s+:\s}mxs;
+        if( $line =~ m{\A(\S+?)\s+:\s*}mxs ) {
+          my $pck = $1;
+          $pck =~ s{\A\d+:}{}mxs;
+          $pck =~ s{-\d+(?:[.]\d+)*-\d+(?:[.]\w+){1,3}\Z}{}mxs;
+          next if exists $s{$pck};
+          $s{$pck}++;
+          push @package, $pck;
+        }
+      }
+    }
+  }
+  return @package;
+}
+
+sub get_apache_sources {
+  my $mod_dir = "$ROOT_PATH/apache2/mods-enabled";
+  my @mods    = grep { !m{^[.]}mxs && -l "$mod_dir/$_" }
+                readdir $dh;
+  foreach my $mod ( @mods ) {
+    my $mod_path = readlink "$mod_dir/$mod";
+    $bin_info->{"apache2:$command"} ={
+      'packages'  => [],
+      'installed' => [ -e $mod_path ? $mod_path : () ],
+    };
+    my @package = search_distro( $mod_path, $mod_path );
+    next unless @package;
+    push @{$bin_info->{"apache2:$command"}{'packages'}}, @package;
+  }
+  return;
+}
+
 sub get_binary_sources {
   my @commands = @_;
 
   my $command_dupes = {};
   my $command_info  = {};
-  ## no critic (BackTickOperators)
   foreach my $command ( @commands ) {
-    my @package;
+    ## no critic (BacktickOperators)
     $command_info->{$command} ={
       'packages'  => [],
       'installed' => [ map { m{(\S+)}mxs ? $1 : () } `which $command` ],
     };
-    my @files = map { $_->[0] eq $_->[1] ? $_->[0] : @{$_} }
+    ## use critic
+    my @package = search_distro( $command,
+                map { $_->[0] eq $_->[1] ? $_->[0] : @{$_} }
                 map { [$_,abs_path($_)] }
                 map { "$_/$command" }
-                @MUNGED_PATH;
-    if( $PACKMAN_TYPE eq 'debian' ) {
-      my @details = $ignore_whats_installed ? () : `dpkg -S @files 2>/dev/null`;
-      if( @details ) {
-        foreach (@details) {
-          if( m{^(\S+?):}mxs ) {
-            push @package, $1;
-          }
-        }
-      } else {
-        @details = `apt-file search $command 2>/dev/null`;
-        my %mp = map { ($_,1) } @files;
-        foreach (@details) {
-          chomp;
-          s{\s+\Z}{}mxs;
-          my($pk, $file) = split m{:\s+}mxs;
-          push @package, $pk if $mp{$file};
-        }
-      }
-    } elsif( $PACKMAN_TYPE eq 'redhat' ) {
-      my @details = $ignore_whats_installed ? () : `rpm -qf @files 2>/dev/null`;
-      my %s;
-      if( @details ) {
-        foreach (@details) {
-          chomp;
-          next if m{\Afile[ ]}mxs;
-          s{-\d+(?:[.]\d+)*-\d+(?:[.]\w+){1,3}\Z}{}mxs;
-          next if exists $s{$_};
-          $s{$_}++;
-          push @package, $_;
-        }
-      } else {
-        @details = `yum whatprovides @files 2>/dev/null`;
-        while( my $line = shift @details ) {
-          next unless $line =~ m{\S}mxs;
-          next if $line =~ m{\A\s}mxs;
-          next if $line =~ m{\ARepo\s+:\s}mxs;
-          next if $line =~ m{\AMatched\s+from:}mxs;
-          next if $line =~ m{\AFilename\s+:\s}mxs;
-          if( $line =~ m{\A(\S+?)\s+:\s*}mxs ) {
-            my $pck = $1;
-            $pck =~ s{\A\d+:}{}mxs;
-            $pck =~ s{-\d+(?:[.]\d+)*-\d+(?:[.]\w+){1,3}\Z}{}mxs;
-            next if exists $s{$pck};
-            $s{$pck}++;
-            push @package, $pck;
-          }
-        }
-      }
+                @MUNGED_PATH,
+    );
+    next unless @package;
+    if(@package > 1) {
+      warn qq(Command $command is provided by more than 1 package "@package"\n);
+      $command_dupes->{$_}++ foreach @package;
     }
-    if( @package ) {
-      if(@package > 1) {
-        warn qq(Command $command is provided by more than 1 package "@package"\n);
-        $command_dupes->{$_}++ foreach @package;
-      }
-      push @{$command_info->{$command}{'packages'}}, @package;
-    }
+    push @{$command_info->{$command}{'packages'}}, @package;
   }
-  ## use critic
   return ($command_info, $command_dupes);
 }
 
@@ -307,60 +334,8 @@ sub get_module_source {
     }
     $mod_list->{$module}{'installed'} = $installed;
 
-    my @files = map { "$_/$fn" } @MUNGED_INC;
-    my @package;
-    ## no critic (BackTickOperators)
-    if( $PACKMAN_TYPE eq 'debian' ) {
-      my @details = $ignore_whats_installed ? () : `dpkg -S @files 2>/dev/null`;
-      if( @details ) {
-        foreach (@details) {
-          if( m{^(\S+?):}mxs ) {
-            push @package, $1;
-          }
-        }
-      } else {
-        @details = `apt-file search $fn 2>/dev/null`;
-        my %mp = map { ($_,1) } @files;
-        foreach (@details) {
-          chomp;
-          s{\s+\Z}{}mxs;
-          my($pk, $file) = split m{:\s+}mxs;
-          push @package, $pk if $mp{$file};
-        }
-      }
-    } elsif( $PACKMAN_TYPE eq 'redhat' ) {
-      my @details = $ignore_whats_installed ? () : `rpm -qf @files 2>/dev/null`;
-      my %s;
-      if( @details ) {
-        foreach (@details) {
-          chomp;
-          next if m{\Afile[ ]}mxs;
-          s{-\d+(?:[.]\d+)*-\d+(?:[.]\w+){1,3}\Z}{}mxs;
-          next if exists $s{$_};
-          $s{$_}++;
-          push @package, $_;
-        }
-      } else {
-        @details = `yum whatprovides @files 2>/dev/null`;
-        while( my $line = shift @details ) {
-          next unless $line =~ m{\S}mxs;
-          next if $line =~ m{\A\s}mxs;
-          next if $line =~ m{\ARepo\s+:\s}mxs;
-          next if $line =~ m{\AMatched\s+from:}mxs;
-          next if $line =~ m{\AFilename\s+:\s}mxs;
-          if( $line =~ m{\A(\S+?)\s+:\s*}mxs ) {
-            my $pck = $1;
-            $pck =~ s{\A\d+:}{}mxs;
-            $pck =~ s{-\d+(?:[.]\d+)*-\d+(?:[.]\w+){1,3}\Z}{}mxs;
-            next if exists $s{$pck};
-            $s{$pck}++;
-            push @package, $pck;
-          }
-        }
-      }
-    }
-    ## use critic
     my $install_type = q(source);
+    my @package = search_distro( $fn, map { "$_/$fn" } @MUNGED_INC );
 ## This is a package manager installation!
     if( @package ) {
       $install_type = $PACKMAN_TYPE;
@@ -375,7 +350,7 @@ sub get_module_source {
           $sources->{$PACKMAN_TYPE}{$s}{$_}{$module}=1 foreach @package;
         }
       }
-    } else {
+    } else { ## Look to see if we have a CPAN package!
       push @package, $cpan->{$module} if exists $cpan->{$module};
       if( @package ) {
 ## This is a cpan package!
@@ -536,7 +511,7 @@ sub dump_bin_install_scripts {
       next if @cache_res;
     } elsif( $PACKMAN_TYPE eq 'redhat' ) {
       my @cache_res = `rpm -q $_`;
-      next if @cache_res && $cache_res[0]=~m{[ ]is[ ]not[ ]installed}mxs;
+      next if @cache_res && $cache_res[0]!~m{[ ]is[ ]not[ ]installed}mxs;
     }
     ## use critic
     push @uninstalled_packages, $_;
