@@ -83,15 +83,15 @@ if( $options{'s'} ) {
 
 sub get_versions {
   return (
-       -e '/usr/bin/dpkg'                 ? 'debian'
-     : -e '/usr/bin/rpm'                  ? 'redhat'
-     :                                      'unknown',
-       -e '/usr/sbin/apache2'             ? 'apache2'
-     : -e '/usr/sbin/httpd'               ? 'httpd'
-     :                                      'unknown',
-       -e '/etc/apache2/mods-available/'  ? '/etc/apache2/mods-available/'
-     : -e '/etc/httpd/mods-available/'    ? '/etc/httpd/mods-available/'
-     :                                      q(),
+       -e '/usr/bin/dpkg'               ? 'debian'
+     : -e '/usr/bin/rpm'                ? 'redhat'
+     :                                    'unknown',
+       -e '/usr/sbin/apache2'           ? 'apache2'
+     : -e '/usr/sbin/httpd'             ? 'httpd'
+     :                                    'unknown',
+       -e '/etc/apache2/mods-available' ? '/etc/apache2/mods-available'
+     : -e '/etc/httpd/mods-available'   ? '/etc/httpd/mods-available'
+     :                                    q(),
   );
 }
 
