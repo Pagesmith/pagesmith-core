@@ -19,6 +19,27 @@ my @params = @ARGV;
 die "Missing options/parameters\n" unless @params;
 my %options = ( 's' => q(), 'c' => 0, 'p' => 8000, 'd' => q() );
 
+my %mod_symlinks = (
+  'debian' => {
+    '2.2' => [qw( alias.load apreq.load authz_host.load cgi.load dir.conf dir.load
+                  env.load expires.load headers.load include.load mime.conf mime.load
+                  jk.load perl.load proxy_http.load proxy.load rewrite.load
+                  setenvif.load status.load)],
+    '2.4' => [qw( alias.load apreq2.load authz_core.load authz_host.load
+                  cgi.load dir.conf dir.load env.load expires.load filter.load
+                  headers.load include.load jk.load mime.conf mime.load mpm_prefork.conf
+                  mpm_prefork.load perl.load proxy_ftp.load proxy_http.load proxy.load
+                  rewrite.load setenvif.load status.load )],
+  },
+  'redhat' => {
+    '2.2' => [qw( alias.load apreq.load authz_host.load cgi.load dir.conf dir.load
+                  env.load expires.load headers.load include.load log_config.load
+                  mime.conf mime.load perl.load rewrite.load setenvif.load status.load
+                  proxy_http.load proxy.load)],
+    '2.4' => [qw( )],
+  },
+);
+
 while( @params ) {
   my $k = shift @params;
   if( $k =~ m{-(\w+)}mxs ) {
@@ -94,9 +115,9 @@ sub create_directories {
     }
   } else {
     if( $options{ 's' } ) {
-      @Q = `svn info $options{'s'}/pagesmith/$setup_key-core | grep Revision`;             ## no critic (BacktickOperators)
+      my @Q = `svn info $options{'s'}/pagesmith/$setup_key-core | grep Revision`;             ## no critic (BacktickOperators)
       if( $Q[0] =~ m{\ARevision:[ ]0}mxs ) {
-        `svn mkdir -m 'adding trunk branch $options{'s'}/pagesmith/$setup_key-core/trunk`; ## no critic (BacktickOperators)
+        `svn mkdir -m 'adding trunk branch' $options{'s'}/pagesmith/$setup_key-core/trunk`; ## no critic (BacktickOperators)
       }
       `svn co $options{'s'}/pagesmith/$setup_key-core/trunk www-dev`;                      ## no critic (BacktickOperators)
     } else {
@@ -167,27 +188,6 @@ sub create_files {
   ## use critic
   return;
 }
-
-my %mod_symlinks = (
-  'debian' => {
-    '2.2' => [qw( alias.load apreq.load authz_host.load cgi.load dir.conf dir.load
-                  env.load expires.load headers.load include.load mime.conf mime.load
-                  jk.load perl.load proxy_http.load proxy.load rewrite.load
-                  setenvif.load status.load)],
-    '2.4' => [qw( alias.load apreq2.load authz_core.load authz_host.load
-                  cgi.load dir.conf dir.load env.load expires.load filter.load
-                  headers.load include.load jk.load mime.conf mime.load mpm_prefork.conf
-                  mpm_prefork.load perl.load proxy_ftp.load proxy_http.load proxy.load
-                  rewrite.load setenvif.load status.load )],
-  },
-  'redhat' => {
-    '2.2' => [qw( alias.load apreq.load authz_host.load cgi.load dir.conf dir.load
-                  env.load expires.load headers.load include.load log_config.load
-                  mime.conf mime.load perl.load rewrite.load setenvif.load status.load
-                  proxy_http.load proxy.load)],
-    '2.4' => [qw( )],
-  },
-);
 
 
 sub create_symlinks {
