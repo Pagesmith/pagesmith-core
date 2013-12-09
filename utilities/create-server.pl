@@ -183,11 +183,13 @@ sub create_directories {
   my $root = $ENV{'PWD'};
   my $log_path = "$root/tmp/logs";
      $log_path = "/www/tmp$1/logs" if $root =~ m{^\/www(?:\/([-\w])+)?\Z}mxs;
+  warn "LOGS PATH - $log_path\n";
   my @parts = split m{/}mxs, $log_path;
   shift @parts;
   my $d = q();
   foreach (@parts) {
     $d .= qq(/$_);
+    warn "  `-- - $d\n";
     mkdir $d, $DIR_PERM unless -d $d;
   }
   warn "#### Directories created\n" unless $options->{'q'};
