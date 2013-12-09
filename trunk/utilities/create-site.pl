@@ -118,7 +118,7 @@ sub pre_flight_checks {
   diedoc( 'Invalid branch' ) unless exists $VALID_BRANCHES{$branch};
   ## Check to see if externals SVN repository exists
   diedoc( "Invalid SVN protocol/path: $core_svn_path" )
-    unless $core_svn_path =~ m{\A(?:(?:svn(?:[+]\w+)?|https?)://[-\w]+|file://)/\w}mxs;
+    unless $core_svn_path =~ m{\A(?:(?:svn(?:[+]\w+)?|https?)://[-\w]+|file:///)\w}mxs;
   diedoc( "Repository '$core_svn_path/pagesmith-core' doesn't exists\n" )
     unless grep_out( ['svn', 'info', "$core_svn_path/pagesmith-core"], 'Revision:[ ](\d+)' );
   ## Check to see if local SVN repository exists
