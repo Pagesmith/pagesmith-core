@@ -55,8 +55,7 @@ GetOptions(
 
 diedoc( 'MUST GIVE DOMAIN NAME' ) unless @ARGV;
 
-my $domain_name = shift @ARGV;
-
+my $domain_name    = shift @ARGV;
 ## Read files from __DATA__ section of file...
 my $file_contents = {};
 
@@ -127,6 +126,10 @@ sub pre_flight_checks {
     unless $from_svn =~ m{\A(?:(?:svn(?:[+]\w+)?|https?)://[-\w]+|file://)/\w}mxs;
   diedoc( "Repository '$from_svn/sites/$domain_name' doesn't exists\n" )
     unless grep_out( ['svn', 'info', "$from_svn/sites/$domain_name"], 'Revision:[ ](\d+)' );
+
+  $htdocs_sub_dir = sprintf '%s-core', lc $name_space unless $htdocs_sub_dir;
+  $name_space     = ucfirst $name_space;
+
   warn "#### Preflight checks passed\n" unless $quiet;
   return;
 }
