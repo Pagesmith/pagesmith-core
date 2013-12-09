@@ -113,7 +113,7 @@ sub guess_defaults {
 }
 
 sub pre_flight_checks {
-  diedoc( 'Cannot find apache dir' ) unless -e "$ROOT_PATH/apache/$setup_key.d";
+  diedoc( 'Cannot find apache dir' ) unless -e "$ROOT_PATH/apache2/$setup_key.d";
   ## Check to see if valid branch name
   diedoc( 'Invalid branch' ) unless exists $VALID_BRANCHES{$branch};
   ## Check to see if externals SVN repository exists
@@ -326,11 +326,11 @@ sub diedoc {
 sub documentation {
   return sprintf q(
 Usage:
-  create-server.pl -h dir \
-                   {-d} {-b trunk|staging|live} {-c}   \
-                   {-k setup_key} {-n namespace} {-q}  \
-                   {-n} {-p 8xxx} {-r protocol://path} \
-                   {-s protocol://path} {-t str} {domain_name}
+  create-site.pl {-h dir} \
+                 {-d} {-b trunk|staging|live} {-c}   \
+                 {-k setup_key} {-n namespace} {-q}  \
+                 {-n} {-p 8xxx} {-r protocol://path} \
+                 {-s protocol://path} {-t str} {domain_name}
 
 Options:
   -b string [opt] - branch (trunk/staging/live)
