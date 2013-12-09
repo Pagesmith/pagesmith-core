@@ -220,9 +220,7 @@ sub create_symlinks {
   if( $module_path ) {
     foreach ( @{$MOD_SYMLINKS{$linux_version}{$apache_version}} ) {
       ## Check to see if link exists if so do not create
-      warn ">> $linux_version - $apache_version - $co_dir - $module_path/$_ <<\n";
-      warn qq(## symlink "$module_path/$_", "www-$co_dir/apache2/mods-enabled"\n);
-      symlink "$module_path/$_", "www-$co_dir/apache2/mods-enabled";
+      symlink "$module_path/$_", "www-$co_dir/apache2/mods-enabled/$_";
     }
   }
   my %other_symlinks = qw(
@@ -256,7 +254,6 @@ sub create_symlinks {
     ## Check to see if link exists if so do not create
     next if -e "www-$co_dir/apache2/$k";
     symlink $v, "www-$co_dir/apache2/$k";
-    warn qq(## symlink "$v", "www-$co_dir/apache2/$k"\n);
   }
   warn "#### Sym-links created\n" unless $options->{'q'};
   return;
