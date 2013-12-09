@@ -220,6 +220,7 @@ sub create_symlinks {
   if( $module_path ) {
     foreach ( @{$MOD_SYMLINKS{$linux_version}{$apache_version}} ) {
       ## Check to see if link exists if so do not create
+      warn ">> $linux_version - $apache_version - $co_dir - $module_path/$_ <<\n";
       symlink "$module_path/$_", "www-$co_dir/apache2/mods-enabled";
     }
   }
