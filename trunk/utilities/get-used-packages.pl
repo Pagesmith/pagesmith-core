@@ -23,6 +23,7 @@ use Cwd            qw(abs_path);
 use Data::Dumper; ## no xcritic (DebuggingModules)
 use File::Find     qw(find);
 use LWP::UserAgent;
+use IPC::Run3      qw(run3);
 
 ## Set up constants!
 my @REQUIRED_BINARIES =qw(
@@ -38,7 +39,7 @@ my %REQUIRED_BY_TYPE = (
 );
 
 my %OTHER_PACKAGES = (
-  'debian' => [qw(php5-imagick php5-mysql php5-gd tomcat7 libapache2-mod-jk
+  'debian' => [qw(php5-imagick php5-mysql php5-gd tomcat7
                   libevent-dev libssl-dev )],
   'redhat' => [qw(php-magickwand php-mysqlnd php-gd tomcat
                   openssl-devel libevent-devel)],
@@ -48,7 +49,7 @@ my $ignore_whats_installed = (@ARGV && $ARGV[0] eq '-i') ? 1 : 0;
 
 my $CPAN_PACKAGES = 'http://www.cpan.org/modules/02packages.details.txt';
 my $PACKAGE_PATH  = {
-  'debian' => 'aptitude -q -q -q -y install',
+  'debian' => 'apt-get -q -q -q -y install',
   'redhat' => 'yum -q -y install',
   'cpan'   => 'cpan',
   'source' => '## MANUAL INSTALL:',
@@ -208,7 +209,7 @@ sub search_distro {
   my ($file_name, @files ) = @_;
   my @package;
   if( $PACKMAN_TYPE eq 'debian' ) {
-    my @details = $ignore_whats_installed ? () : `dpkg -S @files 2>/dev/null`; ## no critic (BackTickOperators)
+    my @details = $ignore_whats_installed ? () : grep_out( [qw(dpkg -S), @files] );
     if( @details ) {
       foreach (@details) {
         if( m{^(\S+?):}mxs ) {
@@ -216,7 +217,7 @@ sub search_distro {
         }
       }
     } else {
-      @details = `apt-file search $file_name 2>/dev/null`; ## no critic (BackTickOperators)
+      @details = grep_out( [qw(apt-file search), $file_name] );
       my %mp = map { ($_,1) } @files;
       foreach (@details) {
         chomp;
@@ -226,7 +227,7 @@ sub search_distro {
       }
     }
   } elsif( $PACKMAN_TYPE eq 'redhat' ) {
-    my @details = $ignore_whats_installed ? () : `rpm -qf @files 2>/dev/null`; ## no critic (BackTickOperators)
+    my @details = $ignore_whats_installed ? () : grep_out( [qw(rpm -qf), @files]);
     my %s;
     if( @details ) {
       foreach (@details) {
@@ -238,7 +239,7 @@ sub search_distro {
         push @package, $_;
       }
     } else {
-      @details = `yum whatprovides @files 2>/dev/null`; ## no critic (BackTickOperators)
+      @details = grep_out( [qw(yum whatprovides), @files] );
       while( my $line = shift @details ) {
         next unless $line =~ m{\S}mxs;
         next if $line =~ m{\A\s}mxs;
@@ -261,17 +262,20 @@ sub search_distro {
 
 sub get_apache_sources {
   my $mod_dir = "$ROOT_PATH/apache2/mods-enabled";
-  my @mods    = grep { !m{^[.]}mxs && -l "$mod_dir/$_" }
-                readdir $dh;
+  my @mods;
+  if( opendir my $dh, $mod_dir ) {
+    @mods    = grep { !m{^[.]}mxs && -l "$mod_dir/$_" }
+               readdir $dh;
+  }
   foreach my $mod ( @mods ) {
     my $mod_path = readlink "$mod_dir/$mod";
-    $bin_info->{"apache2:$command"} ={
+    $bin_info->{"apache2:$mod"} ={
       'packages'  => [],
       'installed' => [ -e $mod_path ? $mod_path : () ],
     };
     my @package = search_distro( $mod_path, $mod_path );
     next unless @package;
-    push @{$bin_info->{"apache2:$command"}{'packages'}}, @package;
+    push @{$bin_info->{"apache2:$mod"}{'packages'}}, @package;
   }
   return;
 }
@@ -282,12 +286,10 @@ sub get_binary_sources {
   my $command_dupes = {};
   my $command_info  = {};
   foreach my $command ( @commands ) {
-    ## no critic (BacktickOperators)
     $command_info->{$command} ={
       'packages'  => [],
-      'installed' => [ map { m{(\S+)}mxs ? $1 : () } `which $command` ],
+      'installed' => [ map { m{(\S+)}mxs ? $1 : () } grep_out( [qw(which), $command] ) ],
     };
-    ## use critic
     my @package = search_distro( $command,
                 map { $_->[0] eq $_->[1] ? $_->[0] : @{$_} }
                 map { [$_,abs_path($_)] }
@@ -505,15 +507,13 @@ sub dump_bin_install_scripts {
   @packages = sort keys %packages;
   my @uninstalled_packages;
   foreach (@packages) {
-    ## no critic (BackTickOperators)
     if( $PACKMAN_TYPE eq 'debian' ) {
-      my @cache_res = `apt-cache search '^$_\$'`;
+      my @cache_res = grep_out( [qw(dpkg -s), $_], '^Status' );
       next if @cache_res;
     } elsif( $PACKMAN_TYPE eq 'redhat' ) {
-      my @cache_res = `rpm -q $_`;
+      my @cache_res = grep_out( [qw(rpm -q), $_]);
       next if @cache_res && $cache_res[0]!~m{[ ]is[ ]not[ ]installed}mxs;
     }
-    ## use critic
     push @uninstalled_packages, $_;
   }
   push @out,    bash_line( $PACKMAN_TYPE, $command_dupes, @packages             );
@@ -674,3 +674,50 @@ sub get_cpan {
   return $cpan;
 }
 
+sub grep_out {
+  my ( $command_ref, $match, $input ) = @_;
+  my $res = run_cmd( $command_ref, $input );
+  return unless $res->{'success'};
+  return @{$res->{'stdout'}||[]} unless defined $match;
+  return map { $_ =~ m{$match}mxs ? (defined $1?$1:$_) : () } @{$res->{'stdout'}||[]};
+}
+
+sub run_cmd {
+  my ( $command_ref, $input_ref ) = @_;
+
+  $input_ref ||= [];
+  my $out_ref  = [];
+  my $err_ref  = [];
+  my $ret = eval { run3 $command_ref, $input_ref, $out_ref, $err_ref; };
+  ## no critic (PunctuationVars)
+  my $res = {(
+    'command' => $command_ref,
+    'success' => $ret && !$?,
+    'error'   => $@ || $?,
+    'stdout'  => resplit( $out_ref ),
+    'stderr'  => resplit( $err_ref ),
+  )};
+  if( $verbose ) {
+    my $msg = sprintf '
+  - Command ------------------------------------------------------------
+  %s
+  - FLAGS --------------------------------------------------------------
+   [%s] %s
+  - STDOUT -------------------------------------------------------------
+  %s
+  - STDERR -------------------------------------------------------------
+  %s
+', "@{$command_ref}",
+     $res->{'success'}, $res->{'error'},
+     map { join qq(\n  ), @{$res->{$_}||[]} } qw(stdout stderr);
+    warn "$msg\n";
+  }
+  return $res;
+  ## use critic
+}
+
+sub resplit {
+  my $a_ref = shift;
+  my @ret = map { split m{\r?\n}mxs, $_ } @{$a_ref};
+  return \@ret;
+}

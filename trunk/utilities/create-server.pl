@@ -406,6 +406,7 @@ sub grep_out {
   my ( $command_ref, $match, $input ) = @_;
   my $res = run_cmd( $command_ref, $input );
   return unless $res->{'success'};
+  return @{$res->{'stdout'}||[]} unless defined $match;
   return map { $_ =~ m{$match}mxs ? (defined $1?$1:$_) : () } @{$res->{'stdout'}||[]};
 }
 
