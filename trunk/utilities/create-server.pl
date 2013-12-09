@@ -180,17 +180,15 @@ sub create_directories {
     mkdir "www-$co_dir/$dir", $DIR_PERM;
   }
   ## Create tmp path!
-  my $root = $ENV{'PWD'};
+  my $root = "$ENV{'PWD'}/www-$co_dir";
   my $log_path = "$root/tmp/logs";
-     $log_path = "/www/tmp/$1/logs"      if $path =~ m{^\/www\/(([-\w]+\/)?www-\w+)}mxs;
+     $log_path = "/www/tmp/$1/logs"      if $root =~ m{^\/www\/(([-\w]+\/)?www-\w+)}mxs;
      $log_path =~ s{//+}{/}mxsg;
-  warn "LOGS PATH - $log_path\n";
   my @parts = split m{/}mxs, $log_path;
   shift @parts;
   my $d = q();
   foreach (@parts) {
     $d .= qq(/$_);
-    warn "  `-- - $d\n";
     mkdir $d, $DIR_PERM unless -d $d;
   }
   warn "#### Directories created\n" unless $options->{'q'};

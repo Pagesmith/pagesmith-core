@@ -74,6 +74,7 @@ my $lr = $path.'/tmp/logs';
 
 ## If it is www-.... then look for 
 $lr = "/www/tmp/$1/logs" if $path =~ m{^\/www\/(([-\w]+\/)?www-\w+)}mxs;
+$lr =~ s{//+}{}mxsg;
 
 my $al = "$lr/diagnostic.log";
 my $el = "$lr/error.log";
