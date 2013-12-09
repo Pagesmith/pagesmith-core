@@ -16,6 +16,7 @@ my $OPTION_DEF = {
   'p' => [qw(s 8_000)],   # Port no
   'r' => ['s', 'http://websvn.europe.sanger.ac.uk/svn'], # External source
   's' => ['s', q()],      # SVN root - local
+  'v' => [qw(+ 0)],       # Verbose
 };
 my %MOD_SYMLINKS = (
   'debian' => {
@@ -69,7 +70,7 @@ warn "Setting up with the following options:
     Repository:      $options->{'s'}/pagesmith/$setup_key-core
     Apache-dir:      $ENV{'PWD'}/www-$co_dir/apache2/$setup_key.d
     Core-directory:  $ENV{'PWD'}/www-$co_dir/core-$setup_key
-";
+" unless $options->{'q'};
 
 die "\n###################### DRY RUN ONLY ######################\n\n" if $options->{'n'};
 
@@ -117,6 +118,7 @@ sub get_templates {
     }
     $file_contents->{$key} .= $line;
   }
+  warn "#### Templates retrieved\n" unless $options->{'q'};
   return;
 }
 
@@ -188,6 +190,7 @@ sub create_directories {
     $d .= qq(/$_);
     mkdir $d, $DIR_PERM unless -d $d;
   }
+  warn "#### Directories created\n" unless $options->{'q'};
   return;
 }
 
@@ -208,6 +211,7 @@ sub create_files {
   print {$p_fh} "$options->{'p'}\n";
   close $p_fh;
   ## use critic
+  warn "#### Files created\n" unless $options->{'q'};
   return;
 }
 
@@ -251,6 +255,7 @@ sub create_symlinks {
     next if -e "www-$co_dir/apache2/$k";
     symlink $v, "www-$co_dir/apache2/$k";
   }
+  warn "#### Sym-links created\n" unless $options->{'q'};
   return;
 }
 
@@ -258,9 +263,11 @@ sub checkout_core {
   foreach my $dir (qw(fonts htdocs lib utilities apache2/core.d)) {
     if( -e "www-$co_dir/$dir" ) {
       run_cmd( ['svn', 'up', "www-$co_dir/$dir"] );
+      warn "#### Core updated\n" unless $options->{'q'};
     } else {
       run_cmd( ['svn', 'co', "$options->{'r'}/pagesmith-core/$options->{'b'}/$dir",
         "www-$co_dir/$dir"] );
+      warn "#### Core checkedout\n" unless $options->{'q'};
     }
   }
   ## use critic
@@ -300,12 +307,14 @@ utilities $options->{'r'}/pagesmith-core/$options->{'b'}/utilities", "www-$co_di
     unless grep_out([qw(svn pg svn:ignore), "www-$co_dir"]);
   my $commits = grep_out([qw(svn log), "www-$co_dir"], '----------' );
   $commits--;
+  warn "#### SVN externals etc setup\n" unless $options->{'q'};
   run_cmd([qw(svn ci -m),
     $commits == 1 ? 'creating initial server structure'
                   : 'patching server structure',
     "www-$co_dir"]) if $options->{'c'};
-
+  warn "#### SVN repository committed\n" if $options->{'c'} && !$options->{'q'};
   run_cmd([qw(svn up), "www-$co_dir"]);
+  warn "#### SVN checkout updated\n" unless $options->{'q'};
   return;
 }
 
@@ -341,8 +350,8 @@ sub documentation {
   return sprintf q(
 Usage:
   create-server.pl {-b trunk|staging|live} {-c} {-d mydomain.org} \
-                   {-n} {-p 8xxx} {-r protocol://path} \
-                   {-s protocol://path} {setupkey}
+                   {-n} {-p 8xxx} {-q} {-r protocol://path} \
+                   {-s protocol://path} {-v} {setupkey}
 
 Options:
   -b string [opt] - branch (trunk/staging/live)
@@ -353,10 +362,12 @@ Options:
   -n              - dry run only - just dump the options!
   -p number [opt] - port under which apache will run
                       [defaults to %s]
+  -q              - quiet - hide all output
   -r string [opt] - repository to get pagesmith-core from
                       [defaults to %s]
   -s string [opt] - root of local svn repository! if not set just creates
                     directory and checks out contents of pagesmith folders
+  -v              - verbose - report output from shell scripts..
 
 Note:
   {setupkey} is used to generate namespace of packages, core, apache site
@@ -372,7 +383,7 @@ sub get_opts {
     my $k = shift @ARGV;
     if( $k =~ m{-(\w+)}mxs ) {
       my $opt = $1;
-      if(exists $def->{$opt} ) {
+      if( exists $def->{$opt} ) {
         if($def->{$opt}[0] eq 's') {
           $values->{ $opt } = shift @ARGV;
         } elsif($def->{$opt}[0] eq q(-)) {
@@ -400,19 +411,35 @@ sub grep_out {
 
 sub run_cmd {
   my ( $command_ref, $input_ref ) = @_;
-  warn "CMD: @{$command_ref}\n";
+
   $input_ref ||= [];
-  my $out_ref   = [];
-  my $err_ref   = [];
+  my $out_ref  = [];
+  my $err_ref  = [];
   my $ret = eval { run3 $command_ref, $input_ref, $out_ref, $err_ref; };
   ## no critic (PunctuationVars)
-  return {(
+  my $res = {(
     'command' => $command_ref,
     'success' => $ret && !$?,
     'error'   => $@ || $?,
     'stdout'  => resplit( $out_ref ),
     'stderr'  => resplit( $err_ref ),
   )};
+  if( $options->{'v'} ) {
+    my $msg = sprintf '
+  - Command ------------------------------------------------------------
+  %s
+  - FLAGS --------------------------------------------------------------
+   [%s] %s
+  - STDOUT -------------------------------------------------------------
+  %s
+  - STDERR -------------------------------------------------------------
+  %s
+', "@{$command_ref}",
+      $res->{'success'}, $res->{'error'},
+      map { join qq(\n  ), @{$res->{$_}||[]} } qw(stdout stderr);
+    warn "$msg\n";
+  }
+  return $res;
   ## use critic
 }
 
