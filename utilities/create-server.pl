@@ -991,6 +991,7 @@ sub handler {
 
 <body>
 <p>Put content here!</p>
+<% LoremIpsum 3 paras %>
 </body>
 </html>
 !! cookiespolicy.html
