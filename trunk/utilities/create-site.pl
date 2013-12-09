@@ -27,13 +27,15 @@ use lib "$ROOT_PATH/lib";
 
 my $from_svn;
 my $name_space;
-my $commit_svn;
 my $htdocs_sub_dir;
 my $setup_key;
-my $dryrun;
 my $branch        = $DEF_BRANCH;
 my $template_name = $DEF_TEMPLATE;
 my $core_svn_path = $DEF_SVN;
+
+## Flags
+my $dryrun        = 0;
+my $commit_svn    = 0;
 my $verbose       = 0;
 my $quiet         = 0;
 
@@ -133,6 +135,7 @@ sub pre_flight_checks {
   $name_space     = ucfirst $name_space;
 
   warn "#### Preflight checks passed\n" unless $quiet;
+  $commit_svn = ! $commit_svn;
   return;
 }
 
