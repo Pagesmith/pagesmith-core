@@ -82,7 +82,7 @@ die "\n###################### DRY RUN ONLY ######################\n\n" if $dryru
 
 get_templates();
 
-my $conf_file     = $setup_key ? "$ROOT_PATH/apache2/$setup_key.d/sites-available/$domain_name.conf$domain_name.conf" : "$ROOT_PATH/apache2/sites-enabled/$domain_name.conf";
+my $conf_file     = $setup_key ? "$ROOT_PATH/apache2/$setup_key.d/sites-available/$domain_name.conf" : "$ROOT_PATH/apache2/sites-enabled/$domain_name.conf";
 my $rel_conf_file = $setup_key ? "../$setup_key.d/sites-available/$domain_name.conf" : q();
 my @date = gmtime;
 my $date = sprintf '%04d-%02d-%02d', $date[5]+1900,$date[4]+1,$date[3]; ## no critic (MagicNumbers)
