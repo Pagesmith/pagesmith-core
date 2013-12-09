@@ -2,24 +2,22 @@
 
 use strict;
 use warnings;
+use IPC::Run3 qw(run3);
+
+## Define constants...
 
 my $DIR_PERM       = 0755; ## no critic (LeadingZeros MagicNumbers)
-my $SOURCE_REPOS   = 'http://websvn.europe.sanger.ac.uk/svn';
-my %option_def     = qw(s s c + p s d s);
-
-my ( $linux_version, $apache_command, $module_path ) = get_versions();
-
-die "PANIC! - Unknown apache binary - can't find either apache2 or httpd\n" if $apache_command eq 'unknown';
-
-## If can't get version then we will assume it's 2.4!
-
-my $apache_version = `/usr/sbin/$apache_command -v` =~ m{Apache/(\d[.]\d)}mxs ? $1 : q(2.4); ## no critic (BacktickOperators)
-
-my @params = @ARGV;
-die "Missing options/parameters\n" unless @params;
-my %options = ( 's' => q(), 'c' => 0, 'p' => 8000, 'd' => q() );
-
-my %mod_symlinks = (
+my %VALID_BRANCHES = qw(trunk dev staging live live live);
+my $OPTION_DEF = {
+  'b' => ['s', 'trunk' ],                                # Branch
+  'c' => [qw(- 1)],       # SVN co
+  'd' => ['s', q() ],     # Domain (for web@ email address)
+  'n' => [qw(+ 0)],       # Dry run
+  'p' => [qw(s 8_000)],   # Port no
+  'r' => ['s', 'http://websvn.europe.sanger.ac.uk/svn'], # External source
+  's' => ['s', q()],      # SVN root - local
+};
+my %MOD_SYMLINKS = (
   'debian' => {
     '2.2' => [qw( alias.load apreq.load authz_host.load cgi.load dir.conf dir.load
                   env.load expires.load headers.load include.load mime.conf mime.load
@@ -40,59 +38,73 @@ my %mod_symlinks = (
   },
 );
 
-while( @params ) {
-  my $k = shift @params;
-  if( $k =~ m{-(\w+)}mxs ) {
-    my $opt = $1;
-    if(exists $option_def{$opt} ) {
-      if($option_def{$opt} eq 's') {
-        $options{ $opt } = shift @params;
-      } else {
-        $options{ $opt } = 1;
-      }
-    } else {
-      die "Unknown option $k\n";
-    }
-  } else {
-    unshift @params, $k;
-    last;
-  }
+## First check to see if the user has passed anything... o/w return docs..
+my $options = get_opts( $OPTION_DEF );
+diedoc( 'Invalid branch' ) unless exists $VALID_BRANCHES{$options->{'b'}};
+diedoc( 'Missing options/parameters' ) unless @ARGV;
+my $setup_key   = shift @ARGV;
+diedoc( 'Invalid setup key' ) unless $setup_key =~ m{\A\w+\Z}mxs;
+
+my ( $linux_version, $apache_command,
+     $module_path,   $apache_version ) = get_versions();
+
+if( $options->{'s'} ) {
+  diedoc( "Invalid SVN protocol/path: $options->{'s'}" )
+    unless $options->{'s'} =~ m{\A(?:(?:svn(?:[+]\w+)?|https?)://[-\w]+|file://)/\w}mxs;
+  diedoc( "Repository '$options->{'s'}/pagesmith/$setup_key-core' doesn't exists\n" )
+    unless grep_out( ['svn', 'info', "$options->{'s'}/pagesmith/$setup_key-core"], 'Revision:[ ](\d+)' );
 }
 
-die "No key specified\n" unless @params;
+my $domain_name = exists $options->{'d'} ? $options->{'d'} : "$setup_key.org";
+my $co_dir      = $VALID_BRANCHES{$options->{'b'}};
 
-my $setup_key   = shift @params;
-my $domain_name = exists $options{'d'} ? $options{'d'} : "$setup_key.org";
-my @date        = gmtime;
-my $date        = sprintf '%04d-%02d-%02d', $date[5]+1900,$date[4]+1,$date[3]; ## no critic (MagicNumbers)
-my $user        = sprintf '%s (%s)',        @{[getpwuid $<]}[qw(0 6)]; ##no critic (PunctuationVars)
+warn "Setting up with the following options:
+  SVN repository:    $options->{'s'}
+  Check in SVN:      $options->{'c'}
+  Port no:           $options->{'p'}
+  Domain:            $options->{'d'}
+  Branch:            $options->{'b'}
+  Externals from:    $options->{'r'}/pagesmith/pagesmith-core/$options->{'b'}
+  Setup key:         $setup_key
+    Repository:      $options->{'s'}/pagesmith/$setup_key-core
+    Apache-dir:      $ENV{'PWD'}/www-$co_dir/apache2/$setup_key.d
+    Core-directory:  $ENV{'PWD'}/www-$co_dir/core-$setup_key
+";
 
+die "\n###################### DRY RUN ONLY ######################\n\n" if $options->{'n'};
+
+my @date           = gmtime;
+my $date           = sprintf '%04d-%02d-%02d', $date[5]+1900,$date[4]+1,$date[3]; ## no critic (MagicNumbers)
+my $user           = sprintf '%s (%s)',        @{[getpwuid $<]}[qw(0 6)];         ## no critic (PunctuationVars)
 my $apache_sub_dir = "$setup_key.d";
-my $file_contents = {};
+my $file_contents  = {};
 
 get_templates();
 create_directories();
 create_files();
 create_symlinks();
 
-if( $options{'s'} ) {
+if( $options->{'s'} ) {
   write_svn();
 } else {
   checkout_core();
 }
 
 sub get_versions {
-  return (
-       -e '/usr/bin/dpkg'               ? 'debian'
-     : -e '/usr/bin/rpm'                ? 'redhat'
-     :                                    'unknown',
-       -e '/usr/sbin/apache2'           ? 'apache2'
-     : -e '/usr/sbin/httpd'             ? 'httpd'
-     :                                    'unknown',
-       -e '/etc/apache2/mods-available' ? '/etc/apache2/mods-available'
-     : -e '/etc/httpd/mods-available'   ? '/etc/httpd/mods-available'
-     :                                    q(),
-  );
+  my $distro =  -e '/usr/bin/dpkg'               ? 'debian'
+             : -e '/usr/bin/rpm'                ? 'redhat'
+             :                                    'unknown';
+  my $ap_bin = -e '/usr/sbin/apache2'           ? 'apache2'
+             : -e '/usr/sbin/httpd'             ? 'httpd'
+             :                                    q();
+  die "PANIC! - Unknown apache binary - can't find either apache2 or httpd\n"
+    unless $ap_bin;
+  my $mod_path = -e '/etc/apache2/mods-available' ? '/etc/apache2/mods-available'
+               : -e '/etc/httpd/mods-available'   ? '/etc/httpd/mods-available'
+               :                                    q();
+## If can't get version then we will assume it's 2.4!
+  my ($ap_ver) = grep_out ( ["/usr/sbin/$ap_bin",'-v'], 'Apache/(\d+[.]\d+)' );
+  return ($distro,$ap_bin,$mod_path,$ap_ver);
 }
 
 sub get_templates {
@@ -109,19 +121,18 @@ sub get_templates {
 }
 
 sub create_directories {
-  if( -d 'www-dev' ) {
-    if( $options{ 's' } ) {
-      `svn up www-dev`; ## no critic (BacktickOperators)
+  if( -d "www-$co_dir" ) { ## Directory already exists
+    if( $options->{ 's' } ) {
+      run_cmd( ['svn', 'up', "www-$co_dir"] );
     }
   } else {
-    if( $options{ 's' } ) {
-      my @Q = `svn info $options{'s'}/pagesmith/$setup_key-core | grep Revision`;             ## no critic (BacktickOperators)
-      if( $Q[0] =~ m{\ARevision:[ ]0}mxs ) {
-        `svn mkdir -m 'adding trunk branch' $options{'s'}/pagesmith/$setup_key-core/trunk`; ## no critic (BacktickOperators)
-      }
-      `svn co $options{'s'}/pagesmith/$setup_key-core/trunk www-dev`;                      ## no critic (BacktickOperators)
+    if( $options->{ 's' } ) {
+      my $flag = grep_out( ['svn', 'info', "$options->{'s'}/pagesmith/$setup_key-core/$options->{'b'}"], 'Revision:[ ](\d+)' );
+      run_cmd( ['svn', 'mkdir', '-m', "adding $options->{'b'} branch",
+          "$options->{'s'}/pagesmith/$setup_key-core/$options->{'b'}" ] ) unless $flag;
+      run_cmd( ['svn', 'co', "$options->{'s'}/pagesmith/$setup_key-core/$options->{'b'}", "www-$co_dir" ] );
     } else {
-      mkdir 'www-dev', $DIR_PERM;
+      mkdir "www-$co_dir", $DIR_PERM;
     }
   }
   my @dirs = qw(
@@ -163,8 +174,19 @@ sub create_directories {
   foreach my $dir (@dirs) {
     $dir =~ s{UPPERMYDIR}{ucfirst $setup_key}mxseg;
     $dir =~ s{MYDIR}{$setup_key}mxseg;
-    next if -d "www-dev/$dir";
-    mkdir "www-dev/$dir", $DIR_PERM;
+    next if -d "www-$co_dir/$dir";
+    mkdir "www-$co_dir/$dir", $DIR_PERM;
+  }
+  ## Create tmp path!
+  my $root = $ENV{'PWD'};
+  my $log_path = "$root/tmp/logs";
+     $log_path = "/www/tmp$1/logs" if $root =~ m{^\/www(?:\/([-\w])+)?\Z}mxs;
+  my @parts = split m{/}mxs, $log_path;
+  shift @parts;
+  my $d = q();
+  foreach (@parts) {
+    $d .= qq(/$_);
+    mkdir $d, $DIR_PERM unless -d $d;
   }
   return;
 }
@@ -175,15 +197,15 @@ sub create_files {
     ( my $path = $file ) =~ s{UPPERMYDIR}{ucfirst $setup_key}mxseg;
     $path =~ s{MYDIR}{$setup_key}mxseg;
     ## Check to see if file exists - if it does do not create!
-    next if -e "www-dev/$path";
-    open my $fh, q(>), "www-dev/$path";
+    next if -e "www-$co_dir/$path";
+    open my $fh, q(>), "www-$co_dir/$path";
     print {$fh} expand_parts( $file_contents->{$file} );
     close $fh;
   }
   ## Check to see if my-port exists  - if it does do not create!
-  return if -e 'www-dev/my-port';
-  open my $p_fh, q(>), 'www-dev/my-port';
-  print {$p_fh} "$options{'p'}\n";
+  return if -e "www-$co_dir/my-port";
+  open my $p_fh, q(>), "www-$co_dir/my-port";
+  print {$p_fh} "$options->{'p'}\n";
   close $p_fh;
   ## use critic
   return;
@@ -192,13 +214,13 @@ sub create_files {
 
 sub create_symlinks {
   if( $module_path ) {
-    foreach ( @{$mod_symlinks{$linux_version}{$apache_version}} ) {
+    foreach ( @{$MOD_SYMLINKS{$linux_version}{$apache_version}} ) {
       ## Check to see if link exists if so do not create
-      `ln -s $module_path/$_ www-dev/apache2/mods-enabled`; ## no critic (BacktickOperators)
+      symlink "$module_path/$_", "www-$co_dir/apache2/mods-enabled";
     }
   }
   my %other_symlinks = qw(
-    sites-enabled/000-default.conf                 ../core.d/sites-available/000-default.conf.conf
+    sites-enabled/000-default.conf                 ../core.d/sites-available/000-default.conf
     other-included/cache/local-filesystem.conf     ../../core.d/cache-conf/local-filesystem.conf
     other-included/cache/local-memcached.conf      ../../core.d/cache-conf/local-memcached.conf
     other-included/cache/local-mysql.conf          ../../core.d/cache-conf/local-mysql.conf
@@ -226,19 +248,19 @@ sub create_symlinks {
     (my $v = $other_symlinks{$k}) =~ s{MYDIR}{$setup_key}mxseg;
     $k                            =~ s{MYDIR}{$setup_key}mxseg;
     ## Check to see if link exists if so do not create
-    next if -e "www-dev/apache2/$k";
-    `ln -s $v www-dev/apache2/$k`; ## no critic (BacktickOperators)
+    next if -e "www-$co_dir/apache2/$k";
+    symlink $v, "www-$co_dir/apache2/$k";
   }
   return;
 }
 
 sub checkout_core {
-  ## no critic (BacktickOperators)
   foreach my $dir (qw(fonts htdocs lib utilities apache2/core.d)) {
-    if( -e "www-dev/$dir" ) {
-      `svn up www-dev/$dir`;
+    if( -e "www-$co_dir/$dir" ) {
+      run_cmd( ['svn', 'up', "www-$co_dir/$dir"] );
     } else {
-      `svn co $SOURCE_REPOS/pagesmith-core/trunk/$dir www-dev/$dir`;
+      run_cmd( ['svn', 'co', "$options->{'r'}/pagesmith-core/$options->{'b'}/$dir",
+        "www-$co_dir/$dir"] );
     }
   }
   ## use critic
@@ -246,41 +268,44 @@ sub checkout_core {
 }
 
 sub write_svn {
-  ## no critic (BacktickOperators)
-  `svn add -q www-dev/*`;
-  my @Q = `svn pg svn:externals www-dev/apache2`;
-  `svn ps svn:externals 'core.d $SOURCE_REPOS/pagesmith-core/trunk/apache2/core.d' www-dev/apache2` unless @Q;
-     @Q = `svn pg svn:externals www-dev`;
-  `svn ps svn:externals 'fonts     $SOURCE_REPOS/pagesmith-core/trunk/fonts
-htdocs    $SOURCE_REPOS/pagesmith-core/trunk/htdocs
-lib       $SOURCE_REPOS/pagesmith-core/trunk/lib
-utilities $SOURCE_REPOS/pagesmith-core/trunk/utilities' www-dev` unless @Q;
+  run_cmd( [ qw(svn add -q), "www-$co_dir/core-$setup_key",
+    map {"www-$co_dir/$_"} qw(apache2 config other-sites sites tmp)]);
+  unless( grep_out([qw(svn pg svn:externals), "www-$co_dir/apache2"]) ) {
+    run_cmd( [ qw(svn ps svn:externals),
+      "core.d $options->{'r'}/pagesmith-core/$options->{'b'}/apache2/core.d",
+      "www-$co_dir/apache2"] );
+  }
+  unless( grep_out([qw(svn pg svn:externals), "www-$co_dir"]) ) {
+    run_cmd( [qw(svn ps svn:externals), "fonts     $options->{'r'}/pagesmith-core/$options->{'b'}/fonts
+htdocs    $options->{'r'}/pagesmith-core/$options->{'b'}/htdocs
+lib       $options->{'r'}/pagesmith-core/$options->{'b'}/lib
+utilities $options->{'r'}/pagesmith-core/$options->{'b'}/utilities", "www-$co_dir"]);
+  }
   foreach my $dir (qw(
-    www-dev/other-sites
-    www-dev/sites
-    www-dev/tmp
-    www-dev/apache2/mods-enabled
-    www-dev/apache2/sites-enabled
-    www-dev/apache2/other-included/pagesmith
-    www-dev/apache2/other-included/cache
-    www-dev/apache2/other-included/vhosts
-    www-dev/apache2/other-included/core
-    www-dev/apache2/other-included/workers
+    other-sites
+    sites
+    tmp
+    apache2/mods-enabled
+    apache2/sites-enabled
+    apache2/other-included/pagesmith
+    apache2/other-included/cache
+    apache2/other-included/vhosts
+    apache2/other-included/core
+    apache2/other-included/workers
   )) {
-    @Q = `svn pg svn:ignore $dir`;
-    next if @Q;
-    `svn ps svn:ignore '*' $dir`;
+    next if grep_out([qw(svn pg svn:ignore), "www-$co_dir/$dir"]);
+    run_cmd( [qw(svn ps svn:ignore '*'), "www-$co_dir/$dir"] );
   }
-  @Q = `svn pg svn:ignore www-dev`;
-  `svn ps svn:ignore 'my-port' www-dev` unless @Q;
-  @Q = `svn info www-dev/ | grep Revision`;
-  if( $Q[0] =~ m{\ARevision:[ ]1}mxs ) {
-    `svn ci -m 'creating initial server structure' www-dev` if $options{'c'};
-  } else {
-    `svn ci -m 'patching server structure' www-dev` if $options{'c'};
-  }
-  `svn up www-dev`;
-  ## use critic
+  run_cmd( [qw(svn ps svn:ignore 'my-port'), "www-$co_dir"])
+    unless grep_out([qw(svn pg svn:ignore), "www-$co_dir"]);
+  my $commits = grep_out([qw(svn log), "www-$co_dir"], '----------' );
+  $commits--;
+  run_cmd([qw(svn ci -m),
+    $commits == 1 ? 'creating initial server structure'
+                  : 'patching server structure',
+    "www-$co_dir"]) if $options->{'c'};
+
+  run_cmd([qw(svn up), "www-$co_dir"]);
   return;
 }
 
@@ -288,21 +313,113 @@ sub expand_parts {
   my $string = shift;
   (my $shortened_domain_name = $domain_name ) =~ s{\Awww[.]}{}mxs;
   ## no critic (InterpolationOfMetachars)
-  my $map = { 'ShortDomain'    => $shortened_domain_name,
-              'MyDir'          => $setup_key,
-              'UpperMyDir'     => ucfirst $setup_key,
-              'Author'         => $user,
-              'BoilerPlate'    => sprintf '## Author         : %s
+  my $bptemplate = '## Author         : %s
 ## Maintainer     : %s
 ## Created        : %s
 ## Last commit by : $Author $
 ## Last modified  : $Date $
 ## Revision       : $Revision $
-## Repository URL : $HeadURL $', $user, $user, $date,
+## Repository URL : $HeadURL $';
+  my $map = { 'ShortDomain'    => $shortened_domain_name,
+              'MyDir'          => $setup_key,
+              'UpperMyDir'     => ucfirst $setup_key,
+              'Author'         => $user,
+              'SvnID'          => '$Id $',
+              'BoilerPlate'    => sprintf $bptemplate, $user, $user, $date,
             };
   ## use critic
   $string =~ s{[{][{](\w+)[}][}]}{$map->{$1}||"YARG{{$1}}"}mxseg;
   return $string;
+}
+
+sub diedoc {
+  my $msg = shift;
+  die "\nERROR:\n  $msg",documentation(),"###### Command aborted ######\n\n";
+}
+
+sub documentation {
+  return sprintf q(
+Usage:
+  create-server.pl {-b trunk|staging|live} {-c} {-d mydomain.org} \
+                   {-n} {-p 8xxx} {-r protocol://path} \
+                   {-s protocol://path} {setupkey}
+
+Options:
+  -b string [opt] - branch (trunk/staging/live)
+                      [defaults to %s]
+  -c        [opt] - DO NOT action the commit!
+  -d string [opt] - domain name for admin email...
+                      [defaults to {setupkey}.org]
+  -n              - dry run only - just dump the options!
+  -p number [opt] - port under which apache will run
+                      [defaults to %s]
+  -r string [opt] - repository to get pagesmith-core from
+                      [defaults to %s]
+  -s string [opt] - root of local svn repository! if not set just creates
+                    directory and checks out contents of pagesmith folders
+
+Note:
+  {setupkey} is used to generate namespace of packages, core, apache site
+  folder details and includes
+), map { $OPTION_DEF->{$_}[1] } qw(b p r);
+}
+
+## Support functions!
+sub get_opts {
+  my $def = shift;
+  my $values = {map { ( $_ => $def->{$_}[1] ) } keys %{$def}};
+  while( @ARGV ) {
+    my $k = shift @ARGV;
+    if( $k =~ m{-(\w+)}mxs ) {
+      my $opt = $1;
+      if(exists $def->{$opt} ) {
+        if($def->{$opt}[0] eq 's') {
+          $values->{ $opt } = shift @ARGV;
+        } elsif($def->{$opt}[0] eq q(-)) {
+          $values->{ $opt } = 0;
+        } else {
+          $values->{ $opt } = 1;
+        }
+      } else {
+        die "Unknown option $k\n",documentation()."\n";
+      }
+    } else {
+      unshift @ARGV, $k;
+      last;
+    }
+  }
+  return $values;
+}
+
+sub grep_out {
+  my ( $command_ref, $match, $input ) = @_;
+  my $res = run_cmd( $command_ref, $input );
+  return unless $res->{'success'};
+  return map { $_ =~ m{$match}mxs ? (defined $1?$1:$_) : () } @{$res->{'stdout'}||[]};
+}
+
+sub run_cmd {
+  my ( $command_ref, $input_ref ) = @_;
+  warn "CMD: @{$command_ref}\n";
+  $input_ref ||= [];
+  my $out_ref   = [];
+  my $err_ref   = [];
+  my $ret = eval { run3 $command_ref, $input_ref, $out_ref, $err_ref; };
+  ## no critic (PunctuationVars)
+  return {(
+    'command' => $command_ref,
+    'success' => $ret && !$?,
+    'error'   => $@ || $?,
+    'stdout'  => resplit( $out_ref ),
+    'stderr'  => resplit( $err_ref ),
+  )};
+  ## use critic
+}
+
+sub resplit {
+  my $a_ref = shift;
+  my @ret = map { split m{\r?\n}mxs, $_ } @{$a_ref};
+  return \@ret;
 }
 
 1;
@@ -838,7 +955,7 @@ sub handler {
 <html>
 
 <head>
-  <meta name="svn-id" content="$Id$" />
+  <meta name="svn-id" content="[[SvnID]]" />
   <meta name="author" content="[[Author]]" />
   <title>Home page</title>
 </head>
@@ -853,7 +970,7 @@ sub handler {
 <html>
 
 <head>
-  <meta name="svn-id" content="$Id$" />
+  <meta name="svn-id" content="[[SvnID]]" />
   <meta name="author" content="[[Author]]" />
   <title>Cookie Policy</title>
 </head>
@@ -940,7 +1057,7 @@ sub handler {
 <html>
 
 <head>
-  <meta name="svn-id" content="$Id$" />
+  <meta name="svn-id" content="[[SvnID]]" />
   <meta name="author" content="[[Author]]" />
   <title>Contact Us</title>
 </head>
@@ -955,7 +1072,7 @@ sub handler {
 <html>
 
 <head>
-  <meta name="svn-id" content="$Id$" />
+  <meta name="svn-id" content="[[SvnID]]" />
   <meta name="author" content="[[Author]]" />
   <title>Legal</title>
 </head>
@@ -1074,7 +1191,7 @@ sub handler {
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en-gb">
 <head>
   <meta name="author" content="[[Author]]" />
-  <meta name="template-svn-id" content="$Id$" />
+  <meta name="template-svn-id" content="[[SvnID]]" />
   <link rel="Shortcut Icon" href="/[[HtdocsSubDir]]/gfx/[[HtdocsSubDir]]_ico.png" type="image/png" />
   <title>[[ShortDomainName]] - <%= h:title %></title>
   <link rel="stylesheet" type="text/css" href="
@@ -1137,7 +1254,7 @@ sub handler {
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en-gb">
 <head>
   <meta name="author" content="[[Author]]" />
-  <meta name="template-svn-id" content="$Id$" />
+  <meta name="template-svn-id" content="[[SvnID]]" />
   <link rel="Shortcut Icon" href="/[[HtdocsSubDir]]/gfx/[[HtdocsSubDir]]_ico.png" type="image/png" />
   <title>[[ShortDomainName]] - <%= h:title %></title>
   <link rel="stylesheet" type="text/css" href="
