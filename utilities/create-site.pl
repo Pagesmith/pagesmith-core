@@ -56,6 +56,7 @@ GetOptions(
 diedoc( 'MUST GIVE DOMAIN NAME' ) unless @ARGV;
 
 my $domain_name    = shift @ARGV;
+(my $repos_name = $domain_name) =~ s{[.]}{-}mxsg;
 ## Read files from __DATA__ section of file...
 my $file_contents = {};
 
@@ -65,13 +66,14 @@ warn "Setting up with the following options:
   Domain:            $domain_name
   SVN repository:    $from_svn
   Check in SVN:      $commit_svn
-  Apache dir:        $setup_key
+  Apache dir:        $setup_key.d
   Branch:            $branch
   Externals from:    $core_svn_path/pagesmith-core/$branch
   Setup key:         $setup_key
-    Repository:      $from_svn/pagesmith/$setup_key-core
-    Apache-dir:      $ROOT_PATH/apache2/$setup_key.d
-    Core-directory:  $ROOT_PATH/core-$setup_key
+  Site details:
+    Repository:      $from_svn/sites/$repos_name/$branch
+    Directory:       $ROOT_PATH/sites/$domain_name
+    Config fiile:    $ROOT_PATH/apache2/$setup_key.d/$domain_name.conf
 " unless $quiet;
 
 die "\n###################### DRY RUN ONLY ######################\n\n" if $dryrun;
@@ -124,8 +126,8 @@ sub pre_flight_checks {
   ## Check to see if local SVN repository exists
   diedoc( "Invalid SVN protocol/path: $from_svn" )
     unless $from_svn =~ m{\A(?:(?:svn(?:[+]\w+)?|https?)://[-\w]+|file://)/\w}mxs;
-  diedoc( "Repository '$from_svn/sites/$domain_name' doesn't exists\n" )
-    unless grep_out( ['svn', 'info', "$from_svn/sites/$domain_name"], 'Revision:[ ](\d+)' );
+  diedoc( "Repository '$from_svn/sites/$repos_name' doesn't exists\n" )
+    unless grep_out( ['svn', 'info', "$from_svn/sites/$repos_name"], 'Revision:[ ](\d+)' );
 
   $htdocs_sub_dir = sprintf '%s-core', lc $name_space unless $htdocs_sub_dir;
   $name_space     = ucfirst $name_space;
@@ -155,7 +157,6 @@ sub get_templates {
 sub create_directories {
   my @paths = qw(htdocs data data/templates data/templates/normal data/config source utilities lib ext-lib lib/Pagesmith);
   push @paths, "htdocs/$htdocs_sub_dir", map { "htdocs/$htdocs_sub_dir/$_" } qw(css gfx inc js assets);
-  (my $repos_name = $domain_name) =~ s{[.]}{-}mxsg;
 
   ### Create root directory of site either from SVN or just with mkdir.!
   if( -d "$ROOT_PATH/sites/$domain_name" ) {
