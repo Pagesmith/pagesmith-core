@@ -182,7 +182,8 @@ sub create_directories {
   ## Create tmp path!
   my $root = $ENV{'PWD'};
   my $log_path = "$root/tmp/logs";
-     $log_path = "/www/tmp$1/logs" if $root =~ m{^\/www(?:\/([-\w])+)?\Z}mxs;
+     $log_path = "/www/tmp/$1/logs"      if $path =~ m{^\/www\/(([-\w]+\/)?www-\w+)}mxs;
+     $log_path =~ s{//+}{/}mxsg;
   warn "LOGS PATH - $log_path\n";
   my @parts = split m{/}mxs, $log_path;
   shift @parts;
