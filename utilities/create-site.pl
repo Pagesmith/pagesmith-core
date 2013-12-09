@@ -269,7 +269,7 @@ sub create_files {
     close $conf_fh;
   }
   ## use critic
-  unless( -e "$ROOT_PATH/apache2/sites-enabled" ) {
+  unless( -e "$ROOT_PATH/apache2/sites-enabled/$domain_name.conf" ) {
     symlink $rel_conf_file, "$ROOT_PATH/apache2/sites-enabled/$domain_name.conf";
   }
   warn "#### Created config files\n" unless $quiet;
