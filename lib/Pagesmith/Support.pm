@@ -31,6 +31,14 @@ use Pagesmith::Session::User;
 
 ## Code that requires r!
 
+sub remote_ip {
+  my $self = shift;
+  return unless $self->r && $self->r->connection;
+  return $self->r->connection->remote_ip if $self->r->connection->can('remote_ip');
+  return $self->r->connection->client_ip if $self->r->connection->can('client_ip');
+  return;
+}
+
 sub tmp_dumper {
   my( $self, $filename, $data_to_dump, $name_of_data ) = @_;
   $filename =~ s{[^-\w.]}{}mxsg;
