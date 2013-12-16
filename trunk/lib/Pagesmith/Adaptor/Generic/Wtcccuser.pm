@@ -32,7 +32,7 @@ sub new {
     ->set_type( 'Wtcccuser' )
     ->set_code( 'username' )
     ->set_sort_order( 'username', 'realname' );
-  ##use critic(ProhibitLongChainsOfMethodCalls) 
+  ##use critic(ProhibitLongChainsOfMethodCalls)
   return $self;
 }
 
@@ -119,7 +119,7 @@ sub create_account {
   return if $hashref;
 
   # and finally...
-  ##no critic qw(ImplicitNewlines) 
+  ##no critic qw(ImplicitNewlines)
   return $self->query('INSERT INTO '.$self->table_name
                      .'        SET    username,   password,             realname, created, modified,
                                         ipaddr,  authtype,       addedby,              note,              email
@@ -168,7 +168,7 @@ sub initialise_object {
   if( exists $self->{'_r'} && $self->{'_r'} ) {
     $user->set_ip(
       $self->{'_r'}->headers_in->{'X-Forwarded-For'} ||
-      $self->{'_r'}->connection->remote_ip,
+      $self->remote_ip,
     ) unless defined $user->ip;
     $user->set_useragent( $self->{'_r'}->headers_in->{'User-Agent'} || q(--) );
   }

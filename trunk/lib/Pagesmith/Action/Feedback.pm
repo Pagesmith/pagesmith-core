@@ -33,7 +33,7 @@ sub run {
       'page'       => $page,
       'created_by' => $created_by,
       'comment'    => $comment,
-      'ip'         => $self->r->headers_in->get('X-Forwarded-For') . q( ) . $self->r->connection->remote_ip,
+      'ip'         => $self->r->headers_in->get('X-Forwarded-For') . q( ) . $self->remote_ip,
       'useragent'  => $self->r->headers_in->get('User-Agent'),
     } )->store;
     return $self->redirect($page);
