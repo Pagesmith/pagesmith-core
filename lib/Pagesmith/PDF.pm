@@ -366,6 +366,21 @@ sub draw_image {
 }
 ## use critic
 
+sub draw_para_overflow {
+  my( $self, $params, $string ) = @_;
+  my $txt = $self->txt;
+  foreach ( qw(font size width left align text_colour line_height para_spacing) ) {
+    $params->{$_} = $self->{'options'}{$_} unless exists $params->{$_}
+  }
+  $txt->fillcolor( $params->{'text_colour'} );
+  $txt->font( $self->font($params->{'font'}), $params->{'size'} );
+  my $top = $params->{'top'}|| $self->{'top'};
+    ## Ignore what comes out of this...
+  my $det =  $self->text_block( $txt, $string, $params );
+  $self->{'top'} = $det->{'last_ypos'};
+  return $det->{'overflow'};
+}
+
 sub draw_para {
   my( $self, $params, $string ) = @_;
   my $txt = $self->txt;
@@ -459,12 +474,14 @@ sub text_block {
   my %width;
   $width{$_} ||= $txt->advancewidth($_) foreach @words;
   my $y_bot = $ypos - $params->{'height'};
+  $y_bot = $self->box_bottom if $y_bot < $self->box_bottom;
   $ypos -=  $params->{'size'};
   my @paragraph = split m{\s+}mxs, shift @paragraphs;
   my $first_line      = 1;
   my $first_paragraph = 1;
   # while we can add another line
   my $endw;
+  my $first_word = 1;
   while ( $ypos >= $y_bot ) {
     unless( @paragraph ) {
       last unless scalar @paragraphs;
@@ -473,6 +490,7 @@ sub text_block {
       last if $ypos < $y_bot;
       $first_line      = 1;
       $first_paragraph = 0;
+      $first_word = 1;
     }
     my $xpos = $params->{'left'};
     # while there's room on the line, add another word
@@ -497,12 +515,13 @@ sub text_block {
       $line_width += $params->{'-indent'};
     }
     ## use critic
-    while ( @paragraph &&
+    while ( $first_word || @paragraph &&
       $line_width + $width{ $paragraph[0] }  + $space_width * scalar @line
        < $params->{'width'}
     ) {
       $line_width += $width{ $paragraph[0] };
       push @line, shift @paragraph;
+      $first_word = 0;
     }
     # calculate the space width
     my ( $wordspace, $align );
@@ -536,6 +555,7 @@ sub text_block {
     }
     $ypos -= $params->{'line_height'};
     $first_line = 0;
+    $first_word = 1;
   }
   unshift @paragraphs, join q( ), @paragraph if scalar @paragraph;
 
