@@ -51,7 +51,7 @@ my ( $linux_version, $apache_command,
 
 if( $options->{'s'} ) {
   diedoc( "Invalid SVN protocol/path: $options->{'s'}" )
-    unless $options->{'s'} =~ m{\A(?:(?:svn(?:[+]\w+)?|https?)://[-\w]+|file://)/\w}mxs;
+    unless $options->{'s'} =~ m{\A(?:(?:svn(?:[+]\w+)?|https?)://[-@\w]+|file://)/\w}mxs;
   diedoc( "Repository '$options->{'s'}/pagesmith/$setup_key-core' doesn't exists\n" )
     unless grep_out( ['svn', 'info', "$options->{'s'}/pagesmith/$setup_key-core"], 'Revision:[ ](\d+)' );
 }
