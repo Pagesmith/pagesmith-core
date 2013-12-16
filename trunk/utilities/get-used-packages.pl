@@ -45,7 +45,13 @@ my %OTHER_PACKAGES = (
                   openssl-devel libevent-devel)],
 );
 
-my $ignore_whats_installed = (@ARGV && $ARGV[0] eq '-i') ? 1 : 0;
+my $verbose                = 0;
+my $ignore_whats_installed = 0;
+while( @ARGV && $ARGV[0] =~ m{\A-([iv])\Z}mxs ) {
+  $verbose                = 1 if $1 eq 'v';
+  $ignore_whats_installed = 1 if $1 eq 'i';
+  shift @ARGV;
+}
 
 my $CPAN_PACKAGES = 'http://www.cpan.org/modules/02packages.details.txt';
 my $PACKAGE_PATH  = {
@@ -69,7 +75,7 @@ my @MUNGED_PATH   = get_munged_path();
 ## Both script and lib... if you wish to pick up other paths
 ## then this is the bit of code that you will need to extend
 
-my @dirs = get_dirs();
+my @dirs      = get_dirs();
 my @lib_paths = grep { -d $_ } "$UTILS_PATH/lib", map { ( "$_/lib", "$_/ext-lib" ) } @dirs;
 my @scr_paths = grep { -d $_ } $UTILS_PATH,       map { "$_/utilities"             } @dirs;
 
