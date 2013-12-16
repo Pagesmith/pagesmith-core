@@ -71,9 +71,9 @@ sub dump_to_log {
   my $bold = q(=) x $ERROR_WIDTH;
   ## no critic (CheckedSyscalls)
   print {*STDERR} "$bold\n";
-  my $IP = $r->headers_in->{ 'X-Forwarded-For' } || $r->connection->remote_ip;
-  printf {*STDERR} "PID: %d; Hostname: %s; Request: %s; IP: %s; Time: %s.\n",
-    $PID, $r->hostname, $r->unparsed_uri, $IP, q().localtime;
+  my $IP = $r->headers_in->{ 'X-Forwarded-For' } || ($r->connection->can('remote_ip') ? $r->connection->remote_ip : $r->connection->client_ip );
+  printf {*STDERR} "PID: %d/%d; Hostname: %s; Request: %s; IP: %s; Time: %s.\n",
+    $PID, $r->subprocess_env->{'CHILD_COUNT'}, $r->hostname, $r->unparsed_uri, $IP, q().localtime;
   foreach ( @{$messages} ) {
     print {*STDERR} join "\n", $line, $_->render_txt($STACKTRACE_MAXDEPTH,$STACKTRACE_LEVEL),q();
   }
