@@ -65,6 +65,7 @@ sub post_read_request_handler {
   $request_started = time;
   $requests++;
 
+  $r->subprocess_env->{'CHILD_COUNT'}    = $requests;
   return DECLINED unless $LEVEL eq 'noisy';
 
   printf {*STDERR} "TI:   Start request %9d - %4d              %s\n",
@@ -88,7 +89,6 @@ sub log_handler {
   my ($new_size, $new_shared, $new_unshared) = Apache2::SizeLimit->_check_size(); ##no critic(PrivateSubs)
 
   my $z = $r->next || $r;
-  $z->subprocess_env->{'CHILD_COUNT'}    = $requests;
   $z->subprocess_env->{'SCRIPT_START'}   = sprintf '%0.6f', $request_started;
   $z->subprocess_env->{'SCRIPT_END'}     = sprintf '%0.6f', $request_ended;
   $z->subprocess_env->{'SCRIPT_TIME'}    = sprintf '%0.6f', $t;
