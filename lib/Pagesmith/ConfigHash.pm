@@ -33,7 +33,7 @@ our @EXPORT_OK = qw(
 our %EXPORT_TAGS = ( 'ALL' => \@EXPORT_OK );
 
 my $config_data = {};
-my $site_key;
+my $site_key = q(-);
 my $r;
 my $key_root;
 
@@ -46,6 +46,7 @@ my $defaults = { qw(
     CacheType       MS
     TmpUrl          /t/
     TmpDir          /www/tmp/www-trunk/tmp/
+    UtilsDir        /www/utilities
     ConfigKey       dev
     ServerStatus    unknown
     AuthServer      http://localhost
