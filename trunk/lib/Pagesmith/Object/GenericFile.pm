@@ -22,6 +22,9 @@ sub new {
      $object_data    ||= {};
   my $self = $class->SUPER::new( $adaptor, $object_data );
   $self->{'mime_type'} = $object_data->{'mime_type'}||$adaptor->mime_type; ## Copy mime_type from object data!
+  $self->{'code'}      = $object_data->{'code'};
+  $self->{'type'}      = $object_data->{'type'};
+  $self->{'sort_order'} = [ split m{\t}mxs, $object_data->{'sort_order'} ] if exists $object_data->{'sort_order'};
   return $self;
 }
 
@@ -42,6 +45,16 @@ sub AUTOLOAD {
   return $self;
 }
 ## use critic
+
+sub code {
+  my $self = shift;
+  return $self->{'code'};
+}
+
+sub sort_order {
+  my $self = shift;
+  return $self->{'sort_order'};
+}
 
 sub set_code {
   my ($self,$val) = @_;
