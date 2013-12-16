@@ -743,7 +743,7 @@ sub svn_commit {
 sub svn_stage {
   my $self = shift;
   my $results = $self->run_cmd( [
-    qw(/www/utilities/stage -v -v -v -b -m),
+    get_config('UtilsDir').'/stage', qw( -v -v -v -b -m),
     safe_base64_encode($self->param('message').$self->user_tweak),
     $self->path ] );
  $self->dumper( $results );
@@ -753,7 +753,7 @@ sub svn_stage {
 sub svn_publish {
   my $self = shift;
   my $results = $self->run_cmd( [
-    qw(/www/utilities/publish -b -m),
+    get_config('UtilsDir').'/publish', qw( -v -v -v -b -m),
     safe_base64_encode($self->param('message').$self->user_tweak),
     $self->path ] );
   return [ $results ];
