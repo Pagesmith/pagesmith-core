@@ -23,8 +23,8 @@ sub new {
   my $self    = {
     '_adpt'      => $adaptor,
 ## Information about the object and it's ID
-    'type'       => $object_data->{'type'},
     'id'         => $object_data->{'id'},
+    'type'       => $object_data->{'type'},
     'state'      => $object_data->{'state'} || 'pending',
     'objdata'    => $object_data->{'objdata'} || {},
 ## Information about the creator/updator of the object
@@ -73,7 +73,7 @@ sub AUTOLOAD {
   return $self->get_date( $1 )    if $method =~ m{::date_(\w+)\Z}mxs;
   return $self->unset( $1 )       if $method =~ m{::unset_(\w+)\Z}mxs;
   return $self->get( $1 )         if $method =~ m{::(\w+)\Z}mxs;
-  return $self;
+  return;
 }
 
 sub can {
@@ -105,6 +105,7 @@ sub state {
   my $self = shift;
   return $self->{'state'};
 }
+
 ## use critic
 
 sub change_state {
