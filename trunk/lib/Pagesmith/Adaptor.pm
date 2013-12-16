@@ -360,7 +360,7 @@ sub set_ip_and_useragent {
   if( exists $self->{'_r'} && $self->r ) {
     $object_to_update->set_ip(
       $self->r->headers_in->{'X-Forwarded-For'} ||
-      $self->r->connection->remote_ip,
+      $self->remote_ip,
     );
     $object_to_update->set_useragent( $self->r->headers_in->{'User-Agent'} || q(--) );
   } else {
