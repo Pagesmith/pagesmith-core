@@ -89,7 +89,7 @@ sub execute {
 
   return q() unless $html;
 
-  my $IP = $self->r->headers_in->{ 'X-Forwarded-For' } || $self->r->connection->remote_ip;
+  my $IP = $self->r->headers_in->{ 'X-Forwarded-For' } || $self->remote_ip;
 
   $IP =~ s{(\b\d+[.]\d+[.]\d+[.]\d+)}{_resolve($1)}mxges;
   ## no critic (ImplicitNewlines)
