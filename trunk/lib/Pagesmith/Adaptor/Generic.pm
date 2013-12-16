@@ -143,6 +143,14 @@ sub parse_filter {
           $extra .= sprintf ' and %s not in (%s)', $column, join q(,), map { q(?) } @values;
           push @params, @values;
         }
+        when( 'like' ) {
+          $extra .= sprintf ' and %s like ?', $column;
+          push @params, "%$values[0]%";
+        }
+        when( 'notlike' ) {
+          $extra .= sprintf ' and %s not like ?', $column;
+          push @params, "%$values[0]%";
+        }
         when( 'not' ) {
           $extra .= sprintf ' and %s != ?', $column;
           push @params, $values[0];

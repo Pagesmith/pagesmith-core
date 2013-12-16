@@ -71,7 +71,7 @@ sub get_all {
   my ($extra,@params) = $self->parse_filter( @filter );
   ##no critic (ImplicitNewlines)
   my $array = $self->all_hash(
-    'select type, genfile_id, code, mime_type, created_at, created_by, updated_at, updated_by, ip, useragent, objdata, state
+    'select type, genfile_id, code, mime_type, created_at, created_by, updated_at, updated_by, ip, useragent, objdata, state, sort_order
        from '.$self->table_name.'
       where type = ?'.$extra.'
       order by sort_order',
@@ -92,7 +92,7 @@ sub get {
   my ( $self, $code ) = @_;
   ##no critic (ImplicitNewlines)
   my $hashref = $self->row_hash(
-    'select genfile_id, mime_type, created_at, created_by, updated_at, updated_by, ip, useragent, objdata, state
+    'select genfile_id, mime_type, created_at, created_by, updated_at, updated_by, ip, useragent, objdata, state, sort_order
        from '.$self->table_name.'
       where type = ? and code=?',
     $self->type, $code,
