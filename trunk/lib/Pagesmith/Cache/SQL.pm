@@ -22,6 +22,7 @@ const my $MICRO_SLEEP => 0.001;
 
 use DBIx::Connector;
 use POSIX qw(ceil);
+use English qw(-no_match_vars $EVAL_ERROR $PID);
 
 use Pagesmith::Cache::Base qw(expires columns);
 
@@ -102,19 +103,38 @@ sub _parse_key {
 
 sub _scalar {
   my($sql,@pars) = @_;
-  my ($t) = $dbh->run( 'fixup' =>  sub { return $_->selectrow_array( $sql, {}, @pars ); } );
+  my $t;
+  my $rv = eval {
+    ($t) = $dbh->run( 'fixup' =>  sub { return $_->selectrow_array( $sql, {}, @pars ); } );
+  };
+  if( $EVAL_ERROR ) {
+    warn "[$t] _scalar EVAL ERROR $PID/$ENV{CHILD_COUNT}:: $EVAL_ERROR $PID\n";
+  }
   return $t;
 }
 
 sub _now {
   my($sql,@pars) = @_;
-  my ($t) = $dbh->run( 'fixup' =>  sub { return $_->selectrow_array( 'select now()', {}, @pars ); } );
+  my $t;
+  my $rv = eval {
+    ($t) = $dbh->run( 'fixup' =>  sub { return $_->selectrow_array( 'select now()', {}, @pars ); } );
+  };
+  if( $EVAL_ERROR ) {
+    warn "[$t] _now EVAL ERROR $PID/$ENV{CHILD_COUNT}:: $EVAL_ERROR $PID\n";
+  }
   return $t;
 }
 
 sub _do {
   my($sql,@pars) = @_;
-  return $dbh->run( 'fixup' => sub { return $_->do( $sql, {}, @pars ); } );
+  my $res;
+  my $rv = eval {
+    $res = $dbh->run( 'fixup' => sub { return $_->do( $sql, {}, @pars ); } );
+  };
+  if( $EVAL_ERROR ) {
+    warn "[$res] _do EVAL ERROR $PID/$ENV{CHILD_COUNT}:: $EVAL_ERROR $PID\n";
+  }
+  return $res;
 }
 
 ### These are the real functions!!!
