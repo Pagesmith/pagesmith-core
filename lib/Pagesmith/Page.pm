@@ -280,7 +280,7 @@ sub merge_cssjs {
       close $fh; ##no critic (CheckedSyscalls CheckedClose)
 
       if( $type eq 'js' ) {
-        system 'java', '-jar', '/www/utilities/jars/compiler.jar',
+        system 'java', '-jar', get_config('UtilsDir').'/jars/compiler.jar',
           '--js',                 $fn,
           '--create_source_map',  "$fn.map",
           '--source_map_format',  'V3',
@@ -309,7 +309,7 @@ sub merge_cssjs {
           $stored_type = 'c';
         }
       } else {
-        system 'java', '-jar', '/www/utilities/jars/yuicompressor.jar',
+        system 'java', '-jar', get_config('UtilsDir').'/jars/yuicompressor.jar',
           '-o', "$fn.out", $fn;
         if ( open $fh, '<', "$fn.out" ) {
           local $INPUT_RECORD_SEPARATOR = undef;
@@ -335,7 +335,11 @@ sub merge_cssjs {
 
 sub minify_html {
   my( $self, $html_ref ) = @_;
-  my $result = $self->run_cmd( [qw(java -jar /www/utilities/jars/htmlcompressor.jar --preserve-server-script --compress-js --js-compressor closure --compress-css --remove-intertag-spaces --remove-form-attr --remove-input-attr )], $html_ref );
+  my $result = $self->run_cmd( [
+   qw(java -jar ),
+   get_config('UtilsDir').'/jars/htmlcompressor.jar',
+   qw(--preserve-server-script --compress-js --js-compressor closure --compress-css
+      --remove-intertag-spaces --remove-form-attr --remove-input-attr )], $html_ref );
   return unless $result->{'success'};
   ${$html_ref} = join qq(\n), @{$result->{'stdout'}};
   return 1;
