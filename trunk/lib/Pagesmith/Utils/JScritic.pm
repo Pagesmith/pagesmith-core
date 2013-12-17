@@ -20,11 +20,10 @@ use HTML::Tidy;
 use XML::Parser;
 use English qw($EVAL_ERROR $INPUT_RECORD_SEPARATOR -no_match_vars);
 use Pagesmith::Core qw(fullescape);
+use Pagesmith::ConfigHash qw(get_config);
 
 use Const::Fast qw(const);
-const my $JSL_COMMAND       => '/www/utilities/jsl -conf /www/utilities/jsl.conf -process';
-const my $ERROR_BLOCK_LINES => 4;
-const my $ERROR_BLOCK_PARTS => 4;
+const my %IGNORE_WARNING => map { ($_=>1) } qw(Z999);
 
 use base qw(Pagesmith::Support);
 
@@ -73,59 +72,23 @@ sub check {
   my $self = shift;
   return 'Unable to open file' unless -e $self->{'filename'} && -f _ && -r _; ## no critic (Filetest_f) # Does have to be a physical file!
 
-  my @lines;
-  if( open my $fh, q(-|), split( m{\s+}mxs, $JSL_COMMAND ), $self->{'filename'} ) {
-    @lines = <$fh>;
-    close $fh; ## no critic (RequireChecked)
-  } else {
-    return 'Unable to process file';
-  }
-
-  splice @lines,0,$ERROR_BLOCK_LINES;
-  my $counts_line = pop @lines;
-  my( $errors,$warns ) = $counts_line =~ m{\A(\d+)\serror[(]s[)],\s(\d+)\swarning[(]s[)]}mxs ? ($1,$2) : (0,0);
-  my $ignored = 0;
-  my @error_messages;
-  while(@lines>0) {
-    my ($msg,$source,$arrow,$blank) = splice @lines,0,$ERROR_BLOCK_LINES;
-    my $c = 0;
-    if( defined $arrow && $arrow =~ m{\A([.]*)\^}mxs ) {
-      $c = length $1;
-    } else {
-      splice @lines,0,0,defined $source ? $source : (),defined $arrow ? $arrow:(),defined $blank ? $blank:();
-      $source = q();
-      $arrow  = q();
-      $blank  = q();
-    }
-    next unless defined $blank;
-    chomp $msg;
-    my($file,$r,$type,$message) = split m{:}mxs, $msg, $ERROR_BLOCK_PARTS;
-    next unless defined $type;
-
-    my $level = $type =~ m{Error}mxis ? 'Error' : 'Warning';
-    $message =~ s{\A\s+}{}mxs;
-    $message =~ s{\s+\Z}{}mxs;
-    chomp $source;
-# Ignore
-#  (1) console errors - but good to display them as they are diagnostic
-#  (2) unexpected end of line - if using <-'. to split chained jQuery blocks
-    if( $message eq 'undeclared identifier: console' ||
-        $message eq 'unexpected end of line; it is ambiguous whether these lines are part of the same statement' &&
-        $source =~ m{\A\s*[.]}mxs ) {
-      $warns  --;
-      $ignored++;
-      $level  = 'Ignored';
-    }
-
-    $type =~ s{\A\s+}{}mxs;
-    $type =~ s{\s+\Z}{}mxs;
-    push @error_messages, {
-      'level'    => $level,
-      'messages' => [ $message ],
-      'line'     => $r,
-      'column'   => $c,
-    };
-  }
+  my $res = $self->run_cmd( [qw(jshint --verbose --config),
+                            get_config('UtilsDir').'/config/jshint.json',
+                            $self->{'filename'}] );
+  ## no critic (ComplexRegexes)
+  my @error_messages = map { m{\A(\S+):[ ]line[ ](\d+),[ ]col[ ](\d+),[ ](.*?[ ][(](([EW])\d{3})[)])\Z}mxs ?
+                           {( 'source'   => $1,
+                             'line'     => $2,
+                             'col'      => $3,
+                             'messages' => [ $4 ],
+                             'code'     => "$5",
+                             'level'    => $6 eq 'E' ? 'Error' : exists $IGNORE_WARNING{$5} ? 'Ignored' : 'Warning',
+                           )} : () }
+                           @{$res->{'stdout'}};
+  ## use critic
+  my $errors  = grep { $_->{'level'} eq 'Error' }   @error_messages;
+  my $ignored = grep { $_->{'level'} eq 'Ignored' } @error_messages;
+  my $warns   = @error_messages - $errors - $ignored;
   $self->{'messages'} = \@error_messages;
   $self->{'counts'}   = { 'Error' => $errors, 'Warning' => $warns, 'Ignored' => $ignored };
   return;
