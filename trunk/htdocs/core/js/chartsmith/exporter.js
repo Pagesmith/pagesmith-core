@@ -1,6 +1,7 @@
 /*globals Raphael: true */
 $(function() {
 /* Image exporter code */
+  'use strict';
   if (Raphael.svg) {
     $('body').first().append('<form action="/action/Svg" method="post" id="svgform"><input type="hidden" value="" name="svg" id="svgvalue"/><\/form>');
     $('.raphael-export svg').livequery(function () {
