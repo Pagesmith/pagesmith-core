@@ -1,3 +1,4 @@
+'use strict';
 /**
  * Simple image based presentation viewer. Takes a The images in a div,
  * and converts them into a simple carousel - with both mouse and
@@ -17,15 +18,15 @@
   var settings = $.metadata && $('.carousel').metadata() ? $('.carousel').metadata() : {};
 
   // Length of time a slide is displayed for:
-  var SLIDE_INTERVAL      = settings['slide_interval']      || 6000; // 6 seconds
-  var DELAY_START         = settings['delay_start']         || 200;
-  var TRANSITION_INTERVAL = settings['transition_interval'] || 250; // 1/4 second between slides.
+  var SLIDE_INTERVAL      = settings.slide_interval      || 6000; // 6 seconds
+  var DELAY_START         = settings.delay_start         || 200;
+  var TRANSITION_INTERVAL = settings.transition_interval || 250; // 1/4 second between slides.
   TRANSITION_INTERVAL *= 1;
   DELAY_START *= 1;
   SLIDE_INTERVAL *= 1;
 
-  var DIMENSION_X =         settings['image_width']         || '320px';
-  var DIMENSION_Y =         settings['image_height']        || '200px';
+  var DIMENSION_X =         settings.image_width         || '320px';
+  var DIMENSION_Y =         settings.image_height        || '200px';
 
 // auto_advance_temporary_pause = Prevent a transition from happening when anyone manually starts anything (click or type)
 
@@ -33,18 +34,16 @@
 
   var f_preshid = function(){$(this).hide().addClass('preshid');};
 
-  var thin_1     = { width: "0px",       height: DIMENSION_Y };
-  var full_left  = { width: DIMENSION_X, height: DIMENSION_Y, left: "0"};
-  var thin_right = { width:   "0",       height: DIMENSION_Y, left: DIMENSION_X };
-  var thin_left  = { width:   "0",       height: DIMENSION_Y, left: "0"};
+  //var thin_1     = { width: '0px',       height: DIMENSION_Y };
+  var full_left  = { width: DIMENSION_X, height: DIMENSION_Y, left: 0};
+  var thin_right = { width:   0,       height: DIMENSION_Y, left: DIMENSION_X };
+  var thin_left  = { width:   0,       height: DIMENSION_Y, left: 0};
 
   var animate_any = function(a_start, a_final, x_final, x,a,t) {
     if (x[0] === a[0]) {
-     // console.log( 'not animating transition from self to self');
       return;
-      }
+    }
     if ( active ) {
-     // console.log( 'not animating because already animating' );
       return;
     } else {
       active = true;
@@ -54,13 +53,12 @@
       a.closest('.carousel').pres_set_title();
       active = false;
       //console.log( active );
-      };
+    };
     // console.log( t );
     x.animate( x_final, { 'duration': t, 'complete': f_preshid } );
 
     a.css( a_start ).removeClass('preshid').show().animate( a_final,
-      { 'duration': t, 'complete': f_finishsettitle }
-      );
+      { 'duration': t, 'complete': f_finishsettitle } );
 
   };
 
@@ -94,7 +92,7 @@
       window.clearInterval( queue );
       queue = null;
       return 1;
-      }
+    }
     return 0;
   };
 
@@ -116,12 +114,13 @@
 
     if ( $('.carousel .pause:visible').length ) {
 
-      var success = pause_timer();
-     // console.log( 'Pausing timer returned ' + success );
+      /* var success = */
+      pause_timer();
+      // console.log( 'Pausing timer returned ' + success );
 
       $(':animated').promise().done(function() {
-         // console.log( 'restarting timer');
-         restart_timer();
+        // console.log( 'restarting timer');
+        restart_timer();
       });
     }
   };
@@ -256,10 +255,10 @@
       var intervalID = window.setInterval( st, SLIDE_INTERVAL );
       push_timer(intervalID);
       $('.carousel .pause').show();
-      };
+    };
 
     // after a couple of seconds, start the show...
-    var r          = window.setTimeout( q, DELAY_START );
+    window.setTimeout( q, DELAY_START );
     // initial setup: can't play if running. can't pause as not running yet
 
     $('.carousel .pause').hide();
