@@ -345,7 +345,9 @@ sub check_data {
 ## Check syntax of PDF files
 
   my $params = shift;
-  return 0 if $params->{'filename'} =~ m{/data/}mxs || $params->{'filename'} =~ m{\A[^/]+/htdocs/robots.txt\Z}mxs;
+  return 0 if $params->{'filename'} =~ m{/data/}mxs ||
+              $params->{'filename'} =~ m{\A[^/]+/htdocs/robots.txt\Z}mxs ||
+              $params->{'filename'} =~ m{/00-license(?:-\w+).txt\Z}mxs;
   printf {*STDERR} "Data file '%s' should be in a /data/ directory\n", $params->{'filename'};
   return 1;
 }
