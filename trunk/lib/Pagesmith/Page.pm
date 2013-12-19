@@ -241,8 +241,11 @@ sub merge_cssjs {
       my $fh;
       if ( open $fh, '<', $fn ) {
         my $x = <$fh>;
-        $x =~ s{^\@charset\s+"UTF-8";}{}mxsg; ## Strip off char set headings
         close $fh; ##no critic (CheckedSyscalls CheckedClose)
+        $x =~ s{^\@charset\s+"UTF-8";}{}mxsg;  ## Strip off char set headings
+        ## Remove use stricts - but not those inside functions!
+        ## assume use strict is one of the first things to do!
+        $x =~ s{^\s*'use[ ]strict';\s*\n}{}mxs unless $x =~ m{function.*'use[ ]strict'}mxs;
         ## Add a header in the HTML to be minified and merged!
         ##no critic (ImplicitNewlines)
         push @html, [
