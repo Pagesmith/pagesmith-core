@@ -74,7 +74,6 @@ sub send_response {
   my( $self, $cipher, $method, $details, $m_conf ) = @_;
   $details->{'method'}  = $method;
   $details->{'subtype'} = $m_conf->{'subtype'} if exists $m_conf->{'subtype'};
-  $self->dumper( $m_conf );
   my $response = safe_base64_encode( $cipher->encrypt( $self->json_encode( $details ) ) );
   return $self->text->set_length( length $response )->print( $response )->ok;
 }
