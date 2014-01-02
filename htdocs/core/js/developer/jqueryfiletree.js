@@ -32,6 +32,7 @@
 // is copyright 2008 A Beautiful Site, LLC.
 //
 (function ($) {
+  'use strict';
   $.extend($.fn, {
     fileTree: function (o, h) {
       // Defaults
@@ -60,7 +61,7 @@
 
         function showTree(c, t) {
           $(c).addClass('wait');
-          $(".jqueryFileTree.start").remove();
+          $('.jqueryFileTree.start').remove();
           $.post(o.script, { dir: t }, function (data) {
             $(c).find('.start').html('');
             $(c).removeClass('wait').append(data);
@@ -114,43 +115,42 @@
     }
   });
 
-}(jQuery));
+  $(document).ready(function () {
+    var domain = window.location.protocol + '//' + window.location.hostname + '/';
+    $('#jqfTree').fileTree({multiFolder: true}, function (file) {
+      $('#jqfTop').html('<h4>/' + escape(file) + '</h4>').load('/action/Jft?dir=' + encodeURI(file));
+      /* We need to look at the file-extn here and see what to do
 
-$(document).ready(function () {
-  var domain = window.location.protocol + '//' + window.location.hostname + '/';
-  $('#jqfTree').fileTree({multiFolder: true}, function (file) {
-    $('#jqfTop').html('<h4>/' + escape(file) + '</h4>').load('/action/Jft?dir=' + encodeURI(file));
-    /* We need to look at the file-extn here and see what to do
-
-    $('#jqfTop').html('<h4>/' + escape(file) + '</h4>').load(
-      '/action/Edit_File?dir=' + encodeURI(file),
-      function() {
-        $(window).trigger('resize');
-        if( $('#pg').length ) {
-          document.getElementById('pg').src = domain + file;
-        }
-      } );
-      html files load!
-      img  files load!
-      js/css <- markup
-      txt files load...
-      docs/pdfs <- include a link to download in the header block (don't load into content until requested!)
-      archive files <- include a link in top to download and to list contents.. if list contents -> push these into body....
-    */
-    if( file.match(/[.](html|png|pdf|gif)$/) ) {
-      document.getElementById('pg').src = domain + file;
-    } else {
-      document.getElementById('pg').src = '/core/gfx/blank.gif';
-    }
-    /* Need to add directory code to be able to open a directory and see full listing of contents
-       Option to delete a file using this....!
-       Option to edit a file, stage + publish it
-       Option to upload a file into a directory
-         { assets: doc/docx/pdf/xls/xlsx/ppt/pptx etc, gfx: png/jpg, ... }
-       Option to edit inc files...
-       Option to create a new template page... {feature, ...}
-     */
+      $('#jqfTop').html('<h4>/' + escape(file) + '</h4>').load(
+        '/action/Edit_File?dir=' + encodeURI(file),
+        function() {
+          $(window).trigger('resize');
+          if( $('#pg').length ) {
+            document.getElementById('pg').src = domain + file;
+          }
+        } );
+        html files load!
+        img  files load!
+        js/css <- markup
+        txt files load...
+        docs/pdfs <- include a link to download in the header block (don't load into content until requested!)
+        archive files <- include a link in top to download and to list contents.. if list contents -> push these into body....
+      */
+      if( file.match(/[.](html|png|pdf|gif)$/) ) {
+        document.getElementById('pg').src = domain + file;
+      } else {
+        document.getElementById('pg').src = '/core/gfx/blank.gif';
+      }
+      /* Need to add directory code to be able to open a directory and see full listing of contents
+         Option to delete a file using this....!
+         Option to edit a file, stage + publish it
+         Option to upload a file into a directory
+           { assets: doc/docx/pdf/xls/xlsx/ppt/pptx etc, gfx: png/jpg, ... }
+         Option to edit inc files...
+         Option to create a new template page... {feature, ...}
+       */
+    });
+   // $('#jqfBox').html('<iframe style="width:100%;height:100%" name="pg" id="pg"></iframe>');
   });
- // $('#jqfBox').html('<iframe style="width:100%;height:100%" name="pg" id="pg"></iframe>');
-});
+}(jQuery));
 

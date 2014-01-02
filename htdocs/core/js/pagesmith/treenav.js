@@ -11,4 +11,3 @@
     link_node.parents('.coll').toggleClass('coll');
   });
 }(jQuery));
-

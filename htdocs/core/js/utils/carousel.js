@@ -1,4 +1,3 @@
-'use strict';
 /**
  * Simple image based presentation viewer. Takes a The images in a div,
  * and converts them into a simple carousel - with both mouse and
@@ -14,7 +13,7 @@
  */
 
 (function ($) {
-
+  'use strict';
   var settings = $.metadata && $('.carousel').metadata() ? $('.carousel').metadata() : {};
 
   // Length of time a slide is displayed for:
