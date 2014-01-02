@@ -11,6 +11,7 @@
  */
 
 (function ($) {
+  'use strict';
   $.fn.pres_set_title = function () {
     var n = $(this).children('img:visible').prevAll('img').length + 1, t = 'Slide ' + n, tt = $(this).children('img:visible').first().attr('title');
     if (tt) {
