@@ -1,4 +1,4 @@
-/*jsl:ignoreall*/
+/* jshint ignore:start */
 /*!
  * jQuery Migrate - v1.1.0 - 2013-01-31
  * https://github.com/jquery/jquery-migrate
@@ -495,3 +495,4 @@ jQuery.each( ajaxEvents.split("|"),
 
 
 })( jQuery, window );
+/* jshint ignore:end */

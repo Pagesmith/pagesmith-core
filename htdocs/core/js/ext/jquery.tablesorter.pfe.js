@@ -1,4 +1,5 @@
 (function ($) {
+  'use strict';
   $.extend({
     tablesorterPager: {
       // Include count!
@@ -77,9 +78,9 @@
 
       get_json: function (table, format) {
         var c = table.config, table_data = { head: [],  body: [] }, th = table.tHead, i, row, r, j,cls,k;
-        for (i = table.tHead.rows.length;  i; i) {
+        for (i = th.rows.length;  i; i) {
           i--;
-          row = table.tHead.rows[i].cells;
+          row = th.rows[i].cells;
           r = [];
           for (j = row.length; j; j) {
             j--;
@@ -113,7 +114,7 @@
       ajaxUpdate: function (table) {
         var c = table.config;
         c.ajax_timer = false;
-        c.ajax_obj = $.ajax({type:'GET',url:c.latest_url,data:'',dataType:'text',success:function(dt,st) {
+        c.ajax_obj = $.ajax({type:'GET',url:c.latest_url,data:'',dataType:'text',success:function(dt) {
           var m = dt.match(/^<span.*?>(\d+)<\/span>\s*(.*)$/);
           if( m ) {
             c.ajax_obj = false;
@@ -129,7 +130,7 @@
               $(table).find('thead').last().after( m[2] );
               var tableBody = $(table.tBodies[0]);
               $.tablesorterPager.fixPosition(table, tableBody);
-              $(table).trigger("applyWidgets");
+              $(table).trigger('applyWidgets');
             }
             $.tablesorterPager.updatePageDisplay(c, table);
           }
@@ -144,7 +145,7 @@
             size:        c.size,
             sort_list:   c.sortList,
             col_filters: $.grep($.map(c.col_filters,function(v,i){return [[i,v.val]];}),function(el) { return el[1] !== ''; })
-          }).replace(/\\/g,'\\\\').replace(/'/g,"\\\'").replace(/"/g,'\\"');
+          }).replace(/\\/g,'\\\\').replace(/'/g,'\\\'').replace(/"/g,'\\"');
           var URL = c.refresh_url.match(/[&?]pars=/) ? c.refresh_url+'+'+json_string : ( c.refresh_url+(c.refresh_url.match(/\?/)?'&':'?')+'pars='+encodeURIComponent(json_string));
           if( c.human_inter ) {
             if( URL !== c.latest_url ) {
@@ -186,7 +187,7 @@
           }
         }
         $.tablesorterPager.fixPosition(table, tableBody);
-        $(table).trigger("applyWidgets");
+        $(table).trigger('applyWidgets');
         $.tablesorterPager.updatePageDisplay(c, table);
       },
 
@@ -245,6 +246,7 @@
                 }
               }
             }
+            /* jshint -W073 */
             if (col_filtering) { // We need any column with a filter value to match
               for (j = row.length; j; j) {
                 j--;
@@ -278,6 +280,7 @@
                 }
               }
             }
+            /* jshint +W073 */
             if (flag) {
               c.rowsCopy.unshift(x);
             }
@@ -328,9 +331,9 @@
         cssDump: '.jsondump',
         cssPageDisplay: '.pagedisplay',
         cssPageSize: '.pagesize',
-        seperator: "/",
+        seperator: '/',
         positionFixed: false,
-        appender: this.appender,
+        //appender: this.appender,
         ajax_key_delay: 200,
         ajax_timer: false,
         ajax_obj: false,
@@ -342,8 +345,8 @@
         return this.each(function () {
           $.tablesorterPager.defaults.appender = $.tablesorterPager.appender;
           var config = $.extend(this.config, $.tablesorterPager.defaults, settings), table = this, pager = config.container, new_size;
-          $(this).trigger("appendCache");
-          new_size = $(".pagesize", pager).length ? parseInt($(".pagesize", pager).val(), 10) : 0;
+          $(this).trigger('appendCache');
+          new_size = $('.pagesize', pager).length ? parseInt($('.pagesize', pager).val(), 10) : 0;
           if (new_size !== config.size && new_size !== 0) {
             $.tablesorterPager.setPageSize(table,  new_size);
           }
@@ -358,7 +361,7 @@
                 sort_list:   config.sortList,
                 col_filters: $.grep($.map(config.col_filters,function(v,i){return [[i,v.val]];}),function(el) { return el[1] !== ''; })
               });
-              var URL = config.export_url+(config.export_url.match(/\?/)?'&':'?')+'config='+escape(json_string);
+              var URL = config.export_url+(config.export_url.match(/\?/)?'&':'?')+'config='+encodeURIComponent(json_string);
               document.location.href = URL;
               return false;
             } else {
