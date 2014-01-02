@@ -12,8 +12,8 @@
     }
     // De-activate all other tabs.. and hide their associated content.
     $(ths).closest('li').addClass('active').siblings('li').each(function () {
-      $(ths).removeClass('active');
-      $($(ths).children('a').prop('hash')).addClass('tabc_hid');
+      $(this).removeClass('active');
+      $($(this).children('a').prop('hash')).addClass('tabc_hid');
     });
     if ($(ths).closest('li').hasClass('action')) {
       $(ths).closest('li').removeClass('active');
