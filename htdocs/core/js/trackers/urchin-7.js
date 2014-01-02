@@ -1,4 +1,4 @@
-/*jsl:ignoreall*/
+/* jshint ignore:start */
 //-- Google Analytics Urchin Module
 //-- Copyright 2007 Google, All Rights Reserved.
 
@@ -393,8 +393,8 @@ function __utmLinker(l,h) {
  var p,k,a="-",b="-",c="-",x="-",z="-",v="-";
  var dc=_ubd.cookie;
  if (!l || l=="") return;
- var iq = l.indexOf("?"); 
- var ih = l.indexOf("#"); 
+ var iq = l.indexOf("?");
+ var ih = l.indexOf("#");
  if (dc) {
   a=_uES(_uGC(dc,"__utma="+_udh,";"));
   b=_uES(_uGC(dc,"__utmb="+_udh,";"));
@@ -421,8 +421,8 @@ function __utmLinkPost(f,h) {
  var p,k,a="-",b="-",c="-",x="-",z="-",v="-";
  var dc=_ubd.cookie;
  if (!f || !f.action) return;
- var iq = f.action.indexOf("?"); 
- var ih = f.action.indexOf("#"); 
+ var iq = f.action.indexOf("?");
+ var ih = f.action.indexOf("#");
  if (dc) {
   a=_uES(_uGC(dc,"__utma="+_udh,";"));
   b=_uES(_uGC(dc,"__utmb="+_udh,";"));
@@ -506,7 +506,7 @@ function _uDomain() {
   }
   _udn=d;
  }
- _udn = _udn.toLowerCase(); 
+ _udn = _udn.toLowerCase();
  if (_uhash=="off") return 1;
  return _uHash(_udn);
 }
@@ -555,8 +555,8 @@ function __utmVisitorCode(f) {
  var r=0,t=0,i=0,i2=0,m=31;
  var a=_uGC(_ubd.cookie,"__utma="+_udh,";");
  if ((i=a.indexOf(".",0))<0) return;
- if ((i2=a.indexOf(".",i+1))>0) r=a.substring(i+1,i2); else return "";  
- if ((i=a.indexOf(".",i2+1))>0) t=a.substring(i2+1,i); else return "";  
+ if ((i2=a.indexOf(".",i+1))>0) r=a.substring(i+1,i2); else return "";
+ if ((i=a.indexOf(".",i2+1))>0) t=a.substring(i2+1,i); else return "";
  if (f) {
   return r;
  } else {
@@ -634,7 +634,7 @@ function _uCO() {
  sc.type='text/javascript';
  sc.id="_gasojs";
  sc.src='https://'+d+'/analytics/reporting/overlay_js?gaso='+_utk+'&'+Math.random();
- document.getElementsByTagName('head')[0].appendChild(sc);  
+ document.getElementsByTagName('head')[0].appendChild(sc);
 }
 function _uGT() {
  var h=location.hash, a;
@@ -648,8 +648,8 @@ function _uGT() {
 var _utk=_uGT();
 if (_utk && _utk!="" && _utk.length>10) {
  if (window.addEventListener) {
-  window.addEventListener('load', _uCO, false); 
- } else if (window.attachEvent) { 
+  window.addEventListener('load', _uCO, false);
+ } else if (window.attachEvent) {
   window.attachEvent('onload', _uCO);
  }
 }
@@ -657,3 +657,4 @@ if (_utk && _utk!="" && _utk.length>10) {
 function _uNx() {
   return (new Date((new Date()).getTime()+63072000000)).toGMTString();
 }
+/* jshint ignore:end */
