@@ -1,4 +1,4 @@
-/*jsl:ignoreall*/
+/* jshint ignore:start */
 /*!
  * jQuery JavaScript Library v1.10.1
  * http://jquery.com/
@@ -9080,7 +9080,7 @@ jQuery.Animation = jQuery.extend( Animation, {
 });
 
 function defaultPrefilter( elem, props, opts ) {
-	/* jshint validthis: true */
+	/* xjshint validthis: true */
 	var prop, value, toggle, tween, hooks, oldfire,
 		anim = this,
 		orig = {},
@@ -9806,3 +9806,4 @@ if ( typeof module === "object" && module && typeof module.exports === "object" 
 }
 
 })( window );
+/* jshint ignore:end */
