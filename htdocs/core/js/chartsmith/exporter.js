@@ -1,5 +1,5 @@
 /*globals Raphael: true */
-$(function() {
+$(function($) {
 /* Image exporter code */
   'use strict';
   if (Raphael.svg) {
@@ -14,4 +14,4 @@ $(function() {
       $('#svgform').attr({target: '_blank', action: '/action/Svg/' + format + '/' + i}).submit();
     });
   }
-});
+}(jQuery));
