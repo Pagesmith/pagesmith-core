@@ -1,5 +1,3 @@
-'use strict';
-/* jsxhint ignore:start */
-/*jsl:ignoreall*/
-$(function(){if(Raphael.svg){$("body").first().append('<form action="/action/Svg" method="post" id="svgform"><input type="hidden" value="" name="svg" id="svgvalue"/></form>');$(".raphael-export svg").livequery(function(){var b=$(this).parent(),a=b.attr("id");b.after('<div class="raphael-buttons"><a class="export-image svg" title="'+a+'">Download SVG</a> <a title="'+a+'" class="export-image png">Download PNG</a></div>')});$("body").on("click",".export-image",function(){var a=$(this).attr("title"),b=$(this).hasClass("png")?"png":"svg";$("#svgvalue").val($("#"+a).html());$("#svgform").attr({target:"_blank",action:"/action/Svg/"+b+"/"+a}).submit()})}});
-/* jsxhint ignore:end */
+/* jshint ignore:start */
+(function(a){if(Raphael.svg){a("body").first().append('<form action="/action/Svg" method="post" id="svgform"><input type="hidden" value="" name="svg" id="svgvalue"/></form>');a(".raphael-export svg").livequery(function(){var c=a(this).parent(),b=c.attr("id");c.after('<div class="raphael-buttons"><a class="export-image svg" title="'+b+'">Download SVG</a> <a title="'+b+'" class="export-image png">Download PNG</a></div>')});a("body").on("click",".export-image",function(){var b=a(this).attr("title"),c=a(this).hasClass("png")?"png":"svg";a("#svgvalue").val(a("#"+b).html());a("#svgform").attr({target:"_blank",action:"/action/Svg/"+c+"/"+b}).submit()})}}(jQuery));
+/* jshint ignore:end */
