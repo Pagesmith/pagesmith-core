@@ -354,7 +354,7 @@ function tb_showIframe(){
 
 (function($){
   'use strict';
-  $('a.thickbox, area.thickbox, input.thickbox').livequery('click',function(){
+  $('body').on('click','a.thickbox, area.thickbox, input.thickbox',function(){
     var t = this.title || this.name || null;
     var a = this.href  || this.alt;
     var g = this.rel   || false;
@@ -362,7 +362,7 @@ function tb_showIframe(){
     this.blur();
     return false;
   });
-}());
+}(jQuery));
 
 function wrapped_tb_show(caption,url,params) {
   'use strict';
