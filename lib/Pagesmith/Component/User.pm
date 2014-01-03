@@ -73,7 +73,7 @@ sub execute {
   ## Initialise User session object!
   my $user_session = $self->page->user;
   return $login_realm ? $template_sets->{$template}[1] : q()
-    unless $user_session && $user_session->fetch;
+    unless $user_session && $user_session->fetch && $user_session->name;
 
   return sprintf $template_sets->{$template}[0], encode_entities( $user_session->name );
 }
