@@ -6,9 +6,10 @@
     Prototype extension to generate repeated strings!
   */
 
-  Chartsmith.Genbank = function (dom_node, raw_json, dom_node_width ) {
+  Chartsmith.Genbank = function (dom_node, raw_json, dom_node_width, dom_node_height ) {
     var j, type, f;
-    this.dom_node_width = dom_node_width || dom_node.width;
+    this.dom_node_width = dom_node_width  || dom_node.width;
+    this.dom_node_width = dom_node_height || dom_node.height;
     this.dom_node       = dom_node;
     this.dom_id         = dom_node.attr('id');
     this.width          = this.dom_node_width - 10;
@@ -158,7 +159,7 @@
     resize_image: function () {
       // Now resize the image!
       this.dom_node.css({height: 50 + this.tracks.length * 20 });
-      this.gbimg = new Raphael(this.dom_id, this.dom_node_width );
+      this.gbimg = new Raphael(this.dom_id, this.dom_node_width, 50 + this.tracks.length * 20 );
       this.gbimg.cs_init({
         object: this.dom_id,
         margins: { top: 5, right: 5, left: 5, bottom: 5 },
@@ -285,6 +286,12 @@
           stroke: 'black'
         });
       }
+      return this;
+    },
+    // This is a generic render function!
+    // Which runs over all the filter/process/place/resize etc fns...
+    render: function() {
+      this.filter_features().process_features().place_features().resize_image().render_features();
       return this;
     }
   };
