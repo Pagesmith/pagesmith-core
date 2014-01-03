@@ -1007,32 +1007,28 @@ sub generate_css_file {
 ## no critic (InterpolationOfMetachars)
 sub generate_js_file {
   return q(
-$('#wrap').on('click','a[href^="#line_"]',function() {
-  $('a[href="#source"]').click();
-  return 1;
-});
+(function($){
+  'use strict';
+  $('#wrap').on('click','a[href^="#line_"]',function() {
+    $('a[href="#source"]').click();
+    return 1;
+  });
 
-$('body')
-  .on('click','#main  .toggle-width',function() { $('#main').attr('id','mainx'); $('#rhs').attr('id','rhsx'); $(this).html('&gt;=&lt;');} )
-  .on('click','#mainx .toggle-width',function() { $('#mainx').attr('id','main'); $('#rhsx').attr('id','rhs'); $(this).html('&lt;=&gt;');} );
-
-var id_str = window.location.hash;
-if (id_str && id_str.match(/^#line_(\d+)$/)) {
-  $('a[href="#source"]').click();
-  window.location.hash = id_str;
-  if( $(id_str).get(0).scrollIntoView ) {
-    $(id_str).get(0).scrollIntoView();
+  var id_str = window.location.hash;
+  if (id_str && id_str.match(/^#line_(\d+)$/)) {
+    $('a[href="#source"]').click();
+    window.location.hash = id_str;
+    if( $(id_str).get(0).scrollIntoView ) {
+      $(id_str).get(0).scrollIntoView();
+    }
+    // Now we have to achieve a scroll to!
   }
-  // Now we have to achieve a scroll to!
-}
 
-$('#wrap').on('click','.method_list',function() {
-  console.log( "METHOD" );
-console.log( $(this) );
-  var name = $(this).prop('hash').substr(1);
-  console.log( name );
-  $('#method_links').html('<div class="ajax" title="/component/File?pars=-ajax%20%2Fdocs%2Fperl%2Finc%2Fmethod_links%2F'+name+'.inc"><p>Fetching lists</p></div>');
-});
+  $('#wrap').on('click','.method_list',function() {
+    var name = $(this).prop('hash').substr(1);
+    $('#method_links').html('<div class="ajax" title="/component/File?pars=-ajax%20%2Fdocs%2Fperl%2Finc%2Fmethod_links%2F'+name+'.inc"><p>Fetching lists</p></div>');
+  });
+}(jQuery));
 );
 }
 ## use critic
