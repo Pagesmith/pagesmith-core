@@ -20,16 +20,12 @@ var Chartsmith;
     }
     y = '';
     while (n) {
-      /*jslint bitwise: true */
-      if (n & 1) {
+      if (n % 1) {
         y += x;
         n--;
       }
-      /*jslint bitwise: false */
       n /= 2;
-      /*jsl:ignore*/
       x += x;
-      /*jsl:end*/
     }
     return y;
   };
@@ -967,4 +963,19 @@ var Chartsmith;
     this.cs.popup_box = this.path(str).attr({ stroke: '#000', fill: '#fff'});
     this.cs.popup_box.insertBefore(this.cs.popup_text);
   };
+
+  if($.metadata){
+    $('.cs_autoload:visible').livequery(function () {
+      var n   = $(this),
+          w   = n.width(),
+          h   = n.height(),
+          md  = n.metadata(),
+          url = md.data_url,
+          ot  = md.type;
+      n.removeClass('cs_autoload');
+      $.getJSON(url, {}, function (resp) {
+        (new Chartsmith[ot](n, resp, w, h)).render();
+      });
+    });
+  }
 }(jQuery));
