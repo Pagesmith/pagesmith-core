@@ -26,3 +26,6 @@ p.more img { vertical-align: top; height: 18px; width:67px; background: url(/cor
   .pdf, .external { padding-right: 0; background: none; }
 }
 
+.btt { font-size: 10px; border-radius: 8px; letter-spacing: 0.5px; background: linear-gradient(to right, #ddd,#eee,#fff,#fff); border: 1px solid #ddd; padding: 1px 1em; box-shadow: 2px 2px 1px 0 #999;  font-weight: bold }
+a.btt { color: black; text-decoration: none }
+
