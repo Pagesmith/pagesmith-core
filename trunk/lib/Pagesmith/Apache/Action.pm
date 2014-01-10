@@ -30,7 +30,7 @@ use Pagesmith::Action;
 use Pagesmith::Cache;
 use Pagesmith::Support;
 
-our @EXPORT_OK = qw(my_handler);
+our @EXPORT_OK = qw(my_handler simple_handler);
 our %EXPORT_TAGS = ('ALL' => \@EXPORT_OK);
 
 sub munge_path {
@@ -56,9 +56,32 @@ sub handler {
 ## no critic (ExcessComplexity)
 sub my_handler {
   my( $path_munger, $r ) = @_;
-  my $t = Pagesmith::Support->new()->set_r( $r );
 
-  my @t         = split m{(/)}mxs, $r->uri;
+  my @path_info = get_path_info( $r->uri );
+  ## $extra - contains a data structure returned by the path_munger
+  ## which is stored so that it can be retrieved by the action
+  ## component later
+  my $extra = &{$path_munger}( $r, \@path_info );
+  return real_handler( $r, $extra, @path_info );
+}
+
+sub simple_handler {
+  my( $url_prefix, $module_prefix, $r ) = @_;
+  my @path_info = get_path_info( $r->uri );
+  if( $path_info[0] eq $url_prefix ) {
+    shift @path_info;
+    if( @path_info ) {
+      $path_info[0] = $module_prefix.q(_).$path_info[0];
+    } else {
+      unshift @path_info, $module_prefix;
+    }
+  }
+  return real_handler( $r, undef, @path_info );
+}
+
+sub get_path_info {
+  my $uri = shift;
+  my @t         = split m{(/)}mxs, $uri;
   my @path_info;
   my $y;
   while (@t) {
@@ -66,18 +89,15 @@ sub my_handler {
     push @path_info, $x;
     $y = shift @t;
   }
-
   push @path_info, q() if defined $y;
   shift @path_info;
+  return @path_info;
+}
 
+sub real_handler {
+  my ($r, $extra, @path_info ) = @_;
   my $parsed = APR::URI->parse($r->pool, $r->uri);
-
-  ## $extra - contains a data structure returned by the path_munger
-  ## which is stored so that it can be retrieved by the action
-  ## component later
-
-  my $extra = &{$path_munger}( $r, \@path_info );
-
+  my $t = Pagesmith::Support->new()->set_r( $r );
   my $module_name = $t->safe_module_name( shift @path_info );
   ## Check namespace ...
   if( $module_name =~ m{\A([[:alpha:]]+)::}mxs && ! can_name_space( $1 ) ) {
