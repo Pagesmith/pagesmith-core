@@ -6,6 +6,7 @@
 
   Note we don't hide the display on the print version of the page!
 ----------------------------------------------------------------------*/
+.collapsed .tabc { border-top: 0 }
 .tabc { border-top: 1px solid #14559f; clear: both; }
 
 .tabc_hid { display: none; }
