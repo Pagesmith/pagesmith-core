@@ -335,6 +335,12 @@ sub new {
   return $self;
 }
 
+sub dump_params {
+  my $self = shift;
+  my %par_hash = map { ($_ => $self->param($_) ) } $self->param;
+  return $self->dumper(\%par_hash);
+}
+
 sub param {
   my ( $self, @param ) = @_;
   return $self->apr->param(@param);
