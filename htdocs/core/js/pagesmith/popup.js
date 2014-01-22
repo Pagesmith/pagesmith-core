@@ -68,4 +68,4 @@
       $('body').children().first().before(arrow);
     }
   };
-}());
+}(jQuery));
