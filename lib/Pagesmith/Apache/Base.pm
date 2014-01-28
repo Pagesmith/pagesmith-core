@@ -90,7 +90,7 @@ sub my_handler {
     my $ch = Pagesmith::Cache->new( 'page', $cache_key );
     if( $flush_cache ) {
       $r->headers_out->set( 'X-Pagesmith-CacheFlag', 'flush' );
-      my $other_cache = (('d' eq substr $cachekey, 0, 1)?'e':'d').substr $cachekey,1;
+      my $other_cache = (('d' eq substr $cache_key, 0, 1)?'e':'d').substr $cache_key,1;
       $other_cache = Pagesmith::Cache->new( 'page', $cache_key );
       $other_cache->unset;
     } else {
