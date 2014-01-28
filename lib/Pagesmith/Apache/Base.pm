@@ -90,8 +90,11 @@ sub my_handler {
     my $ch = Pagesmith::Cache->new( 'page', $cache_key );
     if( $flush_cache ) {
       $r->headers_out->set( 'X-Pagesmith-CacheFlag', 'flush' );
+      my $other_cache = (('d' eq substr $cachekey, 0, 1)?'e':'d').substr $cachekey,1;
+      $other_cache = Pagesmith::Cache->new( 'page', $cache_key );
+      $other_cache->unset;
     } else {
-      $l_html = $ch->get() unless $flush_cache;
+      $l_html = $ch->get();
       if ( defined $l_html ) {
         ## We have retrieved the HTML from the cache - so we need to
         ## set the headers so that we re-parse the file at runtime!
