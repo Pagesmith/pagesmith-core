@@ -47,6 +47,7 @@ sub expand_content {
   return \$t;
 }
 
+## no critic (ExcessComplexity)
 sub my_handler {
 
 ## Base handler ... called by handler functions in derived classes, takes
@@ -61,9 +62,9 @@ sub my_handler {
 #  warn "$$ HTML handler - time taken $t\n";
 #  return $ret;
 #}
-##use critic (CommentedOutCode)
+##use critic
 #
-#sub __handler {
+#sub my_handler {
   my ( $callback, $r ) = @_;
 
   ## Look for things we don't do!
@@ -90,9 +91,12 @@ sub my_handler {
     my $ch = Pagesmith::Cache->new( 'page', $cache_key );
     if( $flush_cache ) {
       $r->headers_out->set( 'X-Pagesmith-CacheFlag', 'flush' );
-      my $other_cache = (('d' eq substr $cache_key, 0, 1)?'e':'d').substr $cache_key,1;
-      $other_cache = Pagesmith::Cache->new( 'page', $cache_key );
-      $other_cache->unset;
+ ## Flush the non-ajax/ajax page - we may need to look for appropriate header to not do this...!
+      if(1) {
+        my $other_cache = (('d' eq substr $cache_key, 0, 1)?'e':'d').substr $cache_key,1;
+        my $other_obj = Pagesmith::Cache->new( 'page', $other_cache );
+        $other_obj->unset;
+      }
     } else {
       $l_html = $ch->get();
       if ( defined $l_html ) {
@@ -137,5 +141,5 @@ sub my_handler {
   $r->print(${$html});
   return OK;
 }
-
+## use critic
 1;
