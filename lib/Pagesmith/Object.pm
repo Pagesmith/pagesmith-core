@@ -116,9 +116,20 @@ sub created_by {
   return $self->{'created_by'}||q(--);
 }
 
+sub created_by_id {
+  my $self = shift;
+  return $self->{'created_by_id'};
+}
+
 sub set_created_by {
   my( $self, $value ) = @_;
   $self->{'created_by'} = $value;
+  return $self;
+}
+
+sub set_created_by_id {
+  my( $self, $value ) = @_;
+  $self->{'created_by_id'} = $value;
   return $self;
 }
 
@@ -132,6 +143,11 @@ sub updated_by {
   return $self->{'updated_by'}||q(--);
 }
 
+sub updated_by_id {
+  my $self = shift;
+  return $self->{'updated_by_id'};
+}
+
 sub set_updated_at {
   my( $self, $value ) = @_;
   $self->{'updated_at'} = $value;
@@ -141,6 +157,12 @@ sub set_updated_at {
 sub set_updated_by {
   my( $self, $value ) = @_;
   $self->{'updated_by'} = $value;
+  return $self;
+}
+
+sub set_updated_by_id {
+  my( $self, $value ) = @_;
+  $self->{'updated_by_id'} = $value;
   return $self;
 }
 
