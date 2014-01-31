@@ -27,7 +27,7 @@ our @EXPORT_OK = qw(
   set_proxy_url set_proxy_noproxy devel_realm is_developer  data  get_config set_config
   server_root   init_data         can_cache   docroot       port  server
   template_name template_dir      proxy_url   proxy_noproxy hash  set_key_root
-  site_root     can_name_space
+  site_root     can_name_space    set_default
 );
 
 our %EXPORT_TAGS = ( 'ALL' => \@EXPORT_OK );
@@ -37,7 +37,8 @@ my $site_key = q(-);
 my $r;
 my $key_root;
 
-my $defaults = { qw(
+my $defaults = {
+  qw(
     RealTmp         /tmp/
     JsFlag          none
     CssFlag         none
@@ -60,12 +61,18 @@ my $defaults = { qw(
     QrURL           /qr/
     QrEnabled       0
     Editable        none
+    EditAuth        local_ldap
     Staging         false
     CachePageParams false
   ),
   map { ($_,undef) } qw( Domain RequiredDiv AltCacheSite ),
 };
 
+sub set_default {
+  my ( $k, $v ) = @_;
+  $defaults->{$k} = $v unless exists $defaults->{$k};
+  return;
+}
 sub init_data {
   $config_data = {};
   return;
