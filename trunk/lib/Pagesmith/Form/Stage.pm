@@ -248,8 +248,30 @@ sub add_readonly_section {
   return $self->current_section;
 }
 
-sub add_section {
+sub unshift_section {
+#@param (self)
+#@param (hashref) $page_data Configuration of the new section
+#@return (Pagesmith::Form::Section) Form page added (or if already exists existing page)
+## Add a new form section (or return a previous defined one)
 
+  my ( $self, $section_data, $caption ) = @_;
+  unless( ref $section_data ) {
+    ( $caption = $section_data ) =~ tr{_}{ } unless defined $caption;
+    $section_data = { 'id' => $section_data, 'caption' => ucfirst $caption };
+  }
+  $section_data->{'id'} ||= $self->config->next_id;
+  my $key = $section_data->{'id'};
+
+  unless ( exists $self->{'sections'}{$key} ) {
+    $self->{'sections'}{$key} = Pagesmith::Form::Section->new( $self, $section_data );
+    $self->{'sections'}{$key}->set_object( $self->object );
+    unshift @{ $self->{'section_order'} }, $key;
+  }
+  $self->{'current_section'} = $key;
+  return $self->current_section;
+}
+
+sub add_section {
 #@param (self)
 #@param (hashref) $page_data Configuration of the new section
 #@return (Pagesmith::Form::Section) Form page added (or if already exists existing page)
