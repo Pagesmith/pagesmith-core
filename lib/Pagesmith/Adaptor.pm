@@ -329,6 +329,16 @@ sub now {
   return $self->sv( 'select now()' );
 }
 
+sub offset {
+#@param (self);
+#@return (string) current mysql time stamp;
+  my ( $self, $size, $unit ) = @_;
+  $size ||= 1;
+  $unit ||= 'hour';
+  $unit =~ s{\W}{}gmxs;
+  return @{$self->row( sprintf 'select adddate( now(), interval %f %s), unix_timestamp( adddate( now(), interval %f %s) )', $size, $unit, $size, $unit )};
+}
+
 sub quote {
   my( $self, $str ) = @_;
   return $self->dbh->quote( $str );
