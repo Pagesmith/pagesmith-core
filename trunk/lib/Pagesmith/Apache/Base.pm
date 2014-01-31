@@ -92,7 +92,7 @@ sub my_handler {
     if( $flush_cache ) {
       $r->headers_out->set( 'X-Pagesmith-CacheFlag', 'flush' );
  ## Flush the non-ajax/ajax page - we may need to look for appropriate header to not do this...!
-      if(1) {
+      unless( ($r->headers_in->{'X-Pagesmith-Alt-Page-Flush'}||q()) =~ m{no}mxsi ) {
         my $other_cache = (('d' eq substr $cache_key, 0, 1)?'e':'d').substr $cache_key,1;
         my $other_obj = Pagesmith::Cache->new( 'page', $other_cache );
         $other_obj->unset;
