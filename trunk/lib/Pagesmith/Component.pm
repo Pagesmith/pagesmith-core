@@ -490,11 +490,6 @@ sub get_output {
   return join q(), @{$self->{'_output'}};
 }
 
-sub table {
-  my( $self, @pars ) = @_;
-  return Pagesmith::HTML::Table->new( $self->r, @pars );
-}
-
 sub stub_form {
   my( $self, $pars ) = @_;
   return Pagesmith::Form::Stub->new( {( %{$pars||{}}, 'r' => $self->r, 'apr' => $self->apr )} );
@@ -513,31 +508,6 @@ sub form_by_code {
 sub generic_form {
   my( $self, @type_and_key ) = @_;
   return Pagesmith::Utils::FormObjectCreator->new( $self->r, $self->apr )->generic_form( @type_and_key );
-}
-
-sub twocol {
-  my( $self, @pars ) = @_;
-  return Pagesmith::HTML::TwoCol->new( @pars );
-}
-
-sub tabs {
-  my( $self, @pars ) = @_;
-  return Pagesmith::HTML::Tabs->new( @pars );
-}
-
-sub fake_tabs {
-  my( $self, @pars ) = @_;
-  return $self->tabs( @pars )->set_option( 'fake', 1 );
-}
-
-sub hidden_tabs {
-  my( $self, @pars ) = @_;
-  return $self->fake_tabs->add_classes('hidden');
-}
-
-sub second_tabs {
-  my( $self, @pars ) = @_;
-  return $self->fake_tabs->add_classes('second-tabs')->set_option( 'no_heading', 1 );
 }
 
 sub is_xhr {
