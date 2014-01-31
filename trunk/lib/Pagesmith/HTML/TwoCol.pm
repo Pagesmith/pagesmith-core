@@ -17,7 +17,6 @@ use version qw(qv); our $VERSION = qv('0.1.0');
 
 use base qw(Pagesmith::Support);
 
-use HTML::Entities qw(encode_entities);
 use Date::Format qw(time2str);
 use Const::Fast qw(const);
 use POSIX qw(mktime);
@@ -76,6 +75,11 @@ sub add_entry {
   }
   push @{$self->{'entries'}}, { 'caption' => $caption, 'values' => \@entries, 'options' => $options };
   return $self;
+}
+
+sub entries {
+  my $self = shift;
+  return @{$self->{'entries'}||[]};
 }
 
 sub render {

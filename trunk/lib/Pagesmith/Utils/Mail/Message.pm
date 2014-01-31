@@ -27,9 +27,11 @@ const my %PRIORITY_MAP    => map { uc $_ } reverse %PRIORITIES;
 const my $NORMAL_PRIORITY => $PRIORITY_MAP{ 'NORMAL' };
 const my $BOUNDARY_LENGTH => 12;
 const my $LINE            => q(-) x $COLUMNS;
+const my $CAPTION_WIDTH   => 20;
+const my $BODY_WIDTH      => 50;
 
 use Text::MultiMarkdown;
-use List::MoreUtils qw(any);
+use List::MoreUtils qw(any pairwise);
 use Pagesmith::Core qw(safe_md5);
 use Pagesmith::ConfigHash qw(template_dir);
 use Pagesmith::Utils::Curl::Fetcher;
@@ -54,6 +56,7 @@ sub new {
     'body_text'       => [],
     'body_html'       => [],
     'wrapper'         => undef,
+    'wrappers'        => {},
   };
   bless $self, $class;
   return $self;
@@ -63,6 +66,12 @@ sub wrapper {
   my $self = shift;
   return $self->{'wrapper'} ||= Pagesmith::Utils::Wrap->new;
 }
+
+sub wrapper_n {
+  my ( $self, $n ) = @_;
+  return $self->{'wrappers'}{$n} ||= Pagesmith::Utils::Wrap->new->set_columns($n);
+}
+
 sub images {
   my $self = shift;
   return values %{$self->{'images'}||{}};
@@ -132,7 +141,7 @@ sub format_plain {
 sub format_mime {
   my $self = shift;
   $self->{'mime'}       = 1;
-  $self->{'boundary'} ||= '==Multipart_Boundary_'.$self->safe_uuid;
+  $self->{'boundary'} ||= '==MB_'.$self->safe_uuid;
   return $self;
 }
 
@@ -228,13 +237,13 @@ sub style_attr {
                   sort { $a->[1] <=> $b->[1] }
                   @{$self->{'styles'}{$tag}||[]};
   }
-  return unless @styles;
+  return q() unless @styles;
   return sprintf ' style="%s"', join q(; ), @styles;
 }
 
 sub add_heading {
   my( $self, $text, $options ) = @_;
-  $self->add_text($LINE,"\n",$text,"\n",$LINE,"\n\n");
+  $self->add_text("\n\n",$LINE,"\n",$text,"\n",$LINE,"\n\n");
   my $level = exists $options->{'main'} ? 'h2' : 'h3';
   $self->add_html( sprintf "<$level%s>\n%s\n</$level>",
     $self->style_attr( $level ), $self->encode( $text ),
@@ -290,6 +299,26 @@ sub add_list {
   return $self;
 }
 
+sub add_twocol {
+  my( $self, $twocol_obj ) = @_;
+  $self->add_html( "<dl>\r\n" );
+  $self->get_style_groups;
+  my $wrapper_caption = $self->wrapper_n( $CAPTION_WIDTH );
+  my $wrapper_body    = $self->wrapper_n( $BODY_WIDTH    );
+  my $dt_type = $self->style_attr( '.twocol dt');
+  my $dd_type = $self->style_attr( '.twocol dd');
+  foreach my $entry ( $twocol_obj->entries ) {
+    $self->add_html( sprintf '<dt%s>%s</dt>', $dt_type, $entry->{'caption'} );
+    $self->add_html( sprintf '<dd%s>%s</dd>', $dd_type, $_ ) foreach @{$entry->{'values'}};
+
+    my @caption_rows = split m{\r?\n}mxs, $wrapper_caption->wrap( $entry->{'caption'}   );
+    my @body_rows    = split m{\r?\n}mxs, $wrapper_body->wrap(    @{$entry->{'values'}} );
+    $self->add_text( join q(), pairwise { sprintf "%-20s: %s\r\n", $a||q(), $b||q() } @caption_rows, @body_rows );
+  }
+  $self->add_html( qq(</dl>\r\n<div style="clear:both; height: 1px">&nbsp;</div>\r\n) );
+  return $self;
+}
+
 sub add_markdown {
   my( $self, $text ) = @_;
   my $m    = Text::MultiMarkdown->new( 'heading_ids' => 0, 'img_ids' => 0 );
@@ -310,10 +339,10 @@ sub add_block {
   $self->add_html( sprintf '<%1$s%3$s>%2$s</%1$s>',
     $block_type,
     $self->format_html( $text ),
-    $self->style_attr( $block_type, map { ".$_" } split m{\s+}mxs, $options->{'class'} ),
+    $self->style_attr( $block_type, map { ".$_" } split m{\s+}mxs, $options->{'class'}||q() ),
   );
   ## use critic
-  return;
+  return $self;
 }
 
 sub format_html {
@@ -678,6 +707,7 @@ sub content_html {
 sub content_plain {
   my $self = shift;
   my $body = $self->substitute( $self->body_text );
+  $body =~ s{\n[\r\n]*\n}{\n}mxsg;
   ( my $text = $self->template_text ) =~ s{\[\[content\]\]}{$body}mxs;
   $text =~ s{(?<!\r)\n}{\r\n}msxg;
   return $text;
