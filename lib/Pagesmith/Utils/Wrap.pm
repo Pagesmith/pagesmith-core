@@ -72,6 +72,7 @@ sub set_next_header {
 
 sub set_headers {
   my ( $self, $first, $next ) = @_;
+  $next = $first unless defined $next;
   return $self->set_first_header( $first )->set_next_header( $next );
 }
 
