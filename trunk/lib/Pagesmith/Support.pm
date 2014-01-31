@@ -26,6 +26,9 @@ use Pagesmith::Adaptor;
 use Pagesmith::Cache;
 use Pagesmith::ConfigHash qw(get_config);
 use Pagesmith::Session::User;
+use Pagesmith::HTML::Table;
+use Pagesmith::HTML::Tabs;
+use Pagesmith::HTML::TwoCol;
 
 ## empty constructor!
 
@@ -239,5 +242,42 @@ sub base_table_from_query {
 sub cache {
   my( $self, @params ) = @_;
   return Pagesmith::Cache->new( @params );
+}
+
+sub table {
+  my( $self, @pars ) = @_;
+  return Pagesmith::HTML::Table->new( $self->r, @pars );
+}
+
+sub twocol {
+  my( $self, @pars ) = @_;
+  return Pagesmith::HTML::TwoCol->new( @pars );
+}
+
+sub tabs {
+  my( $self, @pars ) = @_;
+  return Pagesmith::HTML::Tabs->new( @pars );
+}
+
+sub fake_tabs {
+  my( $self, @pars ) = @_;
+  return $self->tabs( @pars )->set_option( 'fake', 1 );
+}
+
+sub hidden_tabs {
+  my( $self, @pars ) = @_;
+  return $self->fake_tabs->add_classes('hidden');
+}
+
+sub second_tabs {
+  my( $self, @pars ) = @_;
+  return $self->fake_tabs->add_classes('second-tabs')->set_option( 'no_heading', 1 );
+}
+
+sub panel {
+  my( $self, @html ) = @_;
+  my @class = q(panel);
+  push @class, @{shift @html}  if ref $html[0];
+  return sprintf '<div class="%s">%s</div>', "@class", join q(), @html;
 }
 1;
