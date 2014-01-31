@@ -41,9 +41,6 @@ use Pagesmith::ConfigHash qw(can_cache get_config);
 use Pagesmith::Core qw(parse_cookie);
 
 use Pagesmith::Apache::Decorate;
-use Pagesmith::HTML::Table;
-use Pagesmith::HTML::Tabs;
-use Pagesmith::HTML::TwoCol;
 use Pagesmith::Form::Stub;
 use Pagesmith::Utils::FormObjectCreator;
 
@@ -107,41 +104,6 @@ sub form_by_code {
 sub generic_form {
   my( $self, @type_and_key ) = @_;
   return Pagesmith::Utils::FormObjectCreator->new( $self->r, $self->apr )->generic_form( @type_and_key );
-}
-
-sub table {
-  my( $self, @pars ) = @_;
-  return Pagesmith::HTML::Table->new( $self->r, @pars );
-}
-
-sub twocol {
-  my( $self, @pars ) = @_;
-  return Pagesmith::HTML::TwoCol->new( @pars );
-}
-
-sub tabs {
-  my( $self, @pars ) = @_;
-  return Pagesmith::HTML::Tabs->new( @pars );
-}
-
-sub fake_tabs {
-  my( $self, @pars ) = @_;
-  return $self->tabs( @pars )->set_option( 'fake', 1 );
-}
-
-sub hidden_tabs {
-  my( $self, @pars ) = @_;
-  @pars = {} unless @pars;
-  $pars[0]{'fake'}=1;
-  return $self->tabs( @pars )->add_classes('hidden');
-}
-
-sub second_tabs {
-  my( $self, @pars ) = @_;
-  @pars = {} unless @pars;
-  $pars[0]{'fake'}=1;
-  $pars[0]{'no_heading'}=1;
-  return $self->tabs( @pars )->add_classes('second-tabs');
 }
 
 sub push_message {
