@@ -18,6 +18,29 @@ use base qw( Pagesmith::Form::Element::String );
 
 use HTML::Entities qw(encode_entities);
 
+sub init {
+  my $self = shift;
+  $self->{'fetch_title'} = $self->{'_options'}{'fetch_title'} || 1;
+  return;
+}
+
+sub fetch_title {
+  my $self = shift;
+  return $self->{'fetch_title'};
+}
+
+sub set_fetch_title {
+  my $self = shift;
+  $self->{'fetch_title'} = 1;
+  return $self;
+}
+
+sub clear_fetch_title {
+  my $self = shift;
+  $self->{'fetch_title'} = 0;
+  return $self;
+}
+
 sub validate {
   my $self = shift;
   return $self->set_valid if $self->value =~ m{\Ahttps?://\w.*\Z}mxs;
@@ -27,13 +50,13 @@ sub validate {
 sub render_widget {
   my $self = shift;
   my $return = $self->SUPER::render_widget();
-  $return .= sprintf '<p><%% Link -ajax -get_title %s %%></p>', encode_entities( $self->value ) if $self->value;
+  $return .= sprintf '<p><%% Link -ajax -get_title %s %%></p>', encode_entities( $self->value ) if $self->value && $self->{'fetch_title'};
   return $return;
 }
 
 sub element_class {
   my $self = shift;
-  $self->add_class( '_url' );
+  $self->add_class( '_url'.($self->{'fetch_title'}?'_fetch_title':q()) );
   return;
 }
 1;
