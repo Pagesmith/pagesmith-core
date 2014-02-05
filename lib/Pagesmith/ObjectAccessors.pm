@@ -16,60 +16,68 @@ use utf8;
 
 use version qw(qv); our $VERSION = qv('0.1.0');
 use feature qw(switch);
+use Const::Fast qw(const);
 
-my $defaults = {
+
+const my $DEFAULTS => {
   'number'  => 0,
   'boolean' => 'no',
 };
 
-sub _define {
+## This will need our standard get other adaptor method call!
+
+## Functions to define accessors for objects....
+
+sub create_method {
   my ( $pkg, $fn, $sub ) = @_;
   my $method = $pkg.q(::).$fn;
   no strict 'refs'; ## no critic (NoStrict)
   if( defined &{$method} ) {
     warn qq(Method "$fn" already exists on $pkg - defining "_$fn"\n);
-    $method = $pkg.q(::_).$fn;
+    $fn= "_$fn";
+    $method = $pkg.q(::).$fn;
   }
-  *{$method} = $sub;
+  if( 'CODE' eq ref $sub ) {
+    *{$method} = $sub;
+  } else {
+    *{$method} = eval $sub; ## no critic (StringyEval)
+  }
   use strict;
-  return;
+  return $fn;
 }
 
-sub _define_boolean {
+sub define_boolean {
   my( $pkg, $k, $default ) = @_;
-  _define( $pkg, q(is_).$k, sub {
-    my $self = shift;
-    return 'yes' eq ($self->{'obj'}{$k}||$default);
-  } );
-  _define( $pkg, q(off_).$k, sub {
-    my $self = shift;
-    $self->{'obj'}{$k} = 'no';
-    return $self;
-  } );
-  _define( $pkg, q(on_).$k, sub {
-    my $self = shift;
-    $self->{'obj'}{$k} = 'yes';
-    return $self;
-  } );
-  _define(  $pkg, q(set_).$k, sub {
-    my( $self, $value ) = @_;
-    $value = lc $value;
-    if( 'yes' eq $value || 'no' eq $value ) {
-      $self->{'obj'}{$k} = $value;
-    } else {
-      warn "Value for $k is incorrect ($value)\n";
-    }
-    return $self;
-  } );
-  return;
+  return (
+    create_method( $pkg, q(is_).$k, sub {
+      my $self = shift;
+      return 'yes' eq ($self->{'obj'}{$k}||$default);
+    } ),
+    create_method( $pkg, q(off_).$k, sub {
+      my $self = shift;
+      $self->{'obj'}{$k} = 'no';
+      return $self;
+    } ),
+    create_method( $pkg, q(on_).$k, sub {
+      my $self = shift;
+      $self->{'obj'}{$k} = 'yes';
+      return $self;
+    } ),
+    create_method(  $pkg, q(set_).$k, sub {
+      my( $self, $value ) = @_;
+      $value = lc $value;
+      if( 'yes' eq $value || 'no' eq $value ) {
+        $self->{'obj'}{$k} = $value;
+      } else {
+        warn "Value for $k is incorrect ($value)\n";
+      }
+      return $self;
+    } ),
+  );
 }
 
-sub _define_enum {
+sub define_enum {
   my( $pkg, $k, $default, $values ) = @_;
-  _define( $pkg, q(is_).$k, sub {
-    my ( $self, $val ) = @_;
-    return $val eq ($self->{'obj'}{$k}||$default)||q();
-  } );
   my $values_hash = 'HASH' eq ref $values
                   ? $values
                   : { 'HASH'  eq ref $values->[0] ? map { $_->{'value'} => $_->{'name'} } @{$values}
@@ -85,34 +93,40 @@ sub _define_enum {
     : [sort { $values->{$a} cmp $values->{$b} } %{$values} ];
   my $ordered_hash = [ map { [ $_ => $values_hash->{$_} ] } @{$values_ordered} ];
   my $ordered_hr   = [ map { $values_hash->{$_} } @{$values_ordered} ];
-  _define( $pkg, q(set_).$k, sub {
-    my( $self, $value ) = @_;
-    if( exists $values_hash->{$value} ) {
-      $self->{'obj'}{$k} = $value;
-    } else {
-      warn "Value for $k is incorrect ($value)\n";
-    }
-    return $self;
-  } );
   my $method_hr  = $pkg, q(get_).$k.q(_hr);
   my $method_all_hr     = $pkg, q(all_).$k.q(_hr);
   my $method_all_sorted = $pkg, q(all_).$k.q(_sorted);
-  _define( $pkg, q(get_).$k.q(_hr), sub {
-    my $self = shift;
-    return $values_hash->{$self->{'obj'}{$k}||$default};
-  } );
-  _define( $pkg, q(all_).$k.q(_hr), sub {
-    return $ordered_hr;
-  } );
-  _define( $pkg, q(all_).$k.q(_sorted), sub {
-    return $ordered_hash;
-  } );
-  return;
+
+  return (
+    create_method( $pkg, q(is_).$k, sub {
+      my ( $self, $val ) = @_;
+      return $val eq ($self->{'obj'}{$k}||$default)||q();
+    } ),
+    create_method( $pkg, q(set_).$k, sub {
+      my( $self, $value ) = @_;
+      if( exists $values_hash->{$value} ) {
+        $self->{'obj'}{$k} = $value;
+      } else {
+        warn "Value for $k is incorrect ($value)\n";
+      }
+      return $self;
+    } ),
+    create_method( $pkg, q(get_).$k.q(_hr), sub {
+      my $self = shift;
+      return $values_hash->{$self->{'obj'}{$k}||$default};
+    } ),
+    create_method( $pkg, q(all_).$k.q(_hr), sub {
+      return $ordered_hr;
+    } ),
+    create_method( $pkg, q(all_).$k.q(_sorted), sub {
+      return $ordered_hash;
+    } ),
+  );
 }
 
-sub _define_index {
+sub define_index {
   my( $pkg, $k ) = @_;
-  _define( $pkg, q(set_).$k, sub {
+  return create_method( $pkg, q(set_).$k, sub {
     my ( $self, $value ) = @_;
     if( $value <= 0 ) {
       warn "Trying to set non positive value for '$k'\n";
@@ -121,82 +135,160 @@ sub _define_index {
     }
     return $self;
   } );
-  return;
 }
 
-sub _define_set {
+sub define_set {
   my( $pkg, $k ) = @_;
-  _define( $pkg, q(set_).$k, sub {
+  return create_method( $pkg, q(set_).$k, sub {
     my($self,$value) = @_;
     $self->{'obj'}{$k} = $value;
     return $self;
   } );
-  return;
 }
+
+sub define_get {
+  my( $pkg, $k, $default ) = @_;
+  return create_method( $pkg, q(get_).$k, sub {
+    my $self = shift;
+    return defined $self->{'obj'}{$k} ? $self->{'obj'}{$k} : $default;
+  } );
+}
+
+sub define_uid {
+  my( $pkg, $k ) = @_;
+  return create_method( $pkg, q(uid), sub {
+    my $self = shift;
+    return $self->{'obj'}{$k};
+  } );
+}
+
+sub define_related_get_set {
+  my( $pkg, $type, $k, $derived ) = @_;
+  my $fetch_method = 'fetch_'.lc $type;
+  my $get_method   = 'get_'.$k;
+  (my $obj_key = $k) =~ s{_id\Z}{}mxsg;
+  ## Object/get setters!
+  ## no critic (InterpolationOfMetachars)
+  return (
+    create_method( $pkg, 'get_'.$obj_key, sub {
+      my $self = shift;
+      return $self->get_other_adaptor( $type )->$fetch_method( $self->$get_method );
+    } ),
+    create_method(
+      $pkg, 'set_'.$obj_key, sprintf q(sub {
+      my ( $self, $%1$s ) = @_;
+      $%1$s = $self->get_other_adaptor( '%2$s' )->%3$s( $%1$s ) unless ref $%1$s;
+      if( $%1$s ) {
+        $self->{'obj'}{'%4$s'} = $%1$s->uid;%5$s
+      }
+      return $self;
+    }),
+      $obj_key, $type, $fetch_method, $k,
+      join q(),
+      map { sprintf "\n".q(    $self->{'obj'}{'%s'} = $%s->get_%s;), $derived->{$_}, $obj_key, $_ }
+      keys %{$derived},
+    ),
+  );
+  ## use critic
+}
+
+sub define_related_get_all {
+  my( $pkg, $type, $k, $my_type ) = @_;
+  my $method = sprintf 'fetch_%s_by_%s', $k, lc $my_type;
+  return create_method( $pkg, q(get_all_).$k, sub {
+    my $self = shift;
+    return $self->get_other_adaptor( $type )->$method( $self );
+  } );
+}
+
+sub define_related_get_rel {
+  my( $pkg, $k, $my_type ) = @_;
+  my $method = sprintf 'get_%s_by_%s', lc $k, lc $my_type;
+  return create_method( $pkg, 'get_'.lc $k, sub {
+    my $self = shift;
+    return $self->get_other_adaptor( $k )->$method( $self );
+  } );
+}
+
 sub make_accessors {
   my( $pkg, $config ) = @_;
-
-  ## Define core object accessors...
-  foreach my $k ( keys %{$config->{'obj'}} ) {
-    my $defn     = $config->{'obj'}{$k};
+  my @methods;
+  ## Main object properties
+  foreach my $k ( keys %{$config->{'properties'}} ) {
+    my $defn     = $config->{'properties'}{$k};
        $defn     = { 'type' => $defn } unless ref $defn;
     my $type     = $defn->{'type'};
-    my $default  = $defn->{'default'}||( exists $defaults->{$type} ? $defaults->{$type} : undef );
+    my $default  = exists $defn->{'default'} ? $defn->{'default'}
+                 : exists $DEFAULTS->{$type} ? $DEFAULTS->{$type}
+                 :                             undef
+                 ;
 
-    if( $type eq 'uid' ) {
-      _define( $pkg, q(uid), sub {
-        my $self = shift;
-        return $self->{'obj'}{$k};
-      } );
+    push @methods, define_get( $pkg, $k, $default );          ## General Get method...
+    push @methods, define_uid( $pkg, $k )  if $type eq 'uid'; ## unique ID property!;
+
+    for( $type ) {                             ## Methods for different object types...
+      when( $_ eq 'boolean' )           { push @methods, define_boolean(  $pkg, $k, $default ); }
+      when( $_ eq 'enum'    )           { push @methods, define_enum(     $pkg, $k, $default, $defn->{'values'} ); }
+      when( $_ eq 'id' || $_ eq 'uid' ) { push @methods, define_index(    $pkg, $k ); }
+      default                           { push @methods, define_set(      $pkg, $k ); }
     }
-
-    ## General Get method...
-    _define( $pkg, q(get_).$k,sub {
-      my $self = shift;
-      return defined $self->{'obj'}{$k} ? $self->{'obj'}{$k} : $default;
-    } );
-
-    for( $type ) {
-      when( $_ eq 'boolean' )           { _define_boolean(  $pkg, $k, $default ); }
-      when( $_ eq 'enum'    )           { _define_enum(     $pkg, $k, $default, $defn->{'values'} ); }
-      when( $_ eq 'id' || $_ eq 'uid' ) { _define_index(    $pkg, $k ); }
-      when( $_ ne 'derived' )           { _define_set(      $pkg, $k ); }
-    }
-    next unless exists $config->{'rel'}{$k};
-    $defn = $config->{'rel'}{$k};
-    #### use Data::Dumper; warn "!pre!$pkg--$k--\n".Dumper( $defn );
   }
+
+  ## Now we need to look at the relationships between objects...
+  foreach my $k ( keys %{$config->{'related'}} ) {
+    my $defn = $config->{'related'}{$k};
+    if( exists $defn->{'to'} ) {        ## object has a single related object!
+      push @methods, define_get(   $pkg, $k );
+      push @methods, define_index( $pkg, $k );
+      my %derived;
+      ## derived get_calls!
+      if( exists $defn->{'derived'} ) {
+        %derived = %{$defn->{'derived'}};
+        push @methods, define_get( $pkg, $_ ) foreach values %derived;
+      }
+      push @methods, define_related_get_set( $pkg, $defn->{'to'}, $k, \%derived );
+    } elsif( exists $defn->{'from'} ) { ## object has multiple related objects...
+      ## This is a many-1 relationship
+      push @methods, define_related_get_all( $pkg, $defn->{'from'}, $k, $config->{'type'} );
+    } else {                            ## This is a "relationship" with added attributes!
+      push @methods, define_related_get_rel( $pkg, $k, $config->{'type'} );
+    }
+  }
+  create_method( $pkg, 'auto_methods', sub { my @m = sort @methods; return @m; });
   return;
 }
 
-sub parse_rel {
-  my ( $defn, $type ) = @_;
-  my $rel = {};
-  foreach my $k (keys %{$defn->{'relationships'}}) {
-    next unless exists $defn->{'relationships'}{$k}{$type}{'to'};
-    my $t = $defn->{'relationships'}{$k}{$type};
-    return { 'to' => [ $k, @{$t->{'to'}} ], 'additional' => exists $t->{'additional'} ? $t->{'additional'} : {} };
-  }
-  return {};
-}
+## Functions that munge the object configuration structure
+## Merge in relationships!
 
 sub parse_defn {
   my ( $defn, $type ) = @_;
-  my $definition = { 'obj' => $defn->{'objects'}{$type}, 'rel' => {} };
-  if( exists $defn->{'objects'}{$type} ) {
-    foreach my $k (keys %{$defn->{'relationships'}{$type}} ) {
-      my $c = $defn->{'relationships'}{$type}{$k};
-      if( exists $c->{'from'} && !exists $c->{'via'}) {
-        my $t = $defn->{'relationships'}{$c->{'from'}};
-        $c = { 'to'         => [ $c->{'from'}, grep { $_ ne $type } @{$t->{$k}{'to'}} ],
-               'additional' => exists $t->{$k}{'additional'} ? $t->{$k}{'additional'} : {} };
-      }
-      $definition->{'rel'}{$k}=$c;
-    }
+  my $d = $defn->{'objects'}{$type};
+  my $definition = {
+    'type'           => $type,
+    'properties'     => $d->{'properties'},
+    'related'        => {},
+  };
+
+  foreach (qw(properties plural audit)) {
+    $definition->{$_} = $d->{$_} if exists $d->{$_};
   }
+  $definition->{'plural'} = $d->{'plural'} if exists $d->{'plural'};
+  if( exists $d->{'related'} ) {
+    $definition->{'related'}{$_} = $d->{'related'}{$_} foreach keys %{$d->{'related'}};
+  }
+
+  if( exists $defn->{'relationships'} ) {
+    $definition->{'related'}{$_} = $defn->{'relationships'}{$_} foreach
+      grep { exists $defn->{'relationships'}{$_}{'objects'}{$type} }
+      keys %{$defn->{'relationships'}};
+  }
+
   return $definition;
 }
 
+## Now we have the standard methods for this sub-class of objects which we want to define
+## These are added to the base class!!
 sub init {
   my( $self, $hashref, $partial ) = @_;
   $self->{'obj'} = {%{$hashref}};
@@ -211,6 +303,126 @@ sub type {
   my $self = shift;
   my ( $type ) = (ref $self) =~ m{([^:]+)\Z}mxsg;
   return $type;
+}
+
+sub get_created_at {
+  my $self = shift;
+  return $self->{'obj'}{'created_at'};
+}
+
+sub set_created_at {
+  my( $self, $value ) = @_;
+  $self->{'obj'}{'created_at'} = $value;
+  return $self;
+}
+
+sub get_created_by_id {
+  my $self = shift;
+  return $self->{'obj'}{'created_by_id'}||0;
+}
+
+sub set_created_by_id {
+  my( $self, $value ) = @_;
+  $self->{'obj'}{'created_by_id'} = $value;
+  return $self;
+}
+
+sub get_created_by {
+  my $self = shift;
+  return $self->{'obj'}{'created_by'}||0;
+}
+
+sub set_created_by {
+  my( $self, $value ) = @_;
+  $self->{'obj'}{'created_by'} = $value;
+  return $self;
+}
+
+sub get_created_ip {
+  my $self = shift;
+  return $self->{'obj'}{'created_ip'};
+}
+
+sub set_created_ip {
+  my( $self, $value ) = @_;
+  $self->{'obj'}{'ip'} = $value;
+  return $self;
+}
+
+sub get_created_useragent {
+  my $self = shift;
+  return $self->{'obj'}{'created_useragent'};
+}
+
+sub set_created_useragent {
+  my( $self, $value ) = @_;
+  $self->{'obj'}{'created_useragent'} = $value;
+  return $self;
+}
+
+sub get_updated_at {
+  my $self = shift;
+  return $self->{'obj'}{'updated_at'};
+}
+
+sub set_updated_at {
+  my( $self, $value ) = @_;
+  $self->{'obj'}{'updated_at'} = $value;
+  return $self;
+}
+
+sub get_updated_by {
+  my $self = shift;
+  return $self->{'obj'}{'updated_by'}||0;
+}
+
+sub set_updated_by {
+  my( $self, $value ) = @_;
+  $self->{'obj'}{'updated_by'} = $value;
+  return $self;
+}
+
+sub get_updated_by_id {
+  my $self = shift;
+  return $self->{'obj'}{'updated_by_id'}||0;
+}
+
+sub set_updated_by_id {
+  my( $self, $value ) = @_;
+  $self->{'obj'}{'updated_by_id'} = $value;
+  return $self;
+}
+
+sub get_updated_ip {
+  my $self = shift;
+  return $self->{'obj'}{'updated_ip'};
+}
+
+sub set_updated_ip {
+  my( $self, $value ) = @_;
+  $self->{'obj'}{'ip'} = $value;
+  return $self;
+}
+
+sub get_updated_useragent {
+  my $self = shift;
+  return $self->{'obj'}{'updated_useragent'};
+}
+
+sub set_updated_useragent {
+  my( $self, $value ) = @_;
+  $self->{'obj'}{'updated_useragent'} = $value;
+  return $self;
+}
+
+sub store {
+  my $self = shift;
+  return $self->adaptor->store( $self );
+}
+
+sub get_other_adaptor {
+  my( $self, $type ) = @_;
+  return $self->adaptor->get_other_adaptor( $type );
 }
 
 1;
