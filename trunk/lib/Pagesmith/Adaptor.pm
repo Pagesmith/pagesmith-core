@@ -211,7 +211,7 @@ sub sv {
 #@param (?)+ parameters to pass to SQL statement.
   my ( $self, $sql, @pars ) = @_;
   return unless $self->conn;
-  my ($res) = $self->conn->run( 'fixup' =>  sub { return $_->selectrow_array( $sql, {}, @pars ); } );
+  my ($res) = $self->conn->run( 'fixup' =>  sub { my $t = $_->selectrow_arrayref( $sql, {}, @pars ); return $t->[0] if $t; return;} );
   return $res;
 }
 
@@ -229,7 +229,7 @@ sub row {
 #@param (?)+ parameters to pass to SQL statement.
   my ( $self, $sql, @pars ) = @_;
   return unless $self->conn;
-  return $self->conn->run( 'fixup' =>  sub { return $_->selectrow_arrayref( $sql, {}, @pars ); } );
+  return $self->conn->run( 'fixup' =>  sub { my $t = $_->selectrow_arrayref( $sql, {}, @pars ); return $t if $t; return;} );
 }
 
 sub row_hash {
@@ -239,7 +239,7 @@ sub row_hash {
 #@param (?)+ parameters to pass to SQL statement.
   my ( $self, $sql, @pars ) = @_;
   return unless $self->conn;
-  return $self->conn->run( 'fixup' =>  sub { return $_->selectrow_hashref( $sql, {}, @pars ); } );
+  return $self->conn->run( 'fixup' =>  sub { my $t = $_->selectrow_hashref( $sql, {}, @pars ); return $t if $t; return;} );
 }
 
 sub all {
