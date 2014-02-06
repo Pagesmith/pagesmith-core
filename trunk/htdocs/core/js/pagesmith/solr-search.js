@@ -64,7 +64,7 @@
     /* Initialisation function */
     init: function () {
       /** General initialisation of object **/
-      var that = this;
+      var that = this, m, t, i;
       /* Get host information from header of page...
          Used in format DOC to remove domain part of link if this
          is a dev/staging/sandbox copy of a live server - so links
@@ -77,6 +77,18 @@
       /* Copy value from tr search box into this search box, and store on object */
       $('#search_input').val( $('#q').val() );
       this.par.q = $('#search_input').val();
+      if( document.location.hash ) {
+        t = document.location.hash.substr(1).split(/&/);
+        for( i in t ) {
+          if( t.hasOwnProperty(i) ) {
+            m = t[i].match(/^(\w+)=(.*)$/);
+            if(m) {
+              this.par[m[1]] = decodeURIComponent(m[2]);
+            }
+          }
+        }
+        $('#search_input').val( this.par.q );
+      }
       /* Add click/submit functionality */
       /* Check to see if value is placeholder and if so clear entry on mouse down/focus
          and v-v for blur  */
@@ -277,9 +289,11 @@
         (this.facet ? ' in <strong>'+this.label(this.facet)+'</strong>' : '') );
       $('#search_waiting').show();
       // Send off request....
+      var pars = $.map( this.par, function(v,k) { return k+'='+encodeURIComponent(v); } ).join('&');
+      document.location.hash = pars;
       this.xhr = $.ajax({
         dataType: 'json',
-        url: this.search_url + '?'+$.map( this.par, function(v,k) { return k+'='+encodeURIComponent(v); } ).join('&'),
+        url: this.search_url + '?'+pars,
         error: function( xh, st ) {
           $('#search_waiting').hide();
           if( st !== 'abort' ) {
