@@ -1,3 +1,4 @@
+Pagesmith = PageSmith;
 (function($){
   'use strict';
   /* Define parameters ... */
