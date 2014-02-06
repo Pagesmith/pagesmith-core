@@ -1,4 +1,8 @@
 Pagesmith = PageSmith;
+Pagesmith.escapeHTML = function(string) {
+  return (string === null || typeof (string) === 'undefined') ? string : $('<div/>').text(string).html();
+};
+
 (function($){
   'use strict';
   /* Define parameters ... */
