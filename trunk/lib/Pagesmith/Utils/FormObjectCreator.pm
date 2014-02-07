@@ -73,8 +73,11 @@ sub form_from_type {
 
   my $module    = "Pagesmith::MyForm::$formtype";
 
-  return unless $self->dynamic_use( $module ); ## Cannot compile object of class $module
-
+  my $f = $self->dynamic_use( $module ); ## Cannot compile object of class $module
+  unless( $f ) {
+    warn $self->dynamic_use_failure( $module ),"\n";
+    return;
+  }
   ## Create the new object and return it!
   return $module->new({
     'r'         => $self->{'_r'},
