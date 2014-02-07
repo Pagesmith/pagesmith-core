@@ -166,7 +166,8 @@ sub render {
     $self->code eq 'previous' ? '&laquo;' : q(),
     encode_entities( $self->caption ),
     $self->code eq 'next' ? '&raquo;' : q(),
-    !exists $self->{'title'} ? q() : sprintf 'title="%s"', encode_entities($self->{'title'});
+    defined $self->{'title'} ? sprintf 'title="%s"', encode_entities($self->{'title'}) : q(),
+    ;
 }
 
 1;

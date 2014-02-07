@@ -18,11 +18,12 @@ use base qw( Pagesmith::Form::Element::String );
 
 sub new {
   my($class,@pars) = @_;
-  return $class->SUPER::new( @par, 'style' => 'short' );
+  return $class->SUPER::new( @pars, 'style' => 'short' );
 }
 
 sub validate {
   my $self = shift;
+  return $self->set_valid   unless defined $self->value;
   return $self->set_invalid if $self->value == 0;
   return $self->set_valid   if $self->value =~ m{\A(?=\d|[.]\d)\d*(?:[.]\d*)?(?:[Ee][+-]?\d+)?\Z}mxs;
   return $self->set_invalid;

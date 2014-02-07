@@ -124,7 +124,7 @@ sub render_widget {
     $self->rows,
     $self->cols,
     $self->generate_class_string,
-    encode_entities( $self->value ),
+    defined $self->value ? encode_entities( $self->value ) : q(),
     $self->req_opt_string;
 }
 

@@ -18,6 +18,7 @@ use base qw( Pagesmith::Form::Element::String );
 
 sub validate {
   my $self = shift;
+  return $self->set_valid unless defined $self->value;
   return $self->set_invalid if $self->value eq q(0);
   return $self->set_valid   if $self->value =~ m{\A[+]?\d+\Z}mxs;
   return $self->set_invalid;
