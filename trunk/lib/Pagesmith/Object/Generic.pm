@@ -64,16 +64,20 @@ sub set {
 our $AUTOLOAD;
 
 sub AUTOLOAD {
-  my( $self, $value ) = @_;
+  my ($self,@pars) = @_;
 
   my $method = our $AUTOLOAD;
-
-  return $self->set( $1, $value ) if $method =~ m{::set_(\w+)\Z}mxs;
-  return $self->get( $1 )         if $method =~ m{::get_(\w+)\Z}mxs;
-  return $self->get_date( $1 )    if $method =~ m{::date_(\w+)\Z}mxs;
-  return $self->unset( $1 )       if $method =~ m{::unset_(\w+)\Z}mxs;
-  return $self->get( $1 )         if $method =~ m{::(\w+)\Z}mxs;
-  return;
+  my ($action,$param) = $method =~ m{::(?:(set|get|date|unset)_)?(\w+)\Z}mxs;
+  no strict 'refs'; ## no critic (NoStrict)
+  unless( defined $param ) {
+    *{$method} = sub { warn "Method $method not defined\n"; return; };
+  } else {
+    $action ||= 'get';
+    $action = '_get_date' if $action eq 'date';
+    *{$method} = sub { my $self = shift; $self->$action( $param, @_ ); };
+  }
+  use strict;
+  return $self->$method(@pars);
 }
 
 sub can {
@@ -83,12 +87,13 @@ sub can {
   return $self->SUPER::can( $method );
 }
 
-sub get_date {
+## no critic (UnusedPrivateSubroutines)
+sub _get_date {
   my( $self, $key ) = @_;
   return sprintf '%04d-%02d-%02d %02d:%02d:%02d', map { $self->{'objdata'}{$key}{$_}||0 } qw(year month day hour minute second);
 }
-
 ## use critic
+
 sub type {
 
   my $self = shift;
@@ -119,4 +124,6 @@ sub objdata {
   return $self->{'objdata'};
 }
 
+sub DESTROY {
+}
 1;
