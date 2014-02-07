@@ -136,12 +136,12 @@ sub run_cancel {
   my $self = shift;
 
   ## If we cancel where do we go!
-  if( $self->form_object->can('on_cancel') ) {
-    my $on_cancel = $self->form_object->on_cancel( $self->form_object->stage_object );
-    return $on_cancel if $on_cancel;
-  }
+  my $url;
+  $url = $self->form_object->on_cancel( $self->form_object->stage_object )
+    if $self->form_object->can('on_cancel');
+  $url = $self->form_object->attribute( 'ref' ) || $self->base_url( $self->r ).q(/) unless $url;
   $self->form_object->destroy_object;
-  return $self->redirect( $self->form_object->attribute( 'ref' ) || $self->base_url( $self->r ).q(/) );
+  return $self->redirect( $url );
 }
 
 sub run_previous {
