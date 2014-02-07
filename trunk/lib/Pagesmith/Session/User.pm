@@ -31,6 +31,23 @@ sub auth_method {
   return $self->data->{'method'}||q();
 }
 
+sub email {
+  my $self = shift;
+  return $self->data->{'email'} if exists $self->data->{'email'};
+  return $self->data->{'id'}    if exists $self->data->{'id'} && $self->data->{'id'} =~ m{@}mxs;
+  return;
+}
+
+sub access_token {
+  my $self = shift;
+  return $self->data->{'access_token'};
+}
+
+sub refresh_token {
+  my $self = shift;
+  return $self->data->{'refresh_token'};
+}
+
 sub logged_in {
   my $self = shift;
   return unless $self->data;
@@ -57,6 +74,11 @@ sub in_group {
 sub ldap_id {
   my $self = shift;
   return $self->data->{'ldap_id'};
+}
+
+sub ext_id {
+  my $self = shift;
+  return $self->data->{'ext_id'};
 }
 
 sub name {
