@@ -33,8 +33,8 @@ sub create_method {
   my $method = $pkg.q(::).$fn;
   no strict 'refs'; ## no critic (NoStrict)
   if( defined &{$method} ) {
-    warn qq(Method "$fn" already exists on $pkg - defining "_$fn"\n);
-    $fn= "_$fn";
+    warn qq(Method "$fn" already exists on $pkg - defining "std_$fn"\n);
+    $fn = "std_$fn";
     $method = $pkg.q(::).$fn;
   }
   if( 'CODE' eq ref $sub ) {
@@ -120,6 +120,9 @@ sub define_enum {
     } ),
     create_method( $pkg, q(all_).$k.q(_sorted), sub {
       return $ordered_hash;
+    } ),
+    create_method( $pkg, $k.q(_hr), sub {
+      return map { exists $values_hash->{$_} ? $values_hash->{$_} : () } @_;
     } ),
   );
 }
