@@ -62,6 +62,24 @@ sub no_of_entries {
   return @{$self->{'entries'}};
 }
 
+sub add_entry_encode {
+  my( $self, $caption, @entries) = @_;
+  return $self->add_entry( $caption, map { ref $_ ? $_ : $self->encode( $_ ) } @entries );
+}
+
+sub add_entry_email {
+  my( $self, $caption, $email, $default ) = @_;
+  return $self->add_entry( $caption, $default||'&nbsp;' ) unless $email;
+  return $self->add_entry( $caption, $self->safe_email( $email ) );
+}
+
+sub add_entry_url {
+  my( $self, $caption, $url, $default, $length ) = @_;
+  return $self->add_entry( $caption, $default||'&nbsp;' ) unless $url;
+  return $self->add_entry( $caption, sprintf '<%% Link -get_title -length %d %s %%>',
+    $length||0, $self->encode( $url ) );
+}
+
 sub add_entry {
   my( $self, $caption, @entries) = @_;
   my $options = {};
