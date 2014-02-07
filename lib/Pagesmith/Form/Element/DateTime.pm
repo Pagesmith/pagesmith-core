@@ -44,12 +44,15 @@ sub init {
   $self->blank;
   return $self;
 }
+
 sub year_range {
-  my( $self, $start, $end ) = @_;
+  my( $self, $start, $end, $options ) = @_;
   my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = gmtime;
+  $options ||= {};
+  my $this_year = $year+$YEAR_OFFSET;
   $self->{'use_range'} = 1;
-  $self->{'start_range'} = defined $start ? $start : $year+$YEAR_OFFSET;
-  $self->{'end_range'}   = defined $end   ? $end   : $year+$YEAR_OFFSET;
+  $self->{'start_range'} = defined $start ? ( exists $options->{'rel_start'} ? $this_year+$start : $start ) : $this_year;
+  $self->{'end_range'}   = defined $end   ? ( exists $options->{'rel_end'  } ? $this_year+$end   : $end   ) : $this_year;
   return $self;
 }
 
@@ -145,13 +148,17 @@ sub today {
 
 sub set_obj_data {
   my( $self, $value ) = @_;
-  if( ref $value eq 'HASH' ) {
-    $self->{'obj_data'} = [$value];
+  return unless @{$value};
+  my $v = $value->[0];
+  if( 'HASH' eq ref $v ) {
+    $self->{'obj_data'} = [$v];
   } else {
-    my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = $self->munge_date_time_array( $value );
+    my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = $self->munge_date_time_array( $v );
+    $mon  ++              if defined $mon;
+    $year += $YEAR_OFFSET if defined $year;
     $self->SUPER::set_obj_data([{
       'second' => $sec,  'minute' => $min,  'hour' => $hour,
-      'day'    => $mday, 'month' => $mon+1, 'year' => $year+$YEAR_OFFSET }]);
+      'day'    => $mday, 'month' => $mon, 'year' => $year }]);
   }
   return $self;
 }

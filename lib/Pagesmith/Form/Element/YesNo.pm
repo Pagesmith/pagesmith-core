@@ -42,7 +42,9 @@ sub init {
 
 sub value {
   my ($self, @extra ) = @_;
-  return lc $self->SUPER::value( @extra );
+  my $t = $self->SUPER::value( @extra );
+  return unless defined $t;
+  return lc $t;
 }
 
 1;

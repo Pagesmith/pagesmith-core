@@ -89,11 +89,11 @@ sub render_widget {
     return sprintf '<input type="%s" name="%s" value="%s" id="%s" class="%s" size="%s" %s/>%s',
       $self->widget_type,
       encode_entities( $self->code ),
-      ( $self->raw ? $self->render_value( $self->value ) : encode_entities( $self->render_value( $self->value ) ) ),
+      defined  $self->value ? ( $self->raw ? $self->render_value( $self->value ) : encode_entities( $self->render_value( $self->value ) ) ) : q(),
       $self->generate_id_string,
       $self->generate_class_string,
       $self->size || $DEFAULT_SIZE,
-      $self->extra_markup,
+      $self->extra_markup||q(),
       $self->req_opt_string
      ;
   }
