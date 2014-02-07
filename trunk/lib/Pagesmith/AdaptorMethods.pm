@@ -32,8 +32,8 @@ sub create_method {
   my $method = $pkg.q(::).$fn;
   no strict 'refs'; ## no critic (NoStrict)
   if( defined &{$method} ) {
-    warn qq(Method "$fn" already exists on $pkg - defining "_$fn"\n);
-    $fn= "_$fn";
+    warn qq(Method "$fn" already exists on $pkg - defining "std_$fn"\n);
+    $fn = "std_$fn";
     $method = $pkg.q(::).$fn;
   }
   if( 'CODE' eq ref $sub ) {
@@ -136,7 +136,7 @@ sub make_methods {
   my $table_map = {};
   my $tid = 0;
   foreach my $key_column (sort keys %{$derived_tables} ) {
-    $full_column_names  .= ", o.$key_column";
+    $full_column_names  .= ", o.$key_column" unless exists $config->{'related'}{$key_column}{'audit'};
     my $table_name = lc $config->{'related'}{$key_column}{'to'};
     $tid++;
     $table_map->{$key_column} = [ $table_name, "t$tid" ];
@@ -166,7 +166,6 @@ sub make_methods {
 
     ## Fns to get column/table name lists out to allow other queries to get
     ## all object data!
-
     create_method( $pkg, 'full_column_names',   sub { return $full_column_names;  } ),
     create_method( $pkg, 'audit_column_names',  sub { return $audit_column_names; } ),
     create_method( $pkg, 'select_tables',       sub { return $select_tables;      } ),
@@ -193,7 +192,7 @@ sub {
     '%1$s', '%1$s_id',
     %4$s ) );
 }), $singular,
-      ( join qq(,\n             ), @columns, @create_audit_columns ),
+      ( join qq(,\n           ), @columns, @create_audit_columns ),
       ( join q(,), map { q(?) } @columns, @create_audit_columns ),
       ( join qq(,\n     ), map { sprintf '$o->get_%s', $_ } @columns, @create_audit_columns ),
       $create_audit_functions,
