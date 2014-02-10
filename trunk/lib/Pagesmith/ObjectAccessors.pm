@@ -428,4 +428,35 @@ sub get_other_adaptor {
   return $self->adaptor->get_other_adaptor( $type );
 }
 
+sub set_attribute {
+  my ( $self, $name, $value ) = @_;
+  $self->{'attributes'}||={};
+  $self->{'attributes'}{$name} = $value;
+  return $self;
+}
+
+sub get_attribute {
+  my ( $self, $name, $default ) = @_;
+  return exists $self->{'attributes'}{$name} ? $self->{'attributes'}{$name} : $default;
+}
+
+sub get_attribute_names {
+  my $self = shift;
+  $self->{'attributes'}||={};
+  return keys %{$self->{'attributes'}};
+}
+
+sub unset_attribute {
+  my( $self, $name ) = @_;
+  $self->{'attributes'}||={};
+  return unless exists $self->{'attributes'}{$name};
+  return delete $self->{'attributes'}{$name};
+}
+
+sub reset_attributes {
+  my $self = shift;
+  $self->{'attributes'} = {};
+  return $self;
+}
+
 1;
