@@ -350,6 +350,7 @@
           that.prop('value', o.onSelectMultiple( results_set[current_hovered_rank].text, results_set[current_hovered_rank].json, that ) );
         } else {
           that.prop('value', o.onSelect(         results_set[current_hovered_rank].text, results_set[current_hovered_rank].json, that ) );
+          that.trigger('change');
         }
       } else { // What to do when we are in the input element itself!
         if( !o.restricted ) {
@@ -357,6 +358,7 @@
             that.prop('value', o.onSelectMultiple( that.prop('value'), {}, that ) );
           } else {
             that.prop('value', o.onSelect(         that.prop('value'), {}, that ) );
+            that.trigger('change');
           }
         }
       }
@@ -371,6 +373,7 @@
           that.prop('value', o.onSelectMultiple( results_set[current_hovered_rank].text, results_set[current_hovered_rank].json, that ) );
         } else {
           that.prop('value', o.onSelect(         results_set[current_hovered_rank].text, results_set[current_hovered_rank].json, that ) );
+          that.trigger('change');
         }
         return_value = 1;
       } else { // What to do when we are in the input element itself!
@@ -380,6 +383,7 @@
             return_value = 1;
           } else {
             that.prop('value', o.onSelect(         that.prop('value'), {}, that ) );
+            that.trigger('change');
             return_value = 0;
           }
         } else {
