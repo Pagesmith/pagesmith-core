@@ -131,12 +131,14 @@ sub make_methods {
       }
     }
   }
-  #use Data::Dumper qw(Dumper); warn '!pre!'. Dumper( $config );
   my $full_column_names = join q(, ), map { "o.$_" } $uid_column, @columns;
   my $table_map = {};
   my $tid = 0;
   foreach my $key_column (sort keys %{$derived_tables} ) {
-    $full_column_names  .= ", o.$key_column" unless exists $config->{'related'}{$key_column}{'audit'};
+    unless( exists $config->{'related'}{$key_column}{'audit'} ) {
+      $full_column_names  .= ", o.$key_column";
+      push @columns, $key_column;
+    }
     my $table_name = lc $config->{'related'}{$key_column}{'to'};
     $tid++;
     $table_map->{$key_column} = [ $table_name, "t$tid" ];
@@ -184,11 +186,9 @@ sub {
   my( $self, $o ) = @_;
   %5$s
   return $o->set_%1$s_id( $self->insert( '
-    insert into %1$s (
-             %2$s
-           ) values(
-             %3$s
-           )',
+    insert into `%1$s`
+           ( %2$s )
+    values ( %3$s )',
     '%1$s', '%1$s_id',
     %4$s ) );
 }), $singular,
@@ -201,8 +201,8 @@ sub {
 sub {
   my( $self, $o ) = @_;
   %5$s
-  return $o->set_%1$s_id( $self->insert( '
-    update %1$s
+  return $o->set_%1$s_id( $self->query( '
+    update `%1$s`
        set %2$s
      where %3$s = ?',
      %4$s,
