@@ -257,7 +257,7 @@ sub make_accessors {
       push @methods, define_related_get_rel( $pkg, $k, $config->{'type'} );
     }
   }
-  create_method( $pkg, 'auto_methods', sub { my @m = sort @methods; return @m; });
+  create_method( $pkg, 'auto_methods', sub { my @m = sort 'auto_methods', @methods; return @m; });
   return;
 }
 
@@ -288,6 +288,42 @@ sub parse_defn {
   }
 
   return $definition;
+}
+
+## This is the really nasty function which squirts methods into the
+## Support namespace to define the methods in the Object/Adaptor
+## classes...
+
+sub bake_model {
+##@param (string) package name
+##@param (hashref) defn of objects of relationships
+##
+## Pushes four methods:
+##
+## * my_defn       - returns defn for object used in Object/Adaptor code
+## * my_rels       - returns defn for relationship used in Adaptor code?
+## * my_obj_types  - returns list of Object types
+## * my_rel_types  - returns list of Relationship types
+
+  my( $pkg, $DEFN ) = @_;
+  my @methods = (
+    create_method( $pkg, 'my_obj_types', sub {
+      return unless exists $DEFN->{'objects'};
+      my @m = sort keys %{$DEFN->{'objects'}};
+      return @m;
+    } ),
+    create_method( $pkg, 'my_rel_types', sub {
+      return unless exists $DEFN->{'relationships'};
+      my @m = sort keys %{$DEFN->{'relationships'}};
+      return @m;
+    } ),
+    create_method( $pkg, 'my_defn', sub {
+      my $type = shift;
+      return parse_defn( $DEFN, $type );
+    } ),
+  );
+  create_method( $pkg, 'auto_methods', sub { my @m = sort 'auto_methods', @methods; return @m; });
+  return;
 }
 
 ## Now we have the standard methods for this sub-class of objects which we want to define
@@ -421,6 +457,12 @@ sub set_updated_useragent {
 sub store {
   my $self = shift;
   return $self->adaptor->store( $self );
+}
+
+sub remove {
+  my $self = shift;
+  return unless $self->adaptor->can( 'remove' );
+  return $self->adaptor->remove( $self );
 }
 
 sub get_other_adaptor {

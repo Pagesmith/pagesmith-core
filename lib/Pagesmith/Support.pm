@@ -20,6 +20,7 @@ use base qw(Pagesmith::Root);
 
 use List::MoreUtils qw(any);
 use HTML::Entities qw(encode_entities);
+use POSIX qw(floor);
 use Apache2::Request;
 
 use Pagesmith::Adaptor;
@@ -30,6 +31,11 @@ use Pagesmith::HTML::Table;
 use Pagesmith::HTML::Tabs;
 use Pagesmith::HTML::TwoCol;
 
+use Date::Format qw(time2str);
+
+use Const::Fast qw(const);
+const my $K      => 1_024;
+const my $SIZE_R => 2;
 ## empty constructor!
 
 ## Code that requires r!
@@ -280,4 +286,45 @@ sub panel {
   push @class, @{shift @html}  if ref $html[0];
   return sprintf '<div class="%s">%s</div>', "@class", join q(), @html;
 }
+
+sub format_date_range {
+  my( $self, $start, $end ) = @_;
+  return time2str( '%o %h %Y', $self->munge_date_time( $start ) ) if $start eq $end;
+  my ( $sy, $sm, $sd ) = split m{-}mxs, $start;
+  my ( $ey, $em, $ed ) = split m{-}mxs, $end;
+  my $template = $sy != $ey ? '%o %B %Y'
+               : $sm != $em ? '%o %B'
+               :              '%o'
+               ;
+  return sprintf '%s - %s', time2str( $template, $self->munge_date_time( $start ) ),
+                            time2str( '%o %B %Y', $self->munge_date_time( $end ) );
+}
+
+sub format_fixed  {
+  my( $self, $size, $unit, $prec ) = @_;
+  $prec ||= 0;
+  $size ||= 0;
+  my $sign = $size < 0 ? q(-) : q();
+  $size = abs $size;
+  $size /= $K;
+  $size /= $K unless $unit eq 'k';
+  return sprintf "%s%0.${prec}f%s", $sign, $size, uc $unit;
+}
+
+sub format_size {
+  my( $self, $size, $prec ) = @_;
+  $prec ||= 0;
+  $size ||= 0;
+  my $sign = $size < 0 ? q(-) : q();
+  $size = abs $size;
+  return '0' if $size == 0;
+  my $index = floor( log( $size / $SIZE_R ) / log $K );
+  return sprintf '%s%d', $sign, $size if $index < 1;
+  $size /= $K**$index;
+  my @suffix = qw/B K M G T P E Z Y/;
+
+  return sprintf "%s%0.${prec}f%s", $sign, $size, $suffix[ $index ];
+}
+
 1;
+
