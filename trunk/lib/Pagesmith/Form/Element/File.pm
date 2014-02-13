@@ -96,6 +96,12 @@ sub new {
   return $self;
 }
 
+sub ignore_file_uploads {
+  my $self = shift;
+  $self->{'ignore_file_uploads'} = 1;
+  return $self;
+}
+
 sub is_empty {
   my $self = shift;
   return 0 unless $self->value ;
@@ -265,6 +271,7 @@ sub extra_file_info {
 
 sub update_from_apr {
   my( $self, $apr ) = @_;
+  return if $self->{'ignore_file_uploads'};
   my @uploads  = $apr->upload( $self->code );
   ## Loop through all the checkboxes and delete attached files...
   my $del_all = $apr->param( $self->code.'_del_all' ) ? 1 : 0;

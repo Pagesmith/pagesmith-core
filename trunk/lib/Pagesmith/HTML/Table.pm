@@ -19,7 +19,6 @@ use base qw(Pagesmith::Support);
 
 use HTML::Entities qw(encode_entities);
 use Const::Fast qw(const);
-use POSIX qw(floor);
 use Scalar::Util qw(blessed);
 use URI::Escape qw(uri_escape_utf8);
 
@@ -27,8 +26,6 @@ const my $TIME_FORMAT => '%H:%M';
 const my $DATE_FORMAT => '%a, %d %b %Y';
 const my $DOFF        => 1_900;
 const my $CENT        => 100;
-const my $K           => 1_024;
-const my $SIZE_R      => 2; ## Numbers up to $K*$SIZE_R are shown in previous size...
 
 sub new {
   my( $class, $r, $options, $columns, $row_data ) = @_;
@@ -365,9 +362,13 @@ sub expand_link {
   if( $url =~ s{\A(.*)\s+}{}mxs ) {
     my %attrs;
     my $attr_values = $1;
+    my $last_key;
     foreach ( split m{\s+}mxs, $attr_values ) {
       if( m{\A(\w+)=(.*)\Z}mxs ) {
         push @{$attrs{$1}}, $2;
+        $last_key = $1;
+      } else {
+        $attrs{$last_key}[-1].=" $_" if $last_key;
       }
     }
     foreach (sort keys %attrs) {
@@ -451,32 +452,6 @@ sub truncate_string {
 }
 
 ## use critic
-
-sub format_fixed  {
-  my( $self, $size, $unit, $prec ) = @_;
-  $prec ||= 0;
-  $size ||= 0;
-  my $sign = $size < 0 ? q(-) : q();
-  $size = abs $size;
-  $size /= $K;
-  $size /= $K unless $unit eq 'k';
-  return sprintf "%s%0.${prec}f&nbsp;%s", $sign, $size, uc $unit;
-}
-
-sub format_size {
-  my( $self, $size, $prec ) = @_;
-  $prec ||= 0;
-  $size ||= 0;
-  my $sign = $size < 0 ? q(-) : q();
-  $size = abs $size;
-  return '0' if $size == 0;
-  my $index = floor( log( $size / $SIZE_R ) / log $K );
-  return sprintf '%s%d', $sign, $size if $index < 1;
-  $size /= $K**$index;
-  my @suffix = qw/B K M G T P E Z Y/;
-
-  return sprintf "%s%0.${prec}f&nbsp;%s", $sign, $size, $suffix[ $index ];
-}
 
 sub _get_val {
   my( $self, $property, $row ) = @_;

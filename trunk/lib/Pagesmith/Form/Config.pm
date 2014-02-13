@@ -34,6 +34,7 @@ my %defaults = (
   'is_action'            => 0,
   'do_not_pass_ref'      => 0,
   'form_title'           => 'Form',
+  'update_on_create'     => 0, # If set takes parameters from URL if form is initially created!
   'progress_caption'     => 'Form progress',
   'required_string'      => '<strong title="required field"><em>Required</em></strong>',
   'optional_string'      => '<em title="optional field">Optional</em>',

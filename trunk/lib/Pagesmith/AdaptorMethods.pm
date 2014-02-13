@@ -18,6 +18,10 @@ use version qw(qv); our $VERSION = qv('0.1.0');
 use feature qw(switch);
 use Const::Fast qw(const);
 
+use Socket qw(inet_ntop AF_INET6 AF_INET);
+use Sys::Hostname qw(hostname);
+use English qw(-no_match_vars $PROGRAM_NAME);
+
 const my $DEFAULTS => {
   'number'  => 0,
   'boolean' => 'no',
@@ -67,8 +71,8 @@ sub make_methods {
   my $create_audit_functions = q();
   my $update_audit_functions = q();
   my ($uid_column) = grep { 'uid' eq (ref $props->{$_} ? $props->{$_}{'type'} : $props->{$_} ) } keys %{$props};
-  my @columns      = grep { 'uid' ne (ref $props->{$_} ? $props->{$_}{'type'} : $props->{$_} ) } keys %{$props};
-
+  my @columns        = grep { 'uid' ne (ref $props->{$_} ? $props->{$_}{'type'} : $props->{$_} ) } keys %{$props};
+  my @unique_columns = grep { ref $props->{$_} && exists $props->{$_}{'unique'} && $props->{$_}{'unique'} } keys %{$props};
   ## no critic (InterpolationOfMetachars)
   if( exists $config->{'audit'} ) { ## We need to add audit columns!!
     if( exists $config->{'audit'}{'user_id'} ) {
@@ -234,17 +238,101 @@ sub {
       return;
     } ),
     ;
-    ## We need to add any additional auto generated methods that are required here!
+    foreach my $type (@unique_columns) {
+      push @methods, create_method( $pkg, 'fetch_'.$singular.'_by_'.$type, sub {
+        my ($self,$val) = @_;
+        my $t = $self->row_hash(
+          'select '.$self->full_column_names.$self->audit_column_names.'
+             from '.$self->select_tables.'
+            where o.'.$type.' = ?', $val );
+        return $self->$make_method( $t ) if $t;
+        return;
+      } );
+    }
+
+## no critic (CommentedOutCode)
+#    foreach ( ) {
+#      push @methods, create_method( $pkg, 'fetch_'.$singular'.'_by_'.$type, sub {
+#        my ($self,$val) = @_;
+#        my $t = $self->row_hash(
+#          'select '.$self->full_column_names.$self->audit_column_names.'
+#             from '.$self->select_tables.'
+#            where o.'.$type.' = ?', $val );
+#        return $self->$make_method( $t ) if $t;
+#        return;
+#      } );
+#
+#      push @methods, create_method( $pkg, 'fetch_'.$plural'.'_by_'.$type, sub {
+#        my ($self,$val) = @_;
+#        return [ map { $self->$make_method( $_ ) } @{$self->row_hash(
+#          'select '.$self->full_column_names.$self->audit_column_names.'
+#             from '.$self->select_tables.'
+#            where o.'.$type.' = ?
+#            order by o.'.$uid_column', $val );
+#      } );
+#    }
+## use critic
+  ## We need to add any additional auto generated methods that are required here!
 
   ## Finally update a method which returns all the updated methods...
 
-  create_method( $pkg, 'auto_methods', sub { my @m = sort @methods; return @m; });
+  create_method( $pkg, 'auto_methods', sub { my @m = sort 'auto_methods', @methods; return @m; });
 
   return;
 }
+
 ## use critic
 
 ## Functions that munge the object configuration structure
 ## Merge in relationships!
+
+sub attach_user {
+  my( $self, $adapt ) = @_;
+  $self->{'_user_details' } = $adapt->{'_user_details'};
+  return $self;
+}
+
+sub user_id {
+#@params (self)
+#@return (string)
+## Returns key to database connection in configuration file
+  my $self = shift;
+  return $self->{'_user_details'}{'id'};
+}
+
+sub user_username {
+#@params (self)
+#@return (string)
+## Returns key to database connection in configuration file
+  my $self = shift;
+  return $self->{'_user_details'}{'username'};
+}
+
+sub user_ip {
+#@params (self)
+#@return (string)
+## Returns key to database connection in configuration file
+  my $self = shift;
+  unless( $self->{'_user_details'}{'ip'} ) {
+    if( exists $self->{'_r'} ) {
+      $self->{'_user_details'}{'ip'} = $self->r->headers_in->{'X-Forwarded-For'} || $self->remote_ip;
+    } else {
+      my $hn = scalar gethostbyname hostname() || 'localhost';
+      $self->{'_user_details'}{'ip'} = inet_ntop( AF_INET, $hn );
+    }
+  }
+  return $self->{'_user_details'}{'ip'};
+}
+
+sub user_useragent {
+#@params (self)
+#@return (string)
+## Returns key to database connection in configuration file
+  my $self = shift;
+  return $self->{'_user_details'}{'useragent'} ||=
+    exists $self->{'_r'} ? $self->r->headers_in->{'User-Agent'} || q(--)
+                         : "$ENV{q(SHELL)} $PROGRAM_NAME"
+                         ;
+}
 
 1;

@@ -69,6 +69,7 @@ sub run {
         )->ok;
       }
       $form_object  = $self->form( $module_name, $self->next_path_info ); ## This is the ID!
+      $form_object->update_from_apr( $self->apr ) if $form_object->option( 'update_on_create' );
     }
     return $self->wrap( 'Form error',
       sprintf q(<p>Unable to generate form object of type '%s'</p>),

@@ -229,7 +229,7 @@ sub download {
 
 sub download_as {
   my( $self, $filename ) = @_;
-  $self->r->headers_out->set('Content-Disposition' => 'attachment; filename='.$filename );
+  $self->r->headers_out->set('Content-Disposition' => 'attachment; filename="'.$filename.q(") );
   return $self;
 }
 
