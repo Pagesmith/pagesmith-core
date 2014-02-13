@@ -382,6 +382,10 @@
             h: window.innerHeight || (de&&de.clientHeight) || document.body.clientHeight };
   }
 
+  $('body').on('click','.confirm-click',function() {
+    return window.confirm( $.metadata && $(this).metadata() && $(this).metadata().msg ? $(this).metadata().msg : 'Are you sure' );
+  });
+
   $(window).on('resize', function() {
     $('.vert-sizing').each(function(){
       var config = $.extend({},
