@@ -154,7 +154,7 @@
     }
   };
 
-
+/* jshint -W074 */
   var FormValidator = {
     colours: {
       required: '#fec',
@@ -185,6 +185,7 @@
     isFloat:   function (s) { return s.match(/^[\-+]?(\d+\.\d+|\d+\.?|\.\d+)?([Ee][\-+]?\d+)?$/); },
     isEmail:   function (s) { return s.match(/^[^@]+@[^@.:]+[:.][^@]+$/); },
     isURL:     function (s) { return s.match(/^https?:\/\/\w.*$/); },
+    isURI:     function (s) { return s.match(/^(ftp|https?):\/\/\w.*$/); },
     isPass:    function (s) { return s.match(/^\S{6,32}$/); },
     isStrong:  function (s, n) { return this.password_strength(s) < n ? 0 : 1; }, // Requires 3 of lc, uc, digit, symbol
     isCode:    function (s) { return s.match(/^\S+$/); },
@@ -242,8 +243,14 @@
             return [this.isFloat(s),  []];
           case 'email':
             return [this.isEmail(s),  []];
+          case 'url_fetch_title':
+            return [this.isURL(s),    []];
           case 'url':
             return [this.isURL(s),    []];
+          case 'uri_fetch_title':
+            return [this.isURI(s),    []];
+          case 'uri':
+            return [this.isURI(s),    []];
           case 'password':
             return [this.isPass(s),   []];
           case 'code':
@@ -301,7 +308,10 @@
     load_url: function (el) {
       var val = this.trim(el.val());
       el.closest('dd').find('p').remove();
-      el.closest('dd').append('<p><span class="ajax" title="/action/component/Link?pars=-get_title+' + escape(val) + '">Retrieving title</span></p>');
+      if( val && val.match(/^https?:/) ) {
+        el.closest('dd').append('<p><span class="ajax" title="/action/component/Link?pars=-get_title+' + escape(val) + '">Retrieving title</span></p>');
+      }
+      return;
     },
     check: function (el) {
       var required     = el.hasClass('required'),
@@ -619,7 +629,7 @@
     $('body').on(
       // "url" elements do a check of the URL
       'blur',
-      'form ._url',
+      'form ._fetch_title',
       function () {
         return FormValidator.load_url($(this));
       }
@@ -798,3 +808,4 @@
     },100 );
   });
 }(jQuery));
+/* jshint +W074 */
