@@ -69,7 +69,7 @@ sub new {
     'ip'              => ':::::',
     'writeable'       => 0,
     'lock_expiry'     => $DEFAULT_EXPIRY,
-    'lock_timeouit'   => $DEFAULT_TIMEOUT,
+    'lock_timeout'    => $DEFAULT_TIMEOUT,
   };
 
   bless $self, $class;
