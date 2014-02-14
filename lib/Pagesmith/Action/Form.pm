@@ -87,6 +87,7 @@ sub run {
   $form_object->config->set_option( 'is_action', 1 ); ## Required so page can get wrapped later!
   $self->{'form_object'} = $form_object;
 
+  $self->set_navigation_path( $form_object->option( 'navigation_path' ) );
   return $self->run_view  if $form_object->is_completed;
   return $self->r->method eq 'POST' ? $self->run_post : $self->run_get;
 }
