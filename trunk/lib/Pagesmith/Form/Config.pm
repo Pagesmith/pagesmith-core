@@ -26,6 +26,7 @@ my %defaults = (
   'progress_panel'       => 0, # No progress panel (useful for action based forms)
   'progress_navigation'  => 1, # Include navigation links in progress panel
   'confirmation_page'    => 1, # Include
+  'navigation_path'      => q(/),
   'paper_link'           => 0, # Do not include
   'jumbo_link'           => 0, # Jumbo link
   'back_button'          => 1, # Show
