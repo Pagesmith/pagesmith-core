@@ -9,6 +9,8 @@ package Pagesmith::Adaptor::Users;
 ## Revision       : $Revision$
 ## Repository URL : $HeadURL$
 
+## MOVED to auth.sanger.ac.uk/lib/Pagesmith/Adaptor/Auth/Users
+
 use strict;
 use warnings;
 use utf8;
