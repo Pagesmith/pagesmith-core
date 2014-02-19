@@ -1,4 +1,4 @@
-package Pagesmith::Utils::CreateObjectMethods;
+package Pagesmith::Utils::ObjectCreator;
 
 ## Base class for auto-creating methods from configuration...!
 
@@ -20,7 +20,13 @@ use Const::Fast qw(const);
 use Pagesmith::Root;
 use base qw(Exporter);
 
-our @EXPORT_OK = qw(make_adaptor_methods make_rel_adaptor_methods make_object_methods bake_model);
+our @EXPORT_OK = qw(
+  bake_adaptor
+  bake_relationship
+  bake_object
+  bake_model
+  bake_base_adaptor
+);
 our %EXPORT_TAGS = ( 'ALL' => \@EXPORT_OK );
 
 const my $DEFAULTS => {
@@ -35,10 +41,11 @@ my $root = Pagesmith::Root->new;
 ## Functions to define accessors for objects....
 
 sub create_method {
-  my ( $pkg, $fn, $sub ) = @_;
+  my ( $pkg, $fn, $sub, $flag ) = @_;
   my $method = $pkg.q(::).$fn;
   no strict 'refs'; ## no critic (NoStrict)
   if( defined &{$method} ) {
+    return if defined $flag && $flag eq 'no_std';
     warn qq(Method "$fn" already exists on $pkg - defining "std_$fn"\n);
     $fn = "std_$fn";
     $method = $pkg.q(::).$fn;
@@ -52,12 +59,71 @@ sub create_method {
   return $fn;
 }
 
-sub make_rel_adaptor_methods {
+sub bake_relationship {
+  my( $config ) = @_;
+  my $pkg = caller 0;
+  ## no critic (NoStrict)
+  if( ! defined $config ) {
+    my ( $ns, $ot ) = $pkg =~ m{(.*)::(.*)}mxs;
+    $ns =~ s{\APagesmith::Adaptor}{Pagesmith::Support}mxs;
+    $ns.='::my_defn';
+    no strict 'refs';
+    $config = &{$ns}( $ot );
+    use strict;
+  } elsif( ! ref $config ) {
+    my $ot = $config;
+    (my $ns = substr $pkg, 0, - length $ot) =~ s{\APagesmith::Adaptor}{Pagesmith::Support}mxs;
+    $ns .='my_defn';
+    no strict 'refs';
+    $config = &{$ns}( $ot );
+    use strict;
+  }
+  ## use critic
+my $Z = << 'XX';
+  use Data::Dumper qw(Dumper);
+warn "!pre!",Dumper( $config );
+  return;
+  my @methods = (
+    create_method( $pkg, 'store', sprintf q(
+    sub {
+      my( $self, $params ) = @_;
+      my $sql = 'insert ignore into %s ( %s ) values ( %s )';
+      return $self->query( $sql, %s ) || $self->update( $params );
+    }), ),
+    create_method( $pkg, 'store', sprintf q(
+    sub {
+      my( $self, $params ) = @_;
+      my $sql = 'update %s set %s where %s = ?';
+      return $self->query( $sql, %s );
+    ]), ),
+    create_method( $pkg, 'data_columns', sub { return $data_columns; }),
+  );
 
+  ## Generate
+  ##  * store & update methods...
+
+  ##  * data_columns;
+  ##  * get_XX
+  ##  * get_XX_by_YY...
+  ##  * get_all_XX
+XX
+  return;
+}
+
+sub bake_base_adaptor {
+  my $pkg = caller 0;
+  ( my $ns  = $pkg ) =~ s{Pagesmith::Adaptor::}{}mxs;
+  (my $db_key = lc $ns) =~ s{::}{_}mxsg;
+  my @methods = (
+    create_method( $pkg, 'base_class',      sub { return $ns; } ),
+    create_method( $pkg, 'connection_pars', sub { return $db_key; } ),
+  );
+  create_method( $pkg, 'auto_methods', sub { my @m = sort 'auto_methods', @methods; return @m; });
+  return;
 }
 
 ## no critic (ExcessComplexity)
-sub make_adaptor_methods {
+sub bake_adaptor {
   my( $config ) = @_;
   my $pkg = caller 0;
   ## no critic (NoStrict)
@@ -194,10 +260,13 @@ sub make_adaptor_methods {
 
   if( exists $config->{'remove'} && $config->{'remove'} ) {
     my $delete_sql = sprintf "delete from $singular where $uid_column = ?";
+
     push @methods, create_method( $pkg, 'remove', sub {
       my( $self, $o ) = @_;
       $o = $o->uid if ref $o;
-      return $self->query( $delete_sql, $o );
+      my $flag = $self->query( $delete_sql, $o );
+      $o->clear_uid if $flag;
+      return $flag;
     });
   }
 
@@ -311,7 +380,6 @@ sub {
   ## We need to add any additional auto generated methods that are required here!
 
   ## Finally update a method which returns all the updated methods...
-
   create_method( $pkg, 'auto_methods', sub { my @m = sort 'auto_methods', @methods; return @m; });
 
   return;
@@ -400,15 +468,22 @@ sub define_enum {
 
 sub define_index {
   my( $pkg, $k ) = @_;
-  return create_method( $pkg, q(set_).$k, sub {
-    my ( $self, $value ) = @_;
-    if( $value <= 0 ) {
-      warn "Trying to set non positive value for '$k'\n";
-    } else {
-      $self->{'obj'}{$k} = $value;
-    }
-    return $self;
-  } );
+  return (
+    create_method( $pkg, q(set_).$k, sub {
+      my ( $self, $value ) = @_;
+      if( $value <= 0 ) {
+        warn "Trying to set non positive value for '$k'\n";
+      } else {
+        $self->{'obj'}{$k} = $value;
+      }
+      return $self;
+    } ),
+    create_method( $pkg, q(clear_).$k, sub {
+      my $self = shift;
+      $self->{'obj'}{$k} = 0;
+      return $self;
+    } ),
+  );
 }
 
 sub define_set {
@@ -430,10 +505,17 @@ sub define_get {
 
 sub define_uid {
   my( $pkg, $k ) = @_;
-  return create_method( $pkg, q(uid), sub {
-    my $self = shift;
-    return $self->{'obj'}{$k};
-  } );
+  return (
+    create_method( $pkg, q(uid), sub {
+      my $self = shift;
+      return $self->{'obj'}{$k};
+    } ),
+    create_method( $pkg, 'clear_uid', sub {
+      my $self = shift;
+      $self->{'obj'}{$k} = 0;
+      return $self;
+    } ),
+  );
 }
 
 sub define_related_get_set {
@@ -484,7 +566,7 @@ sub define_related_get_rel {
   } );
 }
 
-sub make_object_methods {
+sub bake_object {
   my( $config ) = @_;
   my $pkg = caller 0;
 
@@ -559,6 +641,9 @@ sub make_object_methods {
 
 sub parse_defn {
   my ( $defn, $type ) = @_;
+  if( exists $defn->{'relationships'}{$type} ) {
+    return $defn->{'relationships'}{$type};
+  }
   my $d = $defn->{'objects'}{$type};
   my $definition = {
     'type'           => $type,
@@ -600,7 +685,9 @@ sub bake_model {
 
   my $DEFN = shift;
   my $pkg = caller 0;
+  (my $ns = $pkg) =~ s{Pagesmith::Support::}{}mxs;
   my @methods = (
+    create_method( $pkg, 'base_class', sub { return $ns; } ),
     create_method( $pkg, 'my_obj_types', sub {
       return unless exists $DEFN->{'objects'};
       my @m = sort keys %{$DEFN->{'objects'}};
