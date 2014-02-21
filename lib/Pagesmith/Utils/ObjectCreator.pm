@@ -124,24 +124,31 @@ sub bake_base_adaptor {
 
 ## no critic (ExcessComplexity)
 sub bake_adaptor {
-  my( $config ) = @_;
+  my( $config, $mail_domain ) = @_;
   my $pkg = caller 0;
   ## no critic (NoStrict)
   if( ! defined $config ) {
     my ( $ns, $ot ) = $pkg =~ m{(.*)::(.*)}mxs;
     $ns =~ s{\APagesmith::Adaptor}{Pagesmith::Support}mxs;
-    $ns.='::my_defn';
+    my $meth      = $ns.'::my_defn';
     no strict 'refs';
-    $config = &{$ns}( $ot );
+    $config       = &{$meth}( $ot );
+    $meth         = $ns.'::mail_domain';
+    $mail_domain  = &{$meth}( );
     use strict;
   } elsif( ! ref $config ) {
     my $ot = $config;
     (my $ns = substr $pkg, 0, - length $ot) =~ s{\APagesmith::Adaptor}{Pagesmith::Support}mxs;
-    $ns .='my_defn';
+    my $meth      = $ns.'::my_defn';
     no strict 'refs';
-    $config = &{$ns}( $ot );
+    $config       = &{$meth}( $ot );
+    use strict;
+    $meth         = $ns.'::mail_domain';
+    no strict 'refs';
+    $mail_domain  = &{$meth}( );
     use strict;
   }
+
   ## use critic
 
   my @methods;
@@ -162,6 +169,12 @@ sub bake_adaptor {
   my ($uid_column) = grep { 'uid' eq (ref $props->{$_} ? $props->{$_}{'type'} : $props->{$_} ) } keys %{$props};
   my @columns        = grep { 'uid' ne (ref $props->{$_} ? $props->{$_}{'type'} : $props->{$_} ) } keys %{$props};
   my @unique_columns = grep { ref $props->{$_} && exists $props->{$_}{'unique'} && $props->{$_}{'unique'} } keys %{$props};
+  my @enum_columns   = grep { 'enum' eq (ref $props->{$_} ? $props->{$_}{'type'} : $props->{$_} ) } keys %{$props};
+  foreach (@enum_columns) {
+    my $pl = exists $props->{$_}{'plural'} ? $props->{$_}{'plural'} : $_.'s';
+#    warn ">> $_ -> $pl <<";
+    push @methods, define_enum_adaptor( $pkg, $_, $pl, $props->{$_}{'values'} );
+  }
   ## no critic (InterpolationOfMetachars)
   if( exists $config->{'audit'} ) { ## We need to add audit columns!!
     if( exists $config->{'audit'}{'user_id'} ) {
@@ -263,9 +276,9 @@ sub bake_adaptor {
 
     push @methods, create_method( $pkg, 'remove', sub {
       my( $self, $o ) = @_;
-      $o = $o->uid if ref $o;
-      my $flag = $self->query( $delete_sql, $o );
-      $o->clear_uid if $flag;
+      my $o_id = ref $o ? $o->uid : $o;
+      my $flag = $self->query( $delete_sql, $o_id );
+      $o->clear_uid if ref $o && $flag;
       return $flag;
     });
   }
@@ -274,6 +287,7 @@ sub bake_adaptor {
 
     ## Light weight creator methods!
 
+    create_method( $pkg, 'mail_domain', sub { return $mail_domain; } ),
     create_method( $pkg, $make_method, sub {
       my($self,$hashref,$partial)=@_;
       return $obj_pkg->new( $self, $hashref, $partial );
@@ -318,12 +332,12 @@ sub {
 sub {
   my( $self, $o ) = @_;
   %5$s
-  return $o->set_%1$s_id( $self->query( '
+  return $self->query( '
     update `%1$s`
        set %2$s
      where %3$s = ?',
      %4$s,
-    $o->uid ) );
+    $o->uid );
 }), $singular,
       ( join qq(,\n           ), map { $_.q( = ?) } @columns, @update_audit_columns ),
       $uid_column,
@@ -416,7 +430,7 @@ sub define_boolean {
 }
 
 sub define_enum {
-  my( $pkg, $k, $default, $values ) = @_;
+  my( $pkg, $k, $pl, $default, $values ) = @_;
   my $values_hash = 'HASH' eq ref $values
                   ? $values
                   : { 'HASH'  eq ref $values->[0] ? map { $_->{'value'} => $_->{'name'} } @{$values}
@@ -432,9 +446,6 @@ sub define_enum {
     : [sort { $values->{$a} cmp $values->{$b} } %{$values} ];
   my $ordered_hash = [ map { [ $_ => $values_hash->{$_} ] } @{$values_ordered} ];
   my $ordered_hr   = [ map { $values_hash->{$_} } @{$values_ordered} ];
-  my $method_hr  = $pkg, q(get_).$k.q(_hr);
-  my $method_all_hr     = $pkg, q(all_).$k.q(_hr);
-  my $method_all_sorted = $pkg, q(all_).$k.q(_sorted);
 
   return (
     create_method( $pkg, q(is_).$k, sub {
@@ -454,10 +465,41 @@ sub define_enum {
       my $self = shift;
       return $values_hash->{$self->{'obj'}{$k}||$default};
     } ),
-    create_method( $pkg, q(all_).$k.q(_hr), sub {
+    create_method( $pkg, q(all_).$pl.q(_hr), sub {
       return $ordered_hr;
     } ),
-    create_method( $pkg, q(all_).$k.q(_sorted), sub {
+    create_method( $pkg, q(all_).$pl.q(_sorted), sub {
+      return $ordered_hash;
+    } ),
+    create_method( $pkg, $k.q(_hr), sub {
+      return map { exists $values_hash->{$_} ? $values_hash->{$_} : () } @_;
+    } ),
+  );
+}
+
+sub define_enum_adaptor {
+  my( $pkg, $k, $pl, $values ) = @_;
+  my $values_hash = 'HASH' eq ref $values
+                  ? $values
+                  : { 'HASH'  eq ref $values->[0] ? map { $_->{'value'} => $_->{'name'} } @{$values}
+                    : 'ARRAY' eq ref $values->[0] ? map { $_->[0]       => $_->[1]      } @{$values}
+                    :                               map { $_            => $_           } @{$values}
+                    };
+  my $values_ordered =  'ARRAY' eq ref $values
+    ? (
+        'HASH'  eq ref $values->[0] ? [ map {$_->{'value'}} @{$values} ]
+      : 'ARRAY' eq ref $values->[0] ? [ map {$_->[0]}       @{$values} ]
+      :                               $values,
+    )
+    : [sort { $values->{$a} cmp $values->{$b} } %{$values} ];
+  my $ordered_hash = [ map { [ $_ => $values_hash->{$_} ] } @{$values_ordered} ];
+  my $ordered_hr   = [ map { $values_hash->{$_} } @{$values_ordered} ];
+
+  return (
+    create_method( $pkg, q(all_).$pl.q(_hr), sub {
+      return $ordered_hr;
+    } ),
+    create_method( $pkg, q(all_).$pl.q(_sorted), sub {
       return $ordered_hash;
     } ),
     create_method( $pkg, $k.q(_hr), sub {
@@ -606,7 +648,11 @@ sub bake_object {
 
     for( $type ) {                             ## Methods for different object types...
       when( $_ eq 'boolean' )           { push @methods, define_boolean(  $pkg, $k, $default ); }
-      when( $_ eq 'enum'    )           { push @methods, define_enum(     $pkg, $k, $default, $defn->{'values'} ); }
+      when( $_ eq 'enum'    )           {
+        my $pl = exists $defn->{'plural'} ? $defn->{'plural'} : $k.'s';
+#        warn ">> $k -> $pl <<";
+        push @methods, define_enum(     $pkg, $k, $pl, $default, $defn->{'values'} );
+      }
       when( $_ eq 'id' || $_ eq 'uid' ) { push @methods, define_index(    $pkg, $k ); }
       default                           { push @methods, define_set(      $pkg, $k ); }
     }
@@ -686,7 +732,9 @@ sub bake_model {
   my $DEFN = shift;
   my $pkg = caller 0;
   (my $ns = $pkg) =~ s{Pagesmith::Support::}{}mxs;
+  my $mail_domain = exists $DEFN->{'mail_domain'} ? $DEFN->{'mail_domain'} : q(-);
   my @methods = (
+    create_method( $pkg, 'mail_domain', sub { return $mail_domain; } ),
     create_method( $pkg, 'base_class', sub { return $ns; } ),
     create_method( $pkg, 'my_obj_types', sub {
       return unless exists $DEFN->{'objects'};
@@ -697,6 +745,9 @@ sub bake_model {
       return unless exists $DEFN->{'relationships'};
       my @m = sort keys %{$DEFN->{'relationships'}};
       return @m;
+    } ),
+    create_method( $pkg, 'full_defn', sub {
+      return $DEFN;
     } ),
     create_method( $pkg, 'my_defn', sub {
       my $type = shift;
