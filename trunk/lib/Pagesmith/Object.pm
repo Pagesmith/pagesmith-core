@@ -1,16 +1,14 @@
 package Pagesmith::Object;
 
-## Base class for other web-objects...
-## Author         : js5
-## Maintainer     : js5
-## Created        : 2009-08-12
+## Base class for auto-creating methods from configuration...!
+
+## Author         : James Smith <js5>
+## Maintainer     : James Smith <js5>
+## Created        : Thu, 23 Jan 2014
 ## Last commit by : $Author$
 ## Last modified  : $Date$
 ## Revision       : $Revision$
 ## Repository URL : $HeadURL$
-
-## Really naughty as it exposes SQL functionality of adaptor
-## But this makes it easier for development!
 
 use strict;
 use warnings;
@@ -18,179 +16,174 @@ use utf8;
 
 use version qw(qv); our $VERSION = qv('0.1.0');
 
-use base qw(Pagesmith::Root);
+use base qw(Pagesmith::BaseObject);
 
-sub init {    # Stub class that does nothing!
+## Now we have the standard methods for this sub-class of objects which we want to define
+## These are added to the base class!!
+sub init {
+  my( $self, $hashref, $partial ) = @_;
+  $self->{'obj'} = {%{$hashref}};
+  $self->flag_as_partial if defined $partial && $partial;
+  return;
 }
 
-sub new {
-  my ( $class, $adpt, @pars ) = @_;
-  my $self = { '_adpt' => $adpt, 'ip' => undef, 'useragent' => undef, 'partial' => 0 };
-  bless $self, $class;
-  $self->init(@pars);
-  return $self;
-}
-
-sub adaptor {
+sub type {
+#@param ($self)
+#@return (String);
+## Gets the type of object (basically anything after the last ::)
   my $self = shift;
-  return $self->{'_adpt'};
-}
-sub sv {
-  my ( $self, @pars ) = @_;
-  return $self->{'_adpt'}->sv(@pars);
+  my ( $type ) = (ref $self) =~ m{([^:]+)\Z}mxsg;
+  return $type;
 }
 
-sub col {
-  my ( $self, @pars ) = @_;
-  return $self->{'_adpt'}->col(@pars);
-}
-
-sub hash {
-  my ( $self, @pars ) = @_;
-  return $self->{'_adpt'}->hash(@pars);
-}
-
-sub row {
-  my ( $self, @pars ) = @_;
-  return $self->{'_adpt'}->row(@pars);
-}
-
-sub row_hash {
-  my ( $self, @pars ) = @_;
-  return $self->{'_adpt'}->row_hash(@pars);
-}
-
-sub all {
-  my ( $self, @pars ) = @_;
-  return $self->{'_adpt'}->all(@pars);
-}
-
-sub all_hash {
-  my ( $self, @pars ) = @_;
-  return $self->{'_adpt'}->all_hash(@pars);
-}
-
-sub query {
-  my ( $self, @pars ) = @_;
-  return $self->{'_adpt'}->query(@pars);
-}
-
-sub now {
+sub get_created_at {
   my $self = shift;
-  return $self->{'_adpt'}->now;
-}
-
-sub last_id {
-  my $self = shift;
-  return $self->{'_adpt'}->dbh->{'mysql_insertid'};
-}
-
-sub id {
-  my $self = shift;
-  return $self->{'id'};
-}
-
-sub set_id {
-  my( $self, $id ) = @_;
-  return $self->{'id'} = $id;
-}
-
-sub store {
-  my $self = shift;
-  return $self->{'_adpt'}->store($self);
-}
-
-sub created_at {
-  my $self = shift;
-  return $self->{'created_at'};
+  return $self->{'obj'}{'created_at'};
 }
 
 sub set_created_at {
   my( $self, $value ) = @_;
-  $self->{'created_at'} = $value;
+  $self->{'obj'}{'created_at'} = $value;
   return $self;
 }
 
-sub created_by {
+sub get_created_by_id {
   my $self = shift;
-  return $self->{'created_by'}||q(--);
-}
-
-sub created_by_id {
-  my $self = shift;
-  return $self->{'created_by_id'};
-}
-
-sub set_created_by {
-  my( $self, $value ) = @_;
-  $self->{'created_by'} = $value;
-  return $self;
+  return $self->{'obj'}{'created_by_id'}||0;
 }
 
 sub set_created_by_id {
   my( $self, $value ) = @_;
-  $self->{'created_by_id'} = $value;
+  $self->{'obj'}{'created_by_id'} = $value;
   return $self;
 }
 
-sub updated_at {
+sub get_created_by {
   my $self = shift;
-  return $self->{'updated_at'};
+  return $self->{'obj'}{'created_by'}||0;
 }
 
-sub updated_by {
-  my $self = shift;
-  return $self->{'updated_by'}||q(--);
+sub set_created_by {
+  my( $self, $value ) = @_;
+  $self->{'obj'}{'created_by'} = $value;
+  return $self;
 }
 
-sub updated_by_id {
+sub get_created_ip {
   my $self = shift;
-  return $self->{'updated_by_id'};
+  return $self->{'obj'}{'created_ip'};
+}
+
+sub set_created_ip {
+  my( $self, $value ) = @_;
+  $self->{'obj'}{'ip'} = $value;
+  return $self;
+}
+
+sub get_created_useragent {
+  my $self = shift;
+  return $self->{'obj'}{'created_useragent'};
+}
+
+sub set_created_useragent {
+  my( $self, $value ) = @_;
+  $self->{'obj'}{'created_useragent'} = $value;
+  return $self;
+}
+
+sub get_updated_at {
+  my $self = shift;
+  return $self->{'obj'}{'updated_at'};
 }
 
 sub set_updated_at {
   my( $self, $value ) = @_;
-  $self->{'updated_at'} = $value;
+  $self->{'obj'}{'updated_at'} = $value;
   return $self;
+}
+
+sub get_updated_by {
+  my $self = shift;
+  return $self->{'obj'}{'updated_by'}||0;
 }
 
 sub set_updated_by {
   my( $self, $value ) = @_;
-  $self->{'updated_by'} = $value;
+  $self->{'obj'}{'updated_by'} = $value;
   return $self;
+}
+
+sub get_updated_by_id {
+  my $self = shift;
+  return $self->{'obj'}{'updated_by_id'}||0;
 }
 
 sub set_updated_by_id {
   my( $self, $value ) = @_;
-  $self->{'updated_by_id'} = $value;
+  $self->{'obj'}{'updated_by_id'} = $value;
   return $self;
 }
 
-sub ip {
+sub get_updated_ip {
   my $self = shift;
-  return $self->{'ip'};
+  return $self->{'obj'}{'updated_ip'};
 }
 
-sub set_ip {
+sub set_updated_ip {
   my( $self, $value ) = @_;
-  $self->{'ip'} = $value;
+  $self->{'obj'}{'ip'} = $value;
   return $self;
 }
 
-sub useragent {
+sub get_updated_useragent {
   my $self = shift;
-  return $self->{'useragent'};
+  return $self->{'obj'}{'updated_useragent'};
 }
 
-sub set_useragent {
+sub set_updated_useragent {
   my( $self, $value ) = @_;
-  $self->{'useragent'} = $value;
+  $self->{'obj'}{'updated_useragent'} = $value;
   return $self;
 }
 
-sub set_ip_and_useragent {
+sub store {
   my $self = shift;
-  $self->adaptor->set_ip_and_useragent( $self );
+  return $self->adaptor->store( $self );
+}
+
+sub get_other_adaptor {
+  my( $self, $type ) = @_;
+  return $self->adaptor->get_other_adaptor( $type );
+}
+
+sub set_attribute {
+  my ( $self, $name, $value ) = @_;
+  $self->{'attributes'}||={};
+  $self->{'attributes'}{$name} = $value;
+  return $self;
+}
+
+sub get_attribute {
+  my ( $self, $name, $default ) = @_;
+  return exists $self->{'attributes'}{$name} ? $self->{'attributes'}{$name} : $default;
+}
+
+sub get_attribute_names {
+  my $self = shift;
+  $self->{'attributes'}||={};
+  return keys %{$self->{'attributes'}};
+}
+
+sub unset_attribute {
+  my( $self, $name ) = @_;
+  $self->{'attributes'}||={};
+  return unless exists $self->{'attributes'}{$name};
+  return delete $self->{'attributes'}{$name};
+}
+
+sub reset_attributes {
+  my $self = shift;
+  $self->{'attributes'} = {};
   return $self;
 }
 

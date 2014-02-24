@@ -15,7 +15,7 @@ use utf8;
 
 use version qw(qv); our $VERSION = qv('0.1.0');
 
-use base qw(Pagesmith::Object);
+use base qw(Pagesmith::BaseObject);
 
 sub new {
   my($class,$adaptor,$object_data) = @_;
@@ -126,4 +126,99 @@ sub objdata {
 
 sub DESTROY {
 }
+
+sub created_at {
+  my $self = shift;
+  return $self->{'created_at'};
+}
+
+sub set_created_at {
+  my( $self, $value ) = @_;
+  $self->{'created_at'} = $value;
+  return $self;
+}
+
+sub created_by {
+  my $self = shift;
+  return $self->{'created_by'}||q(--);
+}
+
+sub created_by_id {
+  my $self = shift;
+  return $self->{'created_by_id'};
+}
+
+sub set_created_by {
+  my( $self, $value ) = @_;
+  $self->{'created_by'} = $value;
+  return $self;
+}
+
+sub set_created_by_id {
+  my( $self, $value ) = @_;
+  $self->{'created_by_id'} = $value;
+  return $self;
+}
+
+sub updated_at {
+  my $self = shift;
+  return $self->{'updated_at'};
+}
+
+sub updated_by {
+  my $self = shift;
+  return $self->{'updated_by'}||q(--);
+}
+
+sub updated_by_id {
+  my $self = shift;
+  return $self->{'updated_by_id'};
+}
+
+sub set_updated_at {
+  my( $self, $value ) = @_;
+  $self->{'updated_at'} = $value;
+  return $self;
+}
+
+sub set_updated_by {
+  my( $self, $value ) = @_;
+  $self->{'updated_by'} = $value;
+  return $self;
+}
+
+sub set_updated_by_id {
+  my( $self, $value ) = @_;
+  $self->{'updated_by_id'} = $value;
+  return $self;
+}
+
+sub ip {
+  my $self = shift;
+  return $self->{'ip'};
+}
+
+sub set_ip {
+  my( $self, $value ) = @_;
+  $self->{'ip'} = $value;
+  return $self;
+}
+
+sub useragent {
+  my $self = shift;
+  return $self->{'useragent'};
+}
+
+sub set_useragent {
+  my( $self, $value ) = @_;
+  $self->{'useragent'} = $value;
+  return $self;
+}
+
+sub set_ip_and_useragent {
+  my $self = shift;
+  $self->adaptor->set_ip_and_useragent( $self );
+  return $self;
+}
+
 1;

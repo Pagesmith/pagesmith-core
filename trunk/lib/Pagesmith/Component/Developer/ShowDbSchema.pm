@@ -20,7 +20,7 @@ use Const::Fast qw(const);
 
 use base qw(Pagesmith::Component);
 
-use Pagesmith::Adaptor;
+use Pagesmith::BaseAdaptor;
 
 const my $DEFAULT_PAGE => 25;
 
@@ -59,7 +59,7 @@ sub execute {
   my $self = shift;
 
   my $db = $self->next_par;
-  my $dba = Pagesmith::Adaptor->new( $db );
+  my $dba = Pagesmith::BaseAdaptor->new( $db );
   return $self->execute_mysql(  $db, $dba ) if $dba->is_type( 'mysql'  );
   return $self->execute_oracle( $db, $dba ) if $dba->is_type( 'oracle' );
   return '<h3>Unkown schema!</h3>';

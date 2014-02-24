@@ -15,7 +15,7 @@ use utf8;
 
 use version qw(qv); our $VERSION = qv('0.1.0');
 
-use base qw(Pagesmith::Adaptor);
+use base qw(Pagesmith::BaseAdaptor);
 
 
 my %filter_map = (
@@ -216,7 +216,7 @@ sub store {
       (created_at,created_by,updated_at,updated_by,status,
        start_date, end_date, regclose_date, start_time, end_time,
        title, url, type_id, category_id, location_id, title_id, firstname,
-       lastname, affiliation, host, precis, _search_) values 
+       lastname, affiliation, host, precis, _search_) values
        (?,?,?,?,?,
         ?,?,?,?,?,
         ?,?,?,?,?,?,?,

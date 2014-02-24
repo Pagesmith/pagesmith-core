@@ -23,7 +23,6 @@ use HTML::Entities qw(encode_entities);
 use POSIX qw(floor);
 use Apache2::Request;
 
-use Pagesmith::Adaptor;
 use Pagesmith::Cache;
 use Pagesmith::ConfigHash qw(get_config);
 use Pagesmith::Session::User;
@@ -72,12 +71,6 @@ sub get_adaptor {
   return $self->dynamic_use( $module ) ? $module->new( @params, $self->r ) : undef;
 }
 
-sub get_adaptor_conn {
-  my( $self, $conn, @params ) = @_;
-  return Pagesmith::Adaptor->new( $conn, $self->r );
-}
-
-
 sub user {
   my( $self, $r ) = @_;
   unless( defined $self->{'user'} ) {
@@ -104,6 +97,11 @@ sub set_navigation_path {
   return unless $self->r;
   $self->r->headers_out->set( 'X-Pagesmith-NavPath', $path );
   return $self;
+}
+
+sub is_web {
+  my $self = shift;
+  return $self->r ? 1 : 0;
 }
 
 sub r {
@@ -287,6 +285,13 @@ sub panel {
   return sprintf '<div class="%s">%s</div>', "@class", join q(), @html;
 }
 
+sub links_panel {
+  my( $self, $heading, $links ) = @_;
+  return unless @{$links};
+  return $self->panel( sprintf '<h3>%s</h3><ul>%s</ul>',
+    $heading, join q(), map { sprintf '<li><a href="%s">%s</a></li>', @{$_} } @{$links} );
+}
+
 sub format_date_range {
   my( $self, $start, $end ) = @_;
   return time2str( '%o %h %Y', $self->munge_date_time( $start ) ) if $start eq $end;
@@ -326,5 +331,14 @@ sub format_size {
   return sprintf "%s%0.${prec}f%s", $sign, $size, $suffix[ $index ];
 }
 
+sub button_links {
+  my( $self, @links ) = @_;
+  my @link_pairs;
+  push @link_pairs, [ splice @links,0,2 ] while @links;
+  return sprintf '<p class="r">%s</p>',
+    join '&nbsp; ',
+    map { sprintf '<a class="btt no-img" href="%s">%s</a>', $self->encode( $_->[0] ), $self->encode( $_->[1] ) }
+        @link_pairs;
+}
 1;
 

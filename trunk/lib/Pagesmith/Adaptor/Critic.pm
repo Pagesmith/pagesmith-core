@@ -17,7 +17,7 @@ use utf8;
 use version qw(qv); our $VERSION = qv('0.1.0');
 use utf8;
 
-use base qw(Pagesmith::Adaptor);
+use base qw(Pagesmith::Base::Adaptor);
 
 sub connection_pars {
   return ( 'dbi:mysql:critic:web-vm-db-dev:3302', 'critic_rw', 'Cr171Qz' );

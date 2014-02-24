@@ -15,7 +15,7 @@ use utf8;
 
 use version qw(qv); our $VERSION = qv('0.1.0');
 
-use base qw(Pagesmith::Adaptor);
+use base qw(Pagesmith::BaseAdaptor);
 
 use DBI;
 use URI::Escape qw(uri_escape_utf8);

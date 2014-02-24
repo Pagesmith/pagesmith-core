@@ -35,7 +35,7 @@ use Pagesmith::Form::Config;
 use Pagesmith::Form::Message;
 use Pagesmith::Form::SubmitButton;
 use Pagesmith::Form::ResetButton;
-use Pagesmith::Adaptor;
+use Pagesmith::BaseAdaptor;
 
 use Pagesmith::Cache;
 use Pagesmith::Core       qw(safe_md5);
@@ -212,7 +212,7 @@ sub email_header_encode {
 sub create_adaptor {
   my( $self, $type, $db_info ) = @_;
   my $adaptor = defined $type
-              ? Pagesmith::Adaptor->new( $type )
+              ? Pagesmith::BaseAdaptor->new( $type )
               : $self->get_adaptor(      $db_info )
               ;
   return unless $adaptor;
