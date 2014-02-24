@@ -22,7 +22,7 @@ use APR::URI;
 use English qw(-no_match_vars $EVAL_ERROR);
 use Const::Fast qw(const);
 
-const my %WRAPPABLE_STATUSES => map { ($_=>1) } qw(0 200 400 401 403 404 405 500 501 502 503);
+const my %WRAPPABLE_STATUSES => map { ($_=>1) } qw(0 200 400 401 403 404 405 410 500 501 502 503);
 
 use Pagesmith::ConfigHash qw(can_cache can_name_space);
 use Pagesmith::Apache::Decorate;

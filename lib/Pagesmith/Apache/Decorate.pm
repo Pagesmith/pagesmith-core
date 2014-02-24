@@ -90,7 +90,7 @@ sub handler : FilterRequestHandler {
 
   ## Only handle 200 HTML at the moment - will need it to wrap
   ## non-redirects later!
-  my %handles = map { ( $_ => 1 ) } qw(200 400 401 403 404 405 500 501 502 503);
+  my %handles = map { ( $_ => 1 ) } qw(200 400 401 403 404 405 410 500 501 502 503);
   return DECLINED unless $handles{ $r->status };
 
   ## All requests push all HTML
