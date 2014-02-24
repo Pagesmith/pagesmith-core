@@ -161,6 +161,8 @@ use Pagesmith::HTML::Table;
 use Pagesmith::HTML::TwoCol;
 use Pagesmith::HTML::Tabs;
 
+use Pagesmith::Object::Generic;
+use Pagesmith::Object::Generic;
 use Pagesmith::Object::Reference;
 
 use Pagesmith::Action::Developer::Raw;
@@ -186,6 +188,7 @@ use Pagesmith::Action;
 use Pagesmith::Message;
 use Pagesmith::Page;
 use Pagesmith::Root;
+use Pagesmith::BaseAdaptor;
 use Pagesmith::Adaptor;
 
 use DBD::mysql;

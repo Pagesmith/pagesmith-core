@@ -16,9 +16,12 @@ use utf8;
 use version qw(qv); our $VERSION = qv('0.1.0');
 use feature qw(switch);
 
-use base qw(Pagesmith::Adaptor);
+use base qw(Pagesmith::BaseAdaptor);
 
 use MIME::Base64 qw(decode_base64 encode_base64);
+use English qw(-no_match_vars $PROGRAM_NAME);
+use Sys::Hostname qw(hostname);
+use Socket qw(inet_ntoa);
 
 use Pagesmith::Object::Generic;
 
@@ -292,6 +295,22 @@ sub store {
   ));
   ##use critic (ImplicitNewlines)
   return $generic_obj->id ? 1 : 0;
+}
+
+sub set_ip_and_useragent {
+  my( $self, $object_to_update ) = @_;
+  if( exists $self->{'_r'} && $self->r ) {
+    $object_to_update->set_ip(
+      $self->r->headers_in->{'X-Forwarded-For'} ||
+      $self->remote_ip,
+    );
+    $object_to_update->set_useragent( $self->r->headers_in->{'User-Agent'} || q(--) );
+  } else {
+    my $host = hostname() || 'localhost';
+    $object_to_update->set_ip( inet_ntoa( scalar gethostbyname $host ) );
+    $object_to_update->set_useragent( "$ENV{q(SHELL)} $PROGRAM_NAME" );
+  }
+  return $self;
 }
 
 1;

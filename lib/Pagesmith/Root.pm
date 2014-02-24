@@ -29,6 +29,7 @@ use Data::UUID;
 use Date::Format qw(time2str);
 use English qw(-no_match_vars $EVAL_ERROR $CHILD_ERROR);
 use HTML::Entities qw(encode_entities);
+use URI::Escape qw(uri_escape_utf8);
 use IPC::Run3 qw(run3);
 use JSON::XS;
 use Text::CSV::Encoded;
@@ -36,7 +37,6 @@ use POSIX qw(mktime ceil floor);
 use Time::HiRes qw(time);
 use MIME::Base64 qw(decode_base64 encode_base64);
 use Pagesmith::Config;
-use Pagesmith::Adaptor;
 use Mail::Mailer;
 use Pagesmith::Utils::Mail::Message;
 use Pagesmith::Utils::Mail::Person;
@@ -138,6 +138,14 @@ sub strip_html {
   my( $self, $str ) = @_;
   $str =~ s{<.*?>}{}mxgs;
   return $str;
+}
+
+sub escape {
+#@param (self)
+#@param (string) $value - string to be encoded
+#@return (string) HTML entity encoded version of $value;
+  my ( $self, $value ) = @_;
+  return uri_escape_utf8( $value );
 }
 
 sub encode {
@@ -300,8 +308,7 @@ sub dynamic_use_failure {
 
 sub full_escape {
   my( $self, $string ) = @_;
-  return q() unless $string;
-  return join q(), map { sprintf '%%%02x', ord $_ } split m{}mxs, $string;
+  return uri_escape_utf8( $string, "0-\xffffffff" ); ## no critic (EscapedCharacters)
 }
 
 sub full_encode {
@@ -370,11 +377,6 @@ sub get_adaptor {
   my( $self, $type, @params ) = @_;
   my $module = 'Pagesmith::Adaptor::'.$type;
   return $self->dynamic_use( $module ) ? $module->new( @params ) : undef;
-}
-
-sub get_adaptor_conn {
-  my( $self, $conn, @params ) = @_;
-  return Pagesmith::Adaptor->new( $conn );
 }
 
 sub safe_link {
@@ -454,8 +456,10 @@ sub mail_message {
   my $self = shift;
   return Pagesmith::Utils::Mail::Message->new;
 }
+
 sub mail_person {
   my( $self, $email, $name ) = @_;
   return Pagesmith::Utils::Mail::Person->new( $email, $name );
 }
+
 1;

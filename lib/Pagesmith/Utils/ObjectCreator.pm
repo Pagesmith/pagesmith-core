@@ -78,9 +78,9 @@ sub bake_relationship {
     $config = &{$ns}( $ot );
     use strict;
   }
+  use Data::Dumper qw(Dumper);
   ## use critic
 my $Z = << 'XX';
-  use Data::Dumper qw(Dumper);
 warn "!pre!",Dumper( $config );
   return;
   my @methods = (
@@ -112,10 +112,17 @@ XX
 
 sub bake_base_adaptor {
   my $pkg = caller 0;
+  my $mail_domain = q();
+
   ( my $ns  = $pkg ) =~ s{Pagesmith::Adaptor::}{}mxs;
+  my $meth         = 'Pagesmith::Support::'.$ns.'::mail_domain';
+  no strict 'refs';  ## no critic (NoStrict)
+  $mail_domain    = &{$meth}();
+  use strict;
   (my $db_key = lc $ns) =~ s{::}{_}mxsg;
   my @methods = (
     create_method( $pkg, 'base_class',      sub { return $ns; } ),
+    create_method( $pkg, 'mail_domain',     sub { return $mail_domain; } ),
     create_method( $pkg, 'connection_pars', sub { return $db_key; } ),
   );
   create_method( $pkg, 'auto_methods', sub { my @m = sort 'auto_methods', @methods; return @m; });
