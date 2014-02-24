@@ -44,6 +44,9 @@ my $messages = {
   '405' => [
     'Method not allowed',
     'The method specified in the Request-Line is not allowed for the resource identified by the Request-URI.' ],
+  '410' => [
+    'Gone',
+    'The requested resource is no longer available on this server and there is no forwarding address. Please remove all references to this resource' ],
   '500' => [
     'Internal Server Error',
     'Unfortunately while trying to send you the contents that you requested, the server has hit a problem and cannot return what you have asked for.' ],
