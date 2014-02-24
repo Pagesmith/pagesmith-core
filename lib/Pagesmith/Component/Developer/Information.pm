@@ -259,6 +259,14 @@ my $LIST_T = "\n    <li>%s</li>";
   }
 
   #-- Dump the perl include path (@INC)
+  my $tx = $self->twocol({'class'=>'twothird leftalign'});
+  foreach (sort keys %INC) {
+    next unless m{[.]pm\Z}mxs;
+    next if     m{/Startup(?:/.*)?[.]pm}mxs;
+    (my $x = $_) =~ s{/}{::}mxsg;
+    $x =~s{[.]pm\Z}{}mxs;
+    $tx->add_entry( $x , $INC{$_} );
+  }
   $html .= q(
 </div>
 
@@ -272,6 +280,7 @@ my $LIST_T = "\n    <li>%s</li>";
   #-- Dump the modules included at this point in time
   $html .= sprintf '
   </ul>
+  %s
 </div>
 
 <div id="t_modules">
@@ -280,7 +289,7 @@ my $LIST_T = "\n    <li>%s</li>";
   <ul>%s
   </ul>
 </div>
-',
+',  $tx->render,
     $self->modules(q(::));
 
   my $user = $self->user;
@@ -290,12 +299,10 @@ my $LIST_T = "\n    <li>%s</li>";
     $t->add_entry( 'Name',     $user->name );
     $t->add_entry( 'Ldap ID',  $user->ldap_id || q(-) );
     $t->add_entry( 'Method',   $user->auth_method );
+    $t->add_entry( 'Method',   $user->email   || q(-)  );
     $t->add_entry( 'Groups',   sprintf '<ul>%s</ul>', join q(), map { "<li>$_</li>" } $user->groups ) if $user->groups;
     my $d = $user->data;
-    my $d_filtered = { map { $d->{$_} } grep { $_ ne 'name' && $_ ne 'id' && $_ ne 'ldap_id' && $_ ne 'method' && $_ ne 'groups' } keys %{$d} };
-    if( keys %{$d_filtered} ) {
-      $t->add_entry( 'Data', $self->pre_dumper( $d_filtered ) );
-    }
+    $t->add_entry( 'Data', $self->pre_dumper( $d ) );
     $html .= sprintf  '
 <div id="t_user">
   <h3 class="keep">User details</h3>
