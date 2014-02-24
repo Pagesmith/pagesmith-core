@@ -142,7 +142,7 @@ sub push_changes {
   my @new_entries;
   my $prev;
   foreach (@entries) {
-    if( $prev && ($_->{'action'} eq 'add' || $_->{'action'} eq 'copy') && $prev->{'action'} eq 'delete' && $_->{'path'} eq $_->{'path'} ) {
+    if( $prev && ($_->{'action'} eq 'add' || $_->{'action'} eq 'copy') && $prev->{'action'} eq 'delete' && $_->{'path'} eq $prev->{'path'} ) {
       $new_entries[-1]{'action'} = $_->{'action'} eq 'copy' ? 'copyreplace' : 'replace';
       next;
     }
