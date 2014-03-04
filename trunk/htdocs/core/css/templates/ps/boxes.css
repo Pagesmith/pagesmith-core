@@ -19,45 +19,18 @@
 
 ----------------------------------------------------------------------*/
 
-.panel { margin:0; padding:3px; background:#fff; border: 1px solid #ccc; clear: both; }
+.panel { background-color: #fff; border-radius: 10px; box-shadow: 2px 2px 1px 0 #999; margin: 5px 5px 15px; padding: 0 0 5px; clear: both;}
+.panel h1, .panel h2, .panel h3, .panel h4 { padding: 0 10px; margin: 5px 0 }
+.panel h1:first-child, .panel h2:first-child, .panel h3:first-child, .panel h4:first-child { margin: 10px 0 5px}
+.panel p { margin: 10px }
 
-/* Normal styling */
-.cb {margin: 0; padding:5px; clear: both}
-
-/* Top corners and border */
-.bt, .bb, .bt div, .bb div { background-image: url(/core/gfx/templates/ps/bars-130725.png); background-repeat: no-repeat; height:8px; margin:0; }
-.bt div, .bb div { position:relative; left:0; width:8px; font-size:0; line-height:0; }
-.bt     { background-position: 100% -42px; }
-.bt div { background-position: 0 -42px; }
-.bb     { background-position: 100% -50px; height: 11px; }
-.bb div { background-position: 0 -50px; height: 11px; }
-.i1 { margin:0; display:block; padding:0 1px 0 0; background-color: #b2bbc2; }
-.i2 { margin:0; display:block; padding:0 1px 0 0; background-color: #a0a8ae; }
-.i3 { background-color: #ffffff; margin:0; display:block; padding:0; }
-
-  /* Push the first paragraph/heading up as far as possible
-     to remove the "double gap" caused by the top edge graphic! */
-
-.panel:after, .i1:after, .i2:after, .i3:after {
-  content:"."; display:block; height:0; clear:both; visibility:hidden; }
-.panel:before, .i3:before { /* Make sure stuff doesn't break out of the top of the box! */
-  content:"."; display:block; height:0; visibility:hidden; }
-
-.i3 h2, .i3 h3 { margin: 0 0 5px 0; padding: 0px 10px 5px; }
+.panel:after{ content:"."; display:block; height:0; clear:both; visibility:hidden; }
+.panel:before { content:"."; display:block; height:0; visibility:hidden; }
 .collapsed > h3 { margin-bottom: 0; }
-.collapsed > .i1 > .i2 > .i3 > h3 { margin-bottom: 0; }
 
-/** PRINTER STYLES **/
 @media print {
-  .cb, .panel, .i1, .i2, .i3 { border: 0; padding:0; margin: 0; }
-  .panel, .cb { margin: 1em 0; }
-  .bt, .bb { display: none; }
-  .i1, .i2 { background-color: white; }
-}/*
-  callout
-
-  callouts, projects etc
-*/
+  .panel { margin: 1em 0; }
+}
 
 /*----------------------------------------------------------------------
   Callout
@@ -69,16 +42,7 @@
   Additional "classes" .right (float right) & .fifty (1/2 of container)
 ----------------------------------------------------------------------*/
 
-.callout { width: 33%; float: left; margin: 10px; clear: left; }
-.callout .panel { background-color: #0e518d; border: 0; }
-.callout .bt       { background-position: 100% -22px}
-.callout .bt div   { background-position: 0 -22px}
-.callout .bb       { height:8px; background-position: 100% -30px}
-.callout .bb div   { height:8px; background-position: 0 -30px}
-
-.callout .i1, .callout .i2 { padding:0; }
-.callout .i3 { padding:0; background:#0e518d; }
-
+.callout { width: 33%; float: left; margin: 10px; clear: left; background-color: #0e518d; box-shadow: 0 }
 .callout.right   { float: right; clear: right; }
 .callout.fifty   { width: 50%; }
 .callout.quarter { width:25%; }
@@ -96,81 +60,28 @@
   message boxes
 */
 
-.developer.panel    { background-color: #ffe8cc; border: 0; }
-.developer .bt       { background-position: 100% -413px}
-.developer .bt div   { background-position: 0 -413px}
-.developer .bb       { background-position: 100% -421px}
-.developer .bb div   { background-position: 0 -421px}
-.developer .i3 { background-color:#ffe8cc; }
+.developer    { background-color: #ffe8cc; border: 0; }
 .developer h3 { color: #8e0018; border-bottom: 1px solid #8e0018; }
 
-.box-info.panel      { background-color: #cfc; border: 0; } /* green */
-.box-info .bt       { background-position: 100% -433px}
-.box-info .bt div   { background-position: 0 -433px}
-.box-info .bb       { background-position: 100% -441px}
-.box-info .bb div   { background-position: 0 -441px}
-.box-info .i3 { background-color:#cfc; }
+.box-info      { background-color: #cfc; border: 0; } /* green */
 #rhs .box-info h3, .box-info h3 { color: #060; border-bottom: 1px solid #060;background-image:none }
+.panel .box-info  { background-color: #cfc; border: 0; } /* green */
+.panel .box-info        h3 { color: #060; border-bottom: 1px solid #060; }
 
-.box-msg.panel      { background-color: #ffc; border: 0; } /* yellow */
-.box-msg .bt       { background-position: 100% -453px}
-.box-msg .bt div   { background-position: 0 -453px}
-.box-msg .bb       { background-position: 100% -461px}
-.box-msg .bb div   { background-position: 0 -461px}
-.box-msg .i3 { background-color:#ffc; }
+.box-msg      { background-color: #ffc; border: 0; } /* yellow */
 #rhs .box-msg h3, .box-msg h3 { color: #960; border-bottom: 1px solid #960;background-image:none }
+.panel .box-msg   { background-color: #ffc; border: 0; } /* yellow */
+.panel .box-msg         h3 { color: #960; border-bottom: 1px solid #960; }
 
-.box-error.panel      { background-color: #fcc; border: 0; } /* red */
-.box-error .bt       { background-position: 100% -473px}
-.box-error .bt div   { background-position: 0 -473px}
-.box-error .bb       { background-position: 100% -481px}
-.box-error .bb div   { background-position: 0 -481px}
-.box-error .i3 { background-color:#fcc; }
+.box-error      { background-color: #fcc; border: 0; } /* red */
 #rhs .box-error h3, .box-error h3 { color: #8e0018; border-bottom: 1px solid #8e0018;background-image:none }
+.panel .box-error { background-color: #fcc; border: 0; } /* red */
+.panel .box-error       h3 { color: #8e0018; border-bottom: 1px solid #8e0018; }
 
-.box-warn.panel      { background-color: #ffe8cc; border: 0; } /* orange */
-.box-warn .bt       { background-position: 100% -493px}
-.box-warn .bt div   { background-position: 0 -493px}
-.box-warn .bb       { background-position: 100% -501px}
-.box-warn .bb div   { background-position: 0 -501px}
-.box-warn .i3 { background-color:#ffe8cc; }
+.box-warn      { background-color: #ffe8cc; border: 0; } /* orange */
 #rhs .box-warn h3, .box-warn h3 { color: #8e0018; border-bottom: 1px solid #8e0018;background-image:none }
-
-.cb .box-info .i2, .cb .box-msg .i2, .cb .box-error .i2, .cb .box-warn .i2 { background-color: #dfdfdf; }
-
-.cb .box-info .i1, .cb .box-msg .i1, .cb .box-error .i1, .cb .box-warn .i1 { background-color: #f5f5f5; }
-
-.panel .box-info.panel      { background-color: #cfc; border: 0; } /* green */
-.cb .box-info .bt       { background-position: 100% -517px}
-.cb .box-info .bt div   { background-position: 0 -517px}
-.cb .box-info .bb       { background-position: 100% -525px}
-.cb .box-info .bb div   { background-position: 0 -525px}
-.cb .box-info .i3 { background-color:#cfc; }
-.cb .box-info h3 { color: #060; border-bottom: 1px solid #060; }
-
-.panel .box-msg.panel      { background-color: #ffc; border: 0; } /* yellow */
-.cb .box-msg .bt       { background-position: 100% -537px}
-.cb .box-msg .bt div   { background-position: 0 -537px}
-.cb .box-msg .bb       { background-position: 100% -545px}
-.cb .box-msg .bb div   { background-position: 0 -545px}
-.cb .box-msg .i3 { background-color:#ffc; }
-.cb .box-msg h3 { color: #960; border-bottom: 1px solid #960; }
-
-.panel .box-error.panel      { background-color: #fcc; border: 0; } /* red */
-.cb .box-error .bt       { background-position: 100% -557px}
-.cb .box-error .bt div   { background-position: 0 -557px}
-.cb .box-error .bb       { background-position: 100% -565px}
-.cb .box-error .bb div   { background-position: 0 -565px}
-.cb .box-error .i3 { background-color:#fcc; }
-.cb .box-error h3 { color: #8e0018; border-bottom: 1px solid #8e0018; }
-
-.panel .box-warn.panel      { background-color: #ffe8cc; border: 0; } /* orange */
-.cb .box-warn .bt       { background-position: 100% -577px}
-.cb .box-warn .bt div   { background-position: 0 -577px}
-.cb .box-warn .bb       { background-position: 100% -585px}
-.cb .box-warn .bb div   { background-position: 0 -585px}
-.cb .box-warn .i3 { background-color:#ffe8cc; }
-.cb .box-warn h3 { color: #8e0018; border-bottom: 1px solid #8e0018; }
+.panel .box-warn  { background-color: #ffe8cc; border: 0; } /* orange */
+.panel .box-warn        h3 { color: #8e0018; border-bottom: 1px solid #8e0018; }
 
 /*
   project box style
@@ -194,19 +105,9 @@
   Light grey border (#bcc5cc)
 ----------------------------------------------------------------------*/
 
-.project { width: 33%; float: left; margin: 10px; }
-.project .bt       { background-position: 100% -2px}
-.project .bt div   { background-position: 0 -2px}
-.project .bb       { height:8px; background-position: 100% -10px}
-.project .bb div   { height:8px; background-position: 0 -10px}
-.project .i1 , #page .project .i1 { padding:0 1px 0 0; background-color: #bcc5cc; }
-.project .i2 , #page .project .i2 { padding:0 0 0 1px; background-color: #bcc5cc; }
-.project .i3 , #page .project .i3 { padding:0 10px; background:#ffffff; }
-
+.project { width: 33%; float: left; margin: 10px; border-color #bcc5cc;}
 .centered-panel { width: 95%; margin: 0 auto; float: none; }
-
 .transcript div { height:120px; margin: 0 -2px 0 -10px; }
-
 .audio { clear:none; margin-top: 0; width: 340px; }
 
 /*----------------------------------------------------------------------

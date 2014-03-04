@@ -9,23 +9,25 @@
 .link:hover, a:hover { text-decoration: none; }
 a img   { border:none; }
 
-.extftp, .pdf, .external { position:relative; line-height:18px; background:url(/core/gfx/icons-130725.png) right -363px no-repeat; padding-right:16px; }
-.extftp { background-position: right -562px; }
-.pdf    { background-position: right -161px; }
+.extftp img, .pdf img, .external img { vertical-align: top; height: 12px; width: 15px; background:url(/core/gfx/icons-140302.png) -47px -34px no-repeat; }
+.extftp img { background-position: -47px -50px ; }
+.pdf    img { background-position: -47px -18px ; }
 
 /*#landing #main .external, */
 .more .external { padding-right:0px; background:transparent; }
 
-p.more {float:right; padding-right: 10px; }
-p.more img { vertical-align: top; height: 18px; width:67px; background: url(/core/gfx/icons-130725.png) 0 0 no-repeat; }
 
-.launch img { vertical-align: top; height: 18px; width:67px; background: url(/core/gfx/icons-130725.png) 0 -40px no-repeat; }
+p.more { float:right; padding-right: 10px; }
+
+.launch .btt:after, .more .btt:after { content: '\25b6'; padding-left: 0.5em }
+.zoom .btt, .launch .btt, .more .btt { padding-right: 4px; margin-right: 5px }
+.zoom .btt:after { content: '\271a'; padding-left: 0.5em }
 
 @media print {
   a { text-decoration: none; }
-  .pdf, .external { padding-right: 0; background: none; }
+  .pdf img, .external img { display: none }
 }
 
-.btt { font-size: 10px; border-radius: 8px; letter-spacing: 0.5px; background: linear-gradient(to right, #ddd,#eee,#fff,#fff); border: 1px solid #ddd; padding: 1px 1em; box-shadow: 2px 2px 1px 0 #999;  font-weight: bold }
+.btt { font-size: 10px; border-radius: 8px; letter-spacing: 0.5px; background-color: #e0e4e7; background: linear-gradient(to right, #ddd,#eee,#fff,#fff); border: 1px solid #ddd; padding: 1px 1em; box-shadow: 2px 2px 1px 0 #999;  font-weight: bold }
 a.btt { color: black; text-decoration: none }
 

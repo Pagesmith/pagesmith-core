@@ -5,10 +5,32 @@
 
   Note these are not real tabs just links!
 ----------------------------------------------------------------------*/
+#navTabs {overflow: hidden; width: 100%; clear: both; padding:0; margin:0; border-bottom:solid 1px #0e518d}
+#navRight { float: right; text-align:right; margin: 2px 0 0}
+
+#rhs ul.tabs, ul.tabs, ul#navLeft  { margin: 0; padding: 0; list-style: none; float: left;}
+#rhs ul.tabs, ul.tabs { margin-left: 3px; width: 95%; text-indent: 0 }
+#rhs ul.navr, ul.navr { float: right; }
+#rhs ul.tabs li, .tabs li, #navLeft li { padding: 1px 0; margin 0; list-style: none; float: left; text-indent: 0  }
+#rhs ul.tabs li a, .tabs li a, #navLeft li a { padding: 4px 8px; text-decoration: none; font-weight: bolder; color: #333; float: left; }
+ul.tabs {margin: 8px 6px 0 }
+#rhs ul.tabs { font-size:80%; margin-top: 2px; }
+#rhs ul.tabs li a:hover, .tabs li a:hover, #navLeft li a:hover { text-decoration: underline; color: #8E0018; }
+#rhs ul.tabs .disabled, .tabs li.disabled {display:none}
+#rhs ul.show-disabled li.disabled, ul.show-disabled li.disabled {display:block}
+#rhs ul.tabs .disabled a, .tabs li.disabled a, .tabs li.disabled a:hover { color: #808080; cursor: default; text-decoration: none; }
+#rhs ul.tabs .active a:hover, .tabs .active a:hover, #navLeft .active a:hover {color: white; text-decoration:underline; }
+
+#navLeft { float: left; text-indent: 0}
+.tabs .active a, #navLeft li.active a, #rhs .tabs li.active a { color: #fff }
+#navLeft li, .tabs .active, .tabs li { border-top-left-radius: 6px; border-top-right-radius: 6px; text-indent: 0 }
+#navLeft li, #rhs .tabs li, .tabs li { background: linear-gradient(#f0f0f0,#ddd); margin-right: 1px; background-color: #f0f0f0 }
+#navLeft .active, #rhs .tabs li.active, .tabs .active { background: linear-gradient(#81a7cc,#336cab); color: #fff; background-color: #336cab }
+
+
 #NavTabs2 {overflow: hidden; border-top: 1px solid #0e518d}
-ul#Tabs2, ul.second-tabs { margin: 0; padding: 4px 5px 0 5px; list-style: none; width: 100%; float: left; background: #0e518d url(/core/gfx/templates/ps/bars-130725.png) 0 -193px no-repeat; }
-ul.second-tabs { background-position: right -193px; background-color: transparent }
-ul#Tabs2 li, ul.second-tabs li { float: left; background: none; padding:0; }
+ul#Tabs2, ul.second-tabs { margin: 0; padding: 4px 5px 0 5px; list-style: none; width: 100%; float: left; background: linear-gradient(#0e518d,#02486a); background-color: #0e518d   }
+ul#Tabs2 li, ul.second-tabs li { float: left; background: none; padding:0; text-indent: 0 }
 #Tabs2 li a, ul.second-tabs li a { display:  block; padding: .25em 1em 0 1em; line-height: 2em;     text-decoration: none; color: white; float: left;     font-weight: bold
 }
 #Tabs2 li a:hover, ul.second-tabs li a:hover { color: #fff; text-decoration: underline; }
@@ -18,6 +40,8 @@ ul#Tabs2 li, ul.second-tabs li { float: left; background: none; padding:0; }
   #NavTabs2 { display: none; }
 }
 
+ul#Tabs2 li:before, ul#navLeft li:before,
+ul.tabs li:before, #rhs ul.tabs li:before { content: ''; width: 0 }
 /*----------------------------------------------------------------------
   Primary navigation tabs.
 ------------------------------------------------------------------------
@@ -35,10 +59,7 @@ ul#Tabs2 li, ul.second-tabs li { float: left; background: none; padding:0; }
             bars
 ----------------------------------------------------------------------*/
 
-#navTabs {overflow: hidden; width: 100%; clear: both; padding:0; margin:0; border-bottom:solid 1px #0e518d}
-#navLeft { float: left; }
-#navRight { float: right; text-align:right; margin: 2px 0 0}
-
+/*
 
 #rhs ul.tabs, ul.tabs, #navLeft ul { margin: 0; padding: 0; list-style: none; float: left; }
 #rhs ul.navr, ul.navr { float: right; }
@@ -55,7 +76,7 @@ ul#Tabs2 li, ul.second-tabs li { float: left; background: none; padding:0; }
 #rhs ul.tabs .active a:hover, .tabs .active a:hover, #navLeft .active a:hover {color: white; text-decoration:underline; }
 
 #rhs ul.tabs, ul.tabs { padding-left: 5px; }
-
+*/
 @media print {
   ul.tabs, #navTabs { display: none; }
 }

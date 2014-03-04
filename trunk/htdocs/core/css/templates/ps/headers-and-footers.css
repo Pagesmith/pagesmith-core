@@ -2,25 +2,18 @@
 #logo        { float: left; }
 #logo img    { width: 205px; height: 60px; padding: 5px 0 0 0}
 
-#search      { width: 540px; float: right; line-height: 1; padding: 5px 0; font-size: 12px; }
-#search form { padding: 0; margin: 0; float:right; font-weight: bold; }
+#search { width: 540px; float: right; line-height: 1; padding: 5px 0; font-size: 12px;  }
+#search form { padding: 0; margin: 0; float:right; font-weight: bold; background-color:#e0e4e7; border-radius: 10px; border: 1px solid #bcc5cc; padding:1px 7px; margin: 0 5px 5px }
+#search input#q { width: 200px; border:0; padding:2px; color: #000; margin: 2px 4px 3px 0.5em; font-weight: bold; font-size: 12px; background-color: #fff; border-radius: 4px }
+#search #q.qdef { color: #bcc5cc; }
+#search #q_submit { height:20px; width:20px; background: url(/core/gfx/icons-140302.png) no-repeat -2px -47px; vertical-align: middle }
+
 
 /** Redesign the search box for narrow pages...
 @media all and (max-width: 640px) {
   #search { width: 350px; }
 }
 */
-#search #q_db { border:0; padding: 0px; color: #000; margin: 0; background-color:transparent; width: 12em; font-weight: bold; font-size: 12px; }
-#search input#q { width: 200px; border:0; padding:0; color: #000; margin: 0; font-weight: bold; font-size: 12px; background-color: transparent; }
-#search #q.qdef { color: #bcc5cc; }
-#search #q_submit { height:20px; width:30px; }
-#search span { display: block; float:left; height: 29px; padding: 3px 0 3px 0; border: 0; margin: 0; background: #e0e4e7 url(/core/gfx/templates/ps/bars-130725.png) no-repeat 0 -370px; line-height:12px; }
-#search #s1 { padding: 7px 6px 2px 8px; }
-#search #s4 { padding-left: 4px; background-position: -398px -370px; padding-top: 3px; width: 200px}
-#search #s4 { padding-top: 5px; }
-#search #s5 { width:30px; background-position: -1409px -370px; }
-#search_a { clear: right; float:right; display: none; font-size: 0.8em; width: 10em; }
-
 @media print {
 #search { display: none; }
 }
@@ -48,21 +41,24 @@ ul#skip { display: none; }
 #footer { font-size: 0.8em; color: #5c5150; position: relative; float:left; margin-left: 20px; width: 95%; }
 #lnx { color: #fff; text-align: center; clear: both; margin: 1em 0; font-size: 0.8em; }
 #lnx a { color: #14559f; text-decoration: none; }
-ul#footer_links { float:left; margin: 0 0 0 -5px; padding: 0 }
-#footer_links li { text-align:left; background: none; padding: 0 0.6em; display: inline; }
+ul#footer_links { float:left; margin: 0 0 0 -5px; padding: 0; }
+#footer_links li { text-align:left; padding: 0 0.6em; display: inline; }
 #footer_links a { text-decoration: none; font-weight: bold; }
 #footer .charity { clear: both }
 /* footer social media styling */
 
+ul.social li:before, #footer_links li:before { content: '' }
+
 ul.social { height: 20px; float: right; margin: -5px -15px 0 0; float: right; vertical-align: bottom; margin:0; padding: 0; }
-.social li { text-decoration: none; display: inline-block; list-style-type: none; width: 20px; height: 20px; padding: 0; margin: 0 0 0 4px;
-             background: url(/core/gfx/icons-130725.png) no-repeat 0 -140px }
+.social li { text-decoration: none; display: block; list-style-type: none; float: left;
+             width: 21px; height: 20px; padding: 0; margin: 0 0 0 4px;
+             background: url(/core/gfx/icons-140302.png) no-repeat 0 0 }
 .social li.connect { background: none; width:110px; vertical-align: top; line-height: 20px; text-align: right }
-.social li.fb { background-position: 0     -140px }
-.social li.tw { background-position: -20px -140px }
-.social li.yt { background-position: -40px -140px }
-.social li.wp { background-position: -60px -140px }
-.social li img { height: 20px; width: 20px }
+.social li.fb { background-position:  -1px -1px }
+.social li.tw { background-position: -26px -1px }
+.social li.yt { background-position:  -1px -24px }
+.social li.wp { background-position: -26px -24px }
+.social li img { height: 20px; width: 21px }
 
 
 #footer_print, #footer p { display: none; }
@@ -80,5 +76,5 @@ ul.social { height: 20px; float: right; margin: -5px -15px 0 0; float: right; ve
 }
 
 #user { float: right; clear: right; margin-right: 1em; }
-#logout, #login { vertical-align: middle; padding: 0; margin: 0; height: 18px; width:56px; background: url(/core/gfx/icons-130725.png) 0 -80px no-repeat; }
+/*#logout, #login { vertical-align: middle; padding: 0; margin: 0; height: 18px; width:56px; background: url(/core/gfx/icons-130725.png) 0 -80px no-repeat; }*/
 #logout { background-position: 0 -60px; }

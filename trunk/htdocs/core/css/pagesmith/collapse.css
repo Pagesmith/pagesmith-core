@@ -15,18 +15,13 @@
     when the box is collapsed
 ----------------------------------------------------------------------*/
 
-.collapsible h3:first-child img ,
-  .collapsible h4.keep img ,
-  .collapsible p.head img {
-     cursor: pointer;
-     background: url(/core/gfx/icons-130725.png) -16px -1400px no-repeat;
-     height:16px; width:16px; padding: 0px; margin-right: 0.5em; float: left; display: block; }
-
-.collapsed h3:first-child img,
-  .collapsed h4.keep      img,
-  .collapsed p.head       img { background-position: -32px -1380px; }
-
-.collapsed div.ajax, .collapsed div.coll, .collapsed ul, .collapsed .searchhit, .collapsed table, .collapsed pre, .collapsed h4, .collapsed p, .collapsed dl, .collapsed ul, .collapsed ol { display: none; }
+.collapsible h3:first-child span ,
+  .collapsible h4.keep span ,
+  .collapsible p.head span { cursor: pointer; color: #fff; padding-right: 0.5em; }
+  
+.collapsed div.ajax, .collapsed div.coll, .collapsed ul, .collapsed .searchhit,
+.collapsed table, .collapsed pre, .collapsed h4, .collapsed p,
+.collapsed dl, .collapsed ul, .collapsed ol { display: none; }
 
 .collapsed h4.keep { display: block; }
 
@@ -37,3 +32,6 @@
 
 .collapsed p.head .hide { display: none }
 .collapsed p.head .show { display: inline }
+
+#rhs .collapsible h3 { margin-top: 0; border-top-left-radius: 10px; border-top-right-radius: 10px; 
+  padding-top: 8px }

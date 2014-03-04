@@ -21,40 +21,11 @@
       return false;
     }
   });
-
-  $('#search_a').bind('click', function () {
-    if ($('#q').val() === '' || $('#q').val() === Pagesmith.search_message) {
-      return false;
-    }
-    var uri = $(this).attr('href') + '?q=' + encodeURI($('#q').val());
-    window.document.location = uri;
-    return false;
-  });
-
-
   $(function () {
     $('#q[value="' + Pagesmith.search_message + '"]')
       .addClass('qdef')
       .on('focus', function () {
         $(this).removeClass('qdef').val('');
       });
-  });
-
-  $(function () {
-    $('#collapse-all').on('click', function () {
-      $('div.collapsible').addClass('collapsed');
-      Pagesmith.flags.t = 'c';
-      Pagesmith.setCookie();
-    });
-    $('#expand-all').on('click', function () {
-      $('div.collapsible').removeClass('collapsed');
-      Pagesmith.flags.t = 'e';
-      Pagesmith.setCookie();
-    });
-    if (Pagesmith.flags.t === 'c') {
-      $('#collapse-all').trigger('click');
-    } else {
-      $('#expand-all').trigger('click');
-    }
   });
 }(jQuery));

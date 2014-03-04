@@ -25,13 +25,13 @@ h2 { font-size: 1.4em; font-weight: bold; line-height: 1.4em; margin-top: 1em; }
 h2:first-child { margin-top: 0; }
 h3 { font-size: 1.2em; padding-bottom: 4px; font-weight: bold; line-height: 1.2em; }
 
-h3.emboldened, #landing #main h3 { position: relative; color: #8e0018; border-bottom: 1px solid #ccc; background: url(/core/gfx/templates/ps/bars-130725.png) 0 bottom; }
+h3.emboldened, #landing #main h3 { position: relative; color: #8e0018; border-bottom: 1px solid #ccc; margin-top:8px; padding-top: 0px; padding-bottom: 5px; background: linear-gradient(#fff,#fff,#f9f9f9,#eee); }
 
-#landing #main h3 a { color: #8e0018; text-decoration: none; }
+#landing #main h3 a { color: #8e0018; text-decoration: none; margin-top: 7px; }
 
 #landing #feature h3 a { color: #8e0018; text-decoration: none; }
 
-#rhs h3 {  background: url(/core/gfx/templates/ps/bars-130725.png) 0 bottom; border-bottom: 1px solid #ccc; }
+#rhs h3 { margin-top:8px; padding-top: 0px; padding-bottom: 5px; border-bottom: 1px solid #ccc;  background: linear-gradient(#fff,#fff,#f9f9f9,#eee); }
 .callout h2 { color: #fff; }
 
 h4, h5 { margin: 8px 10px 3px; font-size: 1em; }
@@ -42,10 +42,11 @@ h6 { font-size: 2em; background-color: #f99; color: #900; padding: 1em; }
   #landing #main h3 { background: none; border-bottom: 0; }
 }
 
-.i3 ul + h3, .i3 ol + h3, .i3 dl + h3, .i3 pre + h3, .i3 p + h3 { margin-top: 1.5em; }
+/*.i3 ul + h3, .i3 ol + h3, .i3 dl + h3, .i3 pre + h3, .i3 p + h3 { margin-top: 1.5em; }*/
 
-
+/*
 h1+h3, h2+h3{ padding-top: 0px; margin-top: -10px; }
 h3+h3 { padding-top: 0px; margin-top: -5px; }
 
 h1+ul, h2+ul, h3+ul { margin-top: -5px; }
+*/

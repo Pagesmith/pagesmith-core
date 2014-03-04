@@ -21,7 +21,7 @@
       }
       return this.html(function (i, html) {
         /*jslint regexp: true */
-        var out = html.replace(/([^>\s]+)((\s*<\/\w+>)*\s*)$/, '<span class="' + cls + '">$1</span>$2');
+        var out = html.replace(/([^>\s]+)((\s*<\/\w+>)*\s*)$/, '<span class="' + cls + '">$1<img src="/core/gfx/blank.gif" /></span>$2');
         /*jslint regexp: false */
         return out;
       });
