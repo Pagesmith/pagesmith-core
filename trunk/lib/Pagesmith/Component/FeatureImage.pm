@@ -50,7 +50,7 @@ sub execute {
   if ( $self->option('popup') ) {
     return
       sprintf
-'<div id="featureR"><div%s style="background-image:url(%s)"></div><p><a href="%s" class="thickbox" title="%s"><img alt="Enlarge this image" src="/core/gfx/blank.gif" /></a>%s</p></div>',
+'<div id="featureR"><div%s style="background-image:url(%s)"></div><p class="zoom"><a href="%s" class="btt no-img thickbox" title="%s">zoom</a>%s</p></div>',
       $extra_class,
       encode_entities($img),
       encode_entities($img),

@@ -36,8 +36,8 @@ sub define_options {
 
 my $template_sets = {
   'default' => [
-    '<div id="user">%s logged in <a href="/action/logout"><img id="logout" src="/core/gfx/blank.gif" alt="Logout" /></a></div>',
-    '<div id="user"><a href="/login"><img id="login" src="/core/gfx/blank.gif" alt="Login" /></a></div>',
+    '<div id="user">%s logged in <a class="btt no-img" href="/action/logout">Logout</a></div>',
+    '<div id="user"><a class="btt no-img" href="/login">Login</a></div>',
   ],
   'span' => [
     '<span id="user">%s logged in <a href="/action/logout">logout</a></span>',
