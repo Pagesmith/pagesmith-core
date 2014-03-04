@@ -33,11 +33,15 @@
 /* Hide the following if the content is marked as "closed" */
 .periodical.ref-closed .affiliation, .periodical.ref-closed .grants, .periodical.ref-closed .abstract { display: none; }
 
+ul.references { padding-left: 0 }
+li.periodical { margin-top: 0em; margin-left: 10px }
+li.periodical:before { content: ''; width: 0 }
 
-li.periodical { margin-top: 0em; background: none; padding-left: 10px; margin-left: 10px }
-
-li.periodical h4 { background: transparent url(/core/gfx/icons-130725.png) 0 -1420px no-repeat; margin-bottom: 0px}
-li.ref-coll   h4 { background-position:-16px -1400px; }
-li.ref-closed h4 { background-position: -32px -1380px; }
+li.periodical h4:first-child, li.periodical h4 { margin-bottom: 0px; margin-left: -1.2em }
+li.periodical h4:before { content: ">"; color: #bcc5cc; padding-right: 1em; cursor: pointer }
+li.ref-coll   h4:before { content: "\25BC" }
+li.ref-closed h4:before { content: "\25BA" }
 li.periodical h4, li.periodical p { padding: 0 0 0 20px; }
 li.periodical h4, li.periodical .authors, li.periodical .links, li.periodical .publication { font-size: 1em; }
+
+.references p { margin-top: 0.3em; margin-bottom: 0.3em }

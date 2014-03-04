@@ -16,7 +16,7 @@
 
 .cPic p { margin-top: 10px; border-top: 1px solid #bcc5cc; margin: 10px auto 0 auto; }
 
-#featureR a img, .cPic-c p img, .cPic p img { float: right; margin: 5px 0 0 0; height: 18px; width:67px; background: url(/core/gfx/icons-130725.png) 0 -20px no-repeat; }
+/* #featureR a img, .cPic-c p img, .cPic p img { float: right; margin: 5px 0 0 0; height: 18px; width:67px; background: url(/core/gfx/icons-130725.png) 0 -20px no-repeat; } */
 
 .cPic-c:after {  content:"."; display:block; height:0; clear:both; visibility:hidden; }
 #featureR a img { margin-top: 10px; float: none; }
