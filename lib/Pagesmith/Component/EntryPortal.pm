@@ -73,7 +73,7 @@ sub execute {
   }
   return sprintf '<div class="%s"><h3>%s</h3><p>%s%s</p></div>', $class, $title, $image_html, $body if $url eq q(#);
   return sprintf
-'<div class="%s"><h3><a href="%s">%s</a></h3><p><a href="%s">%s</a>%s</p><p class="more"><a href="%s"><img src="/core/gfx/blank.gif" alt="More information about %s" /></a></p></div>',
+'<div class="%s"><h3><a href="%s">%s</a></h3><p><a href="%s">%s</a>%s</p><p class="more"><a class="btt no-img" href="%s" title="more information about %s">more</a></p></div>',
       $class, $url, $title, $url, $image_html, $body, $url, $about_info;
 }
 

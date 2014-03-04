@@ -277,15 +277,16 @@ sub execute {
     $html .= sprintf q(<p style="width:%dpx">%s%s</p>), $inner_width, encode_entities($caption), $credit if $caption || $credit;
     return qq($html</div>);
   }
-  my $zoom = sprintf q(<a href="%s" class="thickbox" title="%s%s">), $url, encode_entities($caption), $credit;
+  my $zoom    = sprintf q(<a href="%s" class="thickbox" title="%s%s">), $url, encode_entities($caption), $credit;
+  my $zoombtn = sprintf q(<a href="%s" class="thickbox btt no-img" title="%s%s">zoom</a>), $url, encode_entities($caption), $credit;
   my $html = sprintf q(<div class="%s"%s>%s<img src="%s" style="width:%dpx;height:%dpx;" alt="%s" /></a>),
     $class, $style, $zoom, $thumb_url, $width, $height, encode_entities($short);
   if ( $short || $credit ) {
-    $html .= sprintf q(<p style="width:%dpx">%s%s<br />%s<img src="/core/gfx/blank.gif" alt="Enlarge this image (%d x %d)" /></a></p>),
-      $inner_width, encode_entities($short), $credit_marked_up, $zoom, $orig_img_x, $orig_img_y;
+    $html .= sprintf q(<p style="width:%dpx">%s%s</p><p class="right zoom" style="border-top:0;margin-top:0;margin-right: 10px">%s</p>),
+      $inner_width, encode_entities($short), $credit_marked_up, $zoombtn;
   } else {
-    $html .= sprintf q(<p style="border-top:0;width:%dpx">%s<img src="/core/gfx/blank.gif" alt="Enlarge this image (%d x %d)" /></a></p>),
-      $inner_width, $zoom, $orig_img_x, $orig_img_y;
+    $html .= sprintf q(<p class="right zoom" style="border-top:0;margin-top:margin-right: 10px">%s</p>),
+      $zoombtn;
   }
   return qq($html</div>);
 }

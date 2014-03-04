@@ -57,9 +57,7 @@ sub define_options {
 sub execute {
 
 #@param (self)
-#@return (html) class attribute string containing zoom_level class
-## Simply grabs the zoom_level from the users cookie and returns the
-## HTML fragment to set the approriate class on the page
+#@return (html) chunk of lorem ipsum marked up html
   my $self = shift;
 
   my($amount,$what) = $self->pars;
