@@ -49,7 +49,7 @@ ul#footer_links { float:left; margin: 0 0 0 -5px; padding: 0; }
 
 ul.social li:before, #footer_links li:before { content: '' }
 
-ul.social { height: 20px; float: right; margin: -5px -15px 0 0; float: right; vertical-align: bottom; margin:0; padding: 0; }
+ul.social { height: 20px; float: right; margin: -5px -15px 0 0; float: right; vertical-align: bottom; margin:0; padding: 0; text-indent: 0 }
 .social li { text-decoration: none; display: block; list-style-type: none; float: left;
              width: 21px; height: 20px; padding: 0; margin: 0 0 0 4px;
              background: url(/core/gfx/icons-140302.png) no-repeat 0 0 }
@@ -76,5 +76,4 @@ ul.social { height: 20px; float: right; margin: -5px -15px 0 0; float: right; ve
 }
 
 #user { float: right; clear: right; margin-right: 1em; }
-/*#logout, #login { vertical-align: middle; padding: 0; margin: 0; height: 18px; width:56px; background: url(/core/gfx/icons-130725.png) 0 -80px no-repeat; }*/
 #logout { background-position: 0 -60px; }

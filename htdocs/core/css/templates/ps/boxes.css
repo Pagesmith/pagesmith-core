@@ -42,7 +42,7 @@
   Additional "classes" .right (float right) & .fifty (1/2 of container)
 ----------------------------------------------------------------------*/
 
-.callout { width: 33%; float: left; margin: 10px; clear: left; background-color: #0e518d; box-shadow: 0 }
+.callout { width: 33%; float: left; margin: 10px; clear: left; background-color: #0e518d; box-shadow: none }
 .callout.right   { float: right; clear: right; }
 .callout.fifty   { width: 50%; }
 .callout.quarter { width:25%; }
@@ -105,7 +105,8 @@
   Light grey border (#bcc5cc)
 ----------------------------------------------------------------------*/
 
-.project { width: 33%; float: left; margin: 10px; border-color: #bcc5cc;}
+.project { width: 33%; float: left; margin: 10px; border-color: #bcc5cc; box-shadow: none }
+
 .centered-panel { width: 95%; margin: 0 auto; float: none; }
 .transcript div { height:120px; margin: 0 -2px 0 -10px; }
 .audio { clear:none; margin-top: 0; width: 340px; }
