@@ -202,7 +202,12 @@
       changeColFilter: function (table) {
         var c = table.config, filter_values = $(table).find(table.config.cssColFilter), q = [], j = 0;
         filter_values.each(function () {
-          var t = c.parsers[j].type, v = $.trim($(this).val().toLowerCase()),f=[],t_matches,k,t_match;
+          var t = c.parsers[j].type,
+              v = $.trim($(this).val().toLowerCase()),
+              f = [],
+              t_matches,
+              k,
+              t_match;
           if( t === 'numeric' && v.match(/[<=>]/) ) {
             t_matches = v.match(/([<=>]+\s*-?[\.\d]+)/g);
             if( t_matches ) {
@@ -212,6 +217,14 @@
                 t_match = t_matches[k].match(/([<=>]+)\s*(-?[\.\d]+)/);
                 f.push( { cond: t_match[1], val: parseFloat(t_match[2]) } );
               }
+            }
+          } else if( t !== 'numeric' ) {
+            if( v.charAt(0) === '/' ) {
+              f.push( { cond: 'regexp', val: v.substr(1) } );
+            } else if( v.charAt(0) === '^' ) {
+              f.push( { cond: 'start', val: v.substr(1) } );
+            } else if( v.charAt(v.length - 1) === '$' ) {
+              f.push( { cond: 'end', val: v.substr(0, v.length - 1) } );
             }
           }
           q.push({ type:t, val: v, filters: f });
