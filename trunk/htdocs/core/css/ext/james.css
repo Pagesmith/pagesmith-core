@@ -2,3 +2,4 @@
 ul.ul_james, #rhs ul.ul_james { margin: 0; padding: 0; list-style-position: outside; list-style: none; font-size: 80%; text-align: left }
 ul li.li_james, #rhs ul li.li_james { cursor: pointer; background-color: #fff; border: 1px solid #bcc5cc; border-top-width: 0; text-align: left }
 ul li.li_james_hovered, #rhs ul li.li_james_hovered { background-color: #bcc5cc; text-align: left }
+ul.ul_james li:before, #rhs ul.ul_james li:before { content: '' }
