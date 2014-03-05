@@ -125,7 +125,7 @@ sub is_type {
 sub get_options {
   my( $self, $opts ) = @_;
   $opts||={};
-  my $options                        = {( 'RaiseError' => 0, 'LongReadLen' => $ONE_MEG)};
+  my $options                        = {( 'RaiseError' => 1, 'LongReadLen' => $ONE_MEG)};
      $options->{'mysql_enable_utf8'} = 1         if $self->is_type( 'mysql'  );
      $options->{'FetchHashKeyName'}  = 'NAME_lc' if $self->is_type( 'oracle' );
      $options->{$_} = $opts->{$_} foreach keys %{$opts};
