@@ -9,6 +9,7 @@
 .link:hover, a:hover { text-decoration: none; }
 a img   { border:none; }
 
+.external, .pdf, .extpdf { white-space: nowrap }
 .extftp img, .pdf img, .external img { vertical-align: top; height: 12px; width: 15px; background:url(/core/gfx/icons-140302.png) -47px -34px no-repeat; }
 .extftp img { background-position: -47px -50px ; }
 .pdf    img { background-position: -47px -18px ; }
