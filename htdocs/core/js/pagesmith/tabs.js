@@ -41,7 +41,7 @@
     /* For each child in the list - add an on-click function which shows the
        relevant tab content - after first hiding the other tabs */
 
-    jQuery(this).children('li').children('a').click(function(){ pagesmith_tab_click(this);});
+    jQuery(this).children('li').children('a').click(function(){ return pagesmith_tab_click(this);});
     // Activate the first tab
     var x = $(this).children('li.active'); //Find first enabled tab!
     if (!x.length) {
