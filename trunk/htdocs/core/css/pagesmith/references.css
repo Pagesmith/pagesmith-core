@@ -37,11 +37,11 @@ ul.references { padding-left: 0 }
 li.periodical { margin-top: 0em; margin-left: 10px }
 li.periodical:before { content: ''; width: 0 }
 
-li.periodical h4:first-child, li.periodical h4 { margin-bottom: 0px; margin-left: -1.2em }
-li.periodical h4:before { content: ">"; color: #bcc5cc; padding-right: 1em; cursor: pointer }
+li.periodical h4:first-child, li.periodical h4 { margin-bottom: 0px; margin-left: 0}
+li.periodical h4:before { content: ">"; color: #bcc5cc; cursor: pointer; width: 20px; float: left; display:block; margin-left: -20px; padding-right: 0em; }
 li.ref-coll   h4:before { content: "\25BC" }
 li.ref-closed h4:before { content: "\25BA" }
-li.periodical h4, li.periodical p { padding: 0 0 0 20px; }
+li.periodical h4, li.periodical p, li.periodical h4:first-child { margin-right: 10px; padding:0 0 0 20px; margin-left: 0; margin-right: 10px; text-indent: 0}
 li.periodical h4, li.periodical .authors, li.periodical .links, li.periodical .publication { font-size: 1em; }
 
 .references p { margin-top: 0.3em; margin-bottom: 0.3em }

@@ -4,7 +4,7 @@
 #search_counts li.search_total    { color: #666 }
 #search_derestrict { cursor: pointer; }
 #search_res h4 span { float: right; background-color: #fff; padding: 0 3px; font-size: 80%; margin: 1px 2px }
-#search_res h4 { background-color: #eee; padding: 2px 0 5px 4px; margin-bottom: 2px }
+#search_res h4 { background-color: #eee; padding: 2px 2px 5px 5px; margin: 5px 10px 0 }
 #search_res em,  #search_res h2 strong, #search_waiting strong, #search_derestrict strong { font-weight: bold; color: #900 }
 #search_res h4 a { text-decoration: none; }
 #search_res p { padding: 0 5px; margin-bottom: 2px }
