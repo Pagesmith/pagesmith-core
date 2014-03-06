@@ -40,7 +40,7 @@ ul#Tabs2 li, ul.second-tabs li { float: left; background: none; padding:0; text-
   #NavTabs2 { display: none; }
 }
 
-ul#Tabs2 li:before, ul#navLeft li:before,
+ul#Tabs2 li:before, ul#navLeft li:before, ul.second-tabs li:before,
 ul.tabs li:before, #rhs ul.tabs li:before { content: ''; width: 0 }
 
 @media print {
