@@ -10,9 +10,9 @@
 a img   { border:none; }
 
 .external, .pdf, .extpdf { white-space: nowrap }
-.extftp img, .pdf img, .external img { vertical-align: top; height: 12px; width: 15px; background:url(/core/gfx/icons-140302.png) -48px -34px no-repeat; }
-.extftp img { background-position: -48px -50px ; }
-.pdf    img { background-position: -48px -18px ; }
+.extftp   img, .pdf img, .external img { vertical-align: top; height: 12px; width: 15px; background:url(/core/gfx/icons-140302.png) -48px -34px no-repeat; }
+.external img { background-position: -48px -50px ; }
+.pdf      img { background-position: -48px -18px ; }
 
 /*#landing #main .external, */
 .more .external { padding-right:0px; background:transparent; }
