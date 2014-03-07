@@ -148,12 +148,16 @@ sub today {
 
 sub set_obj_data {
   my( $self, $value ) = @_;
-  return unless @{$value};
-  my $v = $value->[0];
-  if( 'HASH' eq ref $v ) {
-    $self->{'obj_data'} = [$v];
+  if( 'ARRAY' eq ref $value ) {
+    return unless @{$value};
+    $value = $value->[0];
   } else {
-    my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = $self->munge_date_time_array( $v );
+    return unless defined $value;
+  }
+  if( 'HASH' eq ref $value ) {
+    $self->{'obj_data'} = [$value];
+  } else {
+    my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = $self->munge_date_time_array( $value );
     $mon  ++              if defined $mon;
     $year += $YEAR_OFFSET if defined $year;
     $self->SUPER::set_obj_data([{
