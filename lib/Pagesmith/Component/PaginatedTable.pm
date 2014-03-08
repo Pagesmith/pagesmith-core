@@ -66,6 +66,10 @@ sub ajax {
   return $self->default_ajax;
 }
 
+sub parsed_options {
+  return q();
+}
+
 sub execute {
   my $self = shift;
 
@@ -81,6 +85,7 @@ sub execute {
   ## no critic (LongChainsOfMethodCalls)
   $table->set_count( $count )
         ->set_refresh_url( '/component/'.$module_name )
+        ->set_refresh_opts( $self->parsed_options )
         ->set_export_url(  '/action/ExportTable/'.$module_name )
         ->add_data( @{$results} ); ## Attach count and data!
   ## use critic
