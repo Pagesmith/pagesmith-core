@@ -82,10 +82,12 @@ sub classes_string {
   }
   my $count = $self->option('count');
   my $url   = $self->option('refresh_url');
+  my $opts  = $self->option('refresh_opts');
   my $x_url = $self->option('export_url');
   my %meta_data;
   if( defined $url && defined $count ) {
     $meta_data{'refresh'} = $url;
+    $meta_data{'opts'}    = $opts;
     $meta_data{'entries'} = $count;
     $meta_data{'export'}  = $x_url if defined $x_url;
   }
@@ -199,6 +201,12 @@ sub set_refresh_url {
   return $self;
 }
 
+sub set_refresh_opts {
+  my( $self, $refresh_opts ) = @_;
+  $self->set_option( 'refresh_opts', $refresh_opts );
+  return $self;
+}
+
 sub clear_refresh_url {
   my $self = shift;
   $self->clear_option( 'refresh_url');
@@ -208,6 +216,11 @@ sub clear_refresh_url {
 sub refresh_url {
   my $self = shift;
   return $self->option( 'refresh_url' );
+}
+
+sub refresh_opts {
+  my $self = shift;
+  return $self->option( 'refresh_opts' );
 }
 
 sub set_export_url {
