@@ -53,6 +53,7 @@
       j,
       md = $.metadata && $(this).metadata() ? $(this).metadata() : {},
       refresh_url = '',
+      refresh_opts = '',
       export_url = '',
       entries = '',
       my_cells;
@@ -60,6 +61,9 @@
     if( md ) {
       if( md.refresh ) {
         refresh_url = md.refresh;
+      }
+      if( md.opts ) {
+        refresh_opts = md.opts;
       }
       if( md.entries ) {
         entries = md.entries;
@@ -176,6 +180,7 @@
     $(this).tablesorterPager({
       container: $('#' + table_key),
       refresh_url:    refresh_url,
+      refresh_opts:   refresh_opts,
       entries:        entries,
       export_url:     export_url
     });
