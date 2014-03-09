@@ -19,6 +19,7 @@ use Const::Fast qw(const);
 const my $MAX_SIZE => 5e6;
 const my $MAX_SLEEP   => 0.02;
 const my $MICRO_SLEEP => 0.001;
+const my $CONN_RESET  => 600;
 
 use DBIx::Connector;
 use POSIX qw(ceil);
@@ -31,6 +32,7 @@ my $dbh_config = {
   'user'    => undef,
   'pass'    => q(),
   'options' => {},
+  'last_connect' => undef,
 };
 
 my $dbh;
@@ -65,13 +67,25 @@ sub configured {
 sub _new_cache {
   $dbh = DBIx::Connector->new( $dbh_config->{'dsn'}, $dbh_config->{'user'}, $dbh_config->{'pass'}, $dbh_config->{'options'} );
   $dbh->mode('fixup');
+  $dbh_config->{'last_connect'} = time;
   $dbh->dbh;
+  return;
+}
+
+sub _touch_cache {
+  return _new_cache unless $dbh;
+  if( time - $dbh_config->{'last_connect'} < $CONN_RESET ) {
+    $dbh_config->{'last_connect'} = time;
+    return;
+  }
+  undef $dbh;
+  _new_cache;
   return;
 }
 
 sub _site_key {
   my $site_key = shift;
-  _new_cache unless $dbh;
+  _touch_cache;
   return unless $dbh;
   my $site_id = _scalar( 'select site_id from site where site_key = ?', $site_key );
   unless ($site_id) {
@@ -157,7 +171,7 @@ sub get {
   my $key = shift;
   my $t   = _parse_key($key);
   return unless $t;
-  _new_cache unless $dbh;
+  _touch_cache;
   return unless $dbh;
   my ( $content, $expires ) = $dbh->run( 'fixup'=> sub { return $_->selectrow_array(
     "select content, unix_timestamp(expires_at) from $t->{'table'} where site_id = ? and $t->{'where'}",
@@ -183,7 +197,7 @@ sub unset {    ## Returns value of undef if not found!
   my $key = shift;
   my $t   = _parse_key($key);
   return unless $t;
-  _new_cache unless $dbh;
+  _touch_cache;
   return unless $dbh;
   my $content = _scalar(
     "select left(content,20) from $t->{'table'} where site_id = ? and $t->{'where'}",
@@ -203,7 +217,7 @@ sub touch {
   my ( $key, $expires ) = @_;
   my $t = _parse_key($key);
   return unless $t;
-  _new_cache unless $dbh;
+  _touch_cache;
   return unless $dbh;
   $expires = expires($expires);
   my $content =
@@ -228,7 +242,7 @@ sub set {    ## Returns true if set was successful...
 
   my $t = _parse_key($key);
   return unless $t;            ## Dodgy key!
-  $dbh ||= _new_cache;
+  _touch_cache;
   return unless $dbh;
 
   $expires = expires($expires);
@@ -279,7 +293,7 @@ sub set {    ## Returns true if set was successful...
 sub get_lock {
   my( $lock_key, $lock_val, $expiry, $timeout ) = @_;
 
-  _new_cache unless $dbh;
+  _touch_cache;
   return 1 unless $dbh; ## if can't get dbh then we have to assume lock is successful!
 
   my $mult = 0;
@@ -297,7 +311,7 @@ sub get_lock {
 sub release_lock {
   my( $lock_key, $lock_val ) = @_;
 
-  _new_cache unless $dbh;
+  _touch_cache;
   return 1 unless $dbh; ## if can't get dbh then we have to assume release is successful!
 
   return _do( 'delete from lock_table where key = ? and value = ?', $lock_key, $lock_val ) ? 1 : 0;
@@ -307,7 +321,7 @@ sub is_free_lock {
 #@return integer - 1 if lock is not used, 0 otherwise
   my( $lock_key, $lock_val ) = @_;
 
-  _new_cache unless $dbh;
+  _touch_cache;
   return 1 unless $dbh; ## if can't get dbh then we have to assume lock is free
 
   return _scalar( 'select value from lock_table where key = ?', $lock_key ) ? 1 : 0;
@@ -317,7 +331,7 @@ sub is_used_lock {
 #@return integer - 1 if lock is used and is owned by this process, -1 if lock is used but not by this cache element, 0 if free
   my( $lock_key, $lock_val ) = @_;
 
-  _new_cache unless $dbh;
+  _touch_cache;
   return 0 unless $dbh; ## if can't get dbh then we have to assume lock is free
 
   my $actual_lock_val = _scalar(  'select value from lock_table where key = ?', $lock_key );
