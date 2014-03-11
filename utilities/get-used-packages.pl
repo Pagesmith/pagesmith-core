@@ -15,7 +15,7 @@ use utf8;
 use warnings;
 use feature qw(switch);
 
-## OLD COMMENT
+## OLD COMMENT (UK)
 use version qw(qv); our $VERSION = qv('0.1.0');
 
 use English        qw(-no_match_vars $PROGRAM_NAME $EVAL_ERROR);
