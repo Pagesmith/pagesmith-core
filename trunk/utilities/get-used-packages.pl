@@ -11,8 +11,8 @@
 ## Repository URL : $HeadURL$
 
 use strict;
-use warnings;
 use utf8;
+use warnings;
 use feature qw(switch);
 
 use version qw(qv); our $VERSION = qv('0.1.0');
