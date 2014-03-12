@@ -44,14 +44,13 @@ sub new {
 #@param (class)
 #@return (self)
   my( $class, $db_info, $r ) = @_;
-
   ## If db_info is empty - and just r $is passd then we shift the entries appropriately
 
   ($r,$db_info) = ($db_info,undef) if 'Apache2::RequestRec' eq ref $db_info; ## Yoda stops requirement for brackets
 
   my $self;
   if( blessed $db_info ) { ## DB info is an adaptor!
-    $self = { map { ( $_ => $db_info->{$_} ) } qw(_conn _dsn _dbuser _dbpass _r _user _version _sub_class pool) };
+    $self = { map { ( $_ => $db_info->{$_} ) } qw(_conn _dsn _dbuser _dbpass _r _user _version _sub_class pool mode) };
     $self->{'_dbopts'} ||= {%{$db_info->{'_dbopts'}||{}}};
     bless $self, $class;
   } else { ## It is either "undefined" - so use connection_pars, scalar or hashref!
@@ -66,6 +65,7 @@ sub new {
       '_user'      => undef,
       '_sub_class' => undef,
       'pool'       => {},
+      'mode'       => 'fixup',
     };
     bless $self, $class;                                        ## Original bless to put this in
                                                                 ## the main adaptors name space...
@@ -83,6 +83,11 @@ sub new {
   $self->init;   ## Run any additional code which is needed to set up the adaptor!
 
   return $self;  ## Return appropriately blessed object
+}
+
+sub mode {
+  my $self = shift;
+  return $self->{'mode'}||'fixup';
 }
 
 ## Stub functions to be overridden in subclass
@@ -151,12 +156,13 @@ sub get_connection {
     $db_details->{'pass'} ||= q();
   ( $db_details->{'name'} ||= $DEFAULT_NAME ) =~ s{[^-[.]\w]}{}mxgs;
     $db_details->{'dsn'}  ||= $self->generate_dsn( $db_details );
-
+    $db_details->{'mode'} ||= 'fixup';
   $self->{'_dsn'}       = $db_details->{'dsn'};
   $self->{'_dbuser'}    = $db_details->{'user'};
   $self->{'_version'}   = $db_details->{'version'};
   $self->{'_dbpass'}    = $db_details->{'pass'};
   $self->{'_sub_class'} = $db_details->{'subclass'} || q();
+  $self->{'mode'}       = $db_details->{'mode'};
   $self->{'_dbopts'}    = $self->get_options( $db_details->{'opts'} );
   return $self;
 }
@@ -172,7 +178,7 @@ sub connect_to_db {
   return $self if $self->{'_conn'};
   return $self unless exists  $self->{'_dsn'} && $self->{'_dsn'};
   $self->{'_conn'} = DBIx::Connector->new( $self->{'_dsn'}, $self->{'_dbuser'}, $self->{'_dbpass'}, $self->{'_dbopts'} );
-  $self->{'_conn'}->mode( 'fixup' );
+  $self->{'_conn'}->mode( $self->mode );
   return $self;
 }
 
@@ -201,7 +207,7 @@ sub dbh {
 sub prepare {
   my( $self, @params ) = @_;
   return unless $self->conn;
-  return $self->conn->run( 'fixup' =>  sub { return $_->prepare( @params ); } );
+  return $self->conn->run( $self->mode =>  sub { return $_->prepare( @params ); } );
 }
 
 sub sv {
@@ -211,7 +217,7 @@ sub sv {
 #@param (?)+ parameters to pass to SQL statement.
   my ( $self, $sql, @pars ) = @_;
   return unless $self->conn;
-  my ($res) = $self->conn->run( 'fixup' =>  sub { my $t = $_->selectrow_arrayref( $sql, {}, @pars ); return $t->[0] if $t; return;} );
+  my ($res) = $self->conn->run( $self->mode =>  sub { my $t = $_->selectrow_arrayref( $sql, {}, @pars ); return $t->[0] if $t; return;} );
   return $res;
 }
 
@@ -219,7 +225,7 @@ sub code_block {
   my ( $self, $coderef ) = @_;
   return unless $self->conn;
   ## We will run these as a transaction!
-  return $self->conn->txn( 'fixup' => $coderef );
+  return $self->conn->txn( $self->mode => $coderef );
 }
 
 sub row {
@@ -229,7 +235,7 @@ sub row {
 #@param (?)+ parameters to pass to SQL statement.
   my ( $self, $sql, @pars ) = @_;
   return unless $self->conn;
-  return $self->conn->run( 'fixup' =>  sub { my $t = $_->selectrow_arrayref( $sql, {}, @pars ); return $t if $t; return;} );
+  return $self->conn->run( $self->mode =>  sub { my $t = $_->selectrow_arrayref( $sql, {}, @pars ); return $t if $t; return;} );
 }
 
 sub row_hash {
@@ -239,7 +245,7 @@ sub row_hash {
 #@param (?)+ parameters to pass to SQL statement.
   my ( $self, $sql, @pars ) = @_;
   return unless $self->conn;
-  return $self->conn->run( 'fixup' =>  sub { my $t = $_->selectrow_hashref( $sql, {}, @pars ); return $t if $t; return;} );
+  return $self->conn->run( $self->mode =>  sub { my $t = $_->selectrow_hashref( $sql, {}, @pars ); return $t if $t; return;} );
 }
 
 sub all {
@@ -249,7 +255,7 @@ sub all {
 #@param (?)+ parameters to pass to SQL statement.
   my ( $self, $sql, @pars ) = @_;
   return unless $self->conn;
-  return $self->conn->run( 'fixup' =>  sub { return $_->selectall_arrayref( $sql, {}, @pars ); } );
+  return $self->conn->run( $self->mode =>  sub { return $_->selectall_arrayref( $sql, {}, @pars ); } );
 }
 
 sub all_hash {
@@ -259,7 +265,7 @@ sub all_hash {
 #@param (?)+ parameters to pass to SQL statement.
   my ( $self, $sql, @pars ) = @_;
   return unless $self->conn;
-  return $self->conn->run( 'fixup' =>  sub { return $_->selectall_arrayref( $sql, { 'Slice' => {} }, @pars ); } );
+  return $self->conn->run( $self->mode =>  sub { return $_->selectall_arrayref( $sql, { 'Slice' => {} }, @pars ); } );
 }
 
 sub query {
@@ -269,7 +275,7 @@ sub query {
 #@param (?)+ parameters to pass to SQL statement.
   my ( $self, $sql, @pars ) = @_;
   return unless $self->conn;
-  return $self->conn->run( 'fixup' =>  sub { return $_->do( $sql, {}, @pars ); });
+  return $self->conn->run( $self->mode =>  sub { return $_->do( $sql, {}, @pars ); });
 }
 
 sub insert {
@@ -279,7 +285,7 @@ sub insert {
 #@param (?)+ parameters to pass to SQL statement.
   my ( $self, $sql, $table_name, $column, @pars ) = @_;
   return unless $self->conn;
-  return $self->conn->run( 'fixup' =>  sub {
+  return $self->conn->run( $self->mode =>  sub {
     return unless $_->do( $sql, {}, @pars );
     return $_->last_insert_id( undef, undef, $table_name, $column );
   });
@@ -293,7 +299,7 @@ sub col {
 #@param (?)+ parameters to pass to SQL statement.
   my ( $self, $sql, @pars ) = @_;
   return unless $self->conn;
-  return $self->conn->run( 'fixup' =>  sub {
+  return $self->conn->run( $self->mode =>  sub {
     return $_->selectcol_arrayref( $sql, {}, @pars );
   });
 }
@@ -304,7 +310,7 @@ sub hash {
 #@param (?)+ parameters to pass to SQL statement.
   my ( $self, $sql, @pars ) = @_;
   return unless $self->conn;
-  return $self->conn->run( 'fixup' =>  sub {
+  return $self->conn->run( $self->mode =>  sub {
     return { map { @{$_} } @{ $_->selectall_arrayref( $sql, { 'Columns' => [1,2] }, @pars ) } };
   });
 }
@@ -317,7 +323,7 @@ sub hash_hash {
 #@param (?)+ parameters to pass to SQL statement.
   my ( $self, $sql, $column, @pars ) = @_;
   return unless $self->conn;
-  return return $self->conn->run( 'fixup' =>  sub {
+  return return $self->conn->run( $self->mode =>  sub {
     return $_->selectall_hashref( $sql, $column, {}, @pars );
   });
 }
