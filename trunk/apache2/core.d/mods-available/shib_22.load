@@ -1,1 +1,1 @@
-LoadModule shib_22_module /usr/lib/apache2/modules/mod_shib_22.so
+LoadModule mod_shib /usr/lib/apache2/modules/mod_shib_22.so
