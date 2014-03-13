@@ -143,7 +143,7 @@ sub parse_cookie {
   my $cookie;
   my $rv = eval {
     my %cookie_jar = Apache2::Cookie->fetch( $r );
-    $cookie = $cookie_jar{ 'PageSmith' };
+    $cookie = $cookie_jar{ 'Pagesmith' };
   };
   return $flags if $EVAL_ERROR;
   return $flags unless $cookie;
