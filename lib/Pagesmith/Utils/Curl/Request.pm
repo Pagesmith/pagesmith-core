@@ -52,7 +52,7 @@ sub new {
   $self->setopt( CURLOPT_FILE,           $self->{'response'} );
   $self->setopt( CURLOPT_WRITEHEADER,    $self->{'response'} );
   $self->setopt( CURLOPT_URL,            $self->{'url'} );
-  $self->setopt( CURLOPT_USERAGENT,      'PageSmith::Utils::Curl/'.$VERSION );
+  $self->setopt( CURLOPT_USERAGENT,      'Pagesmith::Utils::Curl/'.$VERSION );
   $self->setopt( CURLOPT_TIMEOUT,        ( defined $fetcher ? $fetcher->timeout : 0      ) || $TIMEOUT );
   $self->setopt( CURLOPT_CONNECTTIMEOUT, ( defined $fetcher ? $fetcher->conn_timeout : 0 ) || $CONN_TIMEOUT );
   $self->setopt( CURLOPT_SSL_VERIFYHOST, 0 );
