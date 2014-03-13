@@ -26,6 +26,7 @@ const my $TIME_FORMAT => '%H:%M';
 const my $DATE_FORMAT => '%a, %d %b %Y';
 const my $DOFF        => 1_900;
 const my $CENT        => 100;
+const my $MIN         => 60;
 
 sub new {
   my( $class, $r, $options, $columns, $row_data ) = @_;
@@ -349,10 +350,10 @@ sub blocks {
 sub add_columns {
   my( $self, @cols ) = @_;
   foreach my $col ( @cols ) {
-    if( exists $col->{'format'} && defined $col->{'format'} && $col->{'format'} =~ m{\A[tfpdzkm]\d*\Z}mxs ) {
+    if( exists $col->{'format'} && defined $col->{'format'} && $col->{'format'} =~ m{\A(?:[tfpdzkm]\d*|mins|dur)\Z}mxs ) {
       $col->{'align'} ||= 'r';
     }
-    if( exists $col->{'format'} && defined $col->{'format'} && $col->{'format'} =~ m{\A([yzkmt]|date|datetime|time).*\Z}mxs ) {
+    if( exists $col->{'format'} && defined $col->{'format'} && $col->{'format'} =~ m{\A(?:[yzkmt]|date|datetime|time).*\Z}mxs ) {
       $col->{'sort_index'} ||= $col->{'key'};
       $col->{'align'}      ||= 'c';
     }
@@ -435,6 +436,8 @@ sub expand_format {
        : $f =~ m{\Adatetime(.+)\Z}mxs ? $self->time_str( $1,                           $self->munge_date_time( $val ) )
        : $f eq 'currency'             ? sprintf( q(&pound;%0.2f),                      $val||0 )       # &pound;0.00
        : $f eq 't'                    ? $self->commify(                                $val )       # n,nnn,nnn,nnn
+       : $f eq 'dur'                  ? $self->duration(                               $val, 'hms' )  # n,nnn,nnn,nnn
+       : $f eq 'mins'                 ? $self->duration(                               $val, 'hm'  )  # n,nnn,nnn,nnn
        : $f eq 'z'                    ? $self->format_size(                            $val, 0  )   # nnnn K/M/G/...
        : $f =~ m{\Az(\d+)\Z}mxs       ? $self->format_size(                            $val, $1 )   # nnnn.mm K/M/G/...
        : $f eq 'k'                    ? $self->format_fixed(                           $val, 'k', 0 ) # nnnn K
@@ -451,6 +454,23 @@ sub expand_format {
        : $f eq 'd'                    ? sprintf( q(%0d),                               $val||0 )       # Integer
        :                                encode_entities(                               $val )       # HTML safe!
        ;
+}
+
+sub duration {
+  my ($self,$t,$format) = @_;
+
+  if( $format eq 'hm' ) {
+    my $mnx = int $t/$MIN;
+    my $min = $mnx % $MIN;
+    my $hr  = ( $mnx - $min ) / $MIN;
+    return sprintf '%d:%02d', $hr, $min;
+  }
+
+  my $sec = $t % $MIN;
+  my $mnx = ( $t - $sec ) / $MIN;
+  my $min = $mnx % $MIN;
+  my $hr  = ( $mnx - $min ) / $MIN;
+  return sprintf '%d:%02d:%02d', $hr, $min, $sec;
 }
 
 sub wbr {
