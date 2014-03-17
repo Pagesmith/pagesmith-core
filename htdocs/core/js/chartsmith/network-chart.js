@@ -25,14 +25,103 @@
   function isIE9Std() {
     return document.all && document.addEventListener && !window.atob && document.compatMode==='CSS1Compat';
   }
-
+  function intersect( a, b, c, d) {
+    var den = (b.y-a.y)*(d.x-c.x) - (b.x-a.x)*(d.y-c.y), t, s;
+    if( den === 0 ) { // These are parallel
+      return {};
+    }
+    t = ((a.x-c.x)*(d.y-c.y) - (a.y-c.y)*(d.x-c.x))/den;
+    s = d.x-c.x === 0 ? (a.y-c.y + (b.y-a.y)*t)/(d.y-c.y) : (a.x-c.x + (b.x-a.x)*t)/(d.x-c.x);
+    return 0<=t && t<=1 && 0<=s && s<=1 ? { x:a.x+(b.x-a.x)*t,y:a.y+(b.y-a.y)*t} : {};
+  }
   Pagesmith.NetworkChart = function( id, options ) {
     this.init( id, options );
   };
 
   Pagesmith.NetworkChart.prototype = {
+    /* jshint -W072 */
+    draw_arrow: function( pts, x, y, ux, uy, sf, opts ) {
+      var str = 'M'+x+' '+y, l = pts.pts.length, i;
+      for(i=0;i<l;i) {
+        str += pts.pts[i]+(-pts.pts[i+1]*uy*sf+pts.pts[i+2]*ux*sf)+' '+
+                          ( pts.pts[i+1]*ux*sf+pts.pts[i+2]*uy*sf);
+        i+=3;
+      }
+      if( pts.fill ) {
+        str += 'z';
+      }
+      var p = this.paper.path( str ).attr( opts );
+      if( pts.fill ) {
+        p.attr( {fill: opts.stroke} );
+      }
+      return;
+    },
+    /* jshint +W072 */
     init: function( obj_id, options ) {
       var self        = this;
+      this.line_styles = {
+        dashed:        '- ',
+        dashed_dotted: '- .',
+        dotted:        '. ',
+        line:          ''
+      };
+      this.drawn_objects = 0;
+      this.n_objects     = 0;
+      this.drawn_connections = 0;
+      this.n_connections = 0;
+      this.arrow_defs     = {
+        /* dash, none, plain, standard, t_shape */
+        t_shape:   { fill:0, pts: [ 'm', -1, 0, 'l', 2, 0 ] },
+        dash:      { fill:0, pts: [ 'm', -1, 2, 'l', 2, 0 ] },
+        standard:  { fill:1, pts: [ 'l', -1, 1.5, 'l', 1, -0.5, 'l', 1, 0.5 ] },
+        plain:     { fill:0, pts: [ 'm', -1, 1, 'l', 1, -1, 'l', 1, 1 ] }
+      };
+      this.shape_defs     = {
+        diamond:   { line: 'm-0.5 0l0.5 0.5l0.5 -0.5l-0.5 -0.5',
+                textwidth: 0.7,
+                textheight: 0.7,
+                   valign: 'middle',
+                    align: 'center',
+                      pts:  [ [ 0.5,0], [0,0.5],[-0.5,0],[0,-0.5] ] },
+        triangle:  { line: 'm-0.5 0.5l0.5 -1l0.5 1',
+                textwidth: 0.6,
+                textheight: 1,
+                   valign: 'bottom',
+                    align: 'center',
+                      pts:  [ [ -0.5,  0.5],[ 0 , -0.5],[ 0.5,  0.5] ] },
+        trapezoid: { line: 'm-0.5 0.5l0.25 -1l0.5 0l0.25 1l',
+                textwidth: 0.9,
+                textheight: 1,
+                   valign: 'bottom',
+                    align: 'center',
+                      pts:  [ [-0.5,  0.5], [-0.25, -0.5 ] ,[ 0.25, -0.5 ],[ 0.5,  0.5] ] },
+        octagon:   { line: 'm-0.5 -0.25l0 0.5l0.25 0.25l0.5 0l0.25 -0.25l0 -0.5l-0.25 -0.25l-0.5 0',
+                textwidth: 0.8,
+                textheight: 0.8,
+                   valign: 'middle',
+                    align: 'center',
+                      pts:  [ [-0.5, -0.25],[-0.5, 0.25],[-0.25, 0.5],[ 0.25, 0.5],
+                              [ 0.5,  0.25],[ 0.5,-0.25],[ 0.25,-0.5],[-0.25,-0.5] ] },
+        hexagon:   { line: 'm-0.5 0l0.25 0.5l0.5 0l0.25 -0.5l-0.25 -0.5l-0.5 0',
+                textwidth: 0.8,
+                textheight: 0.8,
+                   valign: 'middle',
+                    align: 'center',
+                      pts:  [ [-0.5,  0  ], [-0.25,-0.5 ] ,[ 0.25,-0.5] ,
+                              [ 0.5,  0  ], [ 0.25, 0.5 ] ,[-0.25, 0.5]] },
+        roundrectangle: { line: 'm-0.5 -0.5l1 0l0 1l0 -1',
+                     textwidth: 1,
+                    textheight: 1,
+                        valign: 'middle',
+                         align: 'center',
+                           pts: [ [-0.5,-0.5], [-0.5, 0.5 ],[ 0.5,0.5], [0.5,-0.5] ] },
+        rectangle: { line: 'm-0.5 -0.5l1 0l0 1l0 -1',
+                textwidth: 1,
+               textheight: 1,
+                   valign: 'middle',
+                    align: 'center',
+                      pts:  [ [-0.5,-0.5], [-0.5, 0.5 ],[ 0.5,0.5], [0.5,-0.5] ] }
+      };
       this.fetching_notice     = 'Fetching proteins and preparing chart data';
       this.copyright_notice    = 'Copyright Wellcome Trust Sanger Institute';
       this.include_diagnositcs = 1;
@@ -69,15 +158,93 @@
       this.SF                  = ( this.WIDTH < this.HEIGHT ? this.WIDTH : this.HEIGHT ) / 2 - 10;
       this.popup_array = {};
       this.data_loaded = 0;
-      $(window).on('resize',function(){self.draw_chart();});
+      $(window).on('resize',function(){ self.draw_chart();});
       window.setTimeout( function() { self._init(options); }, this.DELAY );
       return this;
+    },
+    align_text: function (pars) {
+      var pad = 'pad' in pars ? pars.pad : 0,
+          w   = 'w'   in pars ? pars.w   : 100,
+          h   = 'h'   in pars ? pars.h   : 12,
+          mfs = 'max_font' in pars ? pars.max_font : 12,
+          fs  = mfs,
+          txt = (pars.t+''),
+          t   = this.paper.text(pars.x, pars.y, txt.toString()),
+          rat;
+      if( pars.opts ) {
+        t.attr(pars.opts);
+      }
+      t.attr( 'font-size', fs );
+      var tw = t.getBBox().width;
+      var th = t.getBBox().height;
+      if( tw+pad*2 > w ) {
+        rat = (w-pad*2)/tw;
+        fs *= rat;
+        th  = th * rat;
+        tw  = w-pad*2;
+      }
+      if( th+pad*2 > h ) {
+        rat = (h-pad*2)/th;
+        fs *= rat;
+        tw  = tw * rat;
+        th  = h-pad*2;
+      }
+      if( fs < mfs ) {
+        t.remove();
+        t = this.paper.text(pars.x, pars.y, txt.toString());
+        if( pars.opts ) {
+          t.attr(pars.opts);
+        }
+        t.attr( 'font-size', fs );
+      }
+      pad = pars.pad ? pars.pad : 0;
+      if (pars.align === 'right') {
+        t.translate( (w-tw) / 2-pad, 0);
+      }
+      if (pars.align === 'left') {
+        t.translate( (tw-w) / 2+pad, 0);
+      }
+      if (pars.valign === 'top') {
+        t.translate(0, (th-h)/2+pad );
+      }
+      if (pars.valign === 'bottom') {
+        t.translate(0, (h-th)/2-pad );
+      }
+      return t;
     },
     _init: function( /*options*/ ) {
       window.alert( 'You need to sub-class this object' );
     },
     /* Managing parameters and highlighting */
     get_params: function( ) { // Can overwrite
+    },
+    patch_edge: function( node, start, end ) {
+      var pts, p1, p2, l, ip;
+    /* Patch the end of a line... note
+       start should be in feature!
+       end should be outside feature,
+       node is the shape we are seeing if it is in! */
+      if( ! (node.obj.shape in this.shape_defs) ) {
+        return 1;
+      }
+      pts = this.shape_defs[ node.obj.shape ].pts;
+      p1 = { x: node.x + pts[0][0]*node.w,
+             y: node.y + pts[0][1]*node.h};
+      for(l = pts.length;l;l) {
+        l--;
+        p2 = { x: node.x + pts[l][0]*node.w,
+               y: node.y + pts[l][1]*node.h};
+        ip = intersect( start, end, p1, p2 );
+        if( 'x' in ip ) {
+          start.x = ip.x;
+          start.y = ip.y;
+          return 1;
+        }
+        p1 = p2;
+      }
+      return 0;
+      /* Don't intersect... yarg... */
+      // Is start inside shape ?
     },
     copy_params_to_previous: function() { // Can overwrite
       var i;
@@ -121,6 +288,11 @@
       });
       return this;
     },
+    reset_chart_size: function() {
+      this.c_x=0;
+      this.c_y=0;
+      this.sc=1;
+    },
     add_navigation_panel: function() {
       var self = this;
       this.paper.circle( this.WIDTH-35, 45, 22 ).attr( { stroke:'#666','stroke-width':1,fill:'#fff'} );
@@ -138,10 +310,10 @@
         function() { self.c_x -= 1/self.sc;           self.draw_chart(); } );
       this.paper.path( 'M'+ (this.WIDTH-30) +' 40l0 10l-10 0l0 -10').attr(
         {cursor:'pointer',title:'reset',stroke:'#666','stroke-width':1,fill:'#000'}).click(
-        function() { self.c_x=0;self.c_y=0;self.sc=1; self.draw_chart(); } );
+        function() { self.reset_chart_size(); self.draw_chart(); } );
       this.paper.text( this.WIDTH-35,45, 'R'                       ).attr(
         {cursor:'pointer',title:'reset',fill:'#fff',  'font-weight':'bold'        }).click(
-        function() { self.c_x=0;self.c_y=0;self.sc=1; self.draw_chart(); } );
+        function() { self.reset_chart_size(); self.draw_chart(); } );
       this.paper.circle( this.WIDTH-11, 20, 10 ).attr(
         {cursor:'pointer',title:'zoom in x5',stroke:'#666','stroke-width':1,fill:'#fff'} ).click(
         function()  {self.sc*=5;self.draw_chart();} );
@@ -361,6 +533,9 @@
     object_click: function( node, e ) {
       var self = this, _p = this.get_event_loc( e ), x_p = _p.x, y_p = _p.y, z,i,
         object = this.parse_object_title( node.attr('title') ), popup_size, x_l, y_l;
+      if( ! ('object_popup_dimensions' in this) ) {
+        return;
+      }
       if( this.popup_array[ object.id ] ) {
         return;
       }
@@ -391,6 +566,9 @@
           objects = this.parse_line_title( node.attr('title') ),
           x1,x2,y1,y2,x_l,y_l,size_x,size_y,popup, z,i,
           popup_key = objects.a_id +':'+objects.b_id,popup_size;
+      if( !( 'line_popup_dimensions' in this ) ) {
+        return;
+      }
       if( this.popup_array[ popup_key ] ) {
         return;
       }
@@ -478,42 +656,101 @@
     },
     draw_object: function(x,y,pars) {
       var self         = this,
-          r            = 'r' in pars ? pars.r : 10,
-          nm           = 'name'  in pars ? pars.name : '',
-          ttl          = 'title' in pars ? pars.title : '',
-          stroke_width = 'stroke_width' in pars ? pars.stroke_width : (40+pars.r)/50,
-          fill_color   = 'color' in pars ? pars.color : '#ccc',
-          stroke_color = 'border'in pars ? pars.border : '#666',
+          r            = 'r'            in pars ? pars.r            : ( 'h' in pars && 'w' in pars ? Math.min( pars.h, pars.w ) : 10 ),
+          nm           = 'name'         in pars ? pars.name         : '',
+          ttl          = 'title'        in pars ? pars.title        : '',
+          stroke_width = 'stroke_width' in pars ? pars.stroke_width : (40+r)/50,
+          fill_color   = 'color'        in pars ? pars.color        : '#ccc',
+          stroke_color = 'border'       in pars ? pars.border       : '#666',
+          stroke_style = 'style'        in pars ? pars.style        : '',
+          shape        = 'shape'        in pars ? pars.shape        : 'circle',
+          h            = 'h'            in pars ? pars.h            : 2*r,
+          w            = 'w'            in pars ? pars.w            : 2*r,
+          vratio       = shape          in this.shape_defs ? this.shape_defs[shape].textwidth  : 1,
+          hratio       = shape          in this.shape_defs ? this.shape_defs[shape].textheight : 1,
+          valign       = shape          in this.shape_defs ? this.shape_defs[shape].valign     : 'middle',
+          align        = shape          in this.shape_defs ? this.shape_defs[shape].align      : 'center',
           fs,c,t;
       this.n_objects++;
-      if( x <= -r || x >= this.WIDTH+r || y <= -r || y >= this.HEIGHT+r ) {
+      if( x <= -w/2 || x >= this.WIDTH+w/2 || y <= -h/2 || y >= this.HEIGHT+h/2 ) {
         return 0;
       }
       this.drawn_objects++;
-      if( r>12 ) {
+      c = this.draw_shape( { shape: shape, fill_color: fill_color, x: x, y: y, h: h, w: w, r: r,
+                             stroke_width: stroke_width, stroke_color: stroke_color, stroke_style: stroke_style, title: ttl } );
+      var mf = 12;
+      if( 'fit_text' in pars ) {
+        if( 'txtpos' in pars && pars.txtpos === 'tr' ) {
+          valign = 'top';
+          align  = 'right';
+        }
+        t = this.align_text( {
+          x: x,
+          y: y,
+          t: nm,
+          w: w*vratio,
+          h: h*hratio,
+          max_font: mf,
+          opts: { cursor:'pointer','font-weight': 'bold', fill:'#000000', title: ttl  },
+          align: align,
+          valign: valign,
+          pad: 1
+        } );
+        t.click( function( e ) { self.object_click( this, e ); } );
+      } else if( r>12 ) {
         fs = (r<40 ? r:40)/2.7;
-        c = this.paper.circle( x, y, r ).attr({cursor:'pointer',fill:fill_color,stroke:stroke_color,'stroke-width':stroke_width,title: ttl});
         t = this.paper.text( x,y, nm ).attr( {cursor:'pointer','font-size': fs, 'font-weight': 'bold', fill:'#000000', title: ttl  } );
         t.click( function( e ) { self.object_click( this, e ); } );
       } else {
-        c = this.paper.circle( x, y, r ).attr({fill:fill_color,stroke:stroke_color,'stroke-width':stroke_width,title:ttl});
         this.paper.text( x, y+r+6, nm ).attr( {opacity: 0.6,'stroke-width':3,stroke:'#fff','font-size': 10, 'font-weight': 'bold', fill:'#fff' } );
         t = this.paper.text( x, y+r+6, nm ).attr( {'font-size': 10, 'font-weight': 'bold', fill:'#cc0000', title: ttl } );
         t.click( function( e ) { self.object_click( this, e ); } );
       }
       c.click( function( e ) { self.object_click( this, e ); } );
-      return 1;
+      return c;
     },
+    draw_shape: function( pars ) {
+      var c, str, st_style;
+      switch( pars.shape ) {
+        case 'circle':
+          c = this.paper.circle( pars.x, pars.y, pars.r );
+          break;
+        case 'ellipse':
+          c = this.paper.ellipse( pars.x, pars.y, pars.w/2, pars.h/2 );
+          break;
+        case 'rectangle' :
+        case 'roundrectangle' :
+          c = this.paper.rect( pars.x - pars.w/2, pars.y - pars.h/2, pars.w, pars.h );
+          break;
+        default:
+          str = pars.shape in this.shape_defs ? this.shape_defs[pars.shape].line : pars.shape;
+          c = this.paper.path('M' + pars.x+ ' ' + pars.y +
+            str.replace(
+              /(-?\d+(\.\d+)?)[ ](-?\d+(\.\d+)?)/g,
+              function (m,p1,p2,p3) { return (p1 * pars.w)+' '+(p3 * pars.h); }
+            ) + 'z' );
+      }
+      st_style = pars.stroke_style in this.line_styles ? this.line_styles[ pars.stroke_style ] : pars.stroke_style;
+      c.attr({cursor:'pointer',fill:pars.fill_color,stroke:pars.stroke_color,'stroke-width':pars.stroke_width,title: pars.title,
+        'stroke-dasharray': st_style});
+      return c;
+    },
+
     /* jshint -W074 */
     draw_connection: function(x,y,x1,y1,d,pars) {
       var self         = this,
           ttl          = 'title' in pars ? pars.title : '',
-          stroke_width = 'stroke_width' in pars && pars.stroke_width ? pars.stroke_width*(40+pars.r)/50: (40+pars.r)/50,
+          stroke_width = 'stroke_width' in pars && pars.stroke_width ? pars.stroke_width : 1,
+          pattern      = 'pattern'      in pars                      ? pars.pattern : '',
+          start        = 'start'        in pars                      ? pars.start : '',
+          end          = 'end'          in pars                      ? pars.end : '',
           stroke_color = 'color' in pars ? pars.color: '#666',
           d1           = 0,
           t;
       this.n_connections++;
-
+      if( pattern in this.line_styles ) {
+        pattern = this.line_styles[ pattern ];
+      }
       // The following is nasty... it is to work out which lines to draw...
       if( d ) {
         d1 = 1;
@@ -603,13 +840,34 @@
       }
       if( d1 ) {
         this.drawn_connections++;
-        var jn = this.paper.path( 'M'+x+' '+y+'L'+x1+' '+y1 ).toBack().attr(
-          {cursor:'pointer',stroke:stroke_color,'stroke-width':stroke_width,'title':ttl}
-        );
-        // This makes the line easier to click as it is at least 4px wide!
-        var jn2 = this.paper.path( 'M'+x+' '+y+'L'+x1+' '+y1 ).toBack().attr(
-          {cursor:'pointer',stroke:stroke_color,'stroke-opacity':0,'stroke-width':stroke_width+4,'title':ttl}
-        );
+        var jn, jn2;
+        if( 'draw_over' in pars ) {
+          jn = this.paper.path( 'M'+x+' '+y+'L'+x1+' '+y1 ).attr(
+            {cursor:'pointer',stroke:stroke_color,'stroke-width':stroke_width,'title':ttl, 'stroke-dasharray': pattern }
+          );
+          var l = Math.sqrt( (x1-x)*(x1-x)+(y1-y)*(y1-y) );
+          // This makes the line easier to click as it is at least 4px wide!
+          jn2 = this.paper.path( 'M'+x+' '+y+'L'+x1+' '+y1 ).attr(
+            {cursor:'pointer',stroke:stroke_color,'stroke-opacity':0,'stroke-width':stroke_width+4,'title':ttl}
+          );
+          if( start in this.arrow_defs ) {
+            this.draw_arrow( this.arrow_defs[start], x,y, (x1-x)/l, (y1-y)/l, 3,
+              {cursor:'pointer',stroke:stroke_color,'stroke-width':stroke_width} );
+          }
+          if( end in this.arrow_defs ) {
+            this.draw_arrow( this.arrow_defs[end], x1,y1, (x-x1)/l, (y-y1)/l, 3,
+            {cursor:'pointer',stroke:stroke_color,'stroke-width':stroke_width} );
+          }
+        } else {
+          jn = this.paper.path( 'M'+x+' '+y+'L'+x1+' '+y1 ).toBack().attr(
+            {cursor:'pointer',stroke:stroke_color,'stroke-width':stroke_width,'title':ttl, 'stroke-dasharray': pattern}
+          );
+          // This makes the line easier to click as it is at least 4px wide!
+          jn2 = this.paper.path( 'M'+x+' '+y+'L'+x1+' '+y1 ).toBack().attr(
+            {cursor:'pointer',stroke:stroke_color,'stroke-opacity':0,'stroke-width':stroke_width+4,'title':ttl}
+          );
+
+        }
         // Some versions of IE draw lines outside the box so we will need to clip them!
         if( this.ie && ( x<0 || x>this.WIDTH || x1 < 0 || x1 > this.WIDTH || y<0 || y>this.HEIGHT || y1<0 || y1>this.HEIGHT) ) {
           jn.attr({'clip-rect':this.clip_rect});
@@ -651,6 +909,9 @@
     },
     scale_y: function(y) {
       return this.HEIGHT/2  + this.SF * this.sc * (y-this.c_y);
+    },
+    scale_l: function(x) {
+      return this.SF * this.sc * x;
     },
     /* Zoom to box */
     zoom_to_box: function( min_x, min_y, max_x, max_y ) {
