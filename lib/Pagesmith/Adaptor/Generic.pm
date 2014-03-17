@@ -76,7 +76,6 @@ sub type {
 }
 
 sub create {
-
 #@param (self)
 #@param (hashref)? Optional hashref of attributes
 #@return (Pagesmith::Object::Generic)
