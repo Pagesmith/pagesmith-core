@@ -77,6 +77,8 @@
         plain:     { fill:0, pts: [ 'm', -1, 1, 'l', 1, -1, 'l', 1, 1 ] }
       };
       this.shape_defs     = {
+        circle:  { textwidth: 0.7, textheight: 0.7, valign: 'middle', align: 'center' },
+        ellipse: { textwidth: 0.7, textheight: 0.7, valign: 'middle', align: 'center' },
         diamond:   { line: 'm-0.5 0l0.5 0.5l0.5 -0.5l-0.5 -0.5',
                 textwidth: 0.7,
                 textheight: 0.7,
@@ -663,13 +665,13 @@
           fill_color   = 'color'        in pars ? pars.color        : '#ccc',
           stroke_color = 'border'       in pars ? pars.border       : '#666',
           stroke_style = 'style'        in pars ? pars.style        : '',
-          shape        = 'shape'        in pars ? pars.shape        : 'circle',
+          shape        = 'shape' in pars && pars.shape in this.shape_defs ? pars.shape : 'rectangle',
           h            = 'h'            in pars ? pars.h            : 2*r,
           w            = 'w'            in pars ? pars.w            : 2*r,
-          vratio       = shape          in this.shape_defs ? this.shape_defs[shape].textwidth  : 1,
-          hratio       = shape          in this.shape_defs ? this.shape_defs[shape].textheight : 1,
-          valign       = shape          in this.shape_defs ? this.shape_defs[shape].valign     : 'middle',
-          align        = shape          in this.shape_defs ? this.shape_defs[shape].align      : 'center',
+          vratio       = this.shape_defs[shape].textwidth,
+          hratio       = this.shape_defs[shape].textheight,
+          valign       = this.shape_defs[shape].valign,
+          align        = this.shape_defs[shape].align,
           fs,c,t;
       this.n_objects++;
       if( x <= -w/2 || x >= this.WIDTH+w/2 || y <= -h/2 || y >= this.HEIGHT+h/2 ) {
