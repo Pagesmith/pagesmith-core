@@ -29,6 +29,9 @@
   function get_surname(obj) {
     return obj.html().split(' ')[0];
   }
+  $('.ref-coll h4').livequery(function () {
+    $(this).attr('title','Click to show/hide abstract...');
+  });
   $('.fncite a').livequery(function () {
     var h = $(this).prop('hash'), t, yr, autl, aut, ent, ent_ref, n_auth;
     if (h && $(h).closest('li.periodical').length) {

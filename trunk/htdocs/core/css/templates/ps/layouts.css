@@ -1,7 +1,6 @@
 @charset "UTF-8"; .web-error { display: none; }
 body { margin: 0 auto; border:0; background:#fff; padding: 0 10px;   min-width:800px; max-width: 1400px; font-size:100%;   line-height:1.125em; position: relative
 }
-
 /*----------------------------------------------------------------------
   standard page....
 ------------------------------------------------------------------------

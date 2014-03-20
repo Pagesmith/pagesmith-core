@@ -34,3 +34,7 @@ table.messages { font-size: 0.8em; border-collapse: collapse; width: 95%; margin
 .html_value { font-weight: bold; color: #600; background-color: #eee; }
 
 .dev-toggle { position: absolute; z-index: 1000; background-color: #900; font-size: small; color: #fff; display: block; padding: 2px; border: 1px solid #900; border-color: #f99 #300 #300 #f99; left: 50%; width: 6em; text-align: center; margin: 2px -2.5em; }
+
+@media print {
+  .dev-toggle { display: none }
+}
