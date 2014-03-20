@@ -4,7 +4,7 @@
   Defines the main "grey" area of the page, along with the top and left
   graphics.
 ----------------------------------------------------------------------*/
-#wrap { padding: 10px; margin:5px 0; background-color: #bcc5cc; border-radius: 10px; }
+#wrap { padding: 10px 10px 0 10px; margin:5px 0; background-color: #bcc5cc; border-radius: 10px; }
 
 #wrap:after{
   content:"."; display:block; height:0; clear:both; visibility:hidden; }
