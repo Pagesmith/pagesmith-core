@@ -1,4 +1,5 @@
-@charset "UTF-8"; /* This playing around twith maximum width CSS files - to
+@charset "UTF-8";
+/* This playing around twith maximum width CSS files - to
   improve performance on small devices */
 
 /******************
@@ -105,8 +106,8 @@ Smaller than 480px
 */
 
 
-@media all and (max-width: 840px) {
-  body { min-width: 320px; }
+@media all and (max-width: 800px) {
+  body { min-width: 320px }
   #faculty #main, #main, #faculty #rhs, #rhs { float: none; width: 100%; }
   #rhs .col1 { width:49%; float: left; }
   #rhs .col2 { width:49%; float: right; }
@@ -117,43 +118,15 @@ Smaller than 480px
 }
 
 @media all and (max-width: 780px) {
-  #search { width: 455px; }
-  #search #s4, #search input#q { width: 140px; }
   .col1 .col1,   .col2 .col1,   .col1 .col2,   .col2 .col2 { float: none; width: 100%; }
 }
 
-@media all and (max-width: 700px) {
-  #search { width: 405px ; }
-  #search #s1 { width:10px; overflow: hidden; padding: 0; color: transparent; }
-}
-@media all and (max-width: 655px) {
-  #search { width: 235px ; }
-  #search #s1 { padding: 7px 6px 2px 8px; width: auto; color: black; }
-  #search #s2, #search #s3 { display: none; }
-}
 @media all and (max-width: 640px) {
   #navTabs, #Tabs2, #wrap { font-size: 80%; line-height: 1.3em; }
   .col1, .col2 { float: none; width: 100%; }
   #access { display: none; }
 }
+
 @media all and (max-width: 480px) {
-  #logo img { width: 123px; height: 36px; padding: 5px 0 0 0}
-  #header { height: 47px; }
-/*
-  #search { width: 200px; }
-  #search #s1 { width:10px; overflow: hidden; padding: 0; color: transparent; }
-  #search #s4 { width: 150px; }
-*/
   #rhs .col1, #rhs .col2 { float: none; width: 100%; }
-}
-@media all and (max-width: 400px) {
-  #logo img { width: 103px; height: 30px; padding: 5px 0 0 0}
-  #header { height: 35px; }
-  #search { width: 200px; }
-  #search #s1 { width:10px; overflow: hidden; padding: 0; color: transparent; }
-  #search #s4 { width: 150px; }
-}
-@media all and (max-width: 320px) {
-  #search { width: 180px; }
-  #search #s4 { width: 120px; }
 }
