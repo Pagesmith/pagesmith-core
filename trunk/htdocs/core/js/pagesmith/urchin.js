@@ -12,11 +12,9 @@
   'use strict';
   Pagesmith.urchin = {
     init: function () {
-      /*jsl:ignore*/
       if (Cookie.get('DNT') !== '1') {
-        urchinTracker();
+        window.setTimeout( urchinTracker, 10 );
       }
-      /*jsl:end*/
     }
   };
 

@@ -28,9 +28,9 @@
     };
   }(jQuery));
 
-  $('a').livequery(function () {
-    var T   = $(this),
-        H   = $(this).attr('href'),
+  function ext_links(T ) {
+    var //T   = $(this),
+        H   = T.attr('href'),
         msg = 'This link opens in a new window',
         link_class,
         m1,
@@ -39,7 +39,7 @@
       if (T.parents('h1,h2,h3,h4,.no-ext-images').length) {
         T.addClass('no-img');
       }
-      if (H.match(/\.pdf$/) || $(this).hasClass('pdf-link')) {
+      if (H.match(/\.pdf$/) || T.hasClass('pdf-link')) {
         T.external_links();
         if (!T.hasClass('no-img')) {
           T.add_class_to_last_char('pdf');
@@ -73,5 +73,6 @@
         }
       }
     }
-  });
+  }
+  $( function() { $('a').livequery(function(){ ext_links($(this)); }); $('a').each( function() { ext_links($(this)); } ); } );
 }(jQuery));
