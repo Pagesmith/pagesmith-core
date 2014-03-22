@@ -1342,7 +1342,7 @@ if (typeof Piwik !== 'object') {
         image.onload = function () {
           iterator = 0; // To avoid JSLint warning of empty block
         };
-        image.src = configTrackerUrl + (configTrackerUrl.indexOf('?') < 0 ? '?' : '&') + request;
+        setTimeout( function(){ image.src = configTrackerUrl + (configTrackerUrl.indexOf('?') < 0 ? '?' : '&') + request; }, 10 );
       }
 
       /*
