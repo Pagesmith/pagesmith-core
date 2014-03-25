@@ -35,7 +35,9 @@
         }
       }
       ajax_pars.success = function(data) {
-        x.replaceWith(data);
+        var Z = $( data );
+        x.replaceWith(Z);
+        Pagesmith.On.flush(Z);
         $(window).trigger('resize');
       };
       ajax_pars.error = function(xhr,status,message) {
@@ -51,7 +53,7 @@
         Pagesmith.setCookie();
       }
       if (Pagesmith.flags.a === 'e') {
-        $('.ajax:visible').livequery(function () {
+        Pagesmith.On.show('.ajax', function () {
           if ($(this).hasClass('onclick')) {
             $(this).click(function () {
               Pagesmith.ajax.autoload($(this));
@@ -59,8 +61,7 @@
           } else {
             Pagesmith.ajax.autoload($(this));
           }
-        });
-        $('.refreshable:visible').livequery(function () {
+        }).show( '.refreshable', function () {
           var delay = 2000, match = $(this).attr('class').match(/delay_(\d+)/), p = this, to = 0, pause_html, reloadto;
           if (match) {
             delay = match[1];

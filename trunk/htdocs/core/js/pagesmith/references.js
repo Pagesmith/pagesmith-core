@@ -6,7 +6,7 @@
    * title of a paper into the title tag of any cited reference.
    * @author:   js5 (James Smith)
    * @version:  $Id$
-   * @requires: jQuery, jquery.livequery.js
+   * @requires: jQuery
    * @see:      Component::References, Component::Cite
    */
 
@@ -29,45 +29,48 @@
   function get_surname(obj) {
     return obj.html().split(' ')[0];
   }
-  $('.ref-coll h4').livequery(function () {
-    $(this).attr('title','Click to show/hide abstract...');
-  });
-  $('.fncite a').livequery(function () {
-    var h = $(this).prop('hash'), t, yr, autl, aut, ent, ent_ref, n_auth;
-    if (h && $(h).closest('li.periodical').length) {
-      ent = $(h).closest('li.periodical');
-      ent_ref = h.substr(1).replace('_', ' ');
-
-      $(this).attr('title', ent_ref + ': ' + ent.find('h4').text());
-      if ($(this).closest('span').hasClass('refname')) {
-        t = ent.find('.year');
-        yr = t.length > 0 ? t.first().html() : '-';
-        autl = ent.find('.author');
-        n_auth = autl.length;
-        if( ent.find('.authors em').length ) {
-          n_auth+=10;
-        }
-        switch (n_auth) {
-        case 0:
-          aut = '-';
-          break;
-        case 1:
-          aut = get_surname(autl.first());
-          break;
-        case 2:
-          aut = get_surname(autl.first()) + ' and ' + get_surname(autl.first().next());
-          break;
-        default:
-          aut = get_surname(autl.first()) + ' <em>et al</em>';
-          break;
-        }
-        $(this).html('<span class="hidden">' + ent_ref + ': </span>' + aut + ', ' + yr);
+  $(function(){
+    Pagesmith.On.load(
+      '.ref-coll h4', function () {
+        $(this).attr('title','Click to show/hide abstract...');
       }
-      $(this).click(function () {
-        $($(this).prop('hash')).parents('.tabc').each(function () {
-          $('.tabs a[href=#' + $(this).attr('id') + ']').click();
+    ).load( '.fncite a', function () {
+      var h = $(this).prop('hash'), t, yr, autl, aut, ent, ent_ref, n_auth;
+      if (h && $(h).closest('li.periodical').length) {
+        ent = $(h).closest('li.periodical');
+        ent_ref = h.substr(1).replace('_', ' ');
+
+        $(this).attr('title', ent_ref + ': ' + ent.find('h4').text());
+        if ($(this).closest('span').hasClass('refname')) {
+          t = ent.find('.year');
+          yr = t.length > 0 ? t.first().html() : '-';
+          autl = ent.find('.author');
+          n_auth = autl.length;
+          if( ent.find('.authors em').length ) {
+            n_auth+=10;
+          }
+          switch (n_auth) {
+          case 0:
+            aut = '-';
+            break;
+          case 1:
+            aut = get_surname(autl.first());
+            break;
+          case 2:
+            aut = get_surname(autl.first()) + ' and ' + get_surname(autl.first().next());
+            break;
+          default:
+            aut = get_surname(autl.first()) + ' <em>et al</em>';
+            break;
+          }
+          $(this).html('<span class="hidden">' + ent_ref + ': </span>' + aut + ', ' + yr);
+        }
+        $(this).click(function () {
+          $($(this).prop('hash')).parents('.tabc').each(function () {
+            $('.tabs a[href=#' + $(this).attr('id') + ']').click();
+          });
         });
-      });
-    }
+      }
+    });
   });
 }(jQuery));

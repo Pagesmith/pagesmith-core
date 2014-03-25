@@ -3,8 +3,6 @@
   /*----------------------------------------------------------------------
     External link code
   ------------------------------------------------------------------------
-    Dependency: jquery.livequery.js
-  ------------------------------------------------------------------------
     For any link tagged with rel="external" add target = "_blank" to
     open the image up in a new tab/window.
   ----------------------------------------------------------------------*/
@@ -28,7 +26,7 @@
     };
   }(jQuery));
 
-  function ext_links(T ) {
+  function ext_links(T) {
     var //T   = $(this),
         H   = T.attr('href'),
         msg = 'This link opens in a new window',
@@ -36,7 +34,7 @@
         m1,
         m2;
     if (H && T.attr('target') !== '_blank' && T.attr('rel') !== 'no-external') {
-      if (T.parents('h1,h2,h3,h4,.no-ext-images').length) {
+      if (T.parents('h1,h2,h3,h4,.no-ext-images,.areas-landing').length) {
         T.addClass('no-img');
       }
       if (H.match(/\.pdf$/) || T.hasClass('pdf-link')) {
@@ -74,5 +72,5 @@
       }
     }
   }
-  $( function() { $('a').livequery(function(){ ext_links($(this)); }); $('a').each( function() { ext_links($(this)); } ); } );
+  Pagesmith.On.load('a',function(){ ext_links($(this)); });
 }(jQuery));

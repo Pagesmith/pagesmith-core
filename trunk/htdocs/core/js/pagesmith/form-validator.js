@@ -606,7 +606,7 @@
 
   $(function () {
     if( $.james ) {
-      $('.auto_complete').livequery(function () {
+      Pagesmith.On.load('.auto_complete', function () {
         $(this).attr('autocomplete', 'off');
         var mat = $(this).attr('title').match(/^(\w+)=([^?]+)\??(.*)$/);
         if (mat) {
@@ -744,17 +744,20 @@
     );
 
     /* Finally the live query stuff! */
-
-    $('.logic').livequery(function () {
+    Pagesmith.On.load( '.logic', function () {
       if (!$(this).is('form')) {
         $(this).closest('form').addClass('logic');
       }
     });
   });
 
-  $('form.logic').livequery(function () { return FormValidator.check_logic($(this)); });
-  $('form.check :input').livequery(function () { return FormValidator.check($(this)); });
-  $('label').livequery(function () { return FormValidator.push_label($(this)); });
+  Pagesmith.On.load(
+    'form.logic', function () { return FormValidator.check_logic($(this)); }
+  ).load(
+    'form.check :input', function () { return FormValidator.check($(this)); }
+  ).load(
+    'label', function () { return FormValidator.push_label($(this)); }
+  );
 
   /* Multi-select... */
   $('body').on('click','.add_entry',function () {

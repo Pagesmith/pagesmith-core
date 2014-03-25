@@ -1,3 +1,4 @@
+
 (function($){
   'use strict';
   /**
@@ -7,6 +8,7 @@
    */
 
   function pagesmith_tab_click( ths ) {
+ //   var id = $(this).prop('hash');
     if( $(ths).closest('li').hasClass('disabled')) { // Only do something for enabled tabs!
       return false;
     }
@@ -32,12 +34,13 @@
     /* Activate first tab, and for each of it's siblings hide the
        tab content..... */
     // Disable all tabs for which there is no associated div tab!
+  //  var id = jQuery(this).find('a').eq(0).prop('hash');
+
     jQuery(this).children('li').each(function () {
       if (!$($(this).children('a').prop('hash')).addClass(no_top_border ? 'tabc no-top-border' : 'tabc').length && !$(this).hasClass('action')) {
         $(this).addClass('disabled');
       }
     });
-
     /* For each child in the list - add an on-click function which shows the
        relevant tab content - after first hiding the other tabs */
 
@@ -48,6 +51,7 @@
       x = $(this).children('li:not(.disabled)'); //Find first enabled tab!
       x.first().children('a').click();
     }
+    return;
   };
 
     // Finally if the URL contains an anchor - open the tab (if it is a tab!)
@@ -55,10 +59,11 @@
    * Live query block - which attaches tab functionality to any list item
    * of class tabs
    */
-  $('.tabs').livequery(function () { $(this).tabs(0); });
-  $('.fake-tabs').livequery(function () { $(this).tabs(1); });
-
-  $('.enable-tab').livequery(function () {
+  Pagesmith.On.load(
+    '.tabs', function () { $(this).tabs(0); }
+  ).load(
+    '.fake-tabs', function () { $(this).tabs(1); }
+  ).load( '.enable-tab', function () {
     $('.tabs li a[href=' + $(this).prop('hash') + ']').closest('li').removeClass('disabled');
   });
 
@@ -105,7 +110,7 @@
     return false;
   });
 
-  $('.tabc:visible').livequery(function(){
+  Pagesmith.On.show('.tabc', function(){
     var list = $(this).attr('class').split(/\s+/),j,m;
     for(j=list.length;j;j) {
       j--;
