@@ -965,7 +965,7 @@ var Chartsmith;
   };
 
   if($.metadata){
-    $('.cs_autoload:visible').livequery(function () {
+    Pagesmith.On.show('.cs_autoload',function(){
       var n   = $(this),
           w   = n.width(),
           h   = n.height(),
