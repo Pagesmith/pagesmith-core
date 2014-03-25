@@ -122,7 +122,7 @@ Smaller than 480px
 }
 
 @media all and (max-width: 640px) {
-  #navTabs, #Tabs2, #wrap { font-size: 80%; line-height: 1.3em; }
+  #navTabs, #Tabs2, #wrap { font-size: 75%; line-height: 1.2em; }
   .col1, .col2 { float: none; width: 100%; }
   #access { display: none; }
 }
