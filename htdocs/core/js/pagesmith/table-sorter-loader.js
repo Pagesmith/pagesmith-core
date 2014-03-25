@@ -22,12 +22,100 @@
     return s_obj;
   }
 
+  /* jshint +W074 */
+  jQuery.fn.zebra = function () {
+    /* If there is no "thead" block then flip the colours grey/white rather
+      that white/grey so the first row is grey... */
+    if (!jQuery(this).find('thead').length) {
+      jQuery(this).addClass('flip');
+    }
+    /*jsl:ignore*/
+    jQuery(this).find('tbody').not('.foot').children('tr')
+      .filter(':even')
+        .removeClass('odd')
+        .addClass('even')
+      .end()
+      .filter(':odd')
+        .removeClass('even')
+        .addClass('odd');
+    /*jsl:end*/
+  };
+
   $('body').first().append('<form action="/action/ExportJsonTable" method="post" id="export_json_table">'+
    '<input type="hidden" value="" name="json" id="table_json"/><input type="hidden" value="" name="summary" id="table_summary"/>'+
    '<input type="hidden" value="" name="filter" id="table_filter"/></form>');
 
+  // Export for a zebra-table
+  function plain_table_json_export(tb, format) {
+    var t_data = { head: [], body: [] }, th = tb.tHead, i, r, row, j, tb1;
+    if (th) {
+      for (i = th.rows.length; i; i) {
+        i--;
+        row = th.rows[i].cells;
+        r = [];
+        for (j = row.length; j; j) {
+          j--;
+          r.unshift($.trim($(row[j]).text()));
+        }
+        t_data.head.unshift(r);
+      }
+    }
+    if (tb.tBodies.length > 0) {
+      tb1 = tb.tBodies[0];
+      for (i = tb1.rows.length; i; i) {
+        i--;
+        row = tb1.rows[i];
+        r = [];
+        for (j = row.cells.length; j; j) {
+          j--;
+          r.unshift($.trim($(row.cells[j]).text()));
+        }
+        t_data.body.unshift(r);
+      }
+    }
+    $('#table_json').val(JSON.stringify(t_data));
+    $('#table_summary').val($(tb).attr('summary'));
+    $('#table_filter').val('');
+    $('#export_json_table').attr({target: '_blank', action: '/action/ExportJsonTable/' + format}).submit();
+    return;
+  }
+
+  (function ($) {
+    $.fn.rotateTableCellContent = function () {
+      if($(this).hasClass('headers_rotated')) {
+        return;
+      }
+      var cellsToRotate = $('.rotated_cell', this), betterCells = [];
+      cellsToRotate.each(function () {
+        var cell        = $(this),
+            newText     = $.trim(cell.text());
+        cell.html( $('<span>').text(newText) );
+        var SF          = 1,
+            height      = cell.innerHeight(),
+            width       = cell.find('span').innerWidth(),
+            newDiv      = $('<div>').height( (width+10)*SF ).width( height*SF ).css('margin','0 auto'),
+            newInnerDiv = $('<div>', { 'class': 'rotated' }).html(newText),
+            t_string    = (width / 2 + 4 ) + 'px ' + ( 4 + width / 2) + 'px';
+        newInnerDiv.css('-webkit-transform-origin', t_string );
+        newInnerDiv.css('-moz-transform-origin',    t_string );
+        newInnerDiv.css('-ms-transform-origin',     t_string );
+        newInnerDiv.css('-o-transform-origin',      t_string );
+        newDiv.append(newInnerDiv);
+        newInnerDiv.css( $(this).css('background-color') );
+        betterCells.push(newDiv);
+      });
+      cellsToRotate.each(function (i) {
+        $(this).html(betterCells[i]);
+      });
+      cellsToRotate.each(function () {
+        $(this).css({'padding-right':'4px','padding-left':'4px'});
+      });
+      $(this).addClass('headers_rotated');
+    };
+  })(jQuery);
+
   /* jshint -W074 */
-  $('.sorted-table').livequery(function () { // Make "sorted-table"s sortable
+  Pagesmith.On.load( '.sorted-table', function () { // Make "sorted-table"s sortable
     // console.log( $(this).html().substr(0,200) ); // useful to debug errors!
     $(this).tablesorter({ parserMetadataName:'sv', widgets: ['zebra']});
     table_counter++;
@@ -184,70 +272,13 @@
       entries:        entries,
       export_url:     export_url
     });
-  });
-  /* jshint +W074 */
-  jQuery.fn.zebra = function () {
-    /* If there is no "thead" block then flip the colours grey/white rather
-      that white/grey so the first row is grey... */
-    if (!jQuery(this).find('thead').length) {
-      jQuery(this).addClass('flip');
-    }
-    /*jsl:ignore*/
-    jQuery(this).find('tbody').not('.foot').children('tr')
-      .filter(':even')
-        .removeClass('odd')
-        .addClass('even')
-      .end()
-      .filter(':odd')
-        .removeClass('even')
-        .addClass('odd');
-    /*jsl:end*/
-  };
-  $('.zebra').livequery(function () {
+  }).load( '.zebra', function () {
     $(this).children('dt').first().siblings('dt').addClass('bordered').next().addClass('bordered');
-  });
-  $('.zebra-table').livequery(function () {
+  }).load( '.zebra-table', function () {
     if (!$(this).hasClass('faked')) {
       $(this).zebra();
     }
-  });
-
-  // Export for a zebra-table
-  function plain_table_json_export(tb, format) {
-    var t_data = { head: [], body: [] }, th = tb.tHead, i, r, row, j, tb1;
-    if (th) {
-      for (i = th.rows.length; i; i) {
-        i--;
-        row = th.rows[i].cells;
-        r = [];
-        for (j = row.length; j; j) {
-          j--;
-          r.unshift($.trim($(row[j]).text()));
-        }
-        t_data.head.unshift(r);
-      }
-    }
-    if (tb.tBodies.length > 0) {
-      tb1 = tb.tBodies[0];
-      for (i = tb1.rows.length; i; i) {
-        i--;
-        row = tb1.rows[i];
-        r = [];
-        for (j = row.cells.length; j; j) {
-          j--;
-          r.unshift($.trim($(row.cells[j]).text()));
-        }
-        t_data.body.unshift(r);
-      }
-    }
-    $('#table_json').val(JSON.stringify(t_data));
-    $('#table_summary').val($(tb).attr('summary'));
-    $('#table_filter').val('');
-    $('#export_json_table').attr({target: '_blank', action: '/action/ExportJsonTable/' + format}).submit();
-    return;
-  }
-
-  $('.exportable').livequery(function () {
+  }).load( '.exportable', function () {
     var that = this,
         table = $(this),
         m = $(this).attr('class').match(/\bexport_(\w+)/),
@@ -274,42 +305,7 @@
       return false;
     });
   });
-
-  (function ($) {
-    $.fn.rotateTableCellContent = function () {
-      if($(this).hasClass('headers_rotated')) {
-        return;
-      }
-      var cellsToRotate = $('.rotated_cell', this), betterCells = [];
-      cellsToRotate.each(function () {
-        var cell        = $(this),
-            newText     = $.trim(cell.text());
-        cell.html( $('<span>').text(newText) );
-        var SF          = 1,
-            height      = cell.innerHeight(),
-            width       = cell.find('span').innerWidth(),
-            newDiv      = $('<div>').height( (width+10)*SF ).width( height*SF ).css('margin','0 auto'),
-            newInnerDiv = $('<div>', { 'class': 'rotated' }).html(newText),
-            t_string    = (width / 2 + 4 ) + 'px ' + ( 4 + width / 2) + 'px';
-        newInnerDiv.css('-webkit-transform-origin', t_string );
-        newInnerDiv.css('-moz-transform-origin',    t_string );
-        newInnerDiv.css('-ms-transform-origin',     t_string );
-        newInnerDiv.css('-o-transform-origin',      t_string );
-        newDiv.append(newInnerDiv);
-        newInnerDiv.css( $(this).css('background-color') );
-        betterCells.push(newDiv);
-      });
-      cellsToRotate.each(function (i) {
-        $(this).html(betterCells[i]);
-      });
-      cellsToRotate.each(function () {
-        $(this).css({'padding-right':'4px','padding-left':'4px'});
-      });
-      $(this).addClass('headers_rotated');
-    };
-  })(jQuery);
-
-  $('table:visible').livequery(function(){
+  Pagesmith.On.show('table', function(){
     $(this).rotateTableCellContent();
   });
 }(jQuery));

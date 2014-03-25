@@ -1,7 +1,7 @@
 (function($){
   'use strict';
   /* JavaScript module which converts mp3 links into embedded ogg/mp3 players */
-  $('.mp3').livequery(function () {
+  Pagesmith.On.load('.mp3', function(){
     var URL = $(this).attr('href');
     var OGG_URL = URL.replace(/\.mp3$/, '.ogg');
     var audioTagSupport = !!(document.createElement('audio').canPlayType);

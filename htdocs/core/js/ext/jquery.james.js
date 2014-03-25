@@ -401,10 +401,12 @@
     };
   };
 
-  // The following is a livequery james auto-loader! - requires metadata so that it can get the information from the class
   // example <input id="XX" name="XX" class="james {url:'/action/Auto', varname:'XX', minlength:2}" value="XX" autocomplete="off" />
   if($.metadata){
-    $('.james').livequery(function(){ var md = $(this).metadata(); $(this).james(md.url, md); });
+    Pagesmith.On.load('.james',function(){
+      var md = $(this).metadata();
+      $(this).james(md.url, md);
+    });
   }
 
   /* Multi-select... */

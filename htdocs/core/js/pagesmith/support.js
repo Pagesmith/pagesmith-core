@@ -267,7 +267,9 @@
         return this.options.template.replace(/##nav##/, html).replace(/##body##/, contents.join(''));
       }
       html += contents.join('');
-      return html;
+      t = $( html );
+      Pagesmith.On.flush(t);
+      return t;
     }
   };
 
@@ -341,9 +343,11 @@
         }
       }
       if( this.options.noheading ) {
-        return '<table class="' + this.options.className + '"><tbody>' + rs.join('') + '</tbody></table>';
+        t = $('<table class="' + this.options.className + '"><tbody>' + rs.join('') + '</tbody></table>');
       }
-      return '<table class="' + this.options.className + '"><thead><tr>' + h.join('') + '</tr></thead><tbody>' + rs.join('') + '</tbody></table>';
+      t =  $('<table class="' + this.options.className + '"><thead><tr>' + h.join('') + '</tr></thead><tbody>' + rs.join('') + '</tbody></table>' );
+      Pagesmith.On.flush(t);
+      return t;
     }
   };
 
@@ -368,8 +372,10 @@
     }
   };
 
-  $('h2.make-wide, h3.make-wide').livequery(function(){
-    $(this).append('<span class="toggle-width" title="Full width">&#x21d4;</span>');
+  $(function(){
+    Pagesmith.On.load( 'h2.make-wide, h3.make-wide', function(){
+      $(this).append('<span class="toggle-width" title="Full width">&#x21d4;</span>');
+    });
   });
   $('body')
     .on('click','#main  .toggle-width',function() { $('#main').attr('id','mainx'); $('#rhs').attr('id','rhsx'); $(this).html('&lArr;').attr('title','Show navigation'); $(window).trigger('resize');} )
