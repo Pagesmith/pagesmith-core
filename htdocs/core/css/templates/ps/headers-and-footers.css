@@ -54,11 +54,11 @@ body.s-p, #r-p { font-size: 180%; line-height: 1em; }
 .s-x #access { font-size:  53.33%; }
 .s-p #access { font-size:  44.44%; }
 
-.s-s .fixed_size { font-size: 125%; }
-.s-n .fixed_size { font-size: 100%; }
-.s-l .fixed_size { font-size:  83.33%; }
-.s-x .fixed_size { font-size:  66.66%; }
-.s-p .fixed_size { font-size:  55.55%; }
+.s-s .fixed_size { font-size: 125%; line-height: 150% }
+.s-n .fixed_size { font-size: 100%; line-height: 150% }
+.s-l .fixed_size { font-size:  83.33%; line-height: 150% }
+.s-x .fixed_size { font-size:  66.66%; line-height: 150% }
+.s-p .fixed_size { font-size:  55.55%; line-height: 150% }
 
 #access { float: right; margin: 0.5em 0.5em 1px 0.5em; font-size: 80%; }
 #access span { float: left; height: 14px; width: 12px; overflow:hidden; padding:0; margin: 0 1px; border:1px solid #bcc5cc; background-color: #e0e4e7; text-align:center; cursor: pointer; }
@@ -66,18 +66,21 @@ body.s-p, #r-p { font-size: 180%; line-height: 1em; }
 ul#skip { display: none; }
 #footer { font-size: 0.8em; color: #5c5150; position: relative; margin: 0; padding: 0 10px}
 #lnx { color: #fff; text-align: center; clear: both; margin: 1em 0; font-size: 0.8em; }
-#lnx a { color: #14559f; text-decoration: none; }
+#lnx a { color: #14559f; text-decoration: none; margin: 0 1em}
 ul#footer_links { float:left; margin: 0; padding: 0; text-indent: 0}
-#footer_links li { text-align:left; padding: 0 0.6em; display: inline; }
+#footer_links li { text-align:left; padding: 0; display: inline; }
 #footer_links a { text-decoration: none; font-weight: bold; }
-#footer .charity { clear: both; }
+#footer .charity { clear: both; padding-top: 1em}
 /* footer social media styling */
 
 ul.social li:before, #footer_links li:before { content: '' }
+#footer_links li:before { content: "|"; padding: 0 1em; display:inline; float: none; font-weight: bold; color: #5c5150 }
+#footer_links li:first-child:before { content: ""; display: none }
 
 ul.social { height: 20px; float: right; margin: -5px -15px 0 0; float: right; vertical-align: bottom; margin:0; padding: 0; text-indent: 0 }
+
 .social li { text-decoration: none; display: block; list-style-type: none; float: left;
-             width: 21px; height: 20px; padding: 0; margin: 0 0 0 4px;
+             width: 21px; height: 20px; padding: 0; margin: 0 0 0 8px;
              background: url(/core/gfx/icons-140302.png) no-repeat 0 0 }
 .social li.connect { background: none; width:110px; vertical-align: top; line-height: 20px; text-align: right }
 .social li.fb { background-position:  -1px -1px }
@@ -100,6 +103,11 @@ ul.social { height: 20px; float: right; margin: -5px -15px 0 0; float: right; ve
   #footer p { text-align: right; clear: both; display: block; }
   .footerRight { display: none; }
 .qr { display: block; float: right; position: absolute; top: 0px; right: 0px; }
+}
+
+@media screen and (max-width: 480px) {
+  ul.social { margin-top: 10px; margin-bottom: 15px; float: right; clear: both; text-align: right }
+  ul.social li { margin-left: 12px }
 }
 
 #user { float: right; clear: right; margin-right: 1em; }

@@ -48,8 +48,10 @@ ul.tabs li:before, #rhs ul.tabs li:before { content: ''; width: 0 }
 }
 
 .sub_nav { float:right; width:20%; padding: 10px; }
-.sub_nav h4, .sub_nav h3 { background-color: #bcc5cc; padding: 5px 10px; margin: 0; }
+.sub_nav h4:first-child, .sub_nav h3:first-child { background-color: #bcc5cc; padding: 5px 10px; margin: 0; }
 .sub_nav ul { border: 1px solid #bcc5cc; }
+.sub_nav li { padding-left: 10px; text-indent: -10px }
+.sub_nav li:before { content: ''; width: 0 }
 .sub_nav a { text-decoration: none; font-weight: bold; }
 .sub_nav .active a { text-decoration: none; font-weight: bold; color: #999 }
 .sub_data { float:left; width:75%; }
