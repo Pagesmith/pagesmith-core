@@ -221,7 +221,7 @@ sub handler : FilterRequestHandler {
     $r->headers_out->set(   'Content-Script-Type', 'text/javascript' );
     $r->headers_out->set(   'Vary',                'Accept' );
     $r->headers_out->set(   'Language',            'en-gb' );
-    $r->headers_out->set(   'Content-Length',      (length $header) + (length $html) );
+    $r->set_content_length( (length $header) + (length $html) );
     $r->no_cache( 1 );
     ## Set content type to either application/xhtml+xml or text/html
     ## usually we chose the latter as it will break horribly if we have
