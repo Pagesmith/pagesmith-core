@@ -4,7 +4,7 @@
   'use strict';
   if( Raphael.svg ) {
     $('body').first().append('<form action="/action/Svg" method="post" id="svgform"><input type="hidden" value="" name="svg" id="svgvalue"/><\/form>');
-    $('.raphael-export svg').livequery(function () {
+    Pagesmith.On.load('.raphael-export svn', function() {
       var t = $(this).parent(), i = t.attr('id');
       t.after('<div class="raphael-buttons"><a class="export-image svg" title="' + i + '">Download SVG<\/a> <a title="' + i + '" class="export-image png">Download PNG<\/a><\/div>');
     });

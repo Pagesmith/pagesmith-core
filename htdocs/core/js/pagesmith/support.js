@@ -267,9 +267,7 @@
         return this.options.template.replace(/##nav##/, html).replace(/##body##/, contents.join(''));
       }
       html += contents.join('');
-      t = $( html );
-      Pagesmith.On.flush(t);
-      return t;
+      return html;
     }
   };
 
@@ -343,11 +341,9 @@
         }
       }
       if( this.options.noheading ) {
-        t = $('<table class="' + this.options.className + '"><tbody>' + rs.join('') + '</tbody></table>');
+        return '<table class="' + this.options.className + '"><tbody>' + rs.join('') + '</tbody></table>';
       }
-      t =  $('<table class="' + this.options.className + '"><thead><tr>' + h.join('') + '</tr></thead><tbody>' + rs.join('') + '</tbody></table>' );
-      Pagesmith.On.flush(t);
-      return t;
+      return '<table class="' + this.options.className + '"><thead><tr>' + h.join('') + '</tr></thead><tbody>' + rs.join('') + '</tbody></table>';
     }
   };
 
