@@ -56,7 +56,7 @@ sub run {
   return $self
     ->content_type( 'image/png' )
     ->set_last_modified( time - $ONE_YEAR )
-    ->set_expires_header( 1, 'year' )
+    ->set_expires_header( 1, 'YEAR' )
     ->set_length( length $img_content )
     ->print( $img_content )
     ->ok;
