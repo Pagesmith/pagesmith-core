@@ -6,7 +6,7 @@
     author: js5 (James Smith)
     svn-id: $Id$
   ------------------------------------------------------------------------
-    Dependency: jquery.tablesorter.200.js, jquery.livequery.js
+    Dependency: jquery.tablesorter.200.js
   ------------------------------------------------------------------------
     Attach the table sorter code to all tables that are marked with
     ".sorted-table" class

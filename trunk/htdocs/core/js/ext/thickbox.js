@@ -308,6 +308,7 @@ function tb_show(caption, url, imageGroup) {//function called when the user clic
             this.blur();
           });
           $('#TB_window').css({display:'block'});
+          Pagesmith.On.flush( $('#TB_ajaxContent') );
         });
       }
     }

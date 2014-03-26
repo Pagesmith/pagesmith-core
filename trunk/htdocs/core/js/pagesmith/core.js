@@ -102,11 +102,10 @@ var Pagesmith;
                  shw = vn.not(vo),
                  /*hde = vo.not(vn),*/j, m2;
               if(shw.length>0) {
-                for(j in self.show_methods) {
-                  if( self.show_methods.hasOwnProperty(j) ) {
-                    m2 = self.show_methods[j];
-                    shw.filter(m2[0]).each(m2[1]);
-                  }
+                for(j=self.show_methods.length;j;j) {
+                  j--;
+                  m2 = self.show_methods[j];
+                  shw.filter(m2[0]).each(m2[1]);
                 }
               }
               return r;
@@ -122,8 +121,9 @@ var Pagesmith;
             var old = $.fn[m];
             $.fn[m] = function() {
               var i,my_classes = arguments[0].split(/\s+/), flag = 0;
-              for( i in my_classes ) {
-                if( my_classes.hasOwnProperty(i) && my_classes[i] in self.show_classes ) {
+              for( i=my_classes.length;i;i) {
+                i--;
+                if( my_classes[i] in self.show_classes ) {
                   flag = 1;
                   break;
                 }
@@ -137,11 +137,10 @@ var Pagesmith;
                  shw = vn.not(vo),
                  /*hde = vo.not(vn),*/j, m2;
               if(shw.length>0) {
-                for(j in self.show_methods) {
-                  if( self.show_methods.hasOwnProperty(j) ) {
-                    m2 = self.show_methods[j];
-                    shw.filter(m2[0]).each(m2[1]);
-                  }
+                for(j=self.show_methods.length;j;j) {
+                  j--;
+                  m2 = self.show_methods[j];
+                  shw.filter(m2[0]).each(m2[1]);
                 }
               }
               return r;
@@ -171,5 +170,15 @@ var Pagesmith;
   Pagesmith.On.show_init(); // Fire this now as we have to define the dom methods!
   Pagesmith.On.add_class('show tabc hide coll dev-toggle collapsed tabc_hid ref-closed');
   $(function(){Pagesmith.On.load_init();});
+
+  // This little listner stops any link back to the current page from working!
+
+  $('body').on('click','a[href="'+document.location.pathname+document.location.search+'"]',function(e){
+    if($(this).hasClass('follow')){
+      return true;
+    }
+    e.preventDefault();
+    return false;
+  });
 
 }(jQuery));
