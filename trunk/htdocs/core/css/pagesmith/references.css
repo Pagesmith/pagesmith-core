@@ -34,7 +34,7 @@
 .periodical.ref-closed .affiliation, .periodical.ref-closed .grants, .periodical.ref-closed .abstract { display: none; }
 
 ul.references { padding-left: 0 }
-li.periodical { margin-top: 0em; margin-left: 10px }
+li.periodical { margin-top: 0em; margin-left: 10px; list-style-type: none }
 li.periodical:before { content: ''; width: 0 }
 
 li.periodical h4:first-child, li.periodical h4 { margin-bottom: 0px; margin-left: 0; cursor: pointer}
