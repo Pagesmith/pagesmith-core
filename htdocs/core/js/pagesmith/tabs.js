@@ -7,7 +7,7 @@
    * links to hide/show the appropriate link.
    */
 
-  function pagesmith_tab_click( ths ) {
+  Pagesmith.tab_click = function( ths ) {
  //   var id = $(this).prop('hash');
     if( $(ths).closest('li').hasClass('disabled')) { // Only do something for enabled tabs!
       return false;
@@ -28,7 +28,7 @@
   //      $('.tabs' + id_sel + ', .fake-tabs' + id_sel).click();
   //    });
     return false;
-  }
+  };
 
   jQuery.fn.tabs = function (no_top_border) {
     /* Activate first tab, and for each of it's siblings hide the
@@ -44,7 +44,7 @@
     /* For each child in the list - add an on-click function which shows the
        relevant tab content - after first hiding the other tabs */
 
-    jQuery(this).children('li').children('a').click(function(){ return pagesmith_tab_click(this);});
+    jQuery(this).children('li').children('a').click(function(){ return Pagesmith.tab_click(this);});
     // Activate the first tab
     var x = $(this).children('li.active'); //Find first enabled tab!
     if (!x.length) {

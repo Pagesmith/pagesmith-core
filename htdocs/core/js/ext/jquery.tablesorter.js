@@ -1019,15 +1019,16 @@
       var $tr, row = -1,
         odd;
       // loop through the visible rows
+      var regexps = [ new RegExp( '\\b'+table.config.widgetZebra.css[1]+'\\b', 'g' ),
+                      new RegExp( '\\b'+table.config.widgetZebra.css[0]+'\\b', 'g' ) ];
+
       $("tr",table.tBodies[0]).filter(function () { return this.style.display !== 'none'; }).each(function (i) {
         $tr = $(this);
         // style children rows the same way the parent
         // row was styled
         if (!$tr.hasClass(table.config.cssChildRow)) row++;
-        odd = (row % 2 === 0);
-        $tr.removeClass(
-        table.config.widgetZebra.css[odd ? 0 : 1]).addClass(
-        table.config.widgetZebra.css[odd ? 1 : 0]);
+        odd = row % 2;
+        $tr.attr('class', $tr.attr('class').replace( regexps[odd], '' )+' '+table.config.widgetZebra.css[odd] );
       });
       if (table.config.debug) {
         $.tablesorter.benchmark("Applying Zebra widget", time);

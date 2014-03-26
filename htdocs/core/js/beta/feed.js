@@ -3,7 +3,7 @@
   /*----------------------------------------------------------------------
     Feed code
   ------------------------------------------------------------------------
-    Dependency: jquery.livequery.js, base.js
+    Dependency:
   ------------------------------------------------------------------------
     Munge all feed elements to collapse their descriptions and
     add hide/collapse buttons
@@ -35,7 +35,7 @@
     $('.feed_col').removeClass('feed_col').addClass('feed_exp'); // Convert all "feed collapse" buttons to "feed expand buttons"
   };
 
-  $('.feed li').livequery(function () {
+  Pagesmith.On.load( '.feed li', function() {
     if (!$(this).hasClass('munged')) {
       feed_buttons($(this));
     }

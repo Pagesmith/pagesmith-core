@@ -168,16 +168,16 @@
     }
   });
 
-  $('.carousel').livequery(function () {
-      var html = '<div class="title"></div><div><a href="?this=%s" class="prev" title="Previous">&#9664; Back</a>', c = 0;
-      $(this).children('img').first().siblings('img').addClass('preshid');
-      $(this).children('img').each(function () {
-        c++;
-        html += ' <span class="slide">' + c + '</span>';
-      });
-      html += ' <a href="?this=%s" class="next" title="Next">Next &#9654;</a><br /><span class="pause">||Pause</span><span class="play">&gt;Play</span></div>';
-      $(this).append(html).pres_set_title();
+  Pagesmith.On.load('.carousel',function(){
+    var html = '<div class="title"></div><div><a href="?this=%s" class="prev" title="Previous">&#9664; Back</a>', c = 0;
+    $(this).children('img').first().siblings('img').addClass('preshid');
+    $(this).children('img').each(function () {
+      c++;
+      html += ' <span class="slide">' + c + '</span>';
     });
+    html += ' <a href="?this=%s" class="next" title="Next">Next &#9654;</a><br /><span class="pause">||Pause</span><span class="play">&gt;Play</span></div>';
+    $(this).append(html).pres_set_title();
+  });
   $('body').on('click','.carousel img', function () {
     var t = TRANSITION_INTERVAL;
     var x = $(this);
