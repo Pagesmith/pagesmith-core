@@ -1028,7 +1028,8 @@
         // row was styled
         if (!$tr.hasClass(table.config.cssChildRow)) row++;
         odd = row % 2;
-        $tr.attr('class', $tr.attr('class').replace( regexps[odd], '' )+' '+table.config.widgetZebra.css[odd] );
+        var c = $tr.attr('class')||'';
+        $tr.attr('class', c.replace( regexps[odd], '' )+' '+table.config.widgetZebra.css[odd] );
       });
       if (table.config.debug) {
         $.tablesorter.benchmark("Applying Zebra widget", time);
