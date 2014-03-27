@@ -88,12 +88,13 @@
               if (to) {
                 window.clearInterval(to);
               }
-              $(  p).addClass('ajax');
+              $(p).addClass('ajax').removeClass('refreshable');
+              Pagesmith.On.flush(p);
             }, delay);
           } else {
             $(this).append('<p class="r countdown">'+pause_html+'</p>');
           }
-          $(this).delegate('.pause','click', function(){
+          $(this).on('click','.pause',function(){
             $(this).addClass('hidden');
             $(p).find('.play').removeClass('hidden');
             if( to ) {
@@ -102,8 +103,7 @@
             if( reloadto ) {
               window.clearTimeout( reloadto );
             }
-          });
-          $(this).delegate('.play','click',function(){
+          }).on('click', '.play',function(){
             var n = $(p).find('.countdown').last(), timer = $(p).find('.timer'), s = parseInt(n.find('.timer').html(), 10) - 1;
             $(this).addClass('hidden');
             $(p).find('.pause').removeClass('hidden');
@@ -115,15 +115,18 @@
                 }, 1000);
               }
               reloadto = window.setTimeout(function () {
-                $(n).replaceWith('<p class="r countdown" >Reloading now</p>');
+                $(n).replaceWith('<p class="r countdown" >Reloading now[1]</p>');
                 if (to) {
                   window.clearInterval(to);
                 }
-                $(  p).addClass('ajax');
+                $(p).addClass('ajax').removeClass('refreshable');
+                Pagesmith.On.flush(p);
               }, (s+1)*1000);
             }
+          }).on('click', '.refresh', function(){
+            $(p).addClass('ajax').removeClass('refreshable');
+            Pagesmith.On.flush(p);
           });
-          $(this).delegate('.refresh', 'click', function(){ $(p).addClass('ajax'); } );
         });
       }
     }
