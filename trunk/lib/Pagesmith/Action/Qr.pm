@@ -18,7 +18,7 @@ use version qw(qv); our $VERSION = qv('0.1.0');
 use base qw(Pagesmith::Action);
 use English qw(-no_match_vars $INPUT_RECORD_SEPARATOR);
 use Const::Fast qw(const);
-const my $ONE_YEAR => 86_400 * 365;
+const my $ONE_WEEK => 86_400 * 7;
 
 use Pagesmith::Cache;
 use Pagesmith::ConfigHash qw(get_config);
@@ -55,7 +55,7 @@ sub run {
 
   return $self
     ->content_type( 'image/png' )
-    ->set_last_modified( time - $ONE_YEAR )
+    ->set_last_modified( time - $ONE_WEEK )
     ->set_expires_header( 1, 'YEAR' )
     ->set_length( length $img_content )
     ->print( $img_content )
