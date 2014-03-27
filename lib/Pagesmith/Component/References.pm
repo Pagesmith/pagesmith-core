@@ -222,7 +222,7 @@ sub execute {
     $anchors .= sprintf '<a id="%s"></a>',        $reference->sid    if $reference->sid && ( $self->{'cited_references'}{$reference->sid} || $link_list{'sid'} || $link_list{'all'} );
     $anchors .= sprintf '<a id="tmp_%s"></a>',    $reference->key    if $reference->key && ( $self->{'cited_references'}{$reference->key} || $link_list{'key'} || $link_list{'all'} );
     $anchors .= sprintf '<a id="pmc_%s"></a>',    $reference->pmc    if $reference->pmc && ( $self->{'cited_references'}{$reference->pmc} || $link_list{'pmc'} || $link_list{'all'} );
-    push @html, sprintf qq(\n<h4 class="article">%s%s</h4>), $anchors, $reference->title;
+    push @html, sprintf qq(\n<h4 %sclass="article">%s%s</h4>), $self->option('collapse',0) ? 'title="click to show/hide abstract..." ' : q(), $anchors, $reference->title;
 
     if( $reference->doi && ( $self->{'cited_references'}{$reference->doi} || $link_list{'doi'} || $link_list{'all'} ) ) {
       (my $doi = $reference->doi ) =~ s{/}{_}mxgs;
