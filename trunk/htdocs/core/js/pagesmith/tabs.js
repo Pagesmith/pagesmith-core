@@ -66,7 +66,6 @@
   ).load( '.enable-tab', function () {
     $('.tabs li a[href=' + $(this).prop('hash') + ']').closest('li').removeClass('disabled');
   });
-
   function fire_tabs( hash_sel, hash_details ) {
     var id_sel = ' > li > a[href='+ hash_sel +']',
         Z      = $('.tabs' + id_sel + ', .fake-tabs ' + id_sel),
@@ -96,12 +95,14 @@
    * the tab indicated by the href of the link.
    */
 
-  var id_str = window.location.hash;
-  if (id_str && id_str.match(/^#[- \w]+$/)) {
-    var hash_details = id_str.split(/ +/), hash;
-    hash = hash_details.shift();
-    fire_tabs( hash, hash_details );
-  }
+  $(function(){
+    var id_str = window.location.hash;
+    if (id_str && id_str.match(/^#[- \w]+$/)) {
+      var hash_details = id_str.split(/ +/), hash;
+      hash = hash_details.shift();
+      fire_tabs( hash, hash_details );
+    }
+  });
 
   $(document).on('click', '.change-tab', function () {
     var hash_details = $(this).prop('hash').split(/ +/),
