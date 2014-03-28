@@ -1,6 +1,6 @@
-ul.references li { list-style-type: disc; margin-left: 3em; padding-left: 0 }
-li.periodical h4 { background-image: none }
-li.periodical h4, li.periodical p { padding-left: 0 }
+/* Periodicals fix for styling and spacing */
+ul.references li { list-style-type: none }
+ul.references li h4.article { margin-top: 0; padding-left: 0 }
+ul.references li:before { display: none }
 li.periodical p { margin-bottom: 2px }
-ol.references li { list-style-type: decimal; margin-left: 3em; padding-left: 0}
 
