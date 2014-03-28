@@ -1,6 +1,6 @@
 /* Periodicals fix for styling and spacing */
 ul.references li { list-style-type: none }
-ul.references li h4.article { margin-top: 0; padding-left: 0 }
+ul.references li h4.article { margin-top: 0; }
 ul.references li:before { display: none }
 li.periodical p { margin-bottom: 2px }
 
