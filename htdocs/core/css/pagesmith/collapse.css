@@ -18,7 +18,7 @@
 .collapsible h3:first-child span ,
   .collapsible h4.keep span ,
   .collapsible p.head span { cursor: pointer; color: #fff; padding-right: 0.5em; }
-  
+
 .collapsed div.ajax, .collapsed div.coll, .collapsed ul, .collapsed .searchhit,
 .collapsed table, .collapsed pre, .collapsed h4, .collapsed p,
 .collapsed dl, .collapsed ul, .collapsed ol { display: none; }
@@ -27,11 +27,12 @@
 
 .collapsed p.head { display: block }
 
+.collapsible p.head span { color: #000 }
 .collapsible p.head .hide { display: inline }
-.collapsible p.head .show { display: none }
+.collapsible p.head .show { display: none; }
 
 .collapsed p.head .hide { display: none }
 .collapsed p.head .show { display: inline }
 
-#rhs .collapsible h3 { margin-top: 0; border-top-left-radius: 10px; border-top-right-radius: 10px; 
+#rhs .collapsible h3 { margin-top: 0; border-top-left-radius: 10px; border-top-right-radius: 10px;
   padding-top: 8px }
