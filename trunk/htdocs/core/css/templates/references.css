@@ -2,5 +2,10 @@
 ul.references li { list-style-type: none }
 ul.references li h4.article { margin-top: 0; }
 ul.references li:before { display: none }
+
 li.periodical p { margin-bottom: 2px }
 
+ol.references li { list-style-type: decimal; margin-left: 3em }
+ol.references li p { padding-left: 0}
+ol.references h4.article { padding-left: 0 }
+ol.references li:before, ol.references h4.article:before { display: none }
