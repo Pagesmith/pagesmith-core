@@ -38,4 +38,5 @@ li p { margin: 2px 10px; padding: 0 0 0.5em 0; }
 
 
 ul { list-style: none; padding-left: 1.2em; text-indent: -1.2em; }
+ul li p, ul li pre, ul li div { text-indent: 0 }
 ul li:before, #rhs ul.bullet li:before { content: ">"; display: block; float: left; width: 1.2em; color: #bcc5cc; }
