@@ -20,9 +20,11 @@ use base qw(Pagesmith::Action);
 sub run {
   my $self = shift;
 
-  return $self->wrap( q(What's my IP?),
-    $self->twocol->add_entry( 'IP', $self->r->headers_in->get('X-Forwarded-For') )->render,
-  )->ok;
+  my $t = $self->twocol->add_entry( 'IP', $self->r->headers_in->get('X-Forwarded-For') );
+
+  my @client_realms = split m{,\s+}mxs, $self->r->headers_in->get('ClientRealm')||q();
+  $t->add_entry( 'Realm', $_ ) foreach @client_realms;
+  return $self->wrap( q(What's my IP?), $t->render)->ok;
 }
 
 1;
