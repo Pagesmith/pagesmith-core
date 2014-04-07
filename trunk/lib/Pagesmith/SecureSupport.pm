@@ -77,7 +77,7 @@ sub decrypt_input {
 }
 
 sub encrypt_data {
-  my ( $self, $data_in ) = shift;
+  my ( $self, $data_in ) = @_;
   return $self->safe_encrypt( $self->json_encode( $data_in ) );
 }
 
