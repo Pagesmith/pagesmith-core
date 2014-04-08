@@ -45,6 +45,8 @@ sub execute {
   }
   my $adap = Pagesmith::Adaptor::Qr->new();
   my $key  = $self->base_url( $r ). $r->uri;
+warn q(> ),$self->base_url($r),"\n";
+warn q(>> ),$r->uri,"\n";
   $key =~ s{/index[.]html}{/}mxs; ## remove trailing index.html
   my $qr_obj = $adap->get_by_url( $key );
   if( defined $qr_code && ( !defined $qr_obj || $qr_obj->code ne $qr_code ) ) {
@@ -57,7 +59,7 @@ sub execute {
     $qr_obj = $adap->create({'url' => $key, 'prime'=>'yes',});
     return q() unless $qr_obj->store;
   }
-  return sprintf '<div class="qr"><a href="%s%s"><img alt="* quick link - %s%s" src="/qr/%s.png" /></a></div>', $qr_url, $qr_obj->code, $qr_url, $qr_obj->code, $qr_obj->code;
+  return sprintf '<div class="qr"><a href="%s%s"><img height="62" width="62" alt="* quick link - %s%s" src="/qr/%s.png" /></a></div>', $qr_url, $qr_obj->code, $qr_url, $qr_obj->code, $qr_obj->code;
 }
 
 1;
