@@ -6,7 +6,7 @@
 ---------------------------------------------------------------------*/
 
 .onclick, .twocol dd.link, .link, a       { color: #14559f; text-decoration: underline; cursor: pointer; }
-.link:hover, a:hover { text-decoration: none; }
+.link:focus, a:focus, .link:hover, a:hover { text-decoration: none; }
 a img   { border:none; }
 
 .external, .pdf, .extpdf { white-space: nowrap }

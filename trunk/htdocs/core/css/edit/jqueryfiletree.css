@@ -7,7 +7,7 @@ ul.jft{ font-size:11px; line-height:18px; padding:0; margin:0}
 #rhs .jft li, .jft li, #main td.jft { padding-left:20px; background-position:top left; background-repeat:no-repeat; background-image:url(/core/gfx/filetree.png); }
 
 .jft a {color:#333; text-decoration:none; display:block; padding:0 2px}
-.jft a:hover{background:#bdf}
+.jft a:focus, .jft a:hover{background:#bdf}
 /* Core Styles */
 
 #rhs .jft .wait  { background-image: url(/core/gfx/anim/spinner.gif) }
