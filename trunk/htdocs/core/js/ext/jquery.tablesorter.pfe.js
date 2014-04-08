@@ -190,6 +190,7 @@
         $.tablesorterPager.fixPosition(table, tableBody);
         $(table).trigger('applyWidgets');
         $.tablesorterPager.updatePageDisplay(c, table);
+        Pagesmith.On.all_flush();
       },
 
       changeFilter: function (table,  value) {

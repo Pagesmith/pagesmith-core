@@ -16,6 +16,7 @@
 /* jshint -W074 */
 /* jshint -W117 */
 /* jshint -W116 */
+/* jshint -W071 */
 function tb_getPageSize(){
   'use strict';
   var de = document.documentElement;
@@ -239,11 +240,35 @@ function tb_show(caption, url, imageGroup) {//function called when the user clic
     } else {//code to show html
 
       var queryString = url.replace(/^[^\?]+\??/,'');
-      params = tb_parseQuery( queryString );
 
-      TB_WIDTH  = (params.width*1)  + 30 || $(window).width()  - 40; //defaults to 630 if no paramaters were added to URL
+      params = tb_parseQuery( imageGroup );
+
+      var ww = $(window).width();
+      var wh = $(window).height();
+      var wp = 'padding' in params ? 2 * params.padding : 10;
+      TB_WIDTH = ww - wp;
+      if( 'width' in params ) {
+        TB_WIDTH = 1 * params.width + 30;
+      }
+      if( 'max-width' in params && 1 * params['max-width'] + wp + 30 < ww ) {
+        TB_WIDTH = 1 * params['max-width'] + 30;
+      }
+      if( 'min-width' in params && 1 * params['min-width'] * 30 > TB_WIDTH ) {
+        TB_WIDTH = 1 * params['min-width'] + 30;
+      }
+      TB_HEIGHT = wh - wp;
+      if( 'height' in params ) {
+        TB_HEIGHT = 1 * params.height + 40;
+      }
+      if( 'max-height' in params && 1 * params['max-height'] + wp + 40 < wh ) {
+        TB_HEIGHT = 1 * params['max-height'] + 40;
+      }
+      if( 'min-height' in params && 1 * params['min-height'] * 40 > TB_HEIGHT ) {
+        TB_HEIGHT = 1 * params['min-height'] + 40;
+      }
+
       TB_TOP    = 0;
-      TB_HEIGHT = (params.height*1) + 40 || $(window).height() - 40; //defaults to 440 if no paramaters were added to URL
+
       ajaxContentW = TB_WIDTH - 30;
       ajaxContentH = TB_HEIGHT - 45;
 
@@ -372,6 +397,7 @@ function wrapped_tb_show(caption,url,params) {
   tb_show(caption,url,params);
 }
 
+/* jshint +W071 */
 /* jshint +W116 */
 /* jshint +W117 */
 /* jshint +W074 */

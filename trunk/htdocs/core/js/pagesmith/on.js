@@ -8,23 +8,23 @@
    Usage: - adding functions to elements.....
 
      Pagesmith.On.load( 'selector' , function(){
-  
+
      }).show( 'selector' , function(){
 
      });
 
      * load( .... ) these are functions to be executed when the dom element is added to the page
      * show( .... ) these are functions to be executed when the dom element becomes visible
-     
+
 
    Usage: - adding one or more classes that when (addClass/removeClass) is called will trigger
             checks for visibility changes... by default it doesn't perform this check - saves
             a lot of DOM parsing!
 
    Pagesmith.On.add_class( 'show-reference hide-reference' );
-   
+
    Usage: - run attached functions on newly created HTML blob...
-   
+
    dom_element.html( '<p>Put new HTML here</p>' );
    Pagesmith.On.flush( dom_element );
 
@@ -36,6 +36,13 @@
     loaded:  0,
     load:     function( fi, fn ) {
       this.load_methods.push( [fi, fn] );
+      if( this.loaded ) {
+        $(document).find(fi).each(fn);
+      }
+      return this;
+    },
+    all_load:     function( fi, fn ) {
+      this.load_methods.push( [fi, fn, 'all' ] );
       if( this.loaded ) {
         $(document).find(fi).each(fn);
       }
@@ -138,12 +145,28 @@
       }
     },
     /* jshint +W083 */
+    all_flush: function( ) {
+      var i,x;
+      for(i in this.load_methods) {
+        if( this.load_methods.hasOwnProperty(i) ) {
+          x = this.load_methods[i];
+          if( x[2] && x[2] === 'all' ) {
+            $(document).find(x[0]).add($(document).filter(x[0])).each(x[1]);
+          }
+        }
+      }
+      return this;
+    },
     flush: function( node ) {
       var i,x;
       for(i in this.load_methods) {
         if( this.load_methods.hasOwnProperty(i) ) {
           x = this.load_methods[i];
-          $(node).find(x[0]).add($(node).filter(x[0])).each(x[1]);
+          if( x[2] && x[2] === 'all' ) {
+            $(document).find(x[0]).add($(document).filter(x[0])).each(x[1]);
+          } else {
+            $(node).find(x[0]).add($(node).filter(x[0])).each(x[1]);
+          }
         }
       }
       for(i in this.show_methods) {
