@@ -136,23 +136,14 @@ sub set_headers {
 
 sub set_method {
   my( $self, $method ) = @_;
-  given( $method ) {
-    when ( 'HEAD' ) {
-      $self->setopt( CURLOPT_NOBODY,        1 );
-      $self->dont_collect;
-    }
-    when ( 'POST' ) {
-      $self->setopt( CURLOPT_POST,    1 );
-    }
-    when ( 'PUT' ) {
-      $self->setopt( CURLOPT_PUT,     1 );
-    }
-    when ( 'DELETE' ) {
-      $self->setopt( CURLOPT_CUSTOMREQUEST,     'DELETE' );
-    }
-    default {
-      $self->setopt( CURLOPT_HTTPGET, 1 );
-    }
+  $self->dont_collect if $method eq 'HEAD';
+  if( $method eq 'DELETE' ) {
+    $self->setopt( CURLOPT_CUSTOMREQUEST,     'DELETE' );
+  } else {
+    $self->setopt( $method eq 'HEAD' ? CURLOPT_NOBODY
+                 : $method eq 'POST' ? CURLOPT_POST
+                 : $method eq 'PUT'  ? CURLOPT_PUT
+                 :                     CURLOPT_HTTPGET, 1 );
   }
   return $self;
 }
