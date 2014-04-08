@@ -27,6 +27,7 @@
   //     var id_sel = ' a[href=#' + $(this).attr('id') + ']';
   //      $('.tabs' + id_sel + ', .fake-tabs' + id_sel).click();
   //    });
+    Pagesmith.On.all_flush();
     return false;
   };
 
