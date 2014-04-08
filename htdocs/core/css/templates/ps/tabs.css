@@ -15,11 +15,15 @@
 #rhs ul.tabs li a, .tabs li a, #navLeft li a { padding: 4px 8px; text-decoration: none; font-weight: bolder; color: #333; float: left; }
 ul.tabs {margin: 8px 6px 0 }
 #rhs ul.tabs { font-size:80%; margin-top: 2px; }
+#rhs ul.tabs li a:focus, .tabs li a:focus, #navLeft li a:focus,
 #rhs ul.tabs li a:hover, .tabs li a:hover, #navLeft li a:hover { text-decoration: underline; color: #8E0018; }
 #rhs ul.tabs .disabled, .tabs li.disabled {display:none}
 #rhs ul.show-disabled li.disabled, ul.show-disabled li.disabled {display:block}
-#rhs ul.tabs .disabled a, .tabs li.disabled a, .tabs li.disabled a:hover { color: #808080; cursor: default; text-decoration: none; }
-#rhs ul.tabs .active a:hover, .tabs .active a:hover, #navLeft .active a:hover {color: white; text-decoration:underline; }
+#rhs ul.tabs .disabled a, .tabs li.disabled a, .tabs li.disabled a:focus,
+.tabs li.disabled a:hover { color: #808080; cursor: default; text-decoration: none; }
+#rhs ul.tabs .active a:hover, .tabs .active a:hover, #navLeft .active a:hover,
+#rhs ul.tabs .active a:focus, .tabs .active a:focus, #navLeft .active a:focus
+ {color: white; text-decoration:underline; }
 
 #navLeft { float: left; text-indent: 0}
 .tabs .active a, #navLeft li.active a, #rhs .tabs li.active a { color: #fff }
@@ -33,7 +37,9 @@ ul#Tabs2, ul.second-tabs { margin: 0; padding: 4px 5px 0 5px; list-style: none; 
 ul#Tabs2 li, ul.second-tabs li { float: left; background: none; padding:0; text-indent: 0 }
 #Tabs2 li a, ul.second-tabs li a { display:  block; padding: .25em 1em 0 1em; line-height: 2em;     text-decoration: none; color: white; float: left;     font-weight: bold
 }
+#Tabs2 li a:focus, ul.second-tabs li a:focus,
 #Tabs2 li a:hover, ul.second-tabs li a:hover { color: #fff; text-decoration: underline; }
+#Tabs2 .active a:focus, ul.second-tabs .active a:focus,
 #Tabs2 .active a, #Tabs2 .active a:hover, ul.second-tabs .active a, ul.second-tabs .active a:hover { color: #14559f; background-color: #fff; }
 
 @media print {

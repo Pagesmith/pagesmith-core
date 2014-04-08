@@ -6,7 +6,7 @@
 #hnav ul { margin: 0; padding: 0; list-style: none; float: left; }
 #hnav li { list-style: none; float: left; padding: 2px 1em ; margin:0; background: none; color: #999; text-align: center }
 #hnav li a { color: #000; font-weight: bold; text-decoration: none; }
-#hnav li a:hover { color: #333 }
+#hnav li a:focus, #hnav li a:hover { color: #333 }
 
 #hnav:after { content:".";  display:block;  height:0;  clear:both; visibility:hidden; }
 

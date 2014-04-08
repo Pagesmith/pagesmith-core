@@ -7,7 +7,7 @@ form dt {
 }
 .twocol dd.information, form dd.information, .twocol dt.information, form dt.information { width: 100%; text-align: left; color:#14559f; font-weight: normal; }
 form dt a       { color: #663300; text-decoration: underline; font-weight: bold; }
-form dt a:hover { color:#ff7c0d; }
+form dt a:focus, form dt a:hover { color:#ff7c0d; }
 form dd         { float:right; width:77%; color:#14559f; padding:0 5px; margin: 1px 0 0.5em 0}
 
 /* Classes to tweak the size of the left and right hand column widths...
@@ -34,6 +34,7 @@ form dd input.vshort { width: 4em; }
 form dd input.short { width: 7em; }
 form dd input.medium { width: 15em; }
 form dd input.mediumlong { max-width: 25em; }
+form dd input.inline-submit { width: auto; padding: 2px 1em }
 
 form dd select, form dd input { border: 1px solid #666; padding: 2px; }
 form dd select:focus, form dd input:focus { border: 2px solid #090; padding: 1px;  }
