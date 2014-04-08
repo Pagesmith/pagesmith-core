@@ -118,9 +118,15 @@ sub set_r {
 sub base_url {
   my( $self ) = @_;
   return unless $self->r;
-  return join q(://),
+  my $url = join q(://),
     $self->r->headers_in->{'X-is-ssl'} ? 'https' : 'http',
     $self->r->headers_in->{'Host'};
+  if( $self->r->headers_in->{'X-is-ssl'} ) {
+    $url =~ s{:443\Z}{}mxs;
+  } else {
+    $url =~ s{:80\Z}{}mxs;
+  }
+  return $url;
 }
 
 sub get_session {
