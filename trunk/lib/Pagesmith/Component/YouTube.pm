@@ -25,7 +25,7 @@ sub usage {
     'parameters'  => '[{key=s} {caption=s}]+',
     'description' => 'Display an embedded YouTube video - size/positioning is dependent on the template used',
     'notes'       => [
-      '{key} code for video as in http://www.youtube.com/v/...',
+      '{key} code for video as in //www.youtube.com/v/...',
       '{caption} caption to appear under the video',
     ],
   };
@@ -47,10 +47,10 @@ sub my_cache_key {
 }
 
 my $templates = {
-  'small' => q(<p class="youtube-small"><object width="160" height="115" type="application/x-shockwave-flash" data="http://www.youtube.com/v/%s"><param name="movie" value="http://www.youtube.com/v/%s" />Video resource: %s  </object></p>),
-  'small-right' => q(<p class="right youtube-small"><object width="160" height="115" type="application/x-shockwave-flash" data="http://www.youtube.com/v/%s"><param name="movie" value="http://www.youtube.com/v/%s" />Video resource: %s  </object></p>),
-  'centered' => q(<div class="c youtube-large"><object width="480" height="295" type="application/x-shockwave-flash" data="http://www.youtube.com/v/%s"><param name="movie" value="http://www.youtube.com/v/%s" />Video resource: %s</object></div>),
-  'large' => q(<div class="right youtube-large"><object width="480" height="295" type="application/x-shockwave-flash" data="http://www.youtube.com/v/%s"><param name="movie" value="http://www.youtube.com/v/%s" />Video resource: %s</object></div>),
+  'small' => q(<p class="youtube-small"><object width="160" height="115" type="application/x-shockwave-flash" data="//www.youtube.com/v/%s"><param name="movie" value="//www.youtube.com/v/%s" />Video resource: %s  </object></p>),
+  'small-right' => q(<p class="right youtube-small"><object width="160" height="115" type="application/x-shockwave-flash" data="//www.youtube.com/v/%s"><param name="movie" value="//www.youtube.com/v/%s" />Video resource: %s  </object></p>),
+  'centered' => q(<div class="c youtube-large"><object width="480" height="295" type="application/x-shockwave-flash" data="//www.youtube.com/v/%s"><param name="movie" value="//www.youtube.com/v/%s" />Video resource: %s</object></div>),
+  'large' => q(<div class="right youtube-large"><object width="480" height="295" type="application/x-shockwave-flash" data="//www.youtube.com/v/%s"><param name="movie" value="//www.youtube.com/v/%s" />Video resource: %s</object></div>),
 };
 
 sub execute {
@@ -66,7 +66,7 @@ sub execute {
   return $self->wrap( {
     'title' => 'Video channel',
     'html'  => $html,
-    'link'  => 'http://www.youtube.com/'.$self->option('channel'),
+    'link'  => '//www.youtube.com/'.$self->option('channel'),
   } );
 }
 
