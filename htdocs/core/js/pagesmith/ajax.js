@@ -1,3 +1,4 @@
+/*globals console: true */
 (function($){
   'use strict';
   /*----------------------------------------------------------------------
@@ -41,6 +42,9 @@
           Pagesmith.On.flush(t);
         } else {
           x.replaceWith(data);
+          if( console ) {
+            console.log( 'You should be returning a valid HTML object - ability to return plain text may removed in future versions of the javascript' );
+          }
         }
         $(window).trigger('resize');
       };
