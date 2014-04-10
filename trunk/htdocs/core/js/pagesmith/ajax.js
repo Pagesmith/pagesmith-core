@@ -35,9 +35,13 @@
         }
       }
       ajax_pars.success = function(data) {
-        var t = x.parent();
-        x.replaceWith(data);
-        Pagesmith.On.flush(t);
+        if( data.match(/<.*?>/ ) ) {
+          var t = $(data);
+          x.replaceWith(t);
+          Pagesmith.On.flush(t);
+        } else {
+          x.replaceWith(data);
+        }
         $(window).trigger('resize');
       };
       ajax_pars.error = function(xhr,status,message) {
