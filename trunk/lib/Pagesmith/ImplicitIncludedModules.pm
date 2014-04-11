@@ -20,7 +20,7 @@ use version qw(qv); our $VERSION = qv('0.1.0');
 
 use DBD::Oracle;
 use DBD::mysql;
-use Linux::PID;
+use Linux::Pid;
 use Perl::Tidy;
 use Perl::Critic::Bangs;
 use Perl::Critic::Itch;
