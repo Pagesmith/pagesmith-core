@@ -22,8 +22,20 @@ use MIME::Base64 qw(decode_base64 encode_base64);
 use English qw(-no_match_vars $PROGRAM_NAME);
 use Sys::Hostname qw(hostname);
 use Socket qw(inet_ntoa);
+use Const::Fast qw(const);
 
 use Pagesmith::Object::Generic;
+
+const my $FILTER_MAP => {
+  'after'   => q(>=),
+  'before'  => q(<=),
+  'in'      => 'in',
+  'notin'   => 'not in',
+  'like'    => 'like',
+  'notlike' => 'not like',
+  'no'      => q(!=),
+};
+
 
 sub connection_pars {
   return 'objectstore';
@@ -128,39 +140,17 @@ sub parse_filter {
     my $restrictions = shift @filter;
     foreach my $filter ( @{$restrictions} ) {
       my ( $column, $type, @values ) = split m{\s+}mxs, $filter;
-      given( $type ) {
-        when(  'after' ) {
-          $extra .= sprintf ' and %s >= ?', $column;
-          push @params, $values[0];
-        }
-        when( 'before' ) {
-          $extra .= sprintf ' and %s <= ?', $column;
-          push @params, $values[0];
-        }
-        when( 'in' ) {
-          $extra .= sprintf ' and %s in (%s)', $column, join q(,), map { q(?) } @values;
-          push @params, @values;
-        }
-        when( 'notin' ) {
-          $extra .= sprintf ' and %s not in (%s)', $column, join q(,), map { q(?) } @values;
-          push @params, @values;
-        }
-        when( 'like' ) {
-          $extra .= sprintf ' and %s like ?', $column;
-          push @params, "%$values[0]%";
-        }
-        when( 'notlike' ) {
-          $extra .= sprintf ' and %s not like ?', $column;
-          push @params, "%$values[0]%";
-        }
-        when( 'not' ) {
-          $extra .= sprintf ' and %s != ?', $column;
-          push @params, $values[0];
-        }
-        default {
-          $extra .= sprintf ' and %s = ?', $column;
-          push @params, $values[0];
-        }
+        $extra .= sprintf ' and %s %s ',
+        $column,
+        exists $FILTER_MAP->{$type} ? $FILTER_MAP->{$type} : q(=);
+      if( $type eq 'in' || $type eq 'notin' ) {
+        $extra .= sprintf '(%s)', join q(,), map { q(?) } @values;
+        push @params, @values;
+      } else {
+        $extra .= q(?);
+        push @params, $type eq 'like' || $type eq 'notlike'
+                    ? "%$values[0]%"
+                    : $values[0];
       }
     }
   }
