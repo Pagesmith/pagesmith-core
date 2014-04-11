@@ -56,10 +56,47 @@ sub year_range {
   return $self;
 }
 
+## no critic (AmbiguousNames)
+sub second {
+  my $self = shift;
+  return $self->get_value('second')->{'second'};
+}
+## use critic
+
+sub minute {
+  my $self = shift;
+  return $self->get_value('minute')->{'minute'};
+}
+
+sub hour {
+  my $self = shift;
+  return $self->get_value('hour')->{'hour'};
+}
+
+sub day {
+  my $self = shift;
+  return $self->get_value('day')->{'day'};
+}
+
+sub month {
+  my $self = shift;
+  return $self->get_value('month')->{'month'};
+}
+
+sub year {
+  my $self = shift;
+  return $self->get_value('year')->{'year'};
+}
+
 sub value {
   my $self = shift;
+  return $self->get_value( qw(second minute hour day month year) );
+}
+
+sub get_value {
+  my( $self, @parts ) = @_;
   my $return = {};
-  foreach my $k ( qw(second minute hour day month year) ) {
+  foreach my $k ( @parts ) {
     $return->{$k} = 0;
     foreach ( qw(user_data obj_data default) ) {
       next unless exists  $self->{$_} &&
