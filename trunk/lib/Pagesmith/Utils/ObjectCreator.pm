@@ -151,6 +151,44 @@ sub bake_adaptor {
 
   my $derived_tables;
 
+## no critic (CommentedOutCode)
+# Temporarily expunged!
+#   ( my $t_pkg = $pkg ) =~ s{Adaptor}{Results};
+#   create_method( $t_pkg, 'new', sub {
+#     my ($class,$adap,$props ) = @_;
+#     my $self = {
+#       'conn'   => $adap->conn,
+#       'cols'   => $props->{'cols'}||q(),
+#       'tables' => $props->{'tables'}||q(),
+#       'constr' => $props->{'constr'}||[],
+#       'r_type' => 'multiple',
+#       'limit'  => [],
+#       'order'  => [],
+#       'group' => [],
+#     };
+#     bless $self, $class;
+#     return $self;
+#   }, 'Creates a results object' );
+#   create_method( $t_pkg, $make_method, sub {
+#     my($self,$hashref,$partial)=@_;
+#     return $obj_pkg->new( $self, $hashref, $partial );
+#   });
+#   create_method( $t_pkg, 'fetch', sub {
+#     my $self = shift;
+#     my $sql  = q();
+#     my @pars = ();
+#     my $rs = $self->conn->run( 'fixup' => sub { $_->selectall_arrayref( $sql, { 'Slice' => {} }, @pars ); } )||[];
+#     my @res = map { $_ } @{$rs};
+#     if( $self->{'r_type'} eq 'single' ) {
+#       return unless @res;
+#       return $self->$make_method( $res[0] );
+#     }
+#     return [ map { $self->$make_method( $_ ) } @{$_} ];
+#   });
+#
+#   my $t = $t_pkg->new;
+#      $t->fetch;
+## use critic
   my @props        = @{$config->{'properties'}||[]};
 
   my ($uid_column,$uid_defn) =                pairfirst { 'uid'  eq (ref $b ? $b->{'type'} : $b )           } @props;
@@ -179,6 +217,8 @@ sub bake_adaptor {
       if( $config->{'audit'}{'user_id'} ne 'create' ) {
         push @update_audit_columns, 'updated_by_id';
         $update_audit_functions .= '$o->set_updated_by_id( $self->user_id );';
+        push @create_audit_columns, 'updated_by_id';
+        $create_audit_functions .= '$o->set_updated_by_id( $self->user_id );';
       }
     }
     if( exists $config->{'audit'}{'user'} ) {
@@ -187,6 +227,8 @@ sub bake_adaptor {
         $create_audit_functions .= '$o->set_created_by( $self->user_name );';
       }
       if( $config->{'audit'}{'user'} ne 'create' ) {
+        push @create_audit_columns, 'updated_by';
+        $create_audit_functions .= '$o->set_updated_by( $self->user_name );';
         push @update_audit_columns, 'updated_by';
         $update_audit_functions .= '$o->set_updated_by( $self->user_name );';
       }
@@ -197,6 +239,8 @@ sub bake_adaptor {
         $create_audit_functions .= '$o->set_created_at( $self->now );';
       }
       if( $config->{'audit'}{'datetime'} ne 'create' ) {
+        push @create_audit_columns, 'updated_at';
+        $create_audit_functions .= '$o->set_updated_at( $self->now );';
         push @update_audit_columns, 'updated_at';
         $update_audit_functions .= '$o->set_updated_at( $self->now );';
       }
@@ -207,6 +251,8 @@ sub bake_adaptor {
         $create_audit_functions .= '$o->set_created_ip( $self->user_ip );';
       }
       if( $config->{'audit'}{'ip'} ne 'create' ) {
+        push @create_audit_columns, 'updated_ip';
+        $create_audit_functions .= '$o->set_updated_ip( $self->user_ip );';
         push @update_audit_columns, 'updated_ip';
         $update_audit_functions .= '$o->set_updated_ip( $self->user_ip );';
       }
@@ -217,6 +263,8 @@ sub bake_adaptor {
         $create_audit_functions .= '$o->set_created_useragent( $self->user_useragent );';
       }
       if( $config->{'audit'}{'useragent'} ne 'create' ) {
+        push @create_audit_columns, 'updated_useragent';
+        $create_audit_functions .= '$o->set_updated_useragent( $self->user_useragent );';
         push @update_audit_columns, 'updated_useragent';
         $update_audit_functions .= '$o->set_updated_useragent( $self->user_useragent );';
       }
