@@ -27,6 +27,7 @@ const my $DATE_FORMAT => '%a, %d %b %Y';
 const my $DOFF        => 1_900;
 const my $CENT        => 100;
 const my $MIN         => 60;
+const my $DAY         => 24;
 
 sub new {
   my( $class, $r, $options, $columns, $row_data ) = @_;
@@ -350,7 +351,7 @@ sub blocks {
 sub add_columns {
   my( $self, @cols ) = @_;
   foreach my $col ( @cols ) {
-    if( exists $col->{'format'} && defined $col->{'format'} && $col->{'format'} =~ m{\A(?:[tfpdzkm]\d*|mins|dur)\Z}mxs ) {
+    if( exists $col->{'format'} && defined $col->{'format'} && $col->{'format'} =~ m{\A(?:[tfpdzkm]\d*|mins|dur|durday)\Z}mxs ) {
       $col->{'align'} ||= 'r';
     }
     if( exists $col->{'format'} && defined $col->{'format'} && $col->{'format'} =~ m{\A(?:[yzkmt]|date|datetime|time).*\Z}mxs ) {
@@ -436,7 +437,7 @@ sub expand_format {
        : $f =~ m{\Adatetime(.+)\Z}mxs ? $self->time_str( $1,                           $self->munge_date_time( $val ) )
        : $f eq 'currency'             ? sprintf( q(&pound;%0.2f),                      $val||0 )       # &pound;0.00
        : $f eq 't'                    ? $self->commify(                                $val )       # n,nnn,nnn,nnn
-       : $f eq 'dur'                  ? $self->duration(                               $val, 'hms' )  # n,nnn,nnn,nnn
+       : $f eq 'durday'               ? $self->duration(                               $val, 'dhms' )  # n,nnn,nnn,nnn
        : $f eq 'mins'                 ? $self->duration(                               $val, 'hm'  )  # n,nnn,nnn,nnn
        : $f eq 'z'                    ? $self->format_size(                            $val, 0  )   # nnnn K/M/G/...
        : $f =~ m{\Az(\d+)\Z}mxs       ? $self->format_size(                            $val, $1 )   # nnnn.mm K/M/G/...
@@ -465,7 +466,18 @@ sub duration {
     my $hr  = ( $mnx - $min ) / $MIN;
     return sprintf '%d:%02d', $hr, $min;
   }
-
+  if( $format eq 'dhms' ) {
+    my $sec = $t % $MIN;
+    my $mnx = ( $t - $sec ) / $MIN;
+    my $min = $mnx % $MIN;
+    my $hrx = ( $mnx - $min ) / $MIN;
+    my $hr  = $hrx % $DAY;
+    my $day  = ( $hrx - $hr ) / $DAY;
+    if( $day ) {
+      return sprintf '%d %02d:%02d:%02d', $day, $hr, $min, $sec;
+    }
+    return sprintf '%d:%02d:%02d', $hr, $min, $sec;
+  }
   my $sec = $t % $MIN;
   my $mnx = ( $t - $sec ) / $MIN;
   my $min = $mnx % $MIN;
