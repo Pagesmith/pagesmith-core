@@ -55,7 +55,8 @@ sub execute {
   my @Q     = $self->pars;
   my $url   = encode_entities( shift @Q );
   my $img   = encode_entities( shift @Q );
-  my $title = encode_entities( shift @Q );
+  my $title = shift @Q;
+     $title = encode_entities( $title ) unless $self->option( 'raw' );
   if( $self->option( 'wrap' ) ) {
     $title = sprintf '<%s>%s</%s>', $self->option('wrap'), $title, $self->option('wrap');
   }
