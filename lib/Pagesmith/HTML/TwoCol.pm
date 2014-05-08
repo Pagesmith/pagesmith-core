@@ -104,16 +104,26 @@ sub render {
   my $self = shift;
   return q() unless @{$self->{'entries'}};
 
+  my @e = @{$self->{'entries'}};
+
+  @e = grep { @{$_->{'values'}} } @e unless defined $self->option( 'keep_empty' );
+
+  return q() unless @e;
+
   my @classes = ('twocol');
   push @classes, $self->option('class') if $self->option('class');
   my @html = (
     sprintf q(  <dl class="%s">), join q( ),@classes,
   );
-  foreach my $entry ( @{$self->{'entries'}} ) {
+  foreach my $entry ( @e ) {
     my $class = $entry->{'options'}{'class'} || $self->option('entry_class') || q();
     $class = sprintf ' class="%s"', $class if $class;
     push @html,       sprintf '    <dt%s>%s</dt>', $class, $entry->{'caption'};
-    push @html, map { sprintf '    <dd%s>%s</dd>', $class, $_ } @{ $entry->{'values'} };
+    if( @{$entry->{'values'}} ) {
+      push @html, map { sprintf '    <dd%s>%s</dd>', $class, $_ } @{ $entry->{'values'} };
+    } else {
+      push @html, sprintf '    <dd%s>%s</dd>', $class, $self->option( 'keep_empty' )||q();
+    }
   }
   push @html, q(  </dl>);
   return join qq(\n), @html;
