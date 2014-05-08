@@ -20,11 +20,17 @@ use base qw(Pagesmith::Action);
 sub run {
   my $self = shift;
 
-  my $t = $self->twocol->add_entry( 'IP', $self->r->headers_in->get('X-Forwarded-For') );
-
-  my @client_realms = split m{,\s+}mxs, $self->r->headers_in->get('ClientRealm')||q();
-  $t->add_entry( 'Realm', $_ ) foreach @client_realms;
-  return $self->wrap( q(What's my IP?), $t->render)->ok;
+  ## no critic (LongChainsOfMethodCalls)
+  return $self->wrap(
+    q(What's my IP?),
+    $self
+      ->twocol
+      ->set_option( 'keep_empty', q(-) )
+      ->add_entry(  'IP',    $self->r->headers_in->get('X-Forwarded-For') )
+      ->add_entry(  'Realm', split m{,\s+}mxs, $self->r->headers_in->get('ClientRealm')||q() )
+      ->render,
+  )->ok;
+  ## use critic
 }
 
 1;
