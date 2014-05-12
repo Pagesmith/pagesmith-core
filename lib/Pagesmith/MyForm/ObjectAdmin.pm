@@ -59,6 +59,13 @@ sub cant_create {
   return;
 }
 
+sub cant_create_any_user {
+  my $self = shift;
+  return 'not_logged_in' unless $self->user->logged_in;
+  return 'no_permission' unless $self->me;
+  return;
+}
+
 sub cant_create_superadmin {
   my $self = shift;
   return 'not_logged_in' unless $self->user->logged_in;
