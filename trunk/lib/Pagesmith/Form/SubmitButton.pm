@@ -33,7 +33,7 @@ sub new {
   my $code = $element_data->{'code'} || $element_data->{'id'};
 
   my $self = {
-    'form_id'        => $form->config->form_id,
+    'form_id'        => $form->form_config->form_id,
     'classes'        => {},
     'caption'        => exists $element_data->{'caption'} ? $element_data->{'caption'} : ucfirst $code,
     'title'          => $element_data->{'hint'},

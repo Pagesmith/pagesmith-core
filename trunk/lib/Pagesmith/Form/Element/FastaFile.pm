@@ -116,7 +116,7 @@ sub res {
 
 sub extra_columns {
   my $self = shift;
-  my $prefix = $self->config->{'code'}.q(/).$self->code;
+  my $prefix = $self->form_config->{'code'}.q(/).$self->code;
   return (
     { 'key' => 'caption', 'label' => 'Information', 'format' => 'r' },
   );

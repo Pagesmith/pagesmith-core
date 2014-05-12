@@ -247,7 +247,7 @@ sub add_uploaded_file {
     my ($obj_class) = split m{/}mxs, $obj_type;
     return 0 unless any { $obj_type eq $_ || "$obj_class/*" eq $_ } @types;
   }
-  my $prefix = $self->config->option('code').q(|).$self->code;
+  my $prefix = $self->form_config->option('code').q(|).$self->code;
   $self->{'user_data'}[0]{'next_idx'}||=1;
   my $next_idx = $self->{'user_data'}[0]{'next_idx'}++;
   my $key = "$prefix|$next_idx";
@@ -312,7 +312,7 @@ sub expand {
 sub render_email {
   my( $self, $form ) = @_;
   my ($entry) = values %{$self->{'user_data'}[0]{'files'}||{}};
-  my $prefix = $self->config->option('code').q(/).$self->code;
+  my $prefix = $self->form_config->option('code').q(/).$self->code;
   return $self->SUPER::render_email( sprintf qq(%s (%0.1fk %s)\n%s/action/FormFile/%s/%d/%s-%d.%s),
     $entry->{'name'}, $entry->{'size'}/$K, $entry->{'type'},
     $self->base_url($self->{'r'}),
@@ -326,7 +326,7 @@ sub render_single {
   my ($entry) = values %{$self->{'user_data'}[0]{'files'}||{}};
   return q() unless $entry; # '<p>No files currently attached</p>' unless $entry;
   ## no critic (ImplicitNewlines)
-  my $prefix = $self->config->option('code').q(/).$self->code;
+  my $prefix = $self->form_config->option('code').q(/).$self->code;
 
   return sprintf '
   <div class="file-details">
@@ -356,7 +356,7 @@ sub render_table {
   my @rows = values %{$self->{'user_data'}[0]{'files'}||{}};
   return q() unless @rows;## '<p>No files currently attached</p>' unless @rows;
 
-  my $prefix = $self->config->option('code').q(/).$self->code;
+  my $prefix = $self->form_config->option('code').q(/).$self->code;
 
   my @columns = (
     ##{ 'key' => 'ndx',  'label' => 'Index', 'align' => 'right' },
@@ -391,6 +391,12 @@ sub render_value {
 sub has_file {
   return 1;
 }
+
+sub has_file_no_ignored {
+  my $self = shift;
+  return $self->{'ignore_file_uploads'} ? 0 : 1;
+}
+
 sub widget_type {
   return 'file';
 }

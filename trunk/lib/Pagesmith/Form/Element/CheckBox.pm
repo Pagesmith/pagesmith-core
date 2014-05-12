@@ -29,6 +29,7 @@ sub init {
   $self->{'on_value'}  = exists $self->{'_options'}{'on_value' } ? $self->{'_options'}{'on_value'}  : $DEFAULT_ON_VALUE;
   $self->{'off_value'} = exists $self->{'_options'}{'off_value'} ? $self->{'_options'}{'off_value'} : $DEFAULT_OFF_VALUE;
   $self->{'disabled'}  = $self->{'_options'}{'disabled'} || 0;
+  $self->{'inline'}    = $self->{'_options'}{'inline'} || q();
   return $self;
 }
 
@@ -42,6 +43,12 @@ sub update_from_apr {
 sub is_empty {
   my $self = shift;
   return $self->value ne $self->on_value;
+}
+
+sub set_inline {
+  my( $self, $txt ) = @_;
+  $self->{'inline'} = $txt;
+  return $self;
 }
 sub on_value {
   my $self = shift;
@@ -130,7 +137,7 @@ sub render_widget {
     encode_entities( $self->on_value ),
     $self->value eq $self->on_value ? ' checked="checked" '       : q(),
     $self->disabled                 ? ' disabled="disabled" '     : q(),
-    $self->req_opt_string
+    $self->{'inline'}. $self->req_opt_string
   ;
 }
 

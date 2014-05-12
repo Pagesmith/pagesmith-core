@@ -64,7 +64,7 @@ sub make_simple {
 
 sub bake {
   my $self = shift;
-  $self->update_from_apr->add_confirmation_stage;
+  $self->update_from_apr->validate->add_confirmation_stage;
   return $self;
 }
 

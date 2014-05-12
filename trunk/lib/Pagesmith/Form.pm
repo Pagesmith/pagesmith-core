@@ -287,7 +287,7 @@ sub validate {
   my $self = shift;
   $_->validate( $self ) foreach $self->stages;
   $self->extra_validation; ## This is what is usually done "on-next!"
-  return;
+  return $self;
 }
 
 sub dump_invalid_states {
@@ -321,7 +321,7 @@ sub is_invalid {
 
 #= Accessors (used in form construction)
 
-sub config {
+sub form_config {
   my $self = shift;
   return $self->{'config'};
 }
@@ -379,14 +379,14 @@ sub classes {
 ## Return the list of classes associated with the form!
 
   my( $self, $type ) = @_;
-  return $self->config->classes( $type );
+  return $self->form_config->classes( $type );
 }
 
 sub add_class {
 #@param (self)
 #@param (string) $class CSS class to add to form
   my ( $self, $type, $class ) = @_;
-  $self->config->add_class( $type, $class);
+  $self->form_config->add_class( $type, $class);
   return $self;
 }
 
@@ -417,6 +417,11 @@ sub has_file {
   my $self = shift;
   return any { $_->has_file } $self->stages;
 }
+sub has_file_no_ignored {
+#@return (boolean) true if any stage has a file input box
+  my $self = shift;
+  return any { $_->has_file_no_ignored } $self->stages;
+}
 
 #h2 Accessors (not used in form construction)
 
@@ -433,7 +438,7 @@ sub set_introduction {
 sub render_introduction {
   my $self = shift;
   return q() unless $self->{'introduction'};
-  my $x = join q( ), $self->config->classes('section');
+  my $x = join q( ), $self->form_config->classes('section');
   my $html = $x ? qq(<div class="$x">) : q(<div>);
      $html .= sprintf "\n<h1>%s</h1>", encode_entities( $self->{'introduction'}{'caption'} ) if $self->{'introduction'}{'caption'};
      $html .= "\n".$self->{'introduction'}{'body'}."\n</div>";
@@ -657,7 +662,7 @@ sub add_reset_button {
   my ( $self, $action, $text, $title ) = @_;
 
   my $button = Pagesmith::Form::ResetButton->new( $self, {
-    'form'    => $self->config->form_id,
+    'form'    => $self->form_config->form_id,
     'id'      => $action,
     'code'    => $action,
     'caption' => $text,
@@ -676,7 +681,7 @@ sub add_button {
             : $action eq 'next'   ? 'next'
             : 'default-button';
   my $button = Pagesmith::Form::SubmitButton->new( $self, {
-    'form'     => $self->config->form_id,
+    'form'     => $self->form_config->form_id,
     'id'       => $action,
     'code'     => $action,
     'caption'  => $text,
@@ -726,7 +731,7 @@ sub render_formprogress {
     ( my $link  = $link_temp ) =~ s{\#S\#}{$stage_no}mxs;
     if(
       $stage_no > $self->highest_stage ||
-      $self->config->option( 'validate_before_next' ) && $stage_no > ($self->first_invalid_stage - 1) && $self->first_invalid_stage >=0
+      $self->form_config->option( 'validate_before_next' ) && $stage_no > ($self->first_invalid_stage - 1) && $self->first_invalid_stage >=0
     ) {
       $link = q(); # Remove link
     }
@@ -747,9 +752,9 @@ sub render_formprogress {
   }
 
   $html .= sprintf qq(\n      <li><a href="%s">%s</a></li>), encode_entities( $self->action_url_get( { 'jumbo' => 1 } ) ), 'All pages'
-    if $self->config->option('jumbo_link');
+    if $self->form_config->option('jumbo_link');
   $html .= sprintf qq(\n      <li><a href="%s">%s</a></li>), encode_entities( $self->action_url_get( { 'paper' => 1 } ) ), 'Paper copy'
-    if $self->config->option('paper_link');
+    if $self->form_config->option('paper_link');
 
   $html .= "\n    </ul>\n  </div>";
   return $html;
@@ -794,7 +799,7 @@ sub render {
   $o .= $stage->render($self);
   $o .= $self->render_form_end;
   my $html = $self->_trim( $o );
-  return $html unless $self->config->option( 'is_action' );
+  return $html unless $self->form_config->option( 'is_action' );
   ## This is used by Action...
   ( my $template = $self->page_template ) =~ s{<%\sForm\s%>}{$html}mxs;
   $template =~ s{<%\sIntroduction\s%>}{$self->render_introduction}mxse;
@@ -896,7 +901,7 @@ sub render_messages {
     $a->text cmp $b->text
   } @{$self->{'messages'}};
   my $max_level = sprintf 'box-%s', $messages[0]->level;
-  my $class     = join q( ), $max_level, $self->config->classes('section');
+  my $class     = join q( ), $max_level, $self->form_config->classes('section');
   my $html      = q();
   foreach my $message ( @messages ) {
     $html .= sprintf  qq(\n      <li class="form_%s">%s</li>), $message->level, $message->html;
@@ -1001,7 +1006,7 @@ sub store {
   my $self = shift;
   unless( $self->{'cache_handle'} ) {
     $self->{'code'}         ||= $self->safe_uuid;
-    $self->config->set_option( 'code', $self->{'code'} );
+    $self->form_config->set_option( 'code', $self->{'code'} );
     $self->{'cache_handle'}   = Pagesmith::Cache->new( 'form', $self->{'code'}, undef, site_key );
   }
 
@@ -1063,14 +1068,14 @@ sub initialize_form {
 sub set_option {
   my( $self, $key, $value ) = @_;
   $value = 1 unless defined $value;
-  $self->config->set_option( $key, $value );
+  $self->form_config->set_option( $key, $value );
   return $self;
 }
 
 sub option {
   my( $self, $key ) = @_;
-  return unless $self->config;
-  return $self->config->option( $key );
+  return unless $self->form_config;
+  return $self->form_config->option( $key );
 }
 
 ## Error handling!
@@ -1253,18 +1258,18 @@ sub goto_next_stage {
 }
 
 sub set_stage_by_name {
-  my( $self, $name ) = @_;
+  my( $self, $name, $flag ) = @_;
   my $new_stage = 0;
   foreach my $key ( @{ $self->{'stage_order'} } ) {
-    return $self->set_stage( $new_stage ) if $key eq $name;
+    return $self->set_stage( $new_stage, $flag ) if $key eq $name;
     $new_stage++;
   }
   return $self;
 }
 
 sub set_stage {
-  my( $self, $new_stage ) = @_;
-
+  my( $self, $new_stage, $flag ) = @_;
+  $flag ||= 0;
   my $current_stage = $self->stage;
   my $stages = $self->stages;
 
@@ -1281,7 +1286,7 @@ sub set_stage {
   $self->{'stage'} = $new_stage;
 
   if( $new_stage_is_error_stage ) {
-    $self->{'stage_to_store'} = $current_stage ; ## Don't store error stages!
+    $self->{'stage_to_store'} = $current_stage unless $flag; ## Don't store error stages!
   } else {
     delete $self->{'stage_to_store'} if exists $self->{'stage_to_store'};
     $self->{'highest_stage'} = $new_stage if $new_stage > $self->{'highest_stage'};
@@ -1420,6 +1425,8 @@ sub update_from_apr {
            : $pound eq "\xA3"     ? 'ascii'
            :                          'unk'
            ;
+  $self->force_form_code if $self->has_file_no_ignored;
+
   ## use critic
   if( $self->option('show_all_stages') ) {
     ## If we show all the stages of the form at once!
@@ -1481,6 +1488,16 @@ sub on_cancel {
 
 sub extra_validation {
   my $self = shift;
+  return;
+}
+
+sub on_goto_name {
+  my( $self, $current_stage, $name ) = @_;
+  my $new_stage = 0;
+  foreach my $key ( @{ $self->{'stage_order'} } ) {
+    return $self->on_goto( $new_stage ) if $key eq $name;
+    $new_stage++;
+  }
   return;
 }
 
