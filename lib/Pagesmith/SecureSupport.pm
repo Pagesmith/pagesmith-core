@@ -21,6 +21,27 @@ use Crypt::CBC;
 
 use Pagesmith::Core qw(safe_base64_decode safe_base64_encode safe_md5);
 
+sub encrypt_url {
+  my ( $self, $api_key, @parts ) = @_;
+  my $key_config;
+  if( @parts && ref $parts[0] eq 'HASH' ) {
+    $key_config = shift @parts;
+  } else {
+    my $pch = $self->config( 'secure' );
+         $pch->load(1);
+    $key_config = $pch->get( 'keys', $api_key );
+    return unless $key_config;
+  }
+
+  my $cipher = Crypt::CBC->new( '-key' => $key_config->{'key'}, '-cipher' => 'Blowfish', '-header' => 'randomiv' );
+  my @res;
+  my $rv = eval {
+    push @res, map { safe_base64_encode( $cipher->encrypt( $_ ) ) } @parts;
+  };
+  my $cs = safe_md5( join q(:), $key_config->{'secret'}, @parts );
+  $cs =~ s{=+\Z}{}mxs;
+  return join q(/), $api_key, @res, safe_md5( join q(:), $key_config->{'secret'}, @parts );
+}
 
 sub decrypt_input {
   my ( $self, $app ) = @_;
