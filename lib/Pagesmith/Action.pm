@@ -725,4 +725,15 @@ sub get_store {
   return;
 }
 
+sub is_secure {
+  my $self = shift;
+  return $self->r->headers_in->{'X-is-ssl'} eq '1';
+}
+
+sub redirect_secure {
+  my $self = shift;
+  my $host_part = q(https://).$self->r->headers_in->{'Host'};
+     $host_part =~ s{:(?:80:44)\Z}{}mxs;
+  return $self->redirect( $host_part.$self->r->unparsed_uri );
+}
 1;
