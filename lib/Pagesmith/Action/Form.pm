@@ -84,7 +84,7 @@ sub run {
     return $self->redirect( $form_object->action_url_get );
   }
 
-  $form_object->config->set_option( 'is_action', 1 ); ## Required so page can get wrapped later!
+  $form_object->form_config->set_option( 'is_action', 1 ); ## Required so page can get wrapped later!
   $self->{'form_object'} = $form_object;
 
   $self->set_navigation_path( $form_object->option( 'navigation_path' ) );

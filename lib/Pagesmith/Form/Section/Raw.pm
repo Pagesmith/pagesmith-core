@@ -31,9 +31,9 @@ sub is_invalid {
 sub new {
   my ( $class, $page, $section_data ) = @_;
   my $self = {
-    'config'          => $page->config,
-    'id'              => $section_data->{'id'} || $page->config->next_id,
-    'classes'         => { map { $_=>1 } $page->config->classes('section') },
+    'config'          => $page->form_config,
+    'id'              => $section_data->{'id'} || $page->form_config->next_id,
+    'classes'         => { map { $_=>1 } $page->form_config->classes('section') },
     'caption'         => $section_data->{'caption'},
     'body'            => $section_data->{'body'},
   };
@@ -42,7 +42,7 @@ sub new {
   return $self;
 }
 
-sub config {
+sub form_config {
   my $self = shift;
   return $self->{'config'};
 }

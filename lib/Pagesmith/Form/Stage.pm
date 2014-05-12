@@ -36,8 +36,8 @@ sub new {
   my ( $class, $form, $page_data ) = @_;
   my $self = {
     'object'          => $form->object,
-    'config'          => $form->config,
-    'id'              => $page_data->{'id'} || $form->config->next_id,
+    'config'          => $form->form_config,
+    'id'              => $page_data->{'id'} || $form->form_config->next_id,
     'r'               => $form->r,
     'caption'         => $page_data->{'caption'},
     'logic_type'      => 'any', ## none (0), any (>0), all (N), not_all (<N), 'at_least_\d', 'at_most_\d',
@@ -118,7 +118,7 @@ sub set_back_stage {
   return $self;
 }
 
-sub config {
+sub form_config {
   my $self = shift;
   return $self->{'config'};
 }
@@ -184,6 +184,11 @@ sub has_file {
   return any { $_->has_file } $self->sections;
 }
 
+sub has_file_no_ignored {
+  my $self = shift;
+  return any { $_->has_file_no_ignored } $self->sections;
+}
+
 sub is_type {
   my( $self, $type ) = @_;
   return $self->isa( "Pagesmith::Form::Stage::$type" );
@@ -214,7 +219,7 @@ sub add_raw_section {
       $section_data = { 'body' => $section_data };
     }
   }
-  $section_data->{'id'} ||= $self->config->next_id;
+  $section_data->{'id'} ||= $self->form_config->next_id;
   my $key = $section_data->{'id'};
 
   unless ( exists $self->{'sections'}{$key} ) {
@@ -237,7 +242,7 @@ sub add_readonly_section {
 
   $section_data = { 'caption' => $section_data } unless ref $section_data eq 'HASH';
 
-  $section_data->{'id'} ||= $self->config->next_id;
+  $section_data->{'id'} ||= $self->form_config->next_id;
   my $key = $section_data->{'id'};
 
   unless ( exists $self->{'sections'}{$key} ) {
@@ -259,7 +264,7 @@ sub unshift_section {
     ( $caption = $section_data ) =~ tr{_}{ } unless defined $caption;
     $section_data = { 'id' => $section_data, 'caption' => ucfirst $caption };
   }
-  $section_data->{'id'} ||= $self->config->next_id;
+  $section_data->{'id'} ||= $self->form_config->next_id;
   my $key = $section_data->{'id'};
 
   unless ( exists $self->{'sections'}{$key} ) {
@@ -282,7 +287,7 @@ sub add_section {
     ( $caption = $section_data ) =~ tr{_}{ } unless defined $caption;
     $section_data = { 'id' => $section_data, 'caption' => ucfirst $caption };
   }
-  $section_data->{'id'} ||= $self->config->next_id;
+  $section_data->{'id'} ||= $self->form_config->next_id;
   my $key = $section_data->{'id'};
 
   unless ( exists $self->{'sections'}{$key} ) {
@@ -349,8 +354,8 @@ sub add_button_html {
 
 sub render {
   my( $self, $form ) = @_;
-  my $output = sprintf qq(\n  <div id="%s_%s">), encode_entities( $self->config->form_id ), encode_entities( $self->id );
-  $output .= sprintf "<h2>%s</h2>\n", encode_entities( $self->caption ) if $self->caption && $self->config->option( 'show_page_titles' );
+  my $output = sprintf qq(\n  <div id="%s_%s">), encode_entities( $self->form_config->form_id ), encode_entities( $self->id );
+  $output .= sprintf "<h2>%s</h2>\n", encode_entities( $self->caption ) if $self->caption && $self->form_config->option( 'show_page_titles' );
   foreach ($self->sections) {
     $output .= $_->render( $form );
   }

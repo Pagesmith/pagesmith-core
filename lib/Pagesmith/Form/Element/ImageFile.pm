@@ -138,7 +138,7 @@ sub render_single {
   ## Get first value....
   my ($entry) = values %{$self->{'user_data'}[0]{'files'}||{}};
   return '<p>No image currently attached</p>' unless $entry;
-  my $prefix = $self->config->option('code').q(/).$self->code;
+  my $prefix = $self->form_config->option('code').q(/).$self->code;
   ## no critic (ImplicitNewlines)
   my $class = exists $viewable_bitmap{$entry->{'xtn'}} ? q( class="thickbox") : q( rel="external");
   return sprintf '
@@ -169,7 +169,7 @@ sub render_single {
 
 sub extra_columns {
   my $self = shift;
-  my $prefix = $self->config->option('code').q(/).$self->code;
+  my $prefix = $self->form_config->option('code').q(/).$self->code;
   return (
     { 'key' => 'dimensions', 'label' => 'Dimensions', 'align' => 'center', },
     { 'key' => 'thumbnails', 'label' => 'Thumbnail', 'align' => 'center', 'template' => [

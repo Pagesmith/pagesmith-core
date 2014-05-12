@@ -28,7 +28,7 @@ sub widget_type {
 
 sub init {
   my $self = shift;
-  $self->{'url'}        = exists $self->{'_options'}{'url' }       ? $self->{'_options'}{'url'}        : $self->config->form_url."?autocomplete=$self->{'code'}";
+  $self->{'url'}        = exists $self->{'_options'}{'url' }       ? $self->{'_options'}{'url'}        : $self->form_config->form_url."?autocomplete=$self->{'code'}";
   $self->{'query_name'} = exists $self->{'_options'}{'query_name'} ? $self->{'_options'}{'query_name'} : $self->{'code'} || $DEFAULT_QUERY;
   return $self;
 }

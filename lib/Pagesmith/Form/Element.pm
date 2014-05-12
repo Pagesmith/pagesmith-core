@@ -38,13 +38,13 @@ sub new {
   ( my $t_code = $code ) =~ s{_}{ }mxgs;
   my $self = {
     'object'         => $section->object,
-    'config'         => $section->config,
+    'config'         => $section->form_config,
     'r'              => $section->r,
     'raw'            => exists $element_data->{'raw'} && $element_data->{'raw'} eq 'yes' ? 1 : 0,
-    'id'             => $element_data->{'id'} || $section->config->next_id,
+    'id'             => $element_data->{'id'} || $section->form_config->next_id,
     'alias'          => $element_data->{'alias'} || $code,
-    'classes'        => { map { $_=>1 } $section->config->classes('element') },
-    'layouts'        => { map { $_=>1 } $section->config->classes('layout') },
+    'classes'        => { map { $_=>1 } $section->form_config->classes('element') },
+    'layouts'        => { map { $_=>1 } $section->form_config->classes('layout') },
     'caption'        => exists $element_data->{'caption'} ? $element_data->{'caption'} : ucfirst $t_code,
 ## Values are always array refs now to allow for multiple valued entries
     'default'        => exists $element_data->{'default'}
@@ -307,7 +307,7 @@ sub logic_linked {
   return $self->{'logic_linked'} || 'no';
 }
 
-sub config {
+sub form_config {
   my $self = shift;
   return $self->{'config'};
 }
@@ -462,14 +462,14 @@ sub optional_string {
   my $self = shift;
   return $self->{'options'}{'optional_string'}
     ? $self->{'options'}{'optional_string'}
-    : $self->config->option('optional_string');
+    : $self->form_config->option('optional_string');
 }
 
 sub required_string {
   my $self = shift;
   return $self->{'options'}{'required_string'}
     ? $self->{'options'}{'required_string'}
-    : $self->config->option('required_string');
+    : $self->form_config->option('required_string');
 }
 
 sub option {
@@ -632,10 +632,14 @@ sub generate_label_string {
 
 sub generate_id_string {
   my $self = shift;
-  return $self->config->form_id.'_'.$self->id;
+  return $self->form_config->form_id.'_'.$self->id;
 }
 
 sub has_file {
+  return 0;
+}
+
+sub has_file_no_ignored {
   return 0;
 }
 

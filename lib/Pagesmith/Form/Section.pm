@@ -34,10 +34,10 @@ sub new {
   my ( $class, $page, $section_data ) = @_;
   my $self = {
     'object'          => $page->object,
-    'config'          => $page->config,
-    'id'              => $section_data->{'id'} || $page->config->next_id,
+    'config'          => $page->form_config,
+    'id'              => $section_data->{'id'} || $page->form_config->next_id,
     'r'               => $page->r,
-    'classes'         => { map { $_=>1 } $page->config->classes('section') },
+    'classes'         => { map { $_=>1 } $page->form_config->classes('section') },
     'caption'         => $section_data->{'caption'},
     'logic'           => [],
     'elements'        => {},
@@ -80,7 +80,7 @@ sub has_input_elements {
 }
 
 #h2 accessors
-sub config {
+sub form_config {
   my $self = shift;
   return $self->{'config'};
 }
@@ -159,6 +159,11 @@ sub elements {
   return values %{$self->{'elements'}}; ## return all values including those in children!
 }
 
+sub has_file_no_ignored {
+  my $self = shift;
+  return any { $_->has_file_no_ignored } $self->elements;
+}
+
 sub has_file {
   my $self = shift;
   return any { $_->has_file } $self->elements;
@@ -216,7 +221,7 @@ sub add {
   my $element_data = $type_in;
 
   unless( ref $element_data eq 'HASH' ) {
-    $id ||= $self->config->next_id;
+    $id ||= $self->form_config->next_id;
     $element_data = {
       'type'      => $type_in,
       'id'        => $id,
@@ -232,7 +237,7 @@ sub add {
 
   if ( $self->dynamic_use($module) ) {
     $element_data = { 'id' => $element_data } unless ref $element_data;
-    $element_data->{'id'} ||= $self->config->next_id;
+    $element_data->{'id'} ||= $self->form_config->next_id;
     $id = $element_data->{'id'};
 
     my $flag_exists = exists $self->{'elements'}{$id};
@@ -267,7 +272,7 @@ sub add_to_composite {
   my $element_data = $type_in;
 
   unless( ref $element_data eq 'HASH' ) {
-    $id ||= $self->config->next_id;
+    $id ||= $self->form_config->next_id;
     $element_data = {
       'type'      => $type_in,
       'id'        => $id,
@@ -283,7 +288,7 @@ sub add_to_composite {
 
   if ( $self->dynamic_use($module) ) {
     $element_data = { 'id' => $element_data } unless ref $element_data;
-    $element_data->{'id'} ||= $self->config->next_id;
+    $element_data->{'id'} ||= $self->form_config->next_id;
     $id = $element_data->{'id'};
 
     my $flag_exists = exists $self->{'elements'}{$id};
@@ -308,7 +313,7 @@ sub add_to_composite {
 sub generate_id_string {
   my $self = shift;
   return sprintf 'section_%s_%s',
-    encode_entities( $self->config->form_id ),
+    encode_entities( $self->form_config->form_id ),
     encode_entities( $self->id );
 }
 
