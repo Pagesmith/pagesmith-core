@@ -400,7 +400,23 @@ sub render_group {
 
 sub render_email {
   my( $self, $form ) = @_;
-  return sprintf "\n%s\n%s", $self->caption, join q(), map { $_->render_email( $form ) } grep { ref($_)!~ m{Hidden}mxs } $self->elements;
+  return sprintf "\n%s\n%s", $self->caption, $self->render_email_group( q(-), $form );
+}
+
+sub render_email_group {
+  my( $self, $gp, $form ) = @_;
+  my $out = q();
+
+  foreach my $el ( @{$self->{'groups'}{$gp}} ) {
+    next if ref $el eq 'Hidden';
+    if( ref($el eq 'ARRAY') ) {
+      $out .= $self->render_email_group( $el->[1], $form );
+      next;
+    }
+    $out .= "\n".$el->render_email( $form );
+  }
+
+  return $out;
 }
 
 sub render_readonly {
