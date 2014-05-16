@@ -719,7 +719,7 @@ sub render_formprogress {
 
   my $stage_no = 0;
   my $link_temp = $self->action_url_get( { 'goto_#S#' => 1 } );
-  $link_temp = q() if $self->state eq 'completed';
+  $link_temp = q() if $self->status eq 'completed';
   foreach my $stage ( $self->stages ) {
     next if $stage->isa( 'Pagesmith::Form::Stage::Error' );
     my $text  = $stage->progress_caption;
@@ -775,7 +775,7 @@ sub render {
     $self->add_button(    'previous',    $stage->get_back() || 'Previous' , 'Return to previous page' );
   }
 
-  $self->add_button(       'cancel',   'Cancel', 'Cancel form' ) if $self->option( 'cancel_button' ) && $self->state ne 'completed';
+  $self->add_button(       'cancel',   'Cancel', 'Cancel form' ) if $self->option( 'cancel_button' ) && $self->status ne 'completed';
 
   $self->add_reset_button( 'reset',    'Reset',  'Reset current page of form'  )
     if $stage->has_input_elements && ! $self->option('no_reset');
@@ -1309,13 +1309,11 @@ sub previous_stage_object {
   return $self->{'stages'}{ $self->{'stage_order'}[ $previous_stage ] };
 }
 
-##no critic (BuiltinHomonyms)
-sub state {
+sub status {
   my $self = shift;
   return $self->{'state'};
 }
 
-##use critic (BuiltinHomonyms)
 sub errors {
   my $self = shift;
   return $self->{'errors'};
@@ -1412,7 +1410,7 @@ sub completed {
 
 sub is_completed {
   my $self = shift;
-  return $self->state eq 'completed';
+  return $self->status eq 'completed';
 }
 
 sub update_from_apr {
