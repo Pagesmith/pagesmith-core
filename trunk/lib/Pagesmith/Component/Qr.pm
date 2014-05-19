@@ -45,8 +45,6 @@ sub execute {
   }
   my $adap = Pagesmith::Adaptor::Qr->new();
   my $key  = $self->base_url( $r ). $r->uri;
-warn q(> ),$self->base_url($r),"\n";
-warn q(>> ),$r->uri,"\n";
   $key =~ s{/index[.]html}{/}mxs; ## remove trailing index.html
   my $qr_obj = $adap->get_by_url( $key );
   if( defined $qr_code && ( !defined $qr_obj || $qr_obj->code ne $qr_code ) ) {
