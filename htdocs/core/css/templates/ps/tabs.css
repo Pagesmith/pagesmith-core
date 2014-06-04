@@ -33,8 +33,10 @@ ul.tabs {margin: 8px 6px 0 }
 
 
 #NavTabs2 {overflow: hidden; border-top: 1px solid #0e518d}
-ul#Tabs2, ul.second-tabs { margin: 0; padding: 4px 5px 0 5px; list-style: none; width: 100%; float: left; background: linear-gradient(#0e518d,#02486a); background-color: #0e518d   }
+ul#Tabs2, ul.second-tabs { margin: 0; padding: 4px 0 0; list-style: none; width: 100%; float: left; background: linear-gradient(#0e518d,#02486a); background-color: #0e518d   }
 ul#Tabs2 li, ul.second-tabs li { float: left; background: none; padding:0; text-indent: 0 }
+ul#Tabs2 li:first-child, ul.second-tabs li:first-child { margin-left: 5px }
+ul#Tabs2 li:last-child, ul.second-tabs li:last-child { margin-right: 5px }
 #Tabs2 li a, ul.second-tabs li a { display:  block; padding: .25em 1em 0 1em; line-height: 2em;     text-decoration: none; color: white; float: left;     font-weight: bold
 }
 #Tabs2 li a:focus, ul.second-tabs li a:focus,
