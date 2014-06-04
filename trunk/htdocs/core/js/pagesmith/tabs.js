@@ -50,8 +50,8 @@
     var x = $(this).children('li.active'); //Find first enabled tab!
     if (!x.length) {
       x = $(this).children('li:not(.disabled)'); //Find first enabled tab!
-      x.first().children('a').click();
     }
+    x.first().children('a').click();
     return;
   };
 
