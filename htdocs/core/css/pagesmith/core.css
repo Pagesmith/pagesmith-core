@@ -32,6 +32,7 @@ code { background-color: #e0e4e7; font-weight: bold; padding: 0 0.25em; }
 blockquote { margin-left: 2em; margin-right: 2em; }
 /* paragraphs */
 
-sup { font-size: 75%; vertical-align: top; }
+sup { font-size: 66.6%; vertical-align: 40%; }
+sub { font-size: 66.6%; vertical-align: -15% }
 
 em i, i em, i i, em em, .intro em, .intro i { font-style: normal; }
