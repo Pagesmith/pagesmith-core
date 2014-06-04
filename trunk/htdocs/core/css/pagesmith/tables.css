@@ -41,6 +41,7 @@ table tbody td { background-color: #FFF; }
 table tbody.foot td { background-color: #bcc5cc; font-weight: bold }
 
 /** Hack to make sure the first row is grey if there is no header row! **/
+table thead tr.filters td,
 table.flip tbody tr.even td, table tbody tr.odd td { background-color:#e0e4e7; }
 table.flip tbody tr.odd td { background-color:#fff; }
 table.flip tbody tr.odd td { background-color:#fff; }
