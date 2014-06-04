@@ -263,7 +263,7 @@
           t_array.unshift( '<td class="c"><input style="width:95%; margin: 2px 0" class="colfilter" type="text" /></td>' );
         }
       }
-      q.first().append('<tr>' + t_array.join('') + '</tr>');
+      q.first().append('<tr class="filters">' + t_array.join('') + '</tr>');
     }
     $(this).tablesorterPager({
       container: $('#' + table_key),
