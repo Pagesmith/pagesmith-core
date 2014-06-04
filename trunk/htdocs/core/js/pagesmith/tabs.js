@@ -48,10 +48,13 @@
     jQuery(this).children('li').children('a').click(function(){ return Pagesmith.tab_click(this);});
     // Activate the first tab
     var x = $(this).children('li.active'); //Find first enabled tab!
-    if (!x.length) {
+    if(!x.length) {
       x = $(this).children('li:not(.disabled)'); //Find first enabled tab!
     }
-    x.first().children('a').click();
+    if( ! $(this).hasClass('rolledup') ) {
+      x.first().children('a').click();
+    }
+    $(this).addClass('rolledup');
     return;
   };
 
