@@ -11,11 +11,12 @@
   'use strict';
   Pagesmith.accessibility = {
     set: function (sz) {
+      $('body').removeClass('s-' + Pagesmith.flags.z);
       if (sz !== Pagesmith.flags.z) {
         Pagesmith.flags.z = sz;
         Pagesmith.setCookie();
       }
-      $('body').attr('class', 's-' + sz);
+      $('body').addClass('s-' + sz);
       $(window).resize();
     },
     init: function () {
