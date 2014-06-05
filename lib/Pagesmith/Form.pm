@@ -83,7 +83,6 @@ sub new {
     'elements_by_code'  => {},
     'elements_by_alias' => {},
 
-
 ## Storing the buttons on the page!
 #   'buttons'          => [],                      # Buttons on page..
 
@@ -121,10 +120,19 @@ sub new {
 
   undef $self->{'object_id'} if $self->{'object_id'} && !$self->fetch_object(); ## Returns
 
-  $self->add_attribute( 'ref', $self->apr->param( '__ref' ) || $self->r->headers_in->{'Referer'} ) if $self->apr;  ## Set the refererer
 
-  $self->initialize_form         # Create form elements
-       ->populate_object_values  # Load values from the object if it exists
+  $self->initialize_form;         # Create form elements
+
+  if( $self->apr && ! $self->has_attribute('ref') ) {
+    $self->add_attribute( 'ref',
+      $self->apr->param( '__ref' ) ||
+      $self->r->headers_in->{'Referer'} ||
+      $self->form_config->option('default_referer'),
+    );
+    $self->store if $self->{'code'};
+  }
+
+  $self->populate_object_values  # Load values from the object if it exists
        ->populate_user_values;   # Load values onto elements from the cache
 
   return $self;
@@ -135,6 +143,7 @@ sub remove_ref {
   $self->update_attribute( 'ref', q() );
   return $self;
 }
+
 sub expiry {
   my $self = shift;
   return $self->{'expiry'};
@@ -336,6 +345,11 @@ sub add_attribute {
   my( $self, $type, $value ) = @_;
   $self->{'attributes'}{$type} = $value unless exists $self->{'attributes'}{$type};
   return $self;
+}
+
+sub has_attribute {
+  my( $self, $type ) = @_;
+  return exists $self->{'attributes'}{$type};
 }
 
 sub delete_attribute {
@@ -1036,9 +1050,9 @@ sub force_form_code {
 ## This forces the form to have a code EVEN it is the first time that it is used
   my $self = shift;
   return $self if $self->{'code'};
-  return $self->store();
+  return $self->store;
   # means that you won't be able to submit the form twice - (or go back to the first page and
-  # submit the form from their twice!)
+  # submit the form from there twice!)
   # It is quite cool that we get this effectively for free! I do like free code!!
 }
 
