@@ -14,13 +14,16 @@ use utf8;
 
 use version qw(qv); our $VERSION = qv('0.1.0');
 
-use base qw( Pagesmith::Form::Element::String );
+use base qw( Pagesmith::Form::Element::NonNegInt);
 
 sub validate {
   my $self = shift;
   return $self->set_valid unless defined $self->value;
   return $self->set_invalid if $self->value eq q(0);
-  return $self->set_valid   if $self->value =~ m{\A[+]?\d+\Z}mxs;
+  if( $self->value =~ m{\A[+]?\d+\Z}mxs ) {
+    return $self->set_invalid if $self->max && $self->max < $self->value;
+    return $self->set_valid;
+  }
   return $self->set_invalid;
 }
 
