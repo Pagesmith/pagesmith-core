@@ -344,4 +344,5 @@ sub attribute {
   my( $self, $attr ) = @_;
   return $self->data->{$attr};
 }
+
 1;
