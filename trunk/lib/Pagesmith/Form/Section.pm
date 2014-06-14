@@ -329,7 +329,7 @@ sub base_render {
   if( $self->caption ) {
     $output .= "\n    <h3>" . encode_entities( $self->caption ) . '</h3>';
   } else {
-    $output .= qq(\n    <p style="height:1px">&nbsp;</p>);
+    $output .= qq(\n    <div style="height:1px">&nbsp;</div>);
   }
   $output .= $self->{'button_html'}{'top'}    if exists $self->{'button_html'}{'top'};
   $output .= $elements;
