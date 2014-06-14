@@ -32,6 +32,7 @@ my %defaults = (
   'back_button'          => 1, # Show
   'cancel_button'        => 1, # Show
   'no_reset'             => 0, # Show
+  'default_referer'      => q(/),
   'is_action'            => 0,
   'do_not_pass_ref'      => 0,
   'form_title'           => 'Form',
