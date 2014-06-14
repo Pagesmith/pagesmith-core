@@ -33,6 +33,16 @@ sub new {
   return $self;
 }
 
+sub updated_by {
+  my $self = shift;
+  return $self->{'updated_by'};
+}
+
+sub updated_at {
+  my $self = shift;
+  return $self->{'updated_at'};
+}
+
 sub created_by {
   my $self = shift;
   return $self->{'created_by'};
