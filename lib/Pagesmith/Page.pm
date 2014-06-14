@@ -341,8 +341,9 @@ sub minify_html {
   my $result = $self->run_cmd( [
    qw(java -jar ),
    get_config('UtilsDir').'/jars/htmlcompressor.jar',
-   qw(--preserve-server-script --compress-js --js-compressor closure --compress-css
-      --remove-intertag-spaces --remove-form-attr --remove-input-attr )], $html_ref );
+   qw(--preserve-server-script), # --compress-js --js-compressor closure --compress-css
+#   qw(--remove-intertag-spaces)
+   qw( --remove-form-attr --remove-input-attr )], $html_ref );
   return unless $result->{'success'};
   ${$html_ref} = join qq(\n), @{$result->{'stdout'}};
   return 1;
@@ -581,16 +582,18 @@ sub _parse_head {
     }
   }
 
+  $head =~ s{\bproperty="}{name="}mxsg;
   my $head_info   = $head_parser->parse($head);
   if ($head_info) {
     ## If valid.. grab the entries, title, meta:author,
     ## http-equiv:x-pagesmith-decor and copy them into the pars hash....
     my %map = qw(
-      Title            title
-      X-Meta-Author    author
+      Title               title
+      X-Meta-Author       author
       X-Pagesmith-Decor   template_flag
       X-Pagesmith-Expiry  expiry_time
-      X-Last-Modified  last_modified
+      X-Pagesmith-Embargo embargo_time
+      X-Last-Modified     last_modified
     );
     foreach ( keys %map ) {
       $pars->{ $map{$_} } ||= $head_info->header($_);
@@ -625,6 +628,7 @@ sub _parse_head {
     }
   }
   $extra_head .=  sprintf qq(  <meta name="X-site-domain" content="%s" />\n), encode_entities( $self->r->server->server_hostname ) if $self->r->server->server_hostname ne $self->r->get_server_name;
+  $extra_head =~ s{meta[ ]name="og:}{meta property="og:}mxsg;
   return ( $pars, $extra_head );
 }
 ##use critic (ExcessComplexity)
@@ -661,6 +665,11 @@ sub _parse_body {
     $body_attr .= sprintf q( id="%s"), $1;
   } elsif( $self->r->pnotes('body_id') && $self->r->pnotes('body_id') =~ m{\A[-\w]+\Z}mxs ) {
     $body_attr .= sprintf q( id="%s"), $self->r->pnotes('body_id');
+  }
+  if( $body_tag =~ m{class="(.+?)"}mxs ) {
+    $body_attr .= sprintf q( class="%s"), $1;
+  } elsif( $self->r->pnotes('body_class') ) {
+    $body_attr .= sprintf q( class="%s"), $self->r->pnotes('body_class');
   }
 
   ## Return data structure... and cleaned HTML.
