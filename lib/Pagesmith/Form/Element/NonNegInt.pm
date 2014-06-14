@@ -23,6 +23,13 @@ sub init {
   $self->{'_class'} = 'short';
   return;
 }
+
+sub set_max {
+  my ($self,$max) = @_;
+  $self->{'_max'} = $max;
+  return $self;
+}
+
 sub max {
   my $self = shift;
   return $self->{'_max'};
@@ -30,15 +37,24 @@ sub max {
 
 sub validate {
   my $self = shift;
-  return $self->set_valid  if $self->value =~ m{\A[+]?\d+\Z}mxs;
+  return $self->set_valid unless defined $self->value;
+  if( $self->value =~ m{\A[+]?\d+\Z}mxs ) {
+    return $self->set_invalid if $self->max && $self->max < $self->value;
+    return $self->set_valid;
+  }
   return $self->set_invalid;
+}
+
+sub render_widget {
+  my $self = shift;
+  $self->add_class( 'max_'.$self->max ) if $self->max;
+  return $self->SUPER::render_widget;
 }
 
 sub element_class {
   my $self = shift;
   $self->add_class( '_nonnegint' );
   $self->add_class( 'short' );
-  $self->add_class( 'max_'.$self->max ) if $self->max;
   return;
 }
 
