@@ -28,11 +28,12 @@ use base qw(Apache2::Filter);
 
 use Time::Local qw(timelocal);
 use Apache2::Connection  ();
-use Apache2::Const qw(OK DECLINED CONN_KEEPALIVE);
+use Apache2::Const qw(OK NOT_FOUND DECLINED CONN_KEEPALIVE);
 use Apache2::RequestRec  ();
 use Apache2::RequestUtil ();
 use Apache2::URI         ();
 use APR::Table           ();
+use Date::Format qw(time2str);
 use Crypt::CBC;
 use URI::Escape qw(uri_unescape);
 use English qw(-no_match_vars $PID);
@@ -81,8 +82,6 @@ sub handler : FilterRequestHandler {
     $r->headers_out->set( 'X-Pagesmith-Debug', sprintf '!%s:%d', hostname, $PID );
     return DECLINED;
   }
-
-
 
   my $ctx = context($filter);
   ## Initialize if first request
@@ -170,9 +169,19 @@ sub handler : FilterRequestHandler {
       ## X-Pagesmith-Decor != 'runtime' which only parses the second stage
       ## directives '<%~ ~%>'
       ( $html, $pars ) = $renderer->decorate($html);
-
       ## IF the page has a http-equiv X-Pagesmith-Decor no $pars is returned undef
+      my $embargo = $pars->{'embargo_time'} || $r->headers_out->get('X-Pagesmith-Embargo') || 0;
       my $key = $r->headers_out->get('X-Pagesmith-Cache');
+      if( $embargo && $embargo gt time2str( '%Y-%m-%d %H:%M:%S',time ) ) {
+        ## We need to return an error here!
+        $key = undef;
+        ($html) = $renderer->decorate(
+          '<html><head>Embargoed content</head><body><h2>Embargoed content</h2><p>The content of this page is embargoed until: '.
+          $embargo.
+          ' ('.time2str( '%Y-%m-%d %H:%M:%S',time ).')</p></body></html>',
+        );
+      }
+
       if( $key ) { ## Calling  this too often - need to check we only do it once!!
         #$renderer->minify_html( \$html );
         my $expiry = $pars->{'expiry_time'} || $r->headers_out->get('X-Pagesmith-Expiry') || 0;
