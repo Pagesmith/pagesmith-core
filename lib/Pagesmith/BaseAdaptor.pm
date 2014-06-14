@@ -23,7 +23,7 @@ use DBIx::Connector;
 
 use Socket qw(inet_ntoa);
 use Sys::Hostname qw(hostname);
-use English qw(-no_match_vars $PROGRAM_NAME);
+use English qw(-no_match_vars $PROGRAM_NAME $PID);
 use Scalar::Util qw(blessed weaken isweak);
 use POSIX qw(floor);
 use Const::Fast qw(const);
@@ -164,6 +164,7 @@ sub get_connection {
   $self->{'_sub_class'} = $db_details->{'subclass'} || q();
   $self->{'mode'}       = $db_details->{'mode'};
   $self->{'_dbopts'}    = $self->get_options( $db_details->{'opts'} );
+  $self->{'_dbdebug'}   = exists $db_details->{'debug'} ? $db_details->{'debug'} : 0;
   return $self;
 }
 
@@ -178,6 +179,7 @@ sub connect_to_db {
   return $self if $self->{'_conn'};
   return $self unless exists  $self->{'_dsn'} && $self->{'_dsn'};
   $self->{'_conn'} = DBIx::Connector->new( $self->{'_dsn'}, $self->{'_dbuser'}, $self->{'_dbpass'}, $self->{'_dbopts'} );
+  $self->{'_conn'}->dbh->trace( 'SQL|3', "/tmp/trace-$PID" ) if $self->{'_dbdebug'};
   $self->{'_conn'}->mode( $self->mode );
   return $self;
 }
