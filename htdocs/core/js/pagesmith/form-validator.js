@@ -363,6 +363,10 @@
 
     submit: function (form) {
       this.getWarnings(form);
+      if( form.hasClass('submitted') && form.hasClass('prevent_double_submit') ) {
+        window.alert( 'You have already submitted the form' );
+        return false;
+      }
 
       // TODO: something nicer than an alert box
       if (this.warnings.length) {
@@ -372,6 +376,7 @@
       if (form.hasClass('confirm') && !window.confirm('Check the values you entered are correct before continuing')) {
         return false;
       }
+      form.addClass('submitted');
       return true;
     },
 

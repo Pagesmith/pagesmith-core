@@ -70,6 +70,8 @@ form dd.button-row input.next   { color: #090; }*/
 form div.button-default input.valid    { color: #090; }
 form div.button-default input.invalid  { color: #999; }
 
+form.submitted div.button-default input.valid { color: #960 }
+
 form dd input._checkbox, form dd input.checkbox { width: 1em; background-color: transparent; }
 form dd input._checkbox, form dd input.checkbox, form dd input._file { border: 0; }
 
