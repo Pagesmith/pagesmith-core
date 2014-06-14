@@ -18,6 +18,7 @@ use version qw(qv); our $VERSION = qv('0.1.0');
 use base qw( Pagesmith::Form::Element );
 
 use HTML::Entities qw(encode_entities);
+use List::MoreUtils qw(any);
 
 #--------------------------------------------------------------------
 # Creates a form element for an option set, as either a select box
@@ -256,6 +257,22 @@ sub render_widget {
       $self->multiple_button,       ## "multiple button?"
       $self->req_opt_string,        ## Required/optional
       @extra_multiple;              ## already selected values
+}
+
+sub validate {
+  my $self = shift;
+  return $self->set_valid unless defined $self->value;
+  my $t = $self->scalar_value;
+  if( ref $self->{'_values'} eq 'HASH' ) {
+    return $self->set_valid if exists $self->{'_values'}{ $t };
+  } elsif( ref $self->{'_values'} eq 'ARRAY' ) {
+    if( ref $self->{'_values'}[0] eq 'HASH' ) {
+      return $self->set_valid if any { $t eq $_->{'value'} } @{$self->{'_values'}};
+    } else {
+      return $self->set_valid if any { $t eq $_ } @{$self->{'_values'}};
+    }
+  }
+  return $self->set_invalid;
 }
 
 1;
