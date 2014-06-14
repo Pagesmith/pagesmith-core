@@ -71,6 +71,11 @@ sub in_group {
   return 0;
 }
 
+sub status {
+  my $self = shift;
+  return $self->data->{'status'};
+}
+
 sub ldap_id {
   my $self = shift;
   return $self->data->{'ldap_id'};
