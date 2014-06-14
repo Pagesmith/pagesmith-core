@@ -213,19 +213,18 @@ sub process_disk {
   foreach( @{$self->{'raw'}{'disk'}} ) {
     next if m{\A(?:Filesystem|none|tmpfs|udev)\s}mxs;
     next if m{/boot\Z}mxs;
-    given( $_ ) {
-      when( m{\s/nfs/users/}mxs                        ) { $self->{'user_dirs'} = 'Y'; }
-      when( m{\s(?:/vol)?/software\b}mxs               ) { $self->{'software'}  = 'Y'; }
-      when( m{\s(/(?:nfs|www/mnt)/\S+)\Z}mxs             ) { $self->{'nfs'}{$1}++;       }
-      when( m{\s(/(?:shared_|web_|)tmp)\Z}mxs          ) { $self->{'nfs'}{$1}++;       }
-      when( m{\A\S*\s+(\d+)\s+(\d+)\s+(\d+)\s+\d+%\s+(/\S*)\Z}mxs ) {
-        # $1 - size of disk in (k);
-        # $2 - amount used  in (k);
-        # $3 - amount free  in (k);
-        # $4 - mount path of disk.
-        $self->{'disks'}{ $4 } = { 'size' => $1/$K/$K, 'used' => $2/$K/$K, 'available' => $3/$K/$K };
-      }
+    ## no critic (CascadingIfElse)
+    if( m{\s(/(?:nfs|www/mnt)/\S+)\Z}mxs ||
+        m{\s(/(?:shared_|web_|)tmp)\Z}mxs ) {
+      $self->{'nfs'}{$1}++;
+    } elsif( m{\s/nfs/users/}mxs ) {
+      $self->{'user_dirs'} = 'Y';
+    } elsif( m{\s(?:/vol)?/software\b}mxs ) {
+      $self->{'software'}  = 'Y';
+    } elsif( m{\A\S*\s+(\d+)\s+(\d+)\s+(\d+)\s+\d+%\s+(/\S*)\Z}mxs ) {
+      $self->{'disks'}{ $4 } = { 'size' => $1/$K/$K, 'used' => $2/$K/$K, 'available' => $3/$K/$K };
     }
+    ## use critic
   }
   return;
 }
@@ -276,21 +275,17 @@ sub process_ipconfig {
     if( m{\A(\w+)}mxs ) {
       $self->{'interface'} = $1;
     }
-    given( $_ ) {
-      when( m{HWaddr\s+(\w\w:\w\w:\w\w:\w\w:\w\w:\w\w)}mxs ) {
-        $self->{'mac_addr'}  = $1;
-      }
-      ## no critic (ComplexRegexes)
-      when( m{inet\s+addr:(\d+[.]\d+[.]\d+[.]\d+)\s+Bcast:(\d+[.]\d+[.]\d+[.]\d+)\s+Mask:(\d+[.]\d+[.]\d+[.]\d+)}mxs ) {
-        $self->{'ip_addr'}    = $1;
-        $self->{'bcast_addr'} = $2;
-        $self->{'gway_addr'}  = $3;
-      }
-      ## use critic
-      when( m{inet6\s+addr:\s*([\w:]+(?:/\d+)?)\s+}mxs ) {
-        $self->{'ip6_addr'}   = $1;
-      }
+    ## no critic (ComplexRegexes)
+    if( m{HWaddr\s+(\w\w:\w\w:\w\w:\w\w:\w\w:\w\w)}mxs ) {
+      $self->{'mac_addr'}  = $1;
+    } elsif( m{inet\s+addr:(\d+[.]\d+[.]\d+[.]\d+)\s+Bcast:(\d+[.]\d+[.]\d+[.]\d+)\s+Mask:(\d+[.]\d+[.]\d+[.]\d+)}mxs ) {
+      $self->{'ip_addr'}    = $1;
+      $self->{'bcast_addr'} = $2;
+      $self->{'gway_addr'}  = $3;
+    } elsif( m{inet6\s+addr:\s*([\w:]+(?:/\d+)?)\s+}mxs ) {
+      $self->{'ip6_addr'}   = $1;
     }
+    ## use critic
   }
   return;
 }
