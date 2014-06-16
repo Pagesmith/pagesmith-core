@@ -142,6 +142,12 @@ sub set_body_id {
   return $self;
 }
 
+sub set_body_class {
+  my( $self, $class ) = @_;
+  $self->r->pnotes('body_class', $class );
+  return $self;
+}
+
 sub push_css_files {
   my( $self, @files ) = @_;
   my $css_ref = $self->r->pnotes('css_files');
