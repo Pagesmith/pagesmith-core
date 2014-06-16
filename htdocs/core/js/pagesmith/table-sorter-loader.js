@@ -22,6 +22,20 @@
     return s_obj;
   }
 
+  jQuery.fn.cross_highlight = function () {
+    $(this).on('mouseenter','td',function(){
+      var $self = $(this), $tb = $self.closest('table');
+      $tb.find('.cross_h').removeClass('cross_h');
+      $tb.find('.cross_a').removeClass('cross_a');
+      $self.siblings().addClass('cross_h');
+      var x = $(this).prevAll().length;
+      $self.addClass('cross_a').closest('tr').siblings().each(function(){
+        $(this).find('td').eq(x).addClass('cross_h');
+      });
+    }).on('mouseleave','td',function(){
+      $(this).removeClass('cross_a').closest('table').find('.cross_h').removeClass('cross_h');
+    });
+  };
   /* jshint +W074 */
   jQuery.fn.zebra = function () {
     /* If there is no "thead" block then flip the colours grey/white rather
@@ -274,6 +288,8 @@
     });
   }).load( '.zebra', function () {
     $(this).children('dt').first().siblings('dt').addClass('bordered').next().addClass('bordered');
+  }).load( '.cross-highlight', function () {
+    $(this).cross_highlight();
   }).load( '.zebra-table', function () {
     if (!$(this).hasClass('faked')) {
       $(this).zebra();
