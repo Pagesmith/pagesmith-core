@@ -73,3 +73,6 @@ table .vertical { white-space: nowrap; }
 table.lightgrey tbody td { background-color: #fafafa}
 
 input.colfilter, select.colfilter { font-size: 90% }
+
+.cross-highlight td.cross_h { background-color: #ddd; }
+.cross-highlight td.cross_a { background-color: #ccc }
