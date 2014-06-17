@@ -10,7 +10,8 @@
 a img   { border:none; }
 
 .external, .pdf, .extpdf { white-space: nowrap }
-.extftp   img, .pdf img, .external img { vertical-align: top; height: 12px; width: 15px; background:url(/core/gfx/icons-140302.png) -48px -34px no-repeat; padding: 0}
+#outer .extftp img, #outer .pdf img, #outer .external img,
+.extftp   img, .pdf img, .external img { vertical-align: top; height: 12px; width: 15px; background:url(/core/gfx/icons-140302.png) -48px -34px no-repeat; padding: 0; float: none; margin: 0 }
 .external img { background-position: -48px -50px ; }
 .pdf      img { background-position: -48px -18px ; }
 
