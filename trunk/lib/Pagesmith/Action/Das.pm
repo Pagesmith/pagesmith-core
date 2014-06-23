@@ -40,6 +40,7 @@ const my $TIMEOUT_FETCH   => 240; ## 4 minutes..
 const my $TIMEOUT_CONN    => 3;   ## 3 seconds..
 const my $TIMEOUT_SOURCES => 240; ## 4 minutes..
 
+const my $DAS_SLEEP       => 40;
 const my $MAX_TRIES       => 3;   ## Tries up to 3 times to get response from backends before giving up!
 
 ## Following are used to try and stop a re-write of a badgered config...
@@ -233,7 +234,7 @@ sub run {
   my $st;
   while( $c->has_active ) {
     if( $c->active_transfers == $c->active_handles ) {
-      $c->short_sleep;
+      $c->short_sleep( $DAS_SLEEP );
       next;
     }
     while( my $r = $c->next_request ) {
