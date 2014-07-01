@@ -20,6 +20,7 @@ use version qw(qv); our $VERSION = qv('0.1.0');
 use Cwd qw(abs_path);
 use English qw(-no_match_vars $PROGRAM_NAME);
 use File::Basename qw(dirname);
+use List::Util qw(pairs);
 
 my $ROOT_PATH;
 my @libs;
@@ -74,7 +75,7 @@ const my %EL_MAP => (
   'uri'       => [ 'URI',         'varchar(511)'        ],
   'email'     => [ 'Email',       'varchar(128)'        ],
   'string'    => [ 'String',      'varchar(2047)'       ],
-  'string'    => [ 'Text',        'text'                ],
+  'text'      => [ 'Text',        'text'                ],
   'blob'      => [ 'File',        'blob'                ],
   'image'     => [ 'Image',       'blob'                ],
   'int'       => [ 'Int',         'int'                 ],
@@ -86,17 +87,29 @@ const my %EL_MAP => (
 ###  * quite
 ###  * verbose
 ###  * force
+###  * db_name
+###  * act_map
 ### ---------------------------------------------------------------------------------------
 
 my $quiet   = 0;
 my $verbose = 0;
 my $force   = 0;
+my $db_name = q();
+my $act_map = q();
+my ($act_map_from,$act_map_to);
 
 GetOptions(
-  'quite'        => \$quiet,
+  'quite+'       => \$quiet,
   'verbose+'     => \$verbose,
   'force'        => \$force,
+  'db_name:s'    => \$db_name,
+  'act_map:s'    => \$act_map,
 );
+
+if( $act_map ) {
+  ($act_map_from,$act_map_to) = split m{:}mxs, 'action/'.$act_map.q(/);
+  $act_map_from .= q(_);
+}
 
 ### Get namespace
 ### and get support module for name space
@@ -105,39 +118,48 @@ GetOptions(
 ###  * check it has a bake_model call in it
 ### ---------------------------------------------------------------------------------------
 
-run_docs( 'You must specify a name space' ) unless @ARGV;
+## A namespace must be defined!
+_die_with_docs( 'You must specify a name space' ) unless @ARGV;
 my $ns = shift @ARGV;
 
-run_docs( 'Not a valid perl name space' ) unless $ns =~ m{\A[[:upper:]]\w*(::[[:upper:]]\w*)*\Z}mxs;
+## Name space needs to be of form Abc, Abc::Def, Abc::Def::Ghi etc....
+_die_with_docs( 'Not a valid perl name space' ) unless $ns =~ m{\A[[:upper:]]\w*(::[[:upper:]]\w*)*\Z}mxs;
 
 (my $_ns      = $ns )=~s{::}{_}mxsg;          ## For use in Component/Actions...
- my $rt       = Pagesmith::Root->new;         ## Root module so we can dynamic ic
- my $sup      = "Pagesmith::Support::$ns";
-(my $mod_file = "$sup.pm" ) =~ s{::}{/}mxsg;
+ my $rt       = Pagesmith::Root->new;         ## Root module so we can use dynamic_use!
+ my $mod      = "Pagesmith::Model::$ns";      ## Get model definition Namespace ...
+(my $mod_file = "$mod.pm" ) =~ s{::}{/}mxsg;  ## ... & filename...
 
-warn "========================================================================
-# $sup
+warn qq(
 ========================================================================
 
-";
+  Perl modules in "$ns" namespace
 
-unless( $rt->dynamic_use( $sup ) ) { ## Check to see if we can include it!
-  my $msg = $rt->dynamic_use_failure( $sup );
+   * Setting up definition from module: $mod
+
+========================================================================
+
+  Creating following files:
+) unless $quiet;
+
+unless( $rt->dynamic_use( $mod ) ) { ## Check to see if we can include it!
+  my $msg = $rt->dynamic_use_failure( $mod );
   die "\n" if index $msg, "Can't locate $mod_file in \@INC (\@INC";
-  die "No $sup module in file path\n\n";
+  die "No $mod module in file path\n\n";
 }
 
-die "Module $sup doesn't call bake_model\n\n" unless $sup->can( 'auto_methods' );
+die "Module $mod doesn't call bake\n\n" unless $mod->can( 'auto_methods' );
 
 ### Get the boilerplate code, code templates & also the lib path the Support module
 ### is stored in....
 ### ---------------------------------------------------------------------------------------
 
-( my $library_root = $INC{$mod_file} ) =~ s{Pagesmith/Support/.*}{}mxs;
-my $bp        = _boilerplate( $rt, $sup );
+( my $library_root = $INC{$mod_file} ) =~ s{Pagesmith/Model/.*}{}mxs;
+my $bp        = _perl_boilerplate( );
 my $templates = _get_templates();
 
 
+### ---------------------------------------------------------------------------------------
 ### Finally generate files if required
 ###  * Main "core" adaptors
 ###  * type objects & adaptors
@@ -147,188 +169,105 @@ my $templates = _get_templates();
 ### ---------------------------------------------------------------------------------------
 
 generate_core_modules();
-create_adaptors_and_objects();
-create_admin_methods();
-create_schema();
+generate_adaptors_and_objects();
+generate_navigation_component();
+generate_admin_methods();
+generate_documentation();
+generate_schema();
+db_config_note();
 
 exit;
 
-sub run_docs {
-  my $err = shift;
-  warn "** $err\n\n" if $err;
-  die '------------------------------------------------------------------------
-Purpose:
-    to take an object module defined in Pagesmith::Support::{name_space}
-
-Usage:
-    utilities/create-stubs [-q] [-v] [-f] {name_space}
-
-Options:
-    -q  (-quiet)       opt
-    -v  (-verbose)     opt
-    -f  (-force)       opt
-------------------------------------------------------------------------
-';
-}
+########################################################################
+##+------------------------------------------------------------------+##
+##| END OF SCRIPTS - METHODS TO FOLLOW.....                          |##
+##+------------------------------------------------------------------+##
+########################################################################
 
 ###########################################################################################
 ### Now code which generates the files...                                               ###
 ###########################################################################################
 
+sub generate_navigation_component {
+  _write_heading( 'Admin navigation panel component' );
+  my $module_name = 'Pagesmith::Component::'.$ns.'::Navigation';
+  ( my $module_file = "$library_root$module_name.pm" ) =~ s{::}{/}mxsg;
+  if( !$force && -e $module_file ) {
+    warn "     * Skipping file.... $module_file\n" unless $quiet;
+    return;
+  }
+  my @al;
+  my $defn_method = $mod.'::type_defn';
+  foreach ($mod->my_obj_types) {
+    no strict 'refs'; ## no critic (NoStrict)
+    my $definition = &{$defn_method}( $_ );
+    use strict;
+    next unless exists $definition->{'admin'};
+    my $at  = $definition->{'admin'};
+    my $pl  = exists $definition->{'plural'} ? $definition->{'plural'} : lc $_.'s';
+    ## no critic (InterpolationOfMetachars)
+    push @al, sprintf q(push @links, [ '/action/%s_Admin_%s', 'Administer %s' ] if $self->me->is_%s;),
+      $_ns, $_, $pl, $at->{'by'};
+    ## use critic
+  }
+  _write_file( $module_file, 'Component-Navigation', { 'admin_links' => join qq(\n  ), @al } );
+  return;
+}
+
 sub generate_core_modules {
-  foreach my $stub_type (qw( Action Adaptor Component Component-Navigation MyForm MyForm-Admin Object) ) {
+  my @list = qw(Action Adaptor Component MyForm MyForm-Admin Object Support);
+  _write_heading( 'Base modules' );
+
+  foreach my $stub_type ( @list ) {
     my @parts = split m{-}mxs, $stub_type;
     my $module_name = @parts > 1 ? "Pagesmith::$parts[0]::$ns"."::$parts[1]" : "Pagesmith::$parts[0]::$ns";
-    ( my $module_file = "$library_root/$module_name.pm" ) =~ s{::}{/}mxsg;
+    ( my $module_file = "$library_root$module_name.pm" ) =~ s{::}{/}mxsg;
     if( !$force && -e $module_file ) {
-      warn "Skipping file.... $module_file\n";
+      warn "     * Skipping file.... $module_file\n" unless $quiet;
       next;
     }
-    _write_file( $module_file, $stub_type, { } );
+    _write_file( $module_file, $stub_type );
   }
   return;
 }
 
-sub create_adaptors_and_objects {
-  foreach my $obj_type ( $sup->my_obj_types ) {
+sub generate_adaptors_and_objects {
+  _write_heading( 'Object/Adaptor modules');
+  foreach my $obj_type ( $mod->my_obj_types ) {
     ## Create adaptor, object and admin interfaces!
     foreach my $type ( qw(Adaptor Object) ) {
       my $module_name = join q(::), 'Pagesmith', $type, $ns, $obj_type;
-      ( my $module_file = "$library_root/$module_name.pm" ) =~ s{::}{/}mxsg;
+      ( my $module_file = "$library_root$module_name.pm" ) =~ s{::}{/}mxsg;
       if( !$force && -e $module_file ) {
-        warn "Skipping file.... $module_file\n";
+        warn "     * Skipping file.... $module_file\n" unless $quiet;
         next;
       }
       _write_file( $module_file, "type:$type", { 'ot' => $obj_type } );
     }
   }
-  if($verbose) {
-    foreach my $obj_type ( $sup->my_obj_types ) {
-      ## Create adaptor, object and admin interfaces!
-      foreach my $type ( qw(Adaptor Object) ) {
-        my $module_name = join q(::), 'Pagesmith', $type, $ns, $obj_type;
-        $rt->dynamic_use( $module_name );
-        printf "%s\n\n",
-          join "\n  * ", "$module_name methods:", $module_name->auto_methods;
-      }
+  _write_heading( 'Relationship adaptor modules');
+  foreach my $obj_type ( $mod->my_rel_types ) {
+    my $module_name = join q(::), 'Pagesmith', 'Adaptor', $ns, $obj_type;
+    ( my $module_file = "$library_root$module_name.pm" ) =~ s{::}{/}mxsg;
+    if( !$force && -e $module_file ) {
+      warn "     * Skipping file.... $module_file\n" unless $quiet;
+      next;
     }
+    _write_file( $module_file, 'type:Adaptor', { 'ot' => $obj_type } );
   }
   return;
-}
-
-sub _define_column {
-  my( $columns, $prop, $p_def ) = @_;
-
-  $p_def = { 'type' => $p_def } unless ref $p_def;
-  ( my $hr_col_name = ucfirst $prop ) =~ s{_}{ }mxsg;
-  if( $p_def->{'type'} eq 'uid' ) {
-    unshift @{$columns}, sprintf '%s int unsigned not null auto_increment primary key', $prop;
-    return;
-  }
-  my $coltype = exists $EL_MAP{$p_def->{'type'}} ? $EL_MAP{$p_def->{'type'}}[1] : 'varchar(255)';
-
-  $coltype = "varchar($p_def->{'length'})" if $coltype =~ m{^varchar}mxs && $p_def->{'length'};
-
-  if( $p_def->{'type'} eq 'enum' ) {
-    $coltype = sprintf q(enum( %s ) not null default '%s'),
-      ( join q(, ), map { sprintf q('%s'), $_->[0] } @{ $p_def->{'values'}||[] } ),
-      $p_def->{'default'}||q();
-  } elsif( $p_def->{'type'} eq 'boolean' ) {
-    $coltype .= sprintf q( not null default '%s'), exists $p_def->{'default'} ? $p_def->{'default'} : 'no';
-  }
-  push @{$columns}, sprintf '%s %s', $prop, $coltype;
-  if( exists $p_def->{'unique'} && $p_def->{'unique'} ) {
-    push @{$columns}, sprintf '  unique un_%s (%s)', $prop, $prop;
-  }
-  return;
-}
-
-sub create_schema {
-  ## Get schema filename and check to see if we need to create it!
-  my $schema_file = (substr $library_root, 0, $LEN_LIB). lc "sql/$_ns.sql";
-  if( !$force && -e $schema_file ) {
-    warn "Skipping file.... $schema_file\n";
-    return;
-  }
-  my @tables;
-  my $defn_method = $sup.'::my_defn';
-
-  ## For each object
-  foreach my $obj_type ( $sup->my_obj_types ) {
-    no strict 'refs'; ## no critic (NoStrict)
-    my $definition = &{$defn_method}( $obj_type );
-    use strict;
-    my @columns;
-
-    foreach my $prop ( sort keys %{$definition->{'properties'}} ) {
-      _define_column( \@columns, $prop, $definition->{'properties'}{$prop} );
-    }
-    foreach my $prop ( sort keys %{$definition->{'related'}||{}} ) {
-      my $p_def = $definition->{'related'}{$prop};
-      next unless exists $p_def->{'to'};
-      push @columns, sprintf '%s int unsigned not null', $prop;
-      push @columns, sprintf '  index fk_%s (%s)', $prop, $prop;
-    }
-    push @tables, sprintf '
--- Table %s - stores details of %s::%s objects
-
-drop table if exists %s;
-create table %s (
-  %s
-);
-', lc $obj_type,  $ns, $obj_type,  lc $obj_type, lc $obj_type, join qq(,\n  ), @columns;
-  }
-  foreach my $rel_type ( $sup->my_rel_types ) {
-    my @columns;
-    no strict 'refs'; ## no critic (NoStrict)
-    my $definition = &{$defn_method}( $rel_type );
-    use strict;
-    my @unique;
-    foreach my $otype ( sort keys %{$definition->{'objects'}} ) {
-      foreach my $col_name ( sort @{$definition->{'objects'}{$otype}} ) {
-        push @columns, sprintf '%s int unsigned not null', $col_name;
-        push @columns, sprintf '  index fk_%s (%s)', $col_name, $col_name;
-        push @unique, $col_name;
-      }
-    }
-    push @columns, sprintf '  index un_%s (%s)', lc $rel_type, join q(, ), @unique;
-    foreach my $prop ( sort keys %{$definition->{'additional'}} ) {
-      _define_column( \@columns, $prop, $definition->{'additional'}{$prop} );
-    }
-    push @tables, sprintf '
--- Table %s - stores details of %s::%s relationships
-
-drop table if exists %s;
-create table %s (
-  %s
-);
-', lc $rel_type,  $ns, $rel_type, lc $rel_type, lc $rel_type, join qq(,\n  ), @columns;
-    #print $rt->raw_dumper( [ $rel_type, ] );
-  }
-  my $ui = user_info();
-  _write_file( $schema_file, 'schema', {
-    'sup_file' => $sup,
-    'user'     => "$ui->{'name'} <$ui->{'username'}\@".$sup->mail_domain.q(>),
-    'dt'       => $rt->time_str( '%o %h %Y', time ),
-    'dbname'   => lc $_ns,
-    'tabledef' => join q(), @tables,
-  } );
-  return;
-}
-
-sub form_add {
-  my( $el_type, $prop ) = @_;
-  $el_type = sprintf q(%-24s),"'$el_type',";
-  return sprintf q[$self->add(           %s '%s' )], $el_type, $prop; ## no critic (InterpolationOfMetachars)
 }
 
 ## no critic (ExcessComplexity)
-sub create_admin_methods {
-  foreach my $obj_type ( $sup->my_obj_types ) {
-    my $defn_method = $sup.'::my_defn';
+sub generate_admin_methods {
+  _write_heading( 'Admin table view actions & forms');
+  foreach my $obj_type ( $mod->my_obj_types ) {
+    my $defn_method = $mod.'::type_defn';
 
     no strict 'refs'; ## no critic (NoStrict)
     my $definition = &{$defn_method}( $obj_type );
+    next unless $definition->{'admin'};
+    my $admin_type = $definition->{'admin'};
     use strict;
 
     my @table_columns;
@@ -336,8 +275,8 @@ sub create_admin_methods {
     my @form_entries;
     my @form_extra    = (q());
     my @form_elements = (q());
-    foreach my $prop ( sort keys %{$definition->{'properties'}} ) {
-      my $p_def = $definition->{'properties'}{$prop};
+    foreach ( pairs @{$definition->{'properties'}} ) {
+      my ($prop, $p_def ) = @{$_};
       $p_def = { 'type' => $p_def } unless ref $p_def;
       ( my $hr_col_name = ucfirst $prop ) =~ s{_}{ }mxsg;
       if( $p_def->{'type'} eq 'uid' ) {
@@ -385,8 +324,8 @@ sub create_admin_methods {
       ## use critic
       $form_elements[-1] .= q(;);
     }
-    foreach my $rel ( sort keys %{$definition->{'related'}} ) {
-      my $r_def = $definition->{'related'}{$rel};
+    foreach ( pairs @{$definition->{'related'}} ) {
+      my ($rel, $r_def ) = @{$_};
       next unless exists $r_def->{'to'};
 
       (my $vname = $rel ) =~ s{_id\Z}{}mxs;
@@ -399,8 +338,16 @@ sub create_admin_methods {
       push @form_elements, form_add( 'DropDown', $rel );
       push @form_elements,         q[     ->set_firstline(   '== select ==' )],
                            sprintf q[     ->set_caption(     '%s' )],$r_def->{'to'};
-      my @cols = sort values %{$r_def->{'derived'}||{}};
-      @cols = (lc $r_def->{'to'}.'_id') unless @cols;
+      my @cols      = sort keys %{$r_def->{'derived'}||{}};
+      my @cols_name = sort values %{$r_def->{'derived'}||{}};
+      push @form_entries, $rel;
+      if( @cols ) {
+        push @table_columns, sprintf q('key' => 'get_%s', 'label' => '%s', template => '%s', ),
+          $rel, uc $vname, join q( - ), map { sprintf '[[h:get_%s]]', $_ } @cols_name;
+      } else {
+        @cols = (lc $r_def->{'to'}.'_id');
+        push @table_columns, sprintf q('key' => 'get_%s', 'label' => '%s'), $rel, uc $vname;
+      }
       if(@cols>1){
         push @form_elements,
           sprintf q[     ->set_values(      [ map { { 'value' => $_->uid, 'name' => join q( - ), %2$s } } @{$%1$ss} ] );],
@@ -414,13 +361,14 @@ sub create_admin_methods {
     }
     foreach my $type ( qw(Action MyForm) ) {
       my $module_name = join q(::), 'Pagesmith', $type, $ns, 'Admin', $obj_type;
-      ( my $module_file = "$library_root/$module_name.pm" ) =~ s{::}{/}mxsg;
+      ( my $module_file = "$library_root$module_name.pm" ) =~ s{::}{/}mxsg;
       if( !$force && -e $module_file ) {
-        warn "Skipping file.... $module_file\n";
+        warn "     * Skipping file.... $module_file\n" unless $quiet;
         next;
       }
       my $conf = {
         'ot' => $obj_type,
+        'at' => $admin_type,
         'cc_ot'=> exists $definition->{'plural'} ? $definition->{'plural'} : lc $obj_type.'s',
         'form_entries'  => "@form_entries",
         'table_columns' => join qq(\n        ), map { "{ $_ }," } @table_columns, @table_extra,
@@ -433,9 +381,223 @@ sub create_admin_methods {
 }
 ## use critic
 
-###########################################################################################
-### Support methods...........................                                          ###
-###########################################################################################
+sub form_add {
+  my( $el_type, $prop ) = @_;
+  $el_type = sprintf q(%-24s),"'$el_type',";
+  return sprintf q[$self->add(           %s '%s' )], $el_type, $prop; ## no critic (InterpolationOfMetachars)
+}
+
+########################################################################
+##+------------------------------------------------------------------+##
+##| Generate documentation of default fns....                        |##
+##+------------------------------------------------------------------+##
+########################################################################
+
+sub generate_documentation {
+  ## Generate documentation!
+  my $docs = {};
+  foreach my $type ( qw(Adaptor Model Support) ) {
+    my $module_name = join q(::), 'Pagesmith', $type, $ns;
+    $rt->dynamic_use( $module_name );
+    $docs->{$module_name} = $module_name->dump_methods;
+  }
+
+  foreach my $type ( $mod->my_rel_types ) {
+    my $module_name = join q(::), 'Pagesmith', 'Adaptor', $ns, $type;
+    $rt->dynamic_use( $module_name );
+    $docs->{$module_name} = $module_name->dump_methods;
+  }
+
+  foreach my $type ( qw(Adaptor Object) ) {
+    foreach my $obj_type ( $mod->my_obj_types ) {
+    ## Create adaptor, object and admin interfaces!
+      my $module_name = join q(::), 'Pagesmith', $type, $ns, $obj_type;
+      $rt->dynamic_use( $module_name );
+      $docs->{$module_name} = $module_name->dump_methods;
+    }
+  }
+
+  my $docs_file = (substr $library_root, 0, $LEN_LIB). lc "docs/$_ns.txt";
+  _write_heading( 'Documentation file');
+  _write_file( $docs_file, 'docs', { 'docs' => join q(), map { $docs->{$_} } sort keys %{$docs} } );
+
+  return;
+}
+
+########################################################################
+##+------------------------------------------------------------------+##
+##| SQL SCHEMA GENERATION AND SUPPORT METHODS                        |##
+##+------------------------------------------------------------------+##
+########################################################################
+
+sub get_obj_table_sql {
+  my $obj_type    = shift;
+
+  ## Get definition...
+  my $defn_method = $mod.'::type_defn';
+  no strict 'refs'; ## no critic (NoStrict)
+  my $definition = &{$defn_method}( $obj_type );
+  use strict;
+
+  ## Now create table sql
+  my @columns;
+  _define_column( \@columns, @{$_} ) foreach pairs @{$definition->{'properties'}};
+                  ## property and it's definition!
+  foreach ( pairs @{$definition->{'related'}||[]} ) {
+    my( $prop, $p_def ) = @{$_};
+    next unless exists $p_def->{'to'};    ## This is one-to-many relationship so not store in this table!
+    next if     exists $p_def->{'audit'}; ## Already included in audit column definition!
+    push @columns, sprintf '%s int unsigned not null', $prop;
+    push @columns, sprintf '  index fk_%s (%s)', $prop, $prop;
+  }
+  ## We need to add autdit columns now...!
+  ## Need to add audit columns if required....
+  push @columns, _audit_columns( $definition->{'audit'} ) if exists $definition->{'audit'};
+  ## no critic (InterpolationOfMetachars)
+  return sprintf '
+-- Table %1$s - stores details of %2$s::%3$s objects
+
+drop table if exists %1$s;
+create table %1$s (
+  %4$s
+);
+', lc $obj_type,  $ns, $obj_type,  join qq(,\n  ), @columns;
+  ## use critic
+}
+
+sub get_rel_table_sql {
+  my $rel_type    = shift;
+
+  ## Get definition...
+  my $defn_method = $mod.'::type_defn';
+  no strict 'refs'; ## no critic (NoStrict)
+  my $definition = &{$defn_method}( $rel_type );
+  use strict;
+
+  ## Now create table sql
+  my @columns;
+  my @unique;
+  foreach ( pairs @{$definition->{'objects'}} ) {
+    my( $col_name, $ottype) = @{$_};
+    push @columns, sprintf '%s int unsigned not null', $col_name;
+    push @columns, sprintf '  index fk_%s (%s)', $col_name, $col_name;
+    push @unique, $col_name;
+  }
+  foreach (pairs @{$definition->{'additional'}}) {
+    my( $col_name, $dfn) = @{$_};
+    _define_column( \@columns, @{$_} );
+    push @unique, $col_name if exists $dfn->{'in_unique'} && $dfn->{'in_unique'};
+  }
+  ## Create unique index...!
+  push @columns, _audit_columns( $definition->{'audit'} ) if exists $definition->{'audit'};
+  push @columns, sprintf '  unique un_%s (%s)', lc $rel_type, join q(, ), @unique;
+                  ## property and it's definition!
+  ## no critic (InterpolationOfMetachars)
+  return sprintf '
+-- Table %1$s - stores details of %2$s::%3$s relationships
+
+drop table if exists %1$s;
+create table %1$s (
+  %4$s
+);
+', lc $rel_type,  $ns, $rel_type, join qq(,\n  ), @columns;
+   ## use critic
+}
+sub generate_schema {
+  ## Get schema filename and check to see if we need to create it!
+  ## Compute the location of the schema file
+  ## If it exists and we haven't said force then we will skip this block of code
+  _write_heading( 'Schema definition files');
+  my $schema_file = (substr $library_root, 0, $LEN_LIB). lc "sql/$_ns.sql";
+  if( !$force && -e $schema_file ) {
+    warn "     * Skipping file.... $schema_file\n" unless $quiet;
+    return;
+  }
+  my $o_tables = join q(), map { get_obj_table_sql( $_ ) } sort $mod->my_obj_types;
+  my $r_tables = join q(), map { get_rel_table_sql( $_ ) } sort $mod->my_rel_types;
+
+  ##------------------------------------------------------------------
+  my $ui = user_info();
+  _write_file( $schema_file, 'schema', {
+    'mod_file' => $mod,
+    'user'     => "$ui->{'name'} <$ui->{'username'}\@".$mod->mail_domain.q(>),
+    'dt'       => $rt->time_str( '%o %h %Y', time ),
+    'dbname'   => $db_name || lc $_ns,
+    'obj_tables' => $o_tables,
+    'rel_tables' => $r_tables,
+  } );
+  return;
+}
+
+sub _define_column {
+  my( $columns, $prop, $p_def ) = @_;
+
+  $p_def = { 'type' => $p_def } unless ref $p_def;
+  ( my $hr_col_name = ucfirst $prop ) =~ s{_}{ }mxsg;
+  if( $p_def->{'type'} eq 'uid' ) {
+    unshift @{$columns}, sprintf '%s int unsigned not null auto_increment primary key', $prop;
+    return;
+  }
+  my $coltype = exists $EL_MAP{$p_def->{'type'}} ? $EL_MAP{$p_def->{'type'}}[1] : 'varchar(255)';
+
+  $coltype = "varchar($p_def->{'length'})" if $coltype =~ m{^varchar}mxs && $p_def->{'length'};
+
+  if( $p_def->{'type'} eq 'enum' ) {
+    $coltype = sprintf q(enum( %s ) not null default '%s'),
+      ( join q(, ), map { sprintf q('%s'), $_->[0] } @{ $p_def->{'values'}||[] } ),
+      $p_def->{'default'}||q();
+  } elsif( $p_def->{'type'} eq 'boolean' ) {
+    $coltype .= sprintf q( not null default '%s'), exists $p_def->{'default'} ? $p_def->{'default'} : 'no';
+  }
+  push @{$columns}, sprintf '%s %s', $prop, $coltype;
+  if( exists $p_def->{'unique'} && $p_def->{'unique'} ) {
+    push @{$columns}, sprintf '  unique un_%s (%s)', $prop, $prop;
+  }
+  return;
+}
+
+sub _audit_columns {
+  #@params (hashref) audit_defn
+  ## audit hash ref with keys: user_id/user, datetime, ip, useragent, and
+  ## values: update/create/both
+  ##
+  ## e.g. {qw(user_id both ip create useragent create datetime both)}
+  my $audit_defn = shift;
+  my @cols;
+  if( exists $audit_defn->{'user_id'} ) {
+    push @cols, 'created_by_id int unsigned not null',      '  index (created_by_id)'     if $audit_defn->{'user_id'}   ne 'update';
+    push @cols, 'updated_by_id int unsigned not null',      '  index (updated_by_id)'     if $audit_defn->{'user_id'}   ne 'create';
+  }
+  if( exists $audit_defn->{'user'} ) {
+    push @cols, 'created_by varchar(128) not null',         '  index (created_by)'        if $audit_defn->{'user'}      ne 'update';
+    push @cols, 'updated_by varchar(128) not null',         '  index (updated_by)'        if $audit_defn->{'user'}      ne 'create';
+  }
+  if( exists $audit_defn->{'datetime'} ) {
+    push @cols, 'created_at timestamp not null default CURRENT_TIMESTAMP',
+                                                            '  index (created_at)'        if $audit_defn->{'datetime'}  ne 'update';
+    push @cols, 'updated_at timestamp not null',            '  index (updated_at)'        if $audit_defn->{'datetime'}  ne 'create';
+  }
+  if( exists $audit_defn->{'ip'} ) {
+    push @cols, 'created_ip varchar(64) not null',          '  index (created_ip)'        if $audit_defn->{'ip'}        ne 'update';
+    push @cols, 'updated_ip varchar(64) not null',          '  index (updated_ip)'        if $audit_defn->{'ip'}        ne 'create';
+  }
+  if( exists $audit_defn->{'useragent'} ) {
+    push @cols, 'created_useragent varchar(511) not null',  '  index (created_useragent)' if $audit_defn->{'useragent'} ne 'update';
+    push @cols, 'updated_useragent varchar(511) not null',  '  index (updated_useragent)' if $audit_defn->{'useragent'} ne 'create';
+  }
+  return @cols;
+}
+
+########################################################################
+##+------------------------------------------------------------------+##
+##| SUPPORT METHODS                                                  |##
+##+------------------------------------------------------------------+##
+##| * _get_templates                                                 |##
+##| * _perl_boilerplate                                              |##
+##| * _write_file                                                    |##
+##| * _die_with_docs                                                 |##
+##+------------------------------------------------------------------+##
+########################################################################
 
 sub _get_templates {
   my $t = {};
@@ -451,32 +613,40 @@ sub _get_templates {
   return $t;
 }
 
-sub _boilerplate {
+sub _perl_boilerplate {
   my $ui   = user_info();
   ## no critic (InterpolationOfMetachars)
-  return sprintf q(## Author         : %1$s <%2$s>
+  (my $t = q(## Author         : %1$s <%2$s>
 ## Maintainer     : %1$s <%2$s>
 ## Created        : %3$s
 
-## Last commit by : $Author$
-## Last modified  : $Date$
-## Revision       : $Revision$
-## Repository URL : $HeadURL$
+## Last commit by : _Author_
+## Last modified  : _Date_
+## Revision       : _Revision_
+## Repository URL : _HeadURL_
 
 use strict;
 use warnings;
 use utf8;
 
-use version qw(qv); our $VERSION = qv('0.1.0');),
-  $ui->{'name'},
-  $ui->{'username'}.q(@).$sup->mail_domain,
-  $rt->time_str( '%o %h %Y', time );
+use version qw(qv); our $VERSION = qv('0.1.0');) ) =~ s{_}{\$}mxsg;
+  return sprintf $t,
+    $ui->{'name'},
+    $ui->{'username'}.q(@).$mod->mail_domain,
+    $rt->time_str( '%o %h %Y', time );
   ## use critic
+}
+
+sub _write_heading {
+  my $caption = shift;
+  return if $quiet > 1;
+  warn "\n   * $caption\n";
+  return;
 }
 
 sub _write_file {
   my( $fn, $name, $contents ) = @_;
-  warn "Creating file.... $fn\n" unless $quiet;
+  warn "     * $fn\n" if $quiet <= 1;
   (my $dir = $fn) =~ s{/[^/]+\Z}{}mxs;
   my $tmpl = $templates->{$name};
   make_path( $dir ) unless -e $dir;
@@ -488,6 +658,7 @@ sub _write_file {
 
   $tmpl =~ s{\[\[(\w+)\]\]}{$contents->{$1}||"====$1===="}mxseg;
   $tmpl =~ s{[ ]+$}{}mxsg;
+  $tmpl =~ s{$act_map_from}{$act_map_to}mxosg if defined $act_map_to;
 
   if( open my $fh, q(>), $fn ) {
     print {$fh} $tmpl;  ## no critic (RequireChecked)
@@ -497,7 +668,113 @@ sub _write_file {
   return;
 }
 
+sub db_config_note {
+  return if $quiet;
+  ## no critic (Carping)
+  warn sprintf '
+========================================================================
+
+  Database configuration:
+
+   * Add the following to databases.yaml
+
+  %s:
+    name: %s
+    pass: {password}
+    user: {user}
+    host: {host}
+    port: 3306
+
+========================================================================
+
+', lc $_ns, $db_name || lc $_ns;
+  ## use critic
+  return;
+}
+
+
+sub _die_with_docs {
+  my $err = shift;
+  warn "** $err\n\n" if $err;
+  die '------------------------------------------------------------------------
+Purpose:
+    to take an object module defined in Pagesmith::Support::{name_space}
+
+Usage:
+    utilities/create-stubs [-d db_name] [-q] [-v] [-f] {name_space}
+
+Options:
+    -d  (-db_name) string opt
+    -a  (-act_map) string opt
+    -q  (-quiet)          opt
+    -v  (-verbose)        opt
+    -f  (-force)          opt
+------------------------------------------------------------------------
+';
+}
+
+########################################################################
+##+------------------------------------------------------------------+##
+##| NOTE THAT THIS IS THE REAL __END__ OF THIS SCRIPT - WHAT FOLLOWS |##
+##| ARE DOCUMENATION/SQL/PERL MODULETEMPLATES......                  |##
+##+------------------------------------------------------------------+##
+##|  * Pagesmith::Support::{NS}                                      |##
+##|  * Pagesmith::Action::{NS}                                       |##
+##|  * Pagesmith::Adaptor::{NS}                                      |##
+##|  * Pagesmith::Component::{NS}                                    |##
+##|  * Pagesmith::Component::{NS}::Navigation                        |##
+##|  * Pagesmith::MyForm::{NS}                                       |##
+##|  * Pagesmith::MyForm::{NS}::Admin                                |##
+##|  * Pagesmith::Object::{NS}                                       |##
+##|  * Pagesmith::Object::{NS}::{OT}                                 |##
+##|  * Pagesmith::Adaptor::{NS}::{OT}                                |##
+##|  * Pagesmith::Action::{NS}::Admin::{OT}                          |##
+##|  * Pagesmith::MyForm::{NS}::Admin::{OT}                          |##
+##|  * {ns}.docs                                                     |##
+##|  * {ns}.sql                                                      |##
+##+------------------------------------------------------------------+##
+########################################################################
+
 __END__
+>>>>>>>>>>>>>>>>>>>>>>>>Support
+package Pagesmith::Support::[[ns]];
+
+[[bp]]
+
+## Base class for actions/components in [[ns]] namespace
+
+use base qw(Pagesmith::ObjectSupport);
+use Pagesmith::Utils::ObjectCreator qw(bake);
+
+bake();
+
+1;
+__END__
+
+Purpose
+-------
+
+The purpose of the Pagesmith::Support::[[ns]] module is to
+place methods which are to be shared between the following modules:
+
+* Pagesmith::Action::[[ns]]
+* Pagesmith::Component::[[ns]]
+
+Common functionality can include:
+
+* Default configuration for tables, two-cols etc
+* Database adaptor calls
+* Accessing configurations etc
+
+Some default methods for these can be found in the
+Pagesmith::ObjectSupport from which this module is derived:
+
+  * adaptor( $type? ) -> gets an Adaptor of type Pagesmith::Adaptor::[[ns]]::$type
+  * my_table          -> simple table definition for a table within the site
+  * admin_table       -> simple table definition for an admin table (if different!)
+  * me                -> user object (assumes the database being interfaced has a
+                         User table keyed by "email"...
+
 >>>>>>>>>>>>>>>>>>>>>>>>Action
 package Pagesmith::Action::[[ns]];
 
@@ -505,7 +782,7 @@ package Pagesmith::Action::[[ns]];
 
 [[bp]]
 
-use base qw(Pagesmith::Action Pagesmith::Support::[[ns]])
+use base qw(Pagesmith::Action Pagesmith::Support::[[ns]]);
 
 sub my_wrap {
   my ( $self, $title, @body ) = @_;
@@ -514,9 +791,10 @@ sub my_wrap {
     ->set_navigation_path( '/my_path' )
     ->wrap_rhs(
       $title,
-      $self->panel( '<h2>my_title</h2>
+      $self->panel( '<h2>[[ns]]</h2>
                      <h3>'.$self->encode( $title ).'</h3>',
-      @body ),
+                    @body,
+      ),
       '<% [[_ns]]_Navigation -ajax %>',
     )
     ->ok;
@@ -524,7 +802,9 @@ sub my_wrap {
 
 sub run {
   my $self = shift;
-  return $self->my_wrap( '[[ns]] test', $self->panel( '<p>Base action file created successfully</p>' );
+  return $self->my_wrap( '[[ns]] test',
+    $self->panel( '<p>Base action file created successfully</p>' ),
+  );
 }
 
 1;
@@ -546,7 +826,7 @@ package Pagesmith::Adaptor::[[ns]];
 use base qw(Pagesmith::Adaptor);
 use Pagesmith::Utils::ObjectCreator qw(bake_base_adaptor);
 
-bake_base_adaptor();
+bake_base_adaptor;
 
 1;
 
@@ -594,7 +874,20 @@ sub usage {
 }
 
 sub execute {
-  return $self->panel( '<h3>Navigation</h3>' );
+  my $self = shift;
+  return $self->panel(
+    '<h3>Navigation</h3>',
+    '<ul><li><a href="/action/[[_ns]]">Home</a></li></ul>',
+  ).$self->admin_panel;
+}
+
+sub admin_panel {
+  my $self = shift;
+  return q() unless $self->me;
+  my @links;
+  [[admin_links]]
+  return q() unless @links;
+  return $self->links_panel( 'Admin panel', \@links );
 }
 
 1;
@@ -670,10 +963,10 @@ package Pagesmith::Object::[[ns]]::[[ot]];
 [[bp]]
 
 use base qw(Pagesmith::Object::[[ns]]);
-use Pagesmith::Utils::ObjectCreator qw(bake_object);
+use Pagesmith::Utils::ObjectCreator qw(bake);
 
 ## Last bit - bake all remaining methods!
-bake_object;
+bake();
 
 1;
 
@@ -715,10 +1008,10 @@ package Pagesmith::Adaptor::[[ns]]::[[ot]];
 [[bp]]
 
 use base qw(Pagesmith::Adaptor::[[ns]]);
-use Pagesmith::Utils::ObjectCreator qw(bake_adaptor);
+use Pagesmith::Utils::ObjectCreator qw(bake);
 
 ## Last bit - bake all remaining methods!
-bake_adaptor;
+bake();
 
 1;
 
@@ -767,7 +1060,7 @@ sub run {
   my $self = shift;
 
   return $self->login_required unless $self->user->logged_in;
-  return $self->no_permission  unless $self->me && $self->me->is_superadmin;
+  return $self->no_permission  unless $self->me && $self->me->is_[[at]];
 
   ## no critic (LongChainsOfMethodCalls)
   return $self->my_wrap( q([[ns]]'s [[ot]]),
@@ -782,6 +1075,12 @@ sub run {
   );
   ## use critic
 }
+
+1;
+
+__END__
+Notes
+-----
 
 >>>>>>>>>>>>>>>>>>>>>>>>type:MyForm-Admin
 package Pagesmith::MyForm::[[ns]]::Admin::[[ot]];
@@ -816,12 +1115,24 @@ sub initialize_form {
 }
 
 1;
+__END__
+Notes
+-----
+>>>>>>>>>>>>>>>>>>>>>>>>docs
+Documentation for [[ns]] object/adaptor code
+==============================================================================
+
+The following are the auto-generated methods for the
+created modules (Adaptors, Object, Model, Support)
+
+[[docs]]
+
 >>>>>>>>>>>>>>>>>>>>>>>>schema
 --
 -- This file contains the schema for object in the "[[ns]]"
 -- name space
 --
--- created from   : [[sup_file]]
+-- created from   : [[mod_file]]
 --
 -- created by     : [[user]]
 -- maintained by  : [[user]]
@@ -835,4 +1146,16 @@ sub initialize_form {
 
 drop database if exists [[dbname]];
 create database [[dbname]];
-[[tabledef]]
+use [[dbname]];
+
+-- ------------------------------------------------------------------------ --
+-- Tables representing objects...                                           --
+-- ------------------------------------------------------------------------ --
+
+[[obj_tables]]
+
+-- ------------------------------------------------------------------------ --
+-- Tables representing relationships between objects                        --
+-- ------------------------------------------------------------------------ --
+[[rel_tables]]
+
