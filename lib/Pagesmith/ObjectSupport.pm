@@ -73,8 +73,12 @@ sub admin_table {
 }
 
 sub me {
-  my $self = shift;
-  return $self->{'me'} ||= $self->adaptor( 'User' )->fetch_user_by_email( $self->user->username );
+  my ( $self, $create ) = @_;
+  ## no critic (LongChainsOfMethodCalls)
+  return $self->{'me'} ||= $self->adaptor( 'User' )->fetch_user_by_email( $self->user->email ) ||
+                           ($create ? $self->adaptor('User')->create->set_email( $self->user->email )->store : undef );
+  ## use critic
 }
+
 
 1;
