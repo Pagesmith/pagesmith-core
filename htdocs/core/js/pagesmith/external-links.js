@@ -6,25 +6,21 @@
     For any link tagged with rel="external" add target = "_blank" to
     open the image up in a new tab/window.
   ----------------------------------------------------------------------*/
-  (function ($) {
-    $.fn.external_links = function () {
-      return this.attr('target', '_blank');
-    };
-  }(jQuery));
+  $.fn.external_links = function () {
+    return this.attr('target', '_blank');
+  };
 
-  (function ($) {
-    $.fn.add_class_to_last_char = function (cls) {
-      if( this.attr('show') !== undefined ) {
-        return '';
-      }
-      return this.html(function (i, html) {
-        /*jslint regexp: true */
-        var out = html.replace(/([^>\s]+)((\s*<\/\w+>)*\s*)$/, '<span class="' + cls + '">$1<img height="12" width="15" src="/core/gfx/blank.gif" /></span>$2');
-        /*jslint regexp: false */
-        return out;
-      });
-    };
-  }(jQuery));
+  $.fn.add_class_to_last_char = function (cls) {
+    if( this.attr('show') !== undefined ) {
+      return '';
+    }
+    return this.html(function (i, html) {
+      /*jslint regexp: true */
+      var out = html.replace(/([^>\s]+)((\s*<\/\w+>)*\s*)$/, '<span class="' + cls + '">$1<img height="12" width="15" src="/core/gfx/blank.gif" /></span>$2');
+      /*jslint regexp: false */
+      return out;
+    });
+  };
 
   function ext_links(T) {
     var //T   = $(this),
