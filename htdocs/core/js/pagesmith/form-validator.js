@@ -186,19 +186,23 @@
     isEmail:   function (s) { return s.match(/^[^@]+@[^@.:]+[:.][^@]+$/); },
     isURL:     function (s) { return s.match(/^https?:\/\/\w.*$/); },
     isURI:     function (s) { return s.match(/^(ftp|https?):\/\/\w.*$/); },
-    isPass:    function (s) { return s.match(/^\S{6,32}$/); },
+    isPass:    function (s,el) {
+      var ml = el.prop('className').match(/min_(\d+)/);
+      return s.length >= ( ml ? ml[1] : 6 );
+    },
     isStrong:  function (s, n) { return this.password_strength(s) < n ? 0 : 1; }, // Requires 3 of lc, uc, digit, symbol
     isCode:    function (s) { return s.match(/^\S+$/); },
     isAlpha:   function (s) { return s.match(/^\w+$/); },
     isHTML:    function (s) { return !XHTMLValidator.validate(s); },
 
     validators: {
-      vstrongpassword: function(that,s) { return [ that.isPass(s) && that.isStrong(s, 4) ? 2 : (that.isPass(s) ? 1 : false), []]; },
-      strongpassword:  function(that,s) { return [ that.isPass(s) && that.isStrong(s, 3) ? 2 : (that.isPass(s) ? 1 : false), []]; },
-      fstrongpassword: function(that,s) { return [ that.isPass(s) && that.isStrong(s, 2) ? 2 : (that.isPass(s) ? 1 : false), []]; },
-      password:        function(that,s) { return [ that.isPass(s), []]; },
-      even:            function(that,s) { return [ that.isInt(s) && (parseInt(s,10)%2 === 0), []]; },
-      odd:             function(that,s) { return [ that.isInt(s) && (parseInt(s,10)%2 === 1), []]; }
+      vstrongpassword:  function(that,s,el) { return [ that.isPass(s,el) && that.isStrong(s, 4) ? 1 : (that.isPass(s,el) ? false : false), []]; },
+      strongpassword:   function(that,s,el) { return [ that.isPass(s,el) && that.isStrong(s, 3) ? 1 : (that.isPass(s,el) ? false : false), []]; },
+      normalpassword:   function(that,s,el) { return [ that.isPass(s,el) && that.isStrong(s, 2) ? 1 : (that.isPass(s,el) ? false : false), []]; },
+      weakpassword:     function(that,s,el) { return [ that.isPass(s,el) && that.isStrong(s, 1) ? 1 : (that.isPass(s,el) ? false : false), []]; },
+      password:         function(that,s,el) { return [ that.isPass(s,el), []]; },
+      even:             function(that,s) { return [ that.isInt(s) && (parseInt(s,10)%2 === 0), []]; },
+      odd:              function(that,s) { return [ that.isInt(s) && (parseInt(s,10)%2 === 1), []]; }
     },
     valid: function (el, s) {
       var m, els, optgp, v, cl, max;
@@ -232,7 +236,7 @@
       }
       max = el.prop('className').match(/\bmax_(\d+)\b/);
       if( this.validators[cl] ) {
-        return this.validators[cl](this,s);
+        return this.validators[cl](this,s,el);
       } else {
         switch (cl) {
           case 'max_len':
@@ -252,7 +256,7 @@
           case 'uri':
             return [this.isURI(s),    []];
           case 'password':
-            return [this.isPass(s),   []];
+            return [this.isPass(s,el),   []];
           case 'code':
             return [this.isCode(s),   []];
           case 'alpha':
@@ -268,7 +272,7 @@
           case 'pubmed':
             return [this.isRef(s), []];
           case 'posint':
-            return [this.isInt(s)   && parseInt(s, 10)   >  0, []];
+            return [this.isInt(s)   && parseInt(s, 10)   >  0 && (max === null || parseInt(s, 10) <= max[1]), []];
           case 'nonnegint':
             return [this.isInt(s)   && parseInt(s, 10)   >= 0 && (max === null || parseInt(s, 10) <= max[1]), []];
           case 'posfloat':
