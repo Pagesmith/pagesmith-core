@@ -6,7 +6,8 @@
    * Function closes down hidden tabs - and add's functionality to the tab
    * links to hide/show the appropriate link.
    */
-
+  var hc_flag = 0;
+  var track_tabs = 0;
   Pagesmith.tab_click = function( ths ) {
  //   var id = $(this).prop('hash');
     if( $(ths).closest('li').hasClass('disabled')) { // Only do something for enabled tabs!
@@ -20,6 +21,7 @@
     if ($(ths).closest('li').hasClass('action')) {
       $(ths).closest('li').removeClass('active');
     }
+    // This is where we need to update what has been clicked on!
     // Show the content associated with this tab
     // - note we have to do it this way round to stop bumping
     $($(ths).prop('hash')).removeClass('tabc_hid');
@@ -30,7 +32,49 @@
     Pagesmith.On.all_flush();
     return false;
   };
+  Pagesmith.update_tab_list = function( ths ) {
+    if( ! track_tabs ) {
+      return;
+    }
+    var id_str = window.location.hash,
+      m, i,
+      id,
+      ids_to_remove,
+      new_tab_list = [],
+      tab_list = [];
 
+    if( id_str ) {
+      m = id_str.match(/tabs=([-| \w]+)/);
+      if( m ) {
+        tab_list = m[1].split(/\|/);
+      }
+    }
+    id = $(ths).prop('hash');
+    ids_to_remove = {};
+    ids_to_remove[ id ] = 1;
+    $(ths).closest('li').siblings('li').children('a').each(function(){
+      ids_to_remove[ $(this).prop('hash') ] = 1;
+    });
+    for( i in tab_list ) {
+      if( ! ids_to_remove[ '#'+tab_list[i] ] ) {
+        new_tab_list.push( tab_list[i] );
+      }
+    }
+    new_tab_list.push( id.substring(1) );
+    var z = '#tabs='+new_tab_list.join('|');
+    if( window.location.hash !== z ) {
+      hc_flag = 1;
+      window.location.hash = z;
+    }
+    return false;
+  };
+  $(window).hashchange( function(){
+    if( hc_flag === 1 ) {
+      hc_flag = 0;
+      return;
+    }
+    Pagesmith.on_page_load_hash();
+  } );
   jQuery.fn.tabs = function (no_top_border) {
     /* Activate first tab, and for each of it's siblings hide the
        tab content..... */
@@ -45,14 +89,17 @@
     /* For each child in the list - add an on-click function which shows the
        relevant tab content - after first hiding the other tabs */
 
-    jQuery(this).children('li').children('a').click(function(){ return Pagesmith.tab_click(this);});
+    jQuery(this).children('li').children('a').on('click',function(){
+      Pagesmith.tab_click(this);
+      return Pagesmith.update_tab_list(this);
+    });
     // Activate the first tab
     var x = $(this).children('li.active'); //Find first enabled tab!
-    if(!x.length) {
+    if (!x.length) {
       x = $(this).children('li:not(.disabled)'); //Find first enabled tab!
     }
     if( ! $(this).hasClass('rolledup') ) {
-      x.first().children('a').click();
+      Pagesmith.tab_click( x.first().children('a') );
     }
     $(this).addClass('rolledup');
     return;
@@ -63,6 +110,9 @@
    * Live query block - which attaches tab functionality to any list item
    * of class tabs
    */
+  if( $('body').hasClass('track-tabs') ) {
+    track_tabs = 1;
+  }
   Pagesmith.On.load(
     '.tabs', function () { $(this).tabs(0); }
   ).load(
@@ -70,14 +120,19 @@
   ).load( '.enable-tab', function () {
     $('.tabs li a[href=' + $(this).prop('hash') + ']').closest('li').removeClass('disabled');
   });
+
   function fire_tabs( hash_sel, hash_details ) {
+    if( '#' !== hash_sel.charAt(0) ) {
+      hash_sel = '#'+hash_sel;
+    }
     var id_sel = ' > li > a[href='+ hash_sel +']',
         Z      = $('.tabs' + id_sel + ', .fake-tabs ' + id_sel),
         e;
     if( Z.length ) {
-      Z.click().parents('.tabc_hid').each(function () {
+      Pagesmith.tab_click( Z );
+      Z.parents('.tabc_hid').each(function () {
         var parent_id_sel = ' > li > a[href=#' + $(this).attr('id') + ']';
-        $('.tabs' + parent_id_sel + ', .fake-tabs' + parent_id_sel).click();
+        $('.tabs' + parent_id_sel + ', .fake-tabs' + parent_id_sel).each(function(){Pagesmith.tab_click(this);});
       });
       if( hash_details.length ) {
         var x = hash_details.shift();
@@ -99,19 +154,38 @@
    * the tab indicated by the href of the link.
    */
 
-  $(function(){
-    var id_str = window.location.hash;
-    if (id_str && id_str.match(/^#[- \w]+$/)) {
-      var hash_details = id_str.split(/ +/), hash;
-      hash = hash_details.shift();
-      fire_tabs( hash, hash_details );
+  Pagesmith.on_page_load_hash = function() {
+    var id_str = window.location.hash,z,hash,hash_details,i,m;
+    if( id_str ) {
+      m = id_str.match(/tabs=([-| \w]+)/);
+      if( m ) {
+        z = m[1].split(/\|/);
+        for(i in z) {
+          if(z.hasOwnProperty(i)) {
+            hash_details = z[i].split(/ +/);
+            hash = hash_details.shift();
+            fire_tabs( z[i], hash_details );
+          }
+        }
+        return;
+      }
+      if( id_str.match(/^#[- \w]+$/) ) {
+        hash_details = id_str.split(/ +/);
+        hash = hash_details.shift();
+        fire_tabs( hash, hash_details );
+      }
     }
-  });
+  };
+
+  $(function(){ Pagesmith.on_page_load_hash(); });
 
   $(document).on('click', '.change-tab', function () {
     var hash_details = $(this).prop('hash').split(/ +/),
         hash = hash_details.shift();
     fire_tabs( hash, hash_details );
+    var id_sel = ' > li > a[href='+ hash +']',
+        Z      = $('.tabs' + id_sel + ', .fake-tabs ' + id_sel);
+    Pagesmith.update_tab_list( Z );
     return false;
   });
 
