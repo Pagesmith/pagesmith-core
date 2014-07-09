@@ -22,7 +22,7 @@ a img   { border:none; }
 p.more { float:right; padding-right: 10px; }
 
 .launch .btt:after, .more .btt:after { content: '\25b6'; padding-left: 0.5em }
-.zoom .btt, .launch .btt, .more .btt { padding-right: 4px; margin-right: 5px }
+.zoom .btt, .launch .btt, .more .btt { padding-right: 4px; margin-right: 5px;}
 .zoom .btt:after { content: '\271a'; padding-left: 0.5em }
 
 @media print {
@@ -30,6 +30,7 @@ p.more { float:right; padding-right: 10px; }
   .pdf img, .external img { display: none }
 }
 
-.btt { font-size: 10px; border-radius: 8px; letter-spacing: 0.5px; background-color: #e0e4e7; background: linear-gradient(to right, #ddd,#eee,#fff,#fff); border: 1px solid #ddd; padding: 1px 1em; box-shadow: 2px 2px 1px 0 #999;  font-weight: bold }
+.btt { font-size: 10px; border-radius: 8px; letter-spacing: 0.5px; background-color: #e0e4e7; background: linear-gradient(to right, #ddd,#eee,#fff,#fff); border: 1px solid #ddd; padding: 1px 1em; box-shadow: 2px 2px 1px 0 #999;  font-weight: bold; white-space: nowrap }
 a.btt { color: black; text-decoration: none }
 
+.wide-lines { line-height: 1.7em }
