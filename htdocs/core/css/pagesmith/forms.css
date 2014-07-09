@@ -134,3 +134,5 @@ ul.ul_james li:before, #rhs ul.ul_james li:before { content: '' }
 
 /* copied from 6 ? */
 input.add_entry { width: 3em }
+
+.openid { background: url(/core/gfx/openid.png) no-repeat 2px; width: 70%; padding-left:22px }
