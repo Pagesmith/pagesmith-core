@@ -59,7 +59,6 @@
       params:       ''
     }, options || {});
 
-
     // This method performs DOM initialization
     // Creates a UL with an Unique ID and push it to DOM
     // ** It's called only once
@@ -246,7 +245,6 @@
         cleanResults();
       }
     };
-
     /*
      * This method performs the display of the results set
      * Basically called when an event has been made
@@ -304,8 +302,10 @@
         jQuery(elem).removeClass('li_james_hovered');
         current_hovered_rank = -1;
       });
-      jQuery(elem).click(function() {
+      jQuery(elem).click(function(event) {
+        event.preventDefault();
         keyEventEnter(); // Treat this as a click event on the element!
+        return true;
       });
     };
 
