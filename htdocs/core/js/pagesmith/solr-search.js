@@ -47,7 +47,7 @@
       return this.tmpls[d] ? this.tmpls[d].label : d;
     },
     set_facet_field: function ( k ) {
-      this.facet_fields = k;
+      this.facet_field = k;
       this.par['facet.field'] = '{!ex=dt}'+k;
     },
     /* Methods to set properties - used by setup script */
@@ -75,6 +75,13 @@
       this.divs = $('#search_res').html().replace(/<h2.*?h2>/,'');
 
       /* Copy value from tr search box into this search box, and store on object */
+      if( document.location.search ) {
+        t = document.location.search.match(/\bdomain=([^&;]+)/);
+        if( t ) {
+          this.facet = t[1];
+          this.par.fq='{!tag=dt}'+this.facet_field+':"'+ t[1]+'"';
+        }
+      }
       $('#search_input').val( $('#q').val() );
       this.par.q = $('#search_input').val();
       if( document.location.hash ) {
