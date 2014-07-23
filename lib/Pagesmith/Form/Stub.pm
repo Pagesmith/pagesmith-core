@@ -18,6 +18,7 @@ use version qw(qv); our $VERSION = qv('0.1.0');
 ## Form child objects;
 
 use base qw(Pagesmith::Form);
+use Pagesmith::ConfigHash qw(site_key);
 
 sub initialize_form {
   my $self = shift;
@@ -68,5 +69,23 @@ sub bake {
   return $self;
 }
 
+sub update_from_cache {
+  my( $self, $code ) = @_;
+
+  my $form_data = $self->cache( 'form', $code, undef, site_key )->get;
+  $self->form_config->set_option( 'code', $code );
+
+  return unless $form_data;
+
+  $form_data = $self->json_decode( $form_data );
+
+  ## Copy data from cache object to form object - now this is scary!!!!
+
+  $self->{$_} = $form_data->{$_} foreach 'data', 'attributes', keys %{$self->form_defaults};
+
+  $self->populate_user_values;
+
+  return $self;
+}
 1;
 
