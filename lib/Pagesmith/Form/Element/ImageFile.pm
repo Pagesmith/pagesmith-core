@@ -25,6 +25,7 @@ const my $BLUR_PNG             => 0.25;
 const my $DEFAULT_QUALITY      => 65;
 const my $DEFAULT_QUALITY_PNG  => 75;
 const my $K                    => 1024;
+const my $DEFAULT_GEOMETRY     => '180x120>';
 
 my %viewable_bitmap = map { ($_=>1) } qw(png gif jpg);
 
@@ -32,6 +33,17 @@ use English qw(-no_match_vars $INPUT_RECORD_SEPARATOR);
 
 use base qw( Pagesmith::Form::Element::File );
 use Pagesmith::Cache;
+
+sub set_geometry {
+  my ($self, $geo) = @_;
+  my $self->{'geometry'} = $geo;
+  return $self;
+}
+
+sub geometry {
+  my $self = shift;
+  return exists $self->{'geometry'} ? $self->{'geometry'} : $DEFAULT_GEOMETRY;
+}
 
 sub new {
   my($class,$section,$pars) = @_;
@@ -98,7 +110,7 @@ sub extra_file_info {
   $image->Resize(
     'filter'   => $extn eq 'jpg' ? 'Gaussian' : 'Cubic',
     'blur'     => $extn eq 'jpg' ? $BLUR_JPG  : $BLUR_PNG,
-    'geometry' => '180x120>',
+    'geometry' => $self->geometry,
   );
   $image->set( $extn eq 'jpg' ? $DEFAULT_QUALITY : $DEFAULT_QUALITY_PNG );
 
