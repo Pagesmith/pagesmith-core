@@ -57,6 +57,9 @@ const my %DEFAULTS => (
 
 my $ID = 0;
 
+sub form_defaults {
+  return \%DEFAULTS;
+}
 sub new {
   my( $class, $hash_ref ) = @_;
   # Copy hash ref to self - and copy defaults from above...
