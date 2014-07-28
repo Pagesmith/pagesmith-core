@@ -74,21 +74,21 @@ sub add_end_stages {
 sub cant_create {
   my $self = shift;
   return 'not_logged_in' unless $self->user->logged_in;
-  return 'no_permission' unless $self->me && $self->me->is_admin;
+  return 'no_permission' unless $self->me && $self->me->is_active && $self->me->is_admin;
   return;
 }
 
 sub cant_create_any_user {
   my $self = shift;
   return 'not_logged_in' unless $self->user->logged_in;
-  return 'no_permission' unless $self->me;
+  return 'no_permission' unless $self->me && $self->me->is_active;
   return;
 }
 
 sub cant_create_superadmin {
   my $self = shift;
   return 'not_logged_in' unless $self->user->logged_in;
-  return 'no_permission' unless $self->me && $self->me->is_superadmin;
+  return 'no_permission' unless $self->me && $self->me->is_active && $self->me->is_superadmin;
   return;
 }
 
@@ -122,7 +122,19 @@ sub populate_object_values {
 
 sub on_redirect {
   my $self = shift;
-  my $flag = $self->object_id ? $self->update_object : $self->create_object;
+
+  my $flag = $self->object ? $self->update_object : $self->create_object;
+
+  unless( $flag ) {
+    $self->flash_message({
+      'level'     => 'warn',
+      'title'     => 'Unable to create/update',
+      'needs_ack' => 'no',
+      'body'      => sprintf '<p>%s</p>', $self->html_error_string,
+    })->set_stage(0)->store;
+    return;
+  }
+  $self->completed->store;
   return $self->attribute( 'ref' );
 }
 
@@ -134,7 +146,8 @@ sub update_object {
     $self->object->$method( $self->element( $_ )->scalar_value );
   }
   $self->patch_object($self->object) if $self->can( 'patch_object' );
-  $self->object->store;
+  my $flag = $self->object->store;
+  return unless $flag;
   return 1;
 }
 
@@ -147,7 +160,7 @@ sub create_object {
     $o->$method( $self->element( $_ )->scalar_value );
   }
   $self->patch_object($o) if $self->can( 'patch_object' );
-  return unless $o->store();
+  return unless $o->store;
   $self->set_object( $o )->set_object_id( $o->uid );
   return 1;
 }
