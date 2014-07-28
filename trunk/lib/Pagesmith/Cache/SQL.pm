@@ -241,6 +241,7 @@ sub touch {
   $expires = expires($expires);
   my $content =
     _scalar( "select left(content,20) from $t->{'table'} where site_id = ? and $t->{'where'}", $t->{'site_id'}, @{ $t->{'pars'} } );
+  return unless $content;
   if ( $content =~ m{\A2(\d+)}mxs ) {
     my @T    = @{ $t->{'pars'} };
     my $base = pop @T;
