@@ -49,6 +49,8 @@ use Perl::Critic::Swift;
 use Perl::Critic::StricterSubs;
 use Perl::Critic::Storable;
 use PPI;
+use Crypt::Blowfish;
+use Cache::Memcached;
 
 
 1;
