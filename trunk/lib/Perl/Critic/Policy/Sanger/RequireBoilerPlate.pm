@@ -61,9 +61,9 @@ sub violates {
   my $comm = $self->_find_wanted_nodes( $doc );
   $comm =~ s{\s+}{ }mxsg;
   my @viols;
-  push @viols, $self->violation( 'Missing/incorrect copyright notice', q(), $doc )
+  push @viols, $self->violation( 'Missing/incorrect copyright notice', q(), 'Must contain "#| Copyright (c) {years} Genome Research Ltd"'.$self->additional_desc, $doc )
     unless $comm =~ m{Copyright[ ][(]c[)][ ](?:\d{4}(?:-\d{4})?,[ ]?)*\d{4}(?:-\d{4})?[ ]Genome[ ]Research[ ]Ltd[.]}mxs; ## no critic (ComplexRegexes)
-  push @viols, $self->violation( 'Missing/incorrect license notice', q(), $doc )
+  push @viols, $self->violation( 'Missing/incorrect license notice', 'Must contain "GNU Lesser General Public License" in the copyright comment block'.$self->additional_desc, $doc )
     unless $comm =~ m{GNU[ ]Lesser[ ]General[ ]Public[ ]License}mxs;
   return @viols;
 }
@@ -73,4 +73,19 @@ sub _find_wanted_nodes {
   return join q( ), map { m{\A[#][|]\s+(.*)}mxs ? $1 : () } @{$doc->find('PPI::Token::Comment')||[]};
 }
 
+## no critic (ImplicitNewlines)
+sub additional_desc {
+  return sprintf '
+
+To add boilerplate to you perl modules/utilities run:
+
+ * utilities/add-boilerplate.pl {perl-file-name}+
+
+This will automatically add copyright notice (incl
+svn log years) and lgpl license statement to the file.
+
+';
+}
+
+use critic;
 1;
