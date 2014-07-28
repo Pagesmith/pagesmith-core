@@ -42,7 +42,7 @@ use DBIx::Connector;
 
 use Socket qw(inet_ntoa);
 use Sys::Hostname qw(hostname);
-use English qw(-no_match_vars $PROGRAM_NAME $PID);
+use English qw(-no_match_vars $PROGRAM_NAME $PID $EVAL_ERROR);
 use Scalar::Util qw(blessed weaken isweak);
 use POSIX qw(floor);
 use Const::Fast qw(const);
@@ -296,20 +296,57 @@ sub query {
 #@param (?)+ parameters to pass to SQL statement.
   my ( $self, $sql, @pars ) = @_;
   return unless $self->conn;
-  return $self->conn->run( $self->mode =>  sub { return $_->do( $sql, {}, @pars ); });
+  my $flag = eval {
+    $self->conn->run( $self->mode =>  sub { return $_->do( $sql, {}, @pars ); });
+  };
+  $EVAL_ERROR = $self->diagnostic_from_sql_error."\n" if $EVAL_ERROR; ## no critic (LocalizedPunctuationVars)
+  return $flag;
 }
 
 sub insert {
-
 #@param (self);
 #@param (string) $sql SQL
 #@param (?)+ parameters to pass to SQL statement.
   my ( $self, $sql, $table_name, $column, @pars ) = @_;
   return unless $self->conn;
-  return $self->conn->run( $self->mode =>  sub {
-    return unless $_->do( $sql, {}, @pars );
-    return $_->last_insert_id( undef, undef, $table_name, $column );
-  });
+  my $flag = eval {
+    if( $self->is_type( 'oracle' ) ) {
+      $self->conn->run( $self->mode => sub {
+        my $sth = $_->prepare( join q( ), $sql, 'returning', $column, 'into ?' );
+        my $p_new_id = '-1';
+        my $i = 1;
+        foreach(@pars) {
+          $sth->bind_param( $i, $_ );
+          $i++;
+        }
+        $sth->bind_param_inout( $i,\$p_new_id, 38); ## no critic (MagicNumbers)
+        $sth->execute;
+        return if $p_new_id < 0;
+        return $p_new_id;
+      });
+    } else {
+      $self->conn->run( $self->mode =>  sub {
+        return unless $_->do( $sql, {}, @pars );
+        return $_->last_insert_id( undef, undef, $table_name, $column );
+      });
+    }
+  };
+  $EVAL_ERROR = $self->diagnostic_from_sql_error."\n" if $EVAL_ERROR; ## no critic (LocalizedPunctuationVars)
+
+  return $flag;
+}
+
+sub diagnostic_from_sql_error {
+  my $self = shift;
+  my $error_message = $EVAL_ERROR;
+  if( $self->is_type( 'oracle' ) ) {
+    return 'The values you are entering are already in the database' if $error_message =~ m{unique[ ]constraint.*violated}mxs;
+    return 'At least one of the values you entered is too large'     if $error_message =~ m{value[ ]too[ ]large}mxs;
+  } else {
+    return 'The values you are entering are already in the database' if $error_message =~ m{Duplicate[ ]entry}mxs;
+    return 'At least one of the values you entered is too large'     if $error_message =~ m{Data[ ]too[ ]long[ ]for[ ]column}mxs;
+  }
+  return "Unable to update database: $error_message";
 }
 
 
