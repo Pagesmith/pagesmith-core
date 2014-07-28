@@ -87,5 +87,5 @@ svn log years) and lgpl license statement to the file.
 ';
 }
 
-use critic;
+## use critic;
 1;
