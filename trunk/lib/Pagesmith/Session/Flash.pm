@@ -55,8 +55,6 @@ sub new {
 sub push_message {
   my ($self, $params ) = @_;
 
-  $self->dumper( $params );
-
   my $id = $params->{'uuid'} || $self->safe_uuid;
 
   unless( exists $params->{'first'} && $params->{'first'} ) {

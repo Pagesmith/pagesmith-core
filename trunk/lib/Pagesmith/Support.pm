@@ -37,6 +37,7 @@ use version qw(qv); our $VERSION = qv('0.1.0');
 
 use base qw(Pagesmith::Root);
 
+use English qw(-no_match_vars $EVAL_ERROR);
 use List::MoreUtils qw(any);
 use HTML::Entities qw(encode_entities);
 use POSIX qw(floor);
@@ -45,6 +46,7 @@ use Apache2::Request;
 use Pagesmith::Cache;
 use Pagesmith::ConfigHash qw(get_config);
 use Pagesmith::Session::User;
+use Pagesmith::Session::Flash;
 use Pagesmith::HTML::Table;
 use Pagesmith::HTML::Tabs;
 use Pagesmith::HTML::TwoCol;
@@ -88,6 +90,43 @@ sub get_adaptor {
   my( $self, $type, @params ) = @_;
   my $module = 'Pagesmith::Adaptor::'.$type;
   return $self->dynamic_use( $module ) ? $module->new( @params, $self->r ) : undef;
+}
+
+sub flash {
+#@ params (self), $init (int) create flash if doesn't already exist!
+  my( $self, $init ) = @_;
+
+  ## First see if we have a flash!
+  ## If so we return it!
+  return $self->{'flash'} if defined $self->{'flash'};
+
+  ## Have we already grabbed one before...
+  $self->{'flash'} = $self->r->pnotes( 'flash_session' );
+  return $self->{'flash'} if defined $self->{'flash'};
+
+  my $flash = Pagesmith::Session::Flash->new( $self->r );
+
+  if( $flash->read_cookie ) {
+    $flash->fetch;
+    $self->{'flash'} = $flash;
+    $self->r->push_handlers( 'PerlCleanupHandler' => sub { $self->{'flash'}->cleanup; } );
+    return $self->{'flash'};
+  }
+  return unless $init;
+
+  $flash->initialize({})->set_updated->write_cookie;
+
+  $self->{'flash'} = $flash;
+  $self->r->pnotes(     'flash_session' => $self->{'flash'} );        ## Copy into flash session!
+  $self->r->notes->set( 'flash_session_id', $self->{'flash'}->uuid ); ## Copy ID into notes!
+  $self->r->push_handlers( 'PerlCleanupHandler' => sub { $self->{'flash'}->cleanup; } );
+  return $self->{'flash'};
+}
+
+sub flash_message {
+  my ($self,$params) = @_;
+  $self->flash(1)->push_message( $params );
+  return $self;
 }
 
 sub user {
@@ -370,6 +409,12 @@ sub button_links {
     join '&nbsp; ',
     map { sprintf '<a class="btt no-img" href="%s">%s</a>', $self->encode( $_->[0] ), $self->encode( $_->[1] ) }
         @link_pairs;
+}
+
+sub html_error_string {
+  my $self = shift;
+  return $self->encode( $EVAL_ERROR ) if $EVAL_ERROR;
+  return q();
 }
 1;
 
