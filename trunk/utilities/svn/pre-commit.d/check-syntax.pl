@@ -555,6 +555,9 @@ sub check_javascript {
     return 1;
   }
 
+  if( $params->{'filename'} =~ m{[.]map\Z}mxs ) {
+    return 0; ## Don't syntax check map files!
+  }
   my $javascript = join qq(\n), get_contents( $params );
   ## Create a temporary copy so we can run critic on it!
   my $f = "/tmp/test.$PID.js";
@@ -702,6 +705,13 @@ sub check_ico {
    my $params = shift;
    return 0 if $params->{'filename'} =~ m{\A[^/]+/htdocs(-\w+)?/favicon.ico}mxs;
    printf {*STDERR} "Favicon is the only ico file allowed\n", $params->{'filename'};
+   return 1;
+}
+
+sub check_markdown {
+   my $params = shift;
+   return 0 if $params->{'filename'} =~ m{\A[-\w]+[.]md}mxs;
+   printf {*STDERR} "Markdown files '%s', currently only allowed at root level so can be included in github\n", $params->{'filename'};
    return 1;
 }
 
