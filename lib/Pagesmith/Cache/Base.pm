@@ -58,19 +58,20 @@ const my %UNIT_MULTIPLIER => (
   'year'    => 31_622_400,
 );
 const my $COLUMNS => {
-  'action'    => [qw(type cachekey)],
-  'appdata'   => [qw(app cachekey)],
-  'component' => [qw(type cachekey)],
-  'config'    => [qw(location filename)],
-  'feed'      => [qw(url)],
-  'form'      => [qw(cachekey)],
-  'form_file' => [qw(cachekey filekey file_ndx)],
-  'page'      => [qw(type uri params)],
-  'session'   => [qw(type session_key)],
-  'template'  => [qw(type)],
-  'tmpdata'   => [qw(type cachekey)],
-  'tmpfile'   => [qw(type filename)],
-  'variable'  => [qw(type cachekey)],
+  'action'      => [qw(type cachekey)],
+  'appdata'     => [qw(app cachekey)],
+  'component'   => [qw(type cachekey)],
+  'config'      => [qw(location filename)],
+  'feed'        => [qw(url)],
+  'form'        => [qw(cachekey)],
+  'form_file'   => [qw(cachekey filekey file_ndx)],
+  'page'        => [qw(type uri params)],
+  'session'     => [qw(type session_key)],
+  'sessiondata' => [qw(type session_key app_key)],
+  'template'    => [qw(type)],
+  'tmpdata'     => [qw(type cachekey)],
+  'tmpfile'     => [qw(type filename)],
+  'variable'    => [qw(type cachekey)],
 };
 
 const my $TEXT_MODE => {
