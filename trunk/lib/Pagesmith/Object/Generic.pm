@@ -124,15 +124,12 @@ sub id {
   return $self->{'id'};
 }
 
-## no critic (BuiltinHomonyms)
-sub state {
+sub status {
   my $self = shift;
   return $self->{'state'};
 }
 
-## use critic
-
-sub change_state {
+sub change_status {
   my( $self, $value ) = @_;
   $self->{'state'} = $value;
   return $self;
