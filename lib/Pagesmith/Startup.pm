@@ -1,4 +1,4 @@
-## Apache start-up script to preload in a number of modules
+package Pagesmith::Startup;
 
 #+----------------------------------------------------------------------
 #| Copyright (c) 2010, 2011, 2012, 2013, 2014 Genome Research Ltd.
@@ -19,6 +19,7 @@
 #|     <http://www.gnu.org/licenses/>.
 #+----------------------------------------------------------------------
 
+## Apache start-up script to preload in a number of modules
 ## process of producing children and to minimise amount of
 ## shared memory.
 ##
@@ -31,7 +32,6 @@
 ## Revision       : $Revision$
 ## Repository URL : $HeadURL$
 
-package Pagesmith::Startup;
 
 use strict;
 use warnings;
