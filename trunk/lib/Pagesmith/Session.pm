@@ -236,9 +236,11 @@ sub fetch {
   return unless $self->session_cache;
   if( $force || ! keys %{$self->{'data'}} ) {
     my $val = $self->session_cache->get;
+    return unless $val;
     $self->{'data'} = $self->decrypt( $val, 1 );
     $self->rebless( $self->{'data'}{'subtype'} ) if exists $self->{'data'}{'subtype'} && $self->{'data'}{'subtype'};
   }
+  $self->{'updated'} = 0;
   return $self->{'data'};
 }
 
@@ -282,7 +284,6 @@ sub read_cookie {
     $self->touch;
     $self->write_cookie;
     $self->session_cache->touch( $self->{'expiry_time'} );
-
   }
   return 1;
 }
