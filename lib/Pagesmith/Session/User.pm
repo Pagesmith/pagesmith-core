@@ -100,6 +100,11 @@ sub ldap_id {
   return $self->data->{'ldap_id'};
 }
 
+sub uid {
+  my $self = shift;
+  return $self->data->{'uid'};
+}
+
 sub ext_id {
   my $self = shift;
   return $self->data->{'ext_id'};
