@@ -34,24 +34,29 @@ use utf8;
 
 use version qw(qv); our $VERSION = qv('0.1.0');
 
-use List::MoreUtils qw(all);
-use Net::LDAP;
-
 use base qw(Pagesmith::Authenticate::Ldap);
-
-use Const::Fast qw(const);
-const my $GROUP_INDEX => 3;
 
 sub authenticate {
   my( $self, $username, $pass, $parts ) = @_;
   my $details = $self->SUPER::authenticate( $username, $pass, $parts );
-  if( $details->{'ldap_id'} ) {
-    my $res = $self->run_cmd( ['groups', $details->{'ldap_id'}] );
-    ( my $groups = $res->{'stdout'}[0] ) =~ s{\A.*?:\s+}{}mxs;
-    my %groups = map { ($_=>1) } split m{\s+}mxs, $groups;
-    $groups{ [getgrgid [getpwnam $details->{'ldap_id'}]->[$GROUP_INDEX]]->[0] }=1;
-    push @{$details->{'groups'}}, map { "unix:$_" } sort keys %groups;
-  }
+  ## No ldap user ...!
+  return $details unless $details->{'ldap_id'};
+
+  ## Get additional group information!
+  (my $group_url = $self->base ) =~ s{people}{group}mxs;
+  my $result = $self->ldap->search(
+    'attrs'  => [qw(cn)],
+    'base'   => $group_url,
+    'filter' => sprintf 'member=%s=%s,%s', $self->id, $details->{'ldap_id'}, $self->base,
+  );
+
+  ## Request fails... can't get groups!
+  return $details unless $result;
+
+  push @{$details->{'groups'}},
+    sort
+    map { q(unix:).$_->get_value('cn') }
+    $result->entries;
   return $details;
 }
 
