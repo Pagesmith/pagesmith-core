@@ -51,6 +51,8 @@ sub new {
     'groups'        => exists $conf->{'groups'} ? $conf->{'groups'} : {},
   };
   bless $self, $class;
+  my %attr_keys = map { ($_=>1) } $self->id, 'uidNumber', map { split } $self->name_patterns;
+  $self->{'search_attrs'} = [ (sort keys %attr_keys) ];
   return $self;
 }
 
@@ -79,6 +81,8 @@ sub ldap {
   return $self->{'ldap'} ||= Net::LDAP->new( $self->server );
 }
 
+
+
 sub authenticate {
   my( $self, $username, $pass, $parts ) = @_;
 
@@ -88,12 +92,15 @@ sub authenticate {
     'password' => $pass,
   );
   return {} unless $msg->code == 0;
-  my $e = $self->_get_ldap_entry( \$uid );
+
   return {(
     'id'      => $username,
+    'email'   => $username,
     'ldap_id' => $uid,
+    'uid'    => $self->get_uid( $uid ),
     'name'    => $self->realname( $uid ),
     'groups'  => $self->user_groups( $uid ),
+    'status'  => 'active',
   )};
 }
 
@@ -103,6 +110,7 @@ sub _get_ldap_entry {
     # if no realname is present, we can fetch it from LDAP
     my $result = $self->ldap->search(
       'base'   => $self->base,
+      'attrs'  => $self->{'search_attrs'},
       'filter' => $self->id.q(=).${$uid_ref},
     );
     if($result) {
@@ -117,12 +125,21 @@ sub _get_ldap_entry {
   return $self->{'ldap_entries'}{${$uid_ref}};
 }
 
+sub get_uid {
+  my( $self, $uid ) = @_;
+  my $e = $self->_get_ldap_entry( \$uid );
+  return q() unless $e;
+  unless( exists $e->{'uidnumber'} ) {
+    $e->{'uidnumber'} = $e->{'raw'}->get_value('uidnumber');
+  }
+  return $e->{'uidnumber'};
+}
+
 sub realname {
   my( $self, $uid ) = @_;
   my $e = $self->_get_ldap_entry( \$uid );
   return q() unless $e;
   return $e->{'real_name'} if exists $e->{'real_name'};
-
   foreach my $pattern ( $self->name_patterns ) {
     my @parts = map { $e->{'raw'}->get_value($_) } split m{\s+}mxs, $pattern;
     next unless all { $_ } @parts;
