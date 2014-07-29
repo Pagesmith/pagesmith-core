@@ -270,7 +270,7 @@ sub store {
   my $type = $generic_obj->type || $self->{'type'};
 
   $generic_obj->set_ip_and_useragent unless $generic_obj->ip;
-  $generic_obj->set_state( 'new' )                  unless defined $generic_obj->state;
+  $generic_obj->set_status( 'new' )                  unless defined $generic_obj->status;
   if( $generic_obj->id ) {
     $generic_obj->set_updated_by( $self->user );
     $generic_obj->set_updated_at( $generic_obj->now );
@@ -281,7 +281,7 @@ sub store {
        where type = ? and id = ?',
       $self->get_code_value( $generic_obj ),
       $self->get_sort_order_value( $generic_obj ),
-      $generic_obj->updated_at, $generic_obj->updated_by, $obj_data, $generic_obj->state,
+      $generic_obj->updated_at, $generic_obj->updated_by, $obj_data, $generic_obj->status,
       $type, $generic_obj->id,
     );
   ##use critic
@@ -299,7 +299,7 @@ sub store {
     $self->get_code_value( $generic_obj ),
     $self->get_sort_order_value( $generic_obj ),
     $generic_obj->created_at, $generic_obj->created_by, $generic_obj->ip,      $generic_obj->useragent,
-    $type,       $obj_data , $generic_obj->state,
+    $type,       $obj_data , $generic_obj->status,
   ));
   ##use critic (ImplicitNewlines)
   return $generic_obj->id ? 1 : 0;
