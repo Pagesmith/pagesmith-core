@@ -43,6 +43,7 @@ sub new {
   my $self = {
     'users'         => $conf->{'users'},
     'encrypted'     => $conf->{'encrypted'},
+    'email_flag'    => exists $conf->{'email'} && $conf->{'email'} eq 'no' ? 0 : 1,
     'groups'        => exists $conf->{'groups'} ? $conf->{'groups'} : {},
   };
   bless $self, $class;
@@ -63,14 +64,18 @@ sub authenticate {
   my( $self, $username, $pass, $parts ) = @_;
   return {} unless exists $self->users->{$username};
   my( $password, $name ) = @{ $self->users->{$username} };
+
   if( $self->encrypted ) {
     $pass = crypt $pass, $password;
   }
   return {} unless $password eq $pass;
   return {(
     'id'      => $username,
+    'email'   => $self->{'email_flag'} ? $username : undef,
+    'uid'     => $username,
     'name'    => $name,
     'groups'  => $self->user_groups( $username ),
+    'status'  => 'active',
   )};
 }
 
