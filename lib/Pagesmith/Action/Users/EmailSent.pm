@@ -1,4 +1,4 @@
-package Pagesmith::Adaptor::Users;
+package Pagesmith::Action::Users::EmailSent;
 
 #+----------------------------------------------------------------------
 #| Copyright (c) 2014 Genome Research Ltd.
@@ -21,7 +21,8 @@ package Pagesmith::Adaptor::Users;
 #|     <http://www.gnu.org/licenses/>.
 #+----------------------------------------------------------------------
 
-## Base adaptor for objects in Users namespace
+## Admin table display for objects of type User in
+## namespace Users
 
 ## Author         : James Smith <js5@sanger.ac.uk>
 ## Maintainer     : James Smith <js5@sanger.ac.uk>
@@ -38,10 +39,24 @@ use utf8;
 
 use version qw(qv); our $VERSION = qv('0.1.0');
 
-use base qw(Pagesmith::Adaptor);
-use Pagesmith::Utils::ObjectCreator qw(bake_base_adaptor);
+use base qw(Pagesmith::Action::Users Pagesmith::SecureSupport);
 
-bake_base_adaptor;
+sub run {
+#@params (self)
+## Display admin for table for User in Users
+  my $self = shift;
+
+  return $self->redirect_secure unless $self->is_secure;
+  $self->decrypt_input( 'users' );
+  my $email_address = $self->next_path_info;
+  return $self->not_found unless $email_address;
+
+  return $self->wrap( q(Email sent), sprintf
+    '<p>An email has been sent to the account "%s" to. Please read this email and follow the instructions with in it.</p>',
+    $self->encode( $email_address ),
+  )->ok;
+  ## use critic
+}
 
 1;
 

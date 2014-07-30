@@ -1,13 +1,15 @@
 package Pagesmith::Object::Users::User;
 
 #+----------------------------------------------------------------------
-#| Copyright (c) 2011, 2012, 2014 Genome Research Ltd.
-#| This file is part of the Pagesmith web framework.
+#| Copyright (c) 2014 Genome Research Ltd.
+#| This file is part of the User account management extensions to
+#| Pagesmith web framework.
 #+----------------------------------------------------------------------
-#| The Pagesmith web framework is free software: you can redistribute
-#| it and/or modify it under the terms of the GNU Lesser General Public
-#| License as published by the Free Software Foundation; either version
-#| 3 of the License, or (at your option) any later version.
+#| The User account management extensions to Pagesmith web framework is
+#| free software: you can redistribute it and/or modify it under the
+#| terms of the GNU Lesser General Public License as published by the
+#| Free Software Foundation; either version 3 of the License, or (at
+#| your option) any later version.
 #|
 #| This program is distributed in the hope that it will be useful, but
 #| WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -19,10 +21,10 @@ package Pagesmith::Object::Users::User;
 #|     <http://www.gnu.org/licenses/>.
 #+----------------------------------------------------------------------
 
-## Object representing a user in the user database...
-## Author         : js5
-## Maintainer     : js5
-## Created        : 2011-06-01
+## Author         : James Smith <js5@sanger.ac.uk>
+## Maintainer     : James Smith <js5@sanger.ac.uk>
+## Created        : 30th Apr 2014
+
 ## Last commit by : $Author$
 ## Last modified  : $Date$
 ## Revision       : $Revision$
@@ -34,172 +36,69 @@ use utf8;
 
 use version qw(qv); our $VERSION = qv('0.1.0');
 
-use base qw(Pagesmith::BaseObject);
+use base qw(Pagesmith::Object::Users);
+use Pagesmith::Utils::ObjectCreator qw(bake);
+use Const::Fast qw(const);
 
-sub new {
-  my($class,$adaptor,$user_data) = @_;
-     $user_data    ||= {};
-  my $self    = {
-    '_adpt'        => $adaptor,
-    'id'           => $user_data->{'id'},
-    'code'         => $user_data->{'email'},
-    'password'     => $user_data->{'password'},
-    'name'         => $user_data->{'name'},
-    'institute'    => $user_data->{'institute'},
-    'grouptype'    => $user_data->{'grouptype'},
-    'status'       => $user_data->{'status'} || 'active',
-    'status_id'    => $user_data->{'status_id'} || 0,
-  };
-  bless $self, $class;
-  return $self;
-}
+const my $SALT_LENGTH => 16;
+const my $COST        =>  8;
 
-sub type {
-  my $self = shift;
-  return $self->{'grouptype'};
-}
+use MIME::Base64 qw(encode_base64 decode_base64);
+use Crypt::Eksblowfish::Bcrypt qw(bcrypt_hash);
+use Data::UUID;
 
-sub set_type {
-  my( $self, $type ) = @_;
-  $self->{'grouptype'} = $type;
-  return $self;
-}
+## Last bit - bake all remaining methods!
+bake();
 
-sub email {
-  my $self = shift;
-  return $self->{'code'};
-}
-
-sub set_email {
-  my( $self,$code ) = @_;
-  $self->{'code'} = $code;
-  return $self;
-}
-
-sub password {
-  my $self = shift;
-  return $self->{'password'};
+sub check_password {
+  my( $self, $pw ) = @_;
+  return $self->get_password eq $self->_encrypt_password( $pw, $self->get_password );
 }
 
 sub set_password {
-  my( $self,$password ) = @_;
-  $self->{'password'} = $password;
-  return $self;
+  my ( $self, $pw ) = @_;
+  ## We run the password through encryption algorithm before we store it in the database!
+  return $self->std_set_password( $pw eq q() ? q() : $self->_encrypt_password( $pw ) );
 }
 
-sub update_password {
-  my ($self,$password) = @_;
-  $self->set_password($password);
-  return $self->adaptor->change_member_password( $self );
-}
-
-sub name {
-  my $self = shift;
-  return $self->{'name'};
-}
-
-sub set_name {
-  my( $self,$name ) = @_;
-  $self->{'name'} = $name;
-  return $self;
-}
-
-sub institute {
-  my $self = shift;
-  return $self->{'institute'};
-}
-
-sub set_institute {
-  my( $self,$institute ) = @_;
-  $self->{'institute'} = $institute;
-  return $self;
-}
-
-sub update_institute {
-  my $self = shift;
-  return $self->adaptor->change_member_institute($self);
-}
-
-sub status {
-  my $self = shift;
-  return $self->{'status'};
-}
-
-sub set_status {
-  my( $self,$status ) = @_;
-  $self->{'status'} = $status;
-  return $self;
-}
-
-sub status_id {
-  my $self = shift;
-  return $self->{'status_id'};
-}
-
-sub set_status_id {
-  my( $self,$status_id ) = @_;
-  $self->{'status_id'} = $status_id;
-  return $self;
-}
-
-sub update_status_id {
-  my $self = shift;
-  return $self->adaptor->change_member_status($self);
-}
-
-## Membership functions...
-sub get_groups {
-  my $self = shift;
-  return $self->adaptor->get_groups_by_member( $self );
-}
-
-sub add_to_group {
-  my( $self, $group, $status ) = @_;
-  return $self->adaptor->add_member_to_group( $self, $group, $status );
-}
-
-sub change_group_status {
-  my( $self, $user, $status ) = @_;
-  return $self->adaptor->change_member_status_in_group( $user, $self, $status );
-}
-
-sub remove_from_group {
-  my( $self, $group ) = @_;
-  return $self->adaptor->remove_member_from_group( $self, $group );
-}
-
-sub has_member { # untested.
-  my( $self, $user, $group ) = @_;
-  return $self->adaptor->is_member_in_group( $self, $user, $group );
-}
-
-## Store functions...
-sub store {
-  my $self = shift;
-  my $id = $self->adaptor->store_member($self);
-  $self->set_id($id) if ($id);
-  return $id;
-}
-
-sub objdata {
-  my $self = shift;
-
-  my @groups = @{$self->adaptor->get_groups_by_member($self)};
-  my @group_string;
-  if (@groups) {
-    push @group_string, $_->{'code'} foreach @groups;
+sub _encrypt_password {
+  my( $self, $pw, $salt ) = @_;
+  if( $salt ) {
+    $salt = substr decode_base64($salt), 0, $SALT_LENGTH;
+  } else {
+    $salt = Data::UUID->new->create;
   }
-  return {(
-    'id'        => $self->{'id'},
-    'name'      => $self->name,
-    'institute' => $self->institute,
-    'groups'    => [@group_string],
-    'email'     => $self->{'code'},
-    'status'    => $self->status,
-    'password'  => $self->{'password'},
-    'grouptype' => $self->{'grouptype'},
-    'status_id' => $self->{'status_id'},
-        )};
-
+  return encode_base64( $salt.bcrypt_hash({'key_nul'=>1,'cost'=>$COST,'salt'=>$salt},encode_base64($pw)), q() );
 }
 1;
+
+__END__
+
+Purpose
+=======
+
+Object classes are the basis of the Pagesmith OO abstraction layer
+
+Notes
+=====
+
+What methods do I have available to me...!
+------------------------------------------
+
+This is an auto generated module. You can get a list of the auto
+generated methods by calling the "auto generated"
+__PACKAGE__->auto_methods or $obj->auto_methods!
+
+Overriding methods
+------------------
+
+If you override an auto-generated method a version prefixed with
+std_ will be generated which you can use within the package. e.g.
+
+sub get_name {
+  my $self = shift;
+  my $name = $self->std_get_name;
+  $name = 'Sir, '.$name;
+  return $name;
+}
+

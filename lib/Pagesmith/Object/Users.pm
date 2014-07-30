@@ -1,4 +1,4 @@
-package Pagesmith::Adaptor::Users;
+package Pagesmith::Object::Users;
 
 #+----------------------------------------------------------------------
 #| Copyright (c) 2014 Genome Research Ltd.
@@ -21,8 +21,7 @@ package Pagesmith::Adaptor::Users;
 #|     <http://www.gnu.org/licenses/>.
 #+----------------------------------------------------------------------
 
-## Base adaptor for objects in Users namespace
-
+## Base class for all objects in "Users"
 ## Author         : James Smith <js5@sanger.ac.uk>
 ## Maintainer     : James Smith <js5@sanger.ac.uk>
 ## Created        : 30th Apr 2014
@@ -38,14 +37,14 @@ use utf8;
 
 use version qw(qv); our $VERSION = qv('0.1.0');
 
-use base qw(Pagesmith::Adaptor);
-use Pagesmith::Utils::ObjectCreator qw(bake_base_adaptor);
-
-bake_base_adaptor;
+use base qw(Pagesmith::Object);
 
 1;
 
 __END__
+
 Notes
------
+=====
+
+Base class for all objects in "Users"
 

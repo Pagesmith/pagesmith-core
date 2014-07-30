@@ -1,4 +1,4 @@
-package Pagesmith::Adaptor::Users;
+package Pagesmith::Action::Users::Admin::Usergroup;
 
 #+----------------------------------------------------------------------
 #| Copyright (c) 2014 Genome Research Ltd.
@@ -21,7 +21,8 @@ package Pagesmith::Adaptor::Users;
 #|     <http://www.gnu.org/licenses/>.
 #+----------------------------------------------------------------------
 
-## Base adaptor for objects in Users namespace
+## Admin table display for objects of type Usergroup in
+## namespace Users
 
 ## Author         : James Smith <js5@sanger.ac.uk>
 ## Maintainer     : James Smith <js5@sanger.ac.uk>
@@ -38,10 +39,35 @@ use utf8;
 
 use version qw(qv); our $VERSION = qv('0.1.0');
 
-use base qw(Pagesmith::Adaptor);
-use Pagesmith::Utils::ObjectCreator qw(bake_base_adaptor);
+use base qw(Pagesmith::Action::Users);
 
-bake_base_adaptor;
+sub run {
+#@params (self)
+## Display admin for table for Usergroup in Users
+  my $self = shift;
+
+  return $self->login_required unless $self->user->logged_in;
+  return $self->no_permission  unless $self->me && $self->me->is_admin;
+
+  ## no critic (LongChainsOfMethodCalls)
+  return $self->my_wrap( q(Users's Usergroup),
+    $self
+      ->my_table
+      ->add_columns(
+        { 'key' => 'get_usergroup_id', 'label' => 'Usergroup id', 'format' => 'd' },
+        { 'key' => 'get_code', 'label' => 'Code' },
+        { 'key' => 'get_name', 'label' => 'Name' },
+        { 'key' => 'get_description', 'label' => 'Description' },
+        { 'key' => 'get_status', 'label' => 'State' },
+        { 'key' => '_edit', 'label' => 'Edit?', 'template' => 'Edit', 'align' => 'c', 'no_filter' => 1,
+          'link' => '/form/Users_Admin_Usergroup/[[h:uid]]' },
+      )
+      ->add_data( @{$self->adaptor( 'Usergroup' )->fetch_all_usergroups||[]} )
+      ->render.
+    $self->button_links( '/form/Users_Admin_Usergroup', 'Add' ),
+  );
+  ## use critic
+}
 
 1;
 
