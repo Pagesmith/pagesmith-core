@@ -1,4 +1,4 @@
-package Pagesmith::Adaptor::Users;
+package Pagesmith::MyForm::Users::Admin;
 
 #+----------------------------------------------------------------------
 #| Copyright (c) 2014 Genome Research Ltd.
@@ -21,7 +21,7 @@ package Pagesmith::Adaptor::Users;
 #|     <http://www.gnu.org/licenses/>.
 #+----------------------------------------------------------------------
 
-## Base adaptor for objects in Users namespace
+## Base class for all "table admin" forms in "Users"
 
 ## Author         : James Smith <js5@sanger.ac.uk>
 ## Maintainer     : James Smith <js5@sanger.ac.uk>
@@ -38,14 +38,16 @@ use utf8;
 
 use version qw(qv); our $VERSION = qv('0.1.0');
 
-use base qw(Pagesmith::Adaptor);
-use Pagesmith::Utils::ObjectCreator qw(bake_base_adaptor);
+use base qw(Pagesmith::MyForm::ObjectAdmin Pagesmith::MyForm::Users);
 
-bake_base_adaptor;
+sub admin_init {
+  my $self = shift;
+  return $self
+    ->set_navigation_path( '/mypath' )
+    ->SUPER::admin_init;
+}
 
 1;
 
 __END__
-Notes
------
 

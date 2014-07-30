@@ -1,4 +1,4 @@
-package Pagesmith::Adaptor::Users;
+package Pagesmith::Object::Users::Invite;
 
 #+----------------------------------------------------------------------
 #| Copyright (c) 2014 Genome Research Ltd.
@@ -21,8 +21,6 @@ package Pagesmith::Adaptor::Users;
 #|     <http://www.gnu.org/licenses/>.
 #+----------------------------------------------------------------------
 
-## Base adaptor for objects in Users namespace
-
 ## Author         : James Smith <js5@sanger.ac.uk>
 ## Maintainer     : James Smith <js5@sanger.ac.uk>
 ## Created        : 30th Apr 2014
@@ -38,14 +36,41 @@ use utf8;
 
 use version qw(qv); our $VERSION = qv('0.1.0');
 
-use base qw(Pagesmith::Adaptor);
-use Pagesmith::Utils::ObjectCreator qw(bake_base_adaptor);
+use base qw(Pagesmith::Object::Users);
+use Pagesmith::Utils::ObjectCreator qw(bake);
 
-bake_base_adaptor;
+## Last bit - bake all remaining methods!
+bake();
 
 1;
 
 __END__
+
+Purpose
+=======
+
+Object classes are the basis of the Pagesmith OO abstraction layer
+
 Notes
------
+=====
+
+What methods do I have available to me...!
+------------------------------------------
+
+This is an auto generated module. You can get a list of the auto
+generated methods by calling the "auto generated"
+__PACKAGE__->auto_methods or $obj->auto_methods!
+
+Overriding methods
+------------------
+
+If you override an auto-generated method a version prefixed with
+std_ will be generated which you can use within the package. e.g.
+
+sub get_name {
+  my $self = shift;
+  my $name = $self->std_get_name;
+  $name = 'Sir, '.$name;
+  return $name;
+}
 

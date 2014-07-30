@@ -1,4 +1,4 @@
-package Pagesmith::Adaptor::Users;
+package Pagesmith::MyForm::Users::Admin::Usergroup;
 
 #+----------------------------------------------------------------------
 #| Copyright (c) 2014 Genome Research Ltd.
@@ -21,7 +21,8 @@ package Pagesmith::Adaptor::Users;
 #|     <http://www.gnu.org/licenses/>.
 #+----------------------------------------------------------------------
 
-## Base adaptor for objects in Users namespace
+## Admininstration form for objects of type Usergroup
+## in namespace Users
 
 ## Author         : James Smith <js5@sanger.ac.uk>
 ## Maintainer     : James Smith <js5@sanger.ac.uk>
@@ -38,14 +39,41 @@ use utf8;
 
 use version qw(qv); our $VERSION = qv('0.1.0');
 
-use base qw(Pagesmith::Adaptor);
-use Pagesmith::Utils::ObjectCreator qw(bake_base_adaptor);
+use base qw(Pagesmith::MyForm::Users::Admin);
 
-bake_base_adaptor;
+sub object_type {
+#@return (string) the type of object (within the namespace!)
+  return 'Usergroup';
+}
+
+sub entry_names {
+#@return (string+) - an array of names - these are used in the create_object/update_object code
+
+  return qw(code name description status);
+}
+
+sub initialize_form {
+  my $self = shift;
+
+  $self->admin_init;
+
+    my $statuses          = $self->adaptor( 'Usergroup' )->all_statuses_sorted;
+
+    ## Unique_ID
+    $self->add(           'Hidden',                'usergroup_id' )->set_optional;
+
+    $self->add(           'Uuid',                  'code' );
+    $self->add(           'String',                'name' );
+    $self->add(           'Text',                  'description' );
+    $self->add(           'DropDown',              'status' )
+         ->set_firstline(   '== select ==' )
+         ->set_values(      [ map { { 'value' => $_->[0], 'name' => $_->[1] } } @{$statuses} ] );
+
+  $self->add_end_stages;
+  return $self;
+}
 
 1;
-
 __END__
 Notes
 -----
-

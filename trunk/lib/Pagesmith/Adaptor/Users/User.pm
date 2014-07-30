@@ -1,4 +1,4 @@
-package Pagesmith::Adaptor::Users;
+package Pagesmith::Adaptor::Users::User;
 
 #+----------------------------------------------------------------------
 #| Copyright (c) 2014 Genome Research Ltd.
@@ -21,7 +21,7 @@ package Pagesmith::Adaptor::Users;
 #|     <http://www.gnu.org/licenses/>.
 #+----------------------------------------------------------------------
 
-## Base adaptor for objects in Users namespace
+## Adaptor for objects of type User in namespace Users
 
 ## Author         : James Smith <js5@sanger.ac.uk>
 ## Maintainer     : James Smith <js5@sanger.ac.uk>
@@ -38,14 +38,40 @@ use utf8;
 
 use version qw(qv); our $VERSION = qv('0.1.0');
 
-use base qw(Pagesmith::Adaptor);
-use Pagesmith::Utils::ObjectCreator qw(bake_base_adaptor);
+use base qw(Pagesmith::Adaptor::Users);
+use Pagesmith::Utils::ObjectCreator qw(bake);
 
-bake_base_adaptor;
+## Last bit - bake all remaining methods!
+bake();
 
 1;
 
 __END__
+
+Purpose
+-------
+
+Adaptor classes interface with databases as the basis of the Pagesmith OO abstraction layer
+
 Notes
------
+=====
+
+What methods do I have available to me...!
+------------------------------------------
+
+This is an auto generated module. You can get a list of the auto
+generated methods by calling the "auto generated"
+__PACKAGE__->auto_methods or $obj->auto_methods!
+
+Overriding methods
+------------------
+
+If you override an auto-generated method a version prefixed with
+std_ will be generated which you can use within the package. e.g.
+
+sub store {
+  my( $self, $o ) = @_;
+  warn 'Storing '.$o->get_code,"\n";
+  return $self->std_store( $o );     ## Call the standard method!
+}
 

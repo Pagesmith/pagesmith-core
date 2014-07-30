@@ -1,4 +1,4 @@
-package Pagesmith::Adaptor::Users;
+package Pagesmith::Apache::Action::Users;
 
 #+----------------------------------------------------------------------
 #| Copyright (c) 2014 Genome Research Ltd.
@@ -21,31 +21,27 @@ package Pagesmith::Adaptor::Users;
 #|     <http://www.gnu.org/licenses/>.
 #+----------------------------------------------------------------------
 
-## Base adaptor for objects in Users namespace
+## Apache handler for Users action classes for users
 
-## Author         : James Smith <js5@sanger.ac.uk>
-## Maintainer     : James Smith <js5@sanger.ac.uk>
-## Created        : 30th Apr 2014
-
-## Last commit by : $Author$
-## Last modified  : $Date$
-## Revision       : $Revision$
-## Repository URL : $HeadURL$
+## Author         : js5 (James Smith)
+## Maintainer     : js5 (James Smith)
+## Created        : 2014-01-08
+## Last commit by : $Author $
+## Last modified  : $Date $
+## Revision       : $Revision $
+## Repository URL : $HeadURL $
 
 use strict;
 use warnings;
 use utf8;
 
-use version qw(qv); our $VERSION = qv('0.1.0');
+use version qw(qv);our $VERSION = qv('0.1.0');
 
-use base qw(Pagesmith::Adaptor);
-use Pagesmith::Utils::ObjectCreator qw(bake_base_adaptor);
+use Pagesmith::Apache::Action qw(simple_handler);
 
-bake_base_adaptor;
+sub handler {
+  my $r = shift;
+  return simple_handler( 'users', 'Users', $r );
+}
 
 1;
-
-__END__
-Notes
------
-

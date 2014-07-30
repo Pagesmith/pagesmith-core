@@ -1,4 +1,4 @@
-package Pagesmith::Adaptor::Users;
+package Pagesmith::MyForm::Users;
 
 #+----------------------------------------------------------------------
 #| Copyright (c) 2014 Genome Research Ltd.
@@ -21,7 +21,7 @@ package Pagesmith::Adaptor::Users;
 #|     <http://www.gnu.org/licenses/>.
 #+----------------------------------------------------------------------
 
-## Base adaptor for objects in Users namespace
+## Base class for all forms in "Users"
 
 ## Author         : James Smith <js5@sanger.ac.uk>
 ## Maintainer     : James Smith <js5@sanger.ac.uk>
@@ -38,14 +38,19 @@ use utf8;
 
 use version qw(qv); our $VERSION = qv('0.1.0');
 
-use base qw(Pagesmith::Adaptor);
-use Pagesmith::Utils::ObjectCreator qw(bake_base_adaptor);
+use base qw(Pagesmith::MyForm Pagesmith::Support::Users);
 
-bake_base_adaptor;
+sub render_extra {
+  my $self = shift;
+  return '<% Users_Navigation -ajax %>';
+}
 
 1;
 
 __END__
 Notes
 -----
+
+This is the generic Form code for all the code with objects in the
+namespace "Users".
 

@@ -1,4 +1,4 @@
-package Pagesmith::Adaptor::Users;
+package Pagesmith::Support::Users;
 
 #+----------------------------------------------------------------------
 #| Copyright (c) 2014 Genome Research Ltd.
@@ -21,8 +21,6 @@ package Pagesmith::Adaptor::Users;
 #|     <http://www.gnu.org/licenses/>.
 #+----------------------------------------------------------------------
 
-## Base adaptor for objects in Users namespace
-
 ## Author         : James Smith <js5@sanger.ac.uk>
 ## Maintainer     : James Smith <js5@sanger.ac.uk>
 ## Created        : 30th Apr 2014
@@ -38,14 +36,37 @@ use utf8;
 
 use version qw(qv); our $VERSION = qv('0.1.0');
 
-use base qw(Pagesmith::Adaptor);
-use Pagesmith::Utils::ObjectCreator qw(bake_base_adaptor);
+## Base class for actions/components in Users namespace
 
-bake_base_adaptor;
+use base qw(Pagesmith::ObjectSupport);
+use Pagesmith::Utils::ObjectCreator qw(bake);
+
+bake();
 
 1;
-
 __END__
-Notes
------
+
+Purpose
+-------
+
+The purpose of the Pagesmith::Support::Users module is to
+place methods which are to be shared between the following modules:
+
+* Pagesmith::Action::Users
+* Pagesmith::Component::Users
+
+Common functionality can include:
+
+* Default configuration for tables, two-cols etc
+* Database adaptor calls
+* Accessing configurations etc
+
+Some default methods for these can be found in the
+Pagesmith::ObjectSupport from which this module is derived:
+
+  * adaptor( $type? ) -> gets an Adaptor of type Pagesmith::Adaptor::Users::$type
+  * my_table          -> simple table definition for a table within the site
+  * admin_table       -> simple table definition for an admin table (if different!)
+  * me                -> user object (assumes the database being interfaced has a
+                         User table keyed by "email"...
 

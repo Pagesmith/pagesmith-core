@@ -1,15 +1,13 @@
-package Pagesmith::Object::Users::Usergroup;
+package Pagesmith::Object::Users::EmailChange;
 
 #+----------------------------------------------------------------------
 #| Copyright (c) 2014 Genome Research Ltd.
-#| This file is part of the User account management extensions to
-#| Pagesmith web framework.
+#| This file is part of the Pagesmith web framework.
 #+----------------------------------------------------------------------
-#| The User account management extensions to Pagesmith web framework is
-#| free software: you can redistribute it and/or modify it under the
-#| terms of the GNU Lesser General Public License as published by the
-#| Free Software Foundation; either version 3 of the License, or (at
-#| your option) any later version.
+#| The Pagesmith web framework is free software: you can redistribute
+#| it and/or modify it under the terms of the GNU Lesser General Public
+#| License as published by the Free Software Foundation; either version
+#| 3 of the License, or (at your option) any later version.
 #|
 #| This program is distributed in the hope that it will be useful, but
 #| WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -21,9 +19,10 @@ package Pagesmith::Object::Users::Usergroup;
 #|     <http://www.gnu.org/licenses/>.
 #+----------------------------------------------------------------------
 
+
 ## Author         : James Smith <js5@sanger.ac.uk>
 ## Maintainer     : James Smith <js5@sanger.ac.uk>
-## Created        : 30th Apr 2014
+## Created        : 29th Jul 2014
 
 ## Last commit by : $Author$
 ## Last modified  : $Date$

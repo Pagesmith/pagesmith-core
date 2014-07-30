@@ -1,4 +1,4 @@
-package Pagesmith::Adaptor::Users;
+package Pagesmith::Action::Users::Me;
 
 #+----------------------------------------------------------------------
 #| Copyright (c) 2014 Genome Research Ltd.
@@ -21,7 +21,8 @@ package Pagesmith::Adaptor::Users;
 #|     <http://www.gnu.org/licenses/>.
 #+----------------------------------------------------------------------
 
-## Base adaptor for objects in Users namespace
+## Admin table display for objects of type User in
+## namespace Users
 
 ## Author         : James Smith <js5@sanger.ac.uk>
 ## Maintainer     : James Smith <js5@sanger.ac.uk>
@@ -38,10 +39,51 @@ use utf8;
 
 use version qw(qv); our $VERSION = qv('0.1.0');
 
-use base qw(Pagesmith::Adaptor);
-use Pagesmith::Utils::ObjectCreator qw(bake_base_adaptor);
+use base qw(Pagesmith::Action::Users);
 
-bake_base_adaptor;
+sub run {
+#@params (self)
+## Display admin for table for User in Users
+  my $self = shift;
+  return $self->login_required unless $self->user->logged_in;
+
+  return $self->redirect_secure unless $self->is_secure;
+
+  ## no critic (LongChainsOfMethodCalls)
+
+  my $extra;
+
+  $extra .= '<p><a class="btt" href="/users/UpdateDetails">Update details</a></p>' if $self->user->auth_method eq 'user_db';
+
+  my $groups = q(<p>You are not currently the member of any groups</p>);
+  if( $self->user->groups ) {
+    $groups = sprintf '<ul>%s</ul>', join q(), map { sprintf '<li>%s</li>', $_ } sort $self->user->groups;
+  }
+  return $self->my_wrap_no_heading( q(My details),
+    sprintf '
+<div class="balance">
+<div class="col1">
+  <div class="panel">
+    <h3>My details</h3>
+    %s
+  </div>
+</div>
+<div class="col2">
+  <div class="panel">
+    <h3>My groups</h3>
+    %s
+  </div>
+</div>
+</div>',
+    $self->twocol
+      ->add_entry( 'Username', $self->user->email       )
+      ->add_entry( 'Name',     $self->user->name        )
+      ->add_entry( 'Method',   $self->user->auth_method )
+      ->render.
+    $extra, $groups,
+  );
+  ## use critic
+}
 
 1;
 

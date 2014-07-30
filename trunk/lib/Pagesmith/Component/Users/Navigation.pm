@@ -1,4 +1,4 @@
-package Pagesmith::Adaptor::Users;
+package Pagesmith::Component::Users::Navigation;
 
 #+----------------------------------------------------------------------
 #| Copyright (c) 2014 Genome Research Ltd.
@@ -21,7 +21,7 @@ package Pagesmith::Adaptor::Users;
 #|     <http://www.gnu.org/licenses/>.
 #+----------------------------------------------------------------------
 
-## Base adaptor for objects in Users namespace
+## Navigation component to insert into pages - mainly to handle admin links!
 
 ## Author         : James Smith <js5@sanger.ac.uk>
 ## Maintainer     : James Smith <js5@sanger.ac.uk>
@@ -38,10 +38,37 @@ use utf8;
 
 use version qw(qv); our $VERSION = qv('0.1.0');
 
-use base qw(Pagesmith::Adaptor);
-use Pagesmith::Utils::ObjectCreator qw(bake_base_adaptor);
+use base qw(Pagesmith::AjaxComponent Pagesmith::Component::Users);
 
-bake_base_adaptor;
+sub usage {
+#@params (self)
+#@return (hashref)
+## Returns a hashref of documentation of parameters and what the component does!
+  my $self = shift;
+  return {
+    'parameters'  => 'NONE',
+    'description' => 'Navigation component',
+    'notes'       => [],
+  };
+}
+
+sub execute {
+  my $self = shift;
+  return $self->panel(
+    '<h3>Navigation</h3>',
+    '<ul><li><a href="/action/Users">Home</a></li></ul>',
+  ).$self->admin_panel;
+}
+
+sub admin_panel {
+  my $self = shift;
+  return q() unless $self->me;
+  my @links;
+  push @links, [ '/action/Users_Admin_User', 'Administer users' ] if $self->me->is_admin;
+  push @links, [ '/action/Users_Admin_Usergroup', 'Administer usergroups' ] if $self->me->is_admin;
+  return q() unless @links;
+  return $self->links_panel( 'Admin panel', \@links );
+}
 
 1;
 

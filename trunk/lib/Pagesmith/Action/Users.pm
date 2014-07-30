@@ -1,4 +1,4 @@
-package Pagesmith::Adaptor::Users;
+package Pagesmith::Action::Users;
 
 #+----------------------------------------------------------------------
 #| Copyright (c) 2014 Genome Research Ltd.
@@ -21,7 +21,7 @@ package Pagesmith::Adaptor::Users;
 #|     <http://www.gnu.org/licenses/>.
 #+----------------------------------------------------------------------
 
-## Base adaptor for objects in Users namespace
+## Base class for actions in Users namespace
 
 ## Author         : James Smith <js5@sanger.ac.uk>
 ## Maintainer     : James Smith <js5@sanger.ac.uk>
@@ -38,14 +38,47 @@ use utf8;
 
 use version qw(qv); our $VERSION = qv('0.1.0');
 
-use base qw(Pagesmith::Adaptor);
-use Pagesmith::Utils::ObjectCreator qw(bake_base_adaptor);
+use base qw(Pagesmith::Action Pagesmith::Support::Users);
 
-bake_base_adaptor;
+sub admin_wrap {
+  my ( $self, $title, @body ) = @_;
+  return $self
+    ->html
+    ->set_navigation_path( '/my_path' )
+    ->wrap_rhs(
+      $title,
+      $self->panel( '<h2>Users</h2>
+                     <h3>'.$self->encode( $title ).'</h3>',
+                    @body,
+      ),
+      '<% Users_Navigation -ajax %>',
+    )
+    ->ok;
+}
+
+sub my_wrap {
+  my ( $self, $title, $body ) = @_;
+  return $self->wrap( $title, $body )->ok;
+}
+
+sub my_wrap_no_heading {
+  my ( $self, $title, $body ) = @_;
+  return $self->wrap_no_heading( $title, $body )->ok;
+}
+
+sub run {
+  my $self = shift;
+  return $self->my_wrap( 'Users test',
+    $self->panel( '<p>Base action file created successfully</p>' ),
+  );
+}
 
 1;
 
 __END__
 Notes
 -----
+
+This is the generic Action code for all the code with objects in the
+namespace "Users".
 
