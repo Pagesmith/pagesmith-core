@@ -8,7 +8,7 @@
 // twoBit.js: packed-binary reference sequences
 //
 
-"use strict";
+
 
 if (typeof(require) !== 'undefined') {
     var bin = require('./bin');

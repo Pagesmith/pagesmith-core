@@ -8,7 +8,7 @@
 // ensembljson.js -- query the Ensembl REST API.
 //
 
-"use strict";
+
 
 if (typeof(require) !== 'undefined') {
     var sa = require('./sourceadapters');

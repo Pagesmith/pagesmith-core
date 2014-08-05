@@ -8,7 +8,7 @@
 // session.js
 //
 
-"use strict";
+
 
 if (typeof(require) != 'undefined') {
     var browser = require('./cbrowser');

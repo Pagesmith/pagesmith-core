@@ -8,7 +8,7 @@
 // sample.js: downsampling of quantitative features
 //
 
-"use strict";
+
 
 if (typeof(require) !== 'undefined') {
     var das = require('./das');

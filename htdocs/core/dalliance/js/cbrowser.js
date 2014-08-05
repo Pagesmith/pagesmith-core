@@ -8,7 +8,7 @@
 // cbrowser.js: canvas browser container
 //
 
-"use strict";
+
 
 if (typeof(require) !== 'undefined') {
     var utils = require('./utils');

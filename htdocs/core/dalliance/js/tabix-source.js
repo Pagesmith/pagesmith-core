@@ -8,7 +8,7 @@
 // tabix-source.js
 //
 
-"use strict";
+
 
 if (typeof(require) !== 'undefined') {
     var sa = require('./sourceadapters');

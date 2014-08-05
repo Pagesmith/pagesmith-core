@@ -8,7 +8,7 @@
 // kspace.js
 //
 
-"use strict";
+
 
 if (typeof(require) !== 'undefined') {
     var utils = require('./utils');

@@ -8,7 +8,7 @@
 // tabix.js: basic support for tabix-indexed flatfiles
 //
 
-"use strict";
+
 
 var TABIX_MAGIC = 0x01494254;
 

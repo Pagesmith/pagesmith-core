@@ -8,7 +8,7 @@
 // bin.js general binary data support
 //
 
-"use strict";
+
 
 if (typeof(require) !== 'undefined') {
     var utils = require('./utils');

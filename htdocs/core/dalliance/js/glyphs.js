@@ -8,7 +8,7 @@
 // glyphs.js: components which know how to draw themselves
 //
 
-"use strict";
+
 
 if (typeof(require) !== 'undefined') {
     var spans = require('./spans');

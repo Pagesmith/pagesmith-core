@@ -8,7 +8,7 @@
 // das.js: queries and low-level data model.
 //
 
-"use strict";
+
 
 if (typeof(require) !== 'undefined') {
     var utils = require('./utils');

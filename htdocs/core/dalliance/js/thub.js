@@ -8,7 +8,7 @@
 // thub.js: support for track-hub style registries
 //
 
-"use strict";
+
 
 if (typeof(require) !== 'undefined') {
     var utils = require('./utils');

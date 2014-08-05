@@ -8,7 +8,7 @@
 // bigtab.js: indexed tab-delimited flatfiles
 //
 
-"use strict";
+
 
 if (typeof(module) !== 'undefined') {
     var bin = require('./bin');

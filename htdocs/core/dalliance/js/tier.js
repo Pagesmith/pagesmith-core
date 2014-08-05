@@ -8,7 +8,7 @@
 // tier.js: (try) to encapsulate the functionality of a browser tier.
 //
 
-"use strict";
+
 
 if (typeof(require) !== 'undefined') {
     var utils = require('./utils');

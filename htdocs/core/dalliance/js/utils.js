@@ -8,7 +8,7 @@
 // utils.js: odds, sods, and ends.
 //
 
-"use strict";
+
 
 if (typeof(require) !== 'undefined') {
     var sha1 = require('./sha1');
