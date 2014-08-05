@@ -66,7 +66,6 @@ function dalliance_registerSourceAdapterFactory(type, factory) {
 var __dalliance_parserFactories = {};
 
 function dalliance_registerParserFactory(type, factory) {
-console.log( [ "TYPE "+type, factory ] );
     __dalliance_parserFactories[type] = factory;
 };
 
