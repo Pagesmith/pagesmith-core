@@ -6,7 +6,7 @@
 // feature-draw.js: new feature-tier renderer
 //
 
-"use strict";
+
 
 if (typeof(require) !== 'undefined') {
     var utils = require('./utils');

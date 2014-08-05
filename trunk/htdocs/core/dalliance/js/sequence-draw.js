@@ -8,7 +8,7 @@
 // sequence-draw.js: renderers for sequence-related data
 //
 
-"use strict";
+
 
 if (typeof(require) !== 'undefined') {
     var utils = require('./utils');

@@ -8,7 +8,7 @@
 // fetchworker.js
 //
 
-"use strict";
+
 
 var bin = require('./bin');
 var bam = require('./bam');

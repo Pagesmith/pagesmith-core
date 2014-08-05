@@ -8,7 +8,7 @@
 // tier-edit.js
 //
 
-"use strict";
+
 
 if (typeof(require) !== 'undefined') {
     var browser = require('./cbrowser');

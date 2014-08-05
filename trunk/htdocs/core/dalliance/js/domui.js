@@ -8,7 +8,7 @@
 // domui.js: SVG UI components
 //
 
-"use strict";
+
 
 if (typeof(require) !== 'undefined') {
     var browser = require('./cbrowser');

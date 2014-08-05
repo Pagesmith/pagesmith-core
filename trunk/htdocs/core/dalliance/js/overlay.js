@@ -8,7 +8,7 @@
 // overlay.js: featuresources composed from multiple underlying sources
 //
 
-"use strict";
+
 
 if (typeof(require) !== 'undefined') {
     var utils = require('./utils');

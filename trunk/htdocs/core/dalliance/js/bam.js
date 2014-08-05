@@ -8,7 +8,7 @@
 // bam.js: indexed binary alignments
 //
 
-"use strict";
+
 
 if (typeof(require) !== 'undefined') {
     var spans = require('./spans');

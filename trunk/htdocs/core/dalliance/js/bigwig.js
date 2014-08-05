@@ -8,7 +8,7 @@
 // bigwig.js: indexed binary WIG (and BED) files
 //
 
-"use strict";
+
 
 
 if (typeof(require) !== 'undefined') {

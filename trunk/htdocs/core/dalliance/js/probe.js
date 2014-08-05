@@ -8,7 +8,7 @@
 // bedwig.js
 //
 
-"use strict";
+
 
 if (typeof(require) !== 'undefined') {
     var bin = require('./bin');

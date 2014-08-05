@@ -8,7 +8,7 @@
 // spans.js: JavaScript Intset/Location port.
 //
 
-"use strict";
+
 
 
 function Range(min, max)

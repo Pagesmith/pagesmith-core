@@ -8,7 +8,7 @@
 // chainset.js: liftover support
 //
 
-"use strict";
+
 
 if (typeof(require) !== 'undefined') {
     var das = require('./das');

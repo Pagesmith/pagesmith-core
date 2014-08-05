@@ -8,7 +8,7 @@
 // color.js
 //
 
-"use strict";
+
 
 function DColour(red, green, blue, name) {
     this.red = red|0;
