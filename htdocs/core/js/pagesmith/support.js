@@ -378,11 +378,11 @@
     .on('click','#mainx .toggle-width',function() { $('#mainx').attr('id','main'); $('#rhsx').attr('id','rhs'); $(this).html('&#x21d4;').attr('title','Full width'); $(window).trigger('resize');} );
 
   /* On resize function to give "relative heights" to containers! */
-  function getPageSize(){
+  Pagesmith.getPageSize = function() {
     var de = document.documentElement;
     return {w: window.innerWidth  || (de&&de.clientWidth)  || document.body.clientWidth,
             h: window.innerHeight || (de&&de.clientHeight) || document.body.clientHeight };
-  }
+  };
 
   $('body').on('click','.confirm-click',function() {
     return window.confirm( $.metadata && $(this).metadata() && $(this).metadata().msg ? $(this).metadata().msg : 'Are you sure' );
@@ -393,7 +393,7 @@
       var config = $.extend({},
         { padding: 200, minheight: 400 },
         $.metadata && $(this).metadata() ? $(this).metadata() : {});
-      $(this).css('height',Math.max( (getPageSize()).h-config.padding,config.minheight )+'px' );
+      $(this).css('height',Math.max( (Pagesmith.getPageSize()).h-config.padding,config.minheight )+'px' );
     });
   });
   $(window).trigger('resize');
