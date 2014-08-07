@@ -58,31 +58,41 @@ sub run {
     'Password Change',
     '<p>Unfortunately we do not recognise the password change token provided</p>',
   ) unless $reset_obj;
+  my $user = $self->adaptor('User')->fetch_user( $reset_obj->get_user_id );
+  return  $self->my_wrap( 'Password change', '<p>The code you have entered is no longer valid</p>' )
+    if !$user || safe_md5( $user->get_password ) ne $reset_obj->get_checksum;
 
   ## no critic (LongChainsOfMethodCalls ImplicitNewlines)
   my $form = $self->stub_form->make_simple->make_form_post;
+     $form->add( 'String', 'name'  )->set_default_value( $user->get_name  )->set_readonly;
+     $form->add( 'Email',  'email' )->set_default_value( $user->get_email )->set_readonly;
      $form->add( 'SetPassword', 'new_password' )->set_strength( 'vstrong', $PASSWORD_LENGTH );
      $form->bake;
 
   if( $self->is_post && ! $form->is_invalid  ) {
     my $pw = $form->element('new_password')->scalar_value;
-    my $user = $self->adaptor('User')->fetch_user( $reset_obj->get_user_id );
-    return  $self->my_wrap( 'Password change', '<p>The code you have entered is no longer valid</p>' )
-      if safe_md5( $user->get_password ) ne $reset_obj->get_checksum;
-    if( $user ) {
-      $user->set_password( $pw )->store;
-      my $email = $self->mail_message
-        ->format_mime
-        ->set_subject(    'Reset password' )
-        ->add_email_name( 'To', $user->get_email )
-        ->get_templates(  'template' );
-      $email->add_markdown( "Reset password\n==================\n\nDear user\n\nYour password has recently been reset" );
-      $email->send_email;
-      $_->remove foreach @{$self->adaptor('PwChange' )->fetch_pwchanges_by_user( $user )};
-    }
-    return $self->my_wrap( q(Reset password),
-      '<p>If the email address you entered has an account registered against it
-        you will shortly receive an email with further instructions</p>' );
+    $user->set_password( $pw )->store;
+    $email = $self->mail_message
+      ->format_mime
+      ->set_subject(    'Reset password' )
+      ->add_email_name( 'To', $user->get_email )
+      ->get_templates(  'template' )
+      ->add_markdown( sprintf 'Reset password
+==================
+
+Dear %s,
+
+Your password has recently been reset
+', $user->get_name )
+      ->send_email;
+    $_->remove foreach @{$self->adaptor('PwChange' )->fetch_pwchanges_by_user( $user )};
+
+    $self->flash_message({
+      'title' => 'Your password has been reset',
+      'body'  => '<p>The password associated with your account has been reset - you can now log in with the new password</p>',
+    });
+
+    $self->redirect( '/users/Me' );
   }
   return $self->my_wrap( q(Reset password),
     '<p>To finish reseting your password enter the new password below</p>'.

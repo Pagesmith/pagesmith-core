@@ -49,8 +49,9 @@ sub run {
   my $user = $self->adaptor( 'User' )
                   ->fetch_user_by_method_code( 'user_db', $self->next_path_info );
 
+  return $self->redirect( '/users/Me' ) if $self->user->logged_in;
+
   if( $user ) {
-    return $self->redirect( '/users/Me' ) if $self->user->logged_in;
     return $self->my_wrap(
       'Already validated',
       '<p>Your account has already been validated</p>',
@@ -91,13 +92,13 @@ Dear user
           ->add_list( 'If you wish to cancel your account please visit:', [ $cancel_url ] )
           ->send_email;
         ## use critic
-        return $self->my_wrap(
-          'Validated',
-          '<p>Your account has been validated, and password set - please remember this the next time you log in.</p>',
-        );
-      } else {
-        return $self->my_wrap( q(Registration continued), $form->render );
+        $self->flash_message({
+          'title' => 'Email address validated and account activated',
+          'body'  => '<p>Your account has been validated, and password set - please remember this the next time you log in.</p>',
+        });
+        $self->redirect( '/users/Me' );
       }
+      return $self->my_wrap( q(Registration continued), $form->render );
     }
   }
 

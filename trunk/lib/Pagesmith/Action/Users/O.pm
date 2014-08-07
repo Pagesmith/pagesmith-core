@@ -50,6 +50,8 @@ sub run {
 
   my $user = $self->adaptor( 'User' )->fetch_user_by_method_code( 'user_db', $code );
 
+  return $self->redirect( '/users/Me' ) if $user && $user->get_status ne 'active';
+
   if( $user && $user->get_status eq 'cancelled' ) {
     if( $self->is_post ) {
       $user->set_status( 'active' )->store;
@@ -69,8 +71,11 @@ have been restored where possible.
         ->add_list( 'To see details of your account visit:', [ $self->base_url.'/users/Me' ] )
         ->send_email;
       ## use critic
-      return  $self->my_wrap( 'Your account has been re-opened',
-        '<p>You can now <a href="/login">Login to your account.</a></p>' );
+      $self->flash_message({
+        'title' => 'Your account has been re-opened',
+        'body'  => '<p>You will now need to <a href="/login">login to your account</a> to see the details</p>',
+      });
+      $self->redirect( '/users/Me' );
     } else {
       my $form = $self->stub_form->make_simple->make_form_post;
          $form->add( 'Information', '<p>Click below to re-open your account</p>' );
@@ -81,8 +86,8 @@ have been restored where possible.
          $form->bake;
       return $self->my_wrap( q(Re-open account), $form->render );
     }
-    return $self->my_wrap( 'Do not recognise account details', '<p>The link you supplied is either corrupted or out of date</p>' );
   }
+  return $self->my_wrap( 'Do not recognise account details', '<p>The link you supplied is either corrupted or out of date</p>' );
   ## use critic
 }
 
