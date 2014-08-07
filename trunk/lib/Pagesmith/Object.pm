@@ -95,7 +95,7 @@ sub get_created_ip {
 
 sub set_created_ip {
   my( $self, $value ) = @_;
-  $self->{'obj'}{'ip'} = $value;
+  $self->{'obj'}{'created_ip'} = $value;
   return $self;
 }
 
