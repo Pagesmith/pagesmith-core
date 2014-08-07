@@ -124,7 +124,6 @@ sub on_redirect {
   my $self = shift;
 
   my $flag = $self->object ? $self->update_object : $self->create_object;
-
   unless( $flag ) {
     $self->flash_message({
       'level'     => 'warn',
@@ -160,6 +159,7 @@ sub create_object {
     $o->$method( $self->element( $_ )->scalar_value );
   }
   $self->patch_object($o) if $self->can( 'patch_object' );
+  $o->store;
   return unless $o->store;
   $self->set_object( $o )->set_object_id( $o->uid );
   return 1;
