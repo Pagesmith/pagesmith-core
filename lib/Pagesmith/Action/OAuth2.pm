@@ -79,7 +79,6 @@ sub send_to_oauth2_provider {
   ( my $scope = uri_escape_utf8($conf->{'scope'}) ) =~ s{%20}{+}mxsg;
   my $URL = sprintf '%s?client_id=%s&redirect_uri=%s&scope=%s&state=%s&response_type=code',
     $conf->{'get_code'}, $client_id, uri_escape_utf8($redirect_url), $scope, $form_code;
-  printf {*STDERR} "URL: %s\n", $URL;
   return $self->redirect( $URL );
 }
 
@@ -101,6 +100,11 @@ sub run {
     exists $conf->{'sites'} && exists $conf->{'sites'}{$domain};
 
   my $state = $self->param('state');
+
+  my $error = $self->param('error')||q();
+
+  ## What to do if the user cancels...
+  return $self->redirect( '/form/-'.$state ) if $error;
 
   ## First time through this script there will be no state parameter
   ## So we need to redirect to create a state token and redirect to
@@ -144,32 +148,45 @@ sub run {
   return $self->error( 'Connection failed', $form ) unless $token;
 
   ## Now go off and get the user information... returns a JSON structure...
-  $resp = $ua->get( $conf->{'get_userinfo'}.'?access_token='.$token );
-
-  my $user_info = eval { $resp->is_success ? $self->json_decode( $resp->content ) : undef; };
+  my $user_info;
+  foreach ( split m{\s+}mxs, $conf->{'get_userinfo'} ) {
+    my $atn = exists $conf->{'access_token_name' } ? $conf->{'access_token_name' } : 'access_token';
+    $resp = $ua->get( "$_?$atn=$token" );
+    $user_info = eval { $resp->is_success ? $self->json_decode( $resp->content ) : undef; };
+  }
   return $self->error( 'connection failed', $form ) unless $user_info && ref $user_info eq 'HASH';
-  $user_info = $user_info->{'Profile'} if exists $user_info->{'Profile'};
+  my $details = $self->get_details( $user_info, $conf->{'details'} );
   ## Create user session and write cookie...
-  return $self->create_session( $user_info, $system_key )->redirect( $form->destroy_object->attribute('ref') );
+  return $self->create_session( $details, $system_key, $token, q() )->redirect( $form->destroy_object->attribute('ref') );
 }
 ## use critic
 
+sub get_details {
+  my( $self, $user_info, $keys ) = @_;
+  my $user_details = {};
+  my $details_cache = {};
+  foreach my $key ( keys {%{$keys}} ) {
+    my @info_keys = split m{\s+}mxs, $keys->{$key};
+    foreach my $info_key ( @info_keys ) {
+      unless( exists $details_cache->{$info_key} ) {
+        my $t = $user_info;
+        foreach (split m{[.]}mxs, $info_key) {
+          $t = $t->{$_};
+        }
+        $details_cache->{$info_key} = $t;
+      }
+    }
+    $user_details->{$key} = join q( ), @{$details_cache}{@info_keys};
+  }
+  return $user_details;
+}
+
 sub create_session {
-  my ( $self, $user_info, $system_key ) = @_;
-  my $user_details = {
-    'method' => 'OAuth2::'.$system_key,
-    'email'  => exists $user_info->{'email'}         ? $user_info->{'email'}
-              : exists $user_info->{'PrimaryEmail'}  ? $user_info->{'PrimaryEmail'}
-              : exists $user_info->{'emails'}        ? $user_info->{'emails'}{'account'}
-              :                                        undef,
-    'name'   => exists $user_info->{'name'}          ? $user_info->{'name'}
-              : exists $user_info->{'Name'}          ? $user_info->{'Name'}
-              :                                        undef,
-    'id'     => exists $user_info->{'id'}            ? $user_info->{'id'}
-              : exists $user_info->{'CustomerId'}    ? $user_info->{'CustomerId'}
-              :                                        undef,
-  };
-  Pagesmith::Session::User->new( $self->r )->initialize($user_details)->store->write_cookie if $user_details->{'email'};
+  my ( $self, $user_details, $system_key, $access_token, $refresh_token ) = @_;
+  $user_details->{'method'}        = 'OAuth2::'.$system_key;
+  $user_details->{'access_token'}  = $access_token;
+  $user_details->{'refresh_token'} = $refresh_token if $refresh_token;
+  Pagesmith::Session::User->new( $self->r )->initialize($user_details)->store->write_cookie;  ## no critic (LongChainsOfMethodCalls)
   return $self;
 }
 1;
