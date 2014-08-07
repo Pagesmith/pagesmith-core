@@ -97,7 +97,7 @@ sub authenticate {
     'id'      => $username,
     'email'   => $username,
     'ldap_id' => $uid,
-    'uid'    => $self->get_uid( $uid ),
+    'uid'     => $self->get_uid( $uid ),
     'name'    => $self->realname( $uid ),
     'groups'  => $self->user_groups( $uid ),
     'status'  => 'active',
@@ -130,7 +130,7 @@ sub get_uid {
   my $e = $self->_get_ldap_entry( \$uid );
   return q() unless $e;
   unless( exists $e->{'uidnumber'} ) {
-    $e->{'uidnumber'} = $e->{'raw'}->get_value('uidnumber');
+    $e->{'uidnumber'} = $e->{'raw'}->get_value('uidnumber') || $uid;
   }
   return $e->{'uidnumber'};
 }
