@@ -36,9 +36,9 @@ use version qw(qv); our $VERSION = qv('0.1.0');
 
 use Const::Fast qw(const);
 const my $MAX_FAILURES  => 3;
-const my $SLEEP_FACTOR  => 10;
+const my $SLEEP_FACTOR  => 2;
 
-use base qw(Pagesmith::MyForm);
+use base qw(Pagesmith::MyForm Pagesmith::SecureSupport);
 use Pagesmith::Utils::Authenticate;
 use Pagesmith::Core qw(safe_base64_encode);
 use Pagesmith::Session::User;
@@ -62,25 +62,56 @@ sub render_extra {
 
   my $pch = Pagesmith::Config->new( { 'file' => 'external_auth', 'location' => 'site' } )->load(1);
 
+## Is OAUTH2 enabled?
+
   my $oauth = $pch->get( 'oauth2' );
-  my $html = join q(),
-    map { sprintf '<li><a href="/action/OAuth2/%s/%s"><img src="/core/gfx/blank.gif" class="login-button login-%s" />Use %s credentials</a></li>',
-      $_, $self->code, $oauth->{$_}{'type'}, $oauth->{$_}{'name'}||$_  }
-    sort grep { exists $oauth->{$_}{'enabled'} && $oauth->{$_}{'enabled'} } keys %{$oauth};
+
+  my @panels;
+  my $c = $self->code;
+
+  push @panels, sprintf '<div class="col2">%s</div>', $self->panel( sprintf
+    q(<h3>Can't login</h3>
+      <h4>Register</h4>
+      <p class="wide-lines">
+        If you do not already have an account you
+        can <a class="btt" href="/users/Register/%s">register</a> for one,
+        or use one of the alternative login methods
+        below.
+      </p>
+      <h4>Forgot password</h4>
+      <p class="wide-lines">
+        If you have forgotten your password follow this
+        link to <a class="btt" href="/users/ForgotPassword/%s">reset your password</a>
+      </p>), $c, $c );
+  my @html = map { sprintf
+      '<li><a href="/action/OAuth2/%s/%s"><img src="/core/gfx/blank.gif" class="login-button login-%s" />... %s credentials</a></li>',
+      $_, $c, $oauth->{$_}{'type'}, $oauth->{$_}{'name'}||$_  }
+    sort grep { exists $oauth->{$_}{'enabled'} && $oauth->{$_}{'enabled'} }
+    keys %{$oauth};
+
+## Is shibboleth enabled?
 
   if( $pch->get( 'shibboleth', 'enabled' ) ) {
-    $html .= sprintf '<li><a href="/action/Shibboleth/%s"><img src="/core/gfx/blank.gif" class="login-button login-shib" />Use shibboleth</a></li>', $self->code;
+    push @html, sprintf '<li><a href="/action/Shibboleth/%s"><img src="/core/gfx/blank.gif" class="login-button login-shib" />... shibboleth</a></li>', $c;
   }
-  $html = sprintf '<h3>External authentication</h3><ul>%s</ul>', $html if $html;
+  push @panels, sprintf '<div class="col1">%s</div>',$self->panel( '<h3>Login with...</h3><ul>',@html,'</h3>' ) if @html;
 
+## Is openid enabled?
   ## no critic (ImplicitNewlines)
   if( $pch->get( 'openid', 'enabled' ) ) {
-    $html .= sprintf '<h3>Login with open ID:</h3>
-      <form method="post" action="/action/OpenId/%s" class="check"><p class="c"><input style="background: url(/core/gfx/openid.png) no-repeat 2px; width: 70%%; padding-left:22px" type="text" id="url" name="url" class="openid _url required" value="%s" /> <input type="submit" value="Go" /></p></form>', $self->code, $self->param( 'url' )||q();
+    push @panels, sprintf '<div class="col2">%s</div>', $self->panel( sprintf '
+  <h3>Login with openID</h3>
+  <form method="post" action="/action/OpenId/%s" class="check">
+    <p class="c">
+      <input type="text" id="url" name="url" class="openid _url required" value="%s" />
+      <input type="submit" value="Go" />
+    </p>
+  </form>', $c, $self->param( 'url' )||q() );
   }
   ## use critic
-  return q() unless $html || $html;
-  return sprintf q(<div class="panel">%s</div>), $html;
+
+## Return unless none-of-the-above are enabled..
+  return join q(), @panels;
 }
 
 sub initialize_form {
@@ -99,8 +130,9 @@ sub initialize_form {
        ->add_form_attribute( 'method',   'post' )
        ->set_option(         'validate_before_next' )
        ->set_option(         'cancel_button' )
-       ->set_option(         'no_reset', )
+       ->set_option(         'no_reset' )
        ->set_navigation_path( $ret )
+       ->set_expiry(         '1 hour' )                     # Expire form object 1 hour after any "setting" activity!
        ->set_no_progress
        ;
   ## use critic
@@ -120,6 +152,15 @@ sub initialize_form {
 
   $self->add_error_stage( 'unknown_user' )->set_back( 'Try again' )->set_back_stage( 0 );
     $self->add_raw_section( '<% File /core/inc/forms/unknown_user.inc %>', 'Unable to log in' );
+
+  my $encrypted_em_addr = $self->encrypt_url( 'users', $self->element('email')->value );
+  $self->add_error_stage( 'need_to_validate_email' )->set_back( 'Try again' )->set_back_stage( 0 );
+    $self->add_raw_section( '<h3>You need to validate your email</h3>
+      <p>When you registered your account an email was sent to the address you entered.
+        Please check your inbox and follow the link in the email.</p>
+      <p>If you have have not yet received this email (or deleted it) you
+        can <a href="/users/InviteReminder/-'.$self->code.'">click here to resend this initial email</a></p>',
+      'Unable to log in' );
 
   $self->add_error_stage( 'system_error' )->set_back( 'Try again' )->set_back_stage( 0 );
     $self->add_raw_section( '<% File /core/inc/forms/system_error.inc %>', 'Unable to log in' );
@@ -149,10 +190,16 @@ sub extra_validation {
   my $msg = $webuser->check_authentication;
 
   ## No message - successful login!
-  return $self->{ 'user_session_data' } = $webuser->details unless $msg;
-
+  unless( $msg ) {
+    if( $webuser->details->{'status'} eq 'active' ) {
+      return $self->{ 'user_session_data' } = $webuser->details;
+    }
+    return $self->set_stage_by_name( 'unknown_user', 1 ) unless $webuser->details->{'status'} eq 'pending';
+    $self->set_stage_by_name( 'need_to_validate_email', 1 );
+    return;
+  }
   ## If the msg was system failure - go to the system failure page
-  return $self->set_stage_by_name( 'system_error' ) if $msg eq 'System failure' ;
+  return $self->set_stage_by_name( 'system_error', 1 ) if $msg eq 'System failure' ;
   return $self->fail_user( $user_element, $pass_element );
 }
 
@@ -168,6 +215,14 @@ sub fail_user {
     $self->set_stage_by_name( 'unknown_user' );
   }
   return;
+}
+
+sub on_goto {
+  my( $self, $current_stage, $new_stage_id ) = @_;
+  if( $new_stage_id == 0 ) {
+    $self->set_stage( 0 );
+  }
+  return 1;
 }
 
 sub on_error { ## What should we do on an error stage!
