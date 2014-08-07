@@ -19,8 +19,8 @@ package Pagesmith::Action::Users::E;
 #|     <http://www.gnu.org/licenses/>.
 #+----------------------------------------------------------------------
 
-## Reset user password email verification URL - URL is purposefully short so doesn't get foobarred
-## in email!
+## Reset user email email verification URL - URL is purposefully short
+## so doesn't get foobarred in email!
 
 ## Author         : James Smith <js5@sanger.ac.uk>
 ## Maintainer     : James Smith <js5@sanger.ac.uk>
@@ -48,24 +48,22 @@ sub run {
 
   return $self->redirect_secure unless $self->is_secure;
 
-  my $key = $self->next_path_info;
+  ## Get password request object that has been sent!
+  my $reset_obj = $self->adaptor( 'EmailChange' )->fetch_emailchange_by_code( $self->next_path_info );
 
-  my $reset_obj = $self->adaptor( 'EmailChange' )->fetch_emailchange_by_code( $key );
   return $self->my_wrap(
     'Email Change',
-    '<p>Unfortunately we do not recognise the password change token provided</p>',
+    '<p>Unfortunately we do not recognise the email change token provided</p>',
   ) unless $reset_obj;
+
+  return $self->login_required  unless $self->user->logged_in;
+  return $self->no_permission   unless $self->user->auth_method eq 'user_db';
 
   my $user = $self->adaptor('User')->fetch_user_by_method_code( 'user_db', $self->user->uid );
 
   return $self->my_wrap(
     'Email Change',
-    '<p>Unfortunately we do not recognise the password change token provided</p>',
-  ) unless $reset_obj;
-
-  return $self->my_wrap(
-    'Email Change',
-    '<p>Unfortunately cannot update your account unless</p>',
+    '<p>Unfortunately the email change token provided is not for this account</p>',
   ) unless $user->get_user_id == $reset_obj->get_user_id
         && $user->get_email   eq $reset_obj->get_oldemail;
 
@@ -77,6 +75,7 @@ sub run {
      $form->bake;
 
   if( $self->is_post && ! $form->is_invalid ) {
+    ## This will redirect to the user account page!
     $user->set_email( $reset_obj->get_newemail )->store;
     $self->user->set_attribute( 'email', $reset_obj->get_newemail )->store;
     $self->mail_message
@@ -84,8 +83,21 @@ sub run {
       ->set_subject(    'Email changed' )
       ->add_email_name( 'To', $reset_obj->get_oldemail )
       ->get_templates(  'template' )
-      ->add_markdown( "Email changed\n==================\n\nDear user\n\nYour email has recently been change to:\n\n * ".
-          $reset_obj->get_newemail."\n\nfrom:\n\n * ".$reset_obj->get_oldemail )
+      ->add_markdown( sprintf 'Email changed
+==================
+
+Dear user
+
+Your email has recently been change to:
+
+ * %s
+
+from
+
+ * %s
+
+',
+          $reset_obj->get_newemail, $reset_obj->get_oldemail )
       ->send_email;
     $self->flash_message({
       'title' => 'Your email address has been changed',
@@ -96,11 +108,11 @@ sub run {
     $_->remove foreach @{$self->adaptor('EmailChange' )->fetch_emailchanges_by_user( $user )};
     return $self->redirect( '/users/Me' );
   }
+  ## use critic
   return $self->my_wrap( q(Email change),
     '<p>To finish changing your email check the details are correct.</p>'.
     $form->render,
   );
-  ## use critic
 }
 
 1;

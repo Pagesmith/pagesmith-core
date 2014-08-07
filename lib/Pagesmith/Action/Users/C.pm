@@ -19,8 +19,8 @@ package Pagesmith::Action::Users::C;
 #|     <http://www.gnu.org/licenses/>.
 #+----------------------------------------------------------------------
 
-## Cancel an account!
-## in email!
+## Cancel an account! File name is short as this is included in email
+## so to prevent chopping only use a single character!
 
 ## Author         : James Smith <js5@sanger.ac.uk>
 ## Maintainer     : James Smith <js5@sanger.ac.uk>
