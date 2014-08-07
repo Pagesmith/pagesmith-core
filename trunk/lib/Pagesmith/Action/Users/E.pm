@@ -39,8 +39,6 @@ use version qw(qv); our $VERSION = qv('0.1.0');
 
 use base qw(Pagesmith::Action::Users Pagesmith::SecureSupport);
 
-use Pagesmith::Core qw(safe_md5);
-
 sub run {
 #@params (self)
 ## Display admin for table for User in Users

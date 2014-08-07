@@ -139,7 +139,7 @@ validation link
 sub user_cs {
   my $self = shift;
   my $s = join q(:), $self->user->email, $self->user->name;
-  my $r = safe_md5( $s );
+  my $r = safe_md5( $self->escape($s) );
   return $r;
 }
 1;
