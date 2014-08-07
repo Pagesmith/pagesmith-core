@@ -52,6 +52,7 @@ sub run {
   return $self->no_content unless $conf;
 
   my $checksum      = $self->_compute_checksum( "$user:$pass", $conf );
+
   return $self->no_content unless $checksum eq $cs;
 
   my $cipher = Crypt::CBC->new(
@@ -98,7 +99,7 @@ sub send_response {
 }
 
 sub _compute_checksum {
-  my( $self,$string, $conf ) = @_;
+  my( $self, $string, $conf ) = @_;
   return safe_md5( sprintf '%s:%s', $conf->{'secret'}, $string );
 }
 
