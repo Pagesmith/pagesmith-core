@@ -76,8 +76,8 @@ sub run {
 </div>
 </div>',
     $self->twocol
-      ->add_entry( 'Username', $self->user->email       )
-      ->add_entry( 'Name',     $self->user->name        )
+      ->add_entry( 'Username', $self->encode( $self->user->email ) )
+      ->add_entry( 'Name',     $self->encode( $self->user->name  ) )
       ->add_entry( 'Method',   $self->user->auth_method )
       ->render.
     $extra, $groups,

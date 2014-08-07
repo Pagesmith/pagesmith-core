@@ -60,7 +60,7 @@ sub run {
   ) unless $reset_obj;
   my $user = $self->adaptor('User')->fetch_user( $reset_obj->get_user_id );
   return  $self->my_wrap( 'Password change', '<p>The code you have entered is no longer valid</p>' )
-    if !$user || safe_md5( $user->get_password ) ne $reset_obj->get_checksum;
+    if !$user || safe_md5( $self->encode( $user->get_password ) ) ne $reset_obj->get_checksum;
 
   ## no critic (LongChainsOfMethodCalls ImplicitNewlines)
   my $form = $self->stub_form->make_simple->make_form_post;
@@ -72,7 +72,7 @@ sub run {
   if( $self->is_post && ! $form->is_invalid  ) {
     my $pw = $form->element('new_password')->scalar_value;
     $user->set_password( $pw )->store;
-    $email = $self->mail_message
+    $self->mail_message
       ->format_mime
       ->set_subject(    'Reset password' )
       ->add_email_name( 'To', $user->get_email )

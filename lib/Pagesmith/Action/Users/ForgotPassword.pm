@@ -84,7 +84,7 @@ sub run {
       ## Create password change object!
       my $pw_reset = $self->adaptor('PwChange')->create
         ->set_user(       $user )
-        ->set_checksum( safe_md5( $user->get_password ) )
+        ->set_checksum( safe_md5( $self->encode( $user->get_password ) ) )
         ->set_expires_at( $time[0] )
         ->store;
       ## use critic
