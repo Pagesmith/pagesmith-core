@@ -91,6 +91,7 @@ sub execute {
 
   ## Initialise User session object!
   my $user_session = $self->page->user;
+  $user_session->fetch if $user_session;
   return $login_realm ? $template_sets->{$template}[1] : q()
     unless $user_session && $user_session->fetch && $user_session->name;
 
