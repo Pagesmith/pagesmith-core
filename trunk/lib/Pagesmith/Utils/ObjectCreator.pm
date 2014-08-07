@@ -34,15 +34,16 @@ use warnings;
 use utf8;
 
 use version qw(qv); our $VERSION = qv('0.1.0');
-use feature qw(switch);
-use Const::Fast qw(const);
-use Pagesmith::Root;
-use base qw(Exporter);
-use Pagesmith::Utils::Wrap;
-use List::Util qw(pairgrep pairmap pairfirst pairs);
-use English qw(-no_match_vars $EVAL_ERROR);
 
-our @EXPORT_OK = qw(bake bake_base_adaptor);
+use Const::Fast       qw(const);
+use base              qw(Exporter);
+use List::Util        qw(pairgrep pairmap pairfirst pairs);
+use English           qw(-no_match_vars $EVAL_ERROR);
+
+use Pagesmith::Root;
+use Pagesmith::Utils::Wrap;
+
+our @EXPORT_OK = qw(bake bake_base_adaptor); ## Only methods publicly visible - most bake methods wrapped in "bake" call
 our %EXPORT_TAGS = ( 'ALL' => \@EXPORT_OK );
 
 const my $DEFAULTS => {
@@ -50,13 +51,341 @@ const my $DEFAULTS => {
   'boolean' => 'no',
 };
 
-const my $LINE_WIDTH => 120;
+const my $LINE_WIDTH => 118;
 const my $LHS_WIDTH  => 53;
 my $root = Pagesmith::Root->new;
 
-## This will need our standard get other adaptor method call!
+########################################################################
+## Core functionality....
+########################################################################
+sub create_method {
+  my ( $pkg, $fn, $sub, $defn, $flag ) = @_;
+  my $method = $pkg.q(::).$fn;
+  no strict 'refs'; ## no critic (NoStrict)
+  if( defined &{$method} ) {
+    return if defined $flag && $flag eq 'no_std';
+    warn qq(Method "$fn" already exists on $pkg - defining "std_$fn"\n);
+    $fn = "std_$fn";
+    $method = $pkg.q(::).$fn;
+  }
+  if( 'CODE' eq ref $sub ) {
+    *{$method} = $sub;
+  } else {
+    *{$method} = eval $sub; ## no critic (StringyEval)
+  }
+  use strict;
+  $defn = "(?) $defn" if $defn && index $defn, '(';
+  return ($fn,$defn||q(-));
+}
 
-## Functions to define accessors for objects....
+sub create_auto {
+  my( $pkg, @methods ) = @_;
+  create_method( $pkg, 'auto_methods', sub {
+    my @m = sort { $a->[0] cmp $b->[0] } pairs 'auto_methods', q(), 'dump_methods', q(), @methods;
+    return @m;
+  } );
+  create_method( $pkg, 'dump_methods', sub {
+    my @m = sort { $a->[0] cmp $b->[0] } pairs
+      'auto_methods', '() List methods and their definition',
+      'dump_methods', '() Dump methods and their definition',
+      @methods;
+    ## no critic (LongChainsOfMethodCalls)
+    my $wr = Pagesmith::Utils::Wrap->new
+              ->set_separator("\n")
+              ->set_columns($LINE_WIDTH)
+              ->set_headers(q(                                                     ),
+                            q(                                                     ));
+    ## use critic
+    ( my $line = $pkg ) =~ s{.}{-}mxsg;
+    return sprintf "$pkg\n$line\n%s\n", join q(),
+      map { sprintf "  %-48s : %s\n",
+        $_->[1] ? "$_->[0]$_->[1]" : $_->[0],
+        substr $wr->wrap( $_->[2] ), $LHS_WIDTH }
+      map { $_->[1]=~m{[(]\s*(.*?)\s*[)]\s*(.*)}mxs
+          ? [ $_->[0], $1 ? "( $1 )": q(), $2 ]
+          : [ $_->[0], q(), $_->[1] ] }
+        @m;
+  } );
+  return;
+}
+
+########################################################################
+## Definitions of special column types
+##  * boolean
+##  * enum           (for object and adaptor)
+##  * index columns
+########################################################################
+
+sub define_boolean {
+  my( $pkg, $k, $default ) = @_;
+  return (
+    create_method( $pkg, q(is_).$k, sub {
+      my $self = shift;
+      return 'yes' eq ($self->{'obj'}{$k}||$default);
+    }, qq(() returns true if the boolean value for "$k" is true ("yes")) ),
+    create_method( $pkg, q(off_).$k, sub {
+      my $self = shift;
+      $self->{'obj'}{$k} = 'no';
+      return $self;
+    }, qq(() Sets the boolean value for "$k" to false ("no")) ),
+    create_method( $pkg, q(on_).$k, sub {
+      my $self = shift;
+      $self->{'obj'}{$k} = 'yes';
+      return $self;
+    }, qq(() Sets the boolean value for "$k" is true ("yes")) ),
+    create_method(  $pkg, q(set_).$k, sub {
+      my( $self, $value ) = @_;
+      $value = lc $value;
+      if( 'yes' eq $value || 'no' eq $value ) {
+        $self->{'obj'}{$k} = $value;
+      } else {
+        warn "Value for $k is incorrect ($value)\n";
+      }
+      return $self;
+    }, qq((val) Sets the boolean value for "$k" to true (val="yes") or false (val="no") or warns) ),
+  );
+}
+
+sub define_enum {
+  my( $pkg, $k, $pl, $default, $values ) = @_;
+  my $values_hash = 'HASH' eq ref $values
+                  ? $values
+                  : { 'HASH'  eq ref $values->[0] ? map { $_->{'value'} => $_->{'name'} } @{$values}
+                    : 'ARRAY' eq ref $values->[0] ? map { $_->[0]       => $_->[1]      } @{$values}
+                    :                               map { $_            => $_           } @{$values}
+                    };
+  my $values_ordered =  'ARRAY' eq ref $values
+    ? (
+        'HASH'  eq ref $values->[0] ? [ map {$_->{'value'}} @{$values} ]
+      : 'ARRAY' eq ref $values->[0] ? [ map {$_->[0]}       @{$values} ]
+      :                               $values,
+    )
+    : [sort { $values->{$a} cmp $values->{$b} } %{$values} ];
+  my $ordered_hash = [ map { [ $_ => $values_hash->{$_} ] } @{$values_ordered} ];
+  my $ordered_hr   = [ map { $values_hash->{$_} } @{$values_ordered} ];
+
+  return (
+    create_method( $pkg, q(is_).$k, sub {
+      my ( $self, $val ) = @_;
+      return $val eq ($self->{'obj'}{$k}||$default)||q();
+    }, qq((val) Check to see if field "$k" has given value)),
+    create_method( $pkg, q(set_).$k, sub {
+      my( $self, $value ) = @_;
+      if( exists $values_hash->{$value} ) {
+        $self->{'obj'}{$k} = $value;
+      } else {
+        warn "Value for $k is incorrect ($value)\n";
+      }
+      return $self;
+    }, qq(() Set value of enumerated field "$k")),
+    create_method( $pkg, q(get_).$k.q(_hr), sub {
+      my $self = shift;
+      return $values_hash->{$self->{'obj'}{$k}||$default};
+    }, qq(() Get human readable version of enumerated field "$k")),
+    create_method( $pkg, q(all_).$pl.q(_hr), sub {
+      return $ordered_hr;
+    }, qq(() Return an arrayref of human readable version of enumerated field "$k") ),
+    create_method( $pkg, q(all_).$pl.q(_sorted), sub {
+      return $ordered_hash;
+    }, qq(() Return an arrayref of arrayrefs of enumerated field "$k" values [[value, human readable value]]) ),
+    create_method( $pkg, $k.q(_hr), sub {
+      return map { exists $values_hash->{$_} ? $values_hash->{$_} : () } @_;
+    }, qq((val+) Return the human readable form of the enumerated field "$k") ),
+  );
+}
+
+sub define_enum_adaptor {
+  my( $pkg, $k, $pl, $values ) = @_;
+  my $values_hash = 'HASH' eq ref $values
+                  ? $values
+                  : { 'HASH'  eq ref $values->[0] ? map { $_->{'value'} => $_->{'name'} } @{$values}
+                    : 'ARRAY' eq ref $values->[0] ? map { $_->[0]       => $_->[1]      } @{$values}
+                    :                               map { $_            => $_           } @{$values}
+                    };
+  my $values_ordered =  'ARRAY' eq ref $values
+    ? (
+        'HASH'  eq ref $values->[0] ? [ map {$_->{'value'}} @{$values} ]
+      : 'ARRAY' eq ref $values->[0] ? [ map {$_->[0]}       @{$values} ]
+      :                               $values,
+    )
+    : [sort { $values->{$a} cmp $values->{$b} } %{$values} ];
+  my $ordered_hash = [ map { [ $_ => $values_hash->{$_} ] } @{$values_ordered} ];
+  my $ordered_hr   = [ map { $values_hash->{$_} } @{$values_ordered} ];
+
+  return (
+    create_method( $pkg, q(all_).$pl.q(_hr), sub {
+      return $ordered_hr;
+    }, qq(() Return an arrayref of human readable version of enumerated field "$k") ),
+    create_method( $pkg, q(all_).$pl.q(_sorted), sub {
+      return $ordered_hash;
+    }, qq(() Return an arrayref of arrayrefs of enumerated field "$k" values [[value, human readable value]]) ),
+    create_method( $pkg, $k.q(_hr), sub {
+      return map { exists $values_hash->{$_} ? $values_hash->{$_} : () } @_;
+    }, qq((val) Return the human readable form of the enumerated field "$k") ),
+  );
+}
+
+sub define_index {
+  my( $pkg, $k ) = @_;
+  return (
+    create_method( $pkg, q(set_).$k, sub {
+      my ( $self, $value ) = @_;
+      if( $value <= 0 ) {
+        warn "Trying to set non positive value for '$k'\n";
+      } else {
+        $self->{'obj'}{$k} = $value;
+      }
+      return $self;
+    }, qq((val) Set value of id key "$k", warn if value being set <=0) ),
+    create_method( $pkg, q(clear_).$k, sub {
+      my $self = shift;
+      $self->{'obj'}{$k} = 0;
+      return $self;
+    }, qq(() Clear id key "$k") ),
+  );
+}
+
+sub define_uid {
+  my( $pkg, $k ) = @_;
+  return (
+    create_method( $pkg, q(uid), sub {
+      my $self = shift;
+      return $self->{'obj'}{$k};
+    }, qq(() Get value of unique id field "$k") ),
+    create_method( $pkg, 'clear_uid', sub {
+      my $self = shift;
+      $self->{'obj'}{$k} = 0;
+      return $self;
+    }, qq(() Clear value of unique id field "$k") ),
+  );
+}
+
+########################################################################
+## Definitions of get and set functions for properties
+##  * set
+##  * get
+##  * get/set for related columns
+##  * get all
+##  * get by relationship value
+########################################################################
+
+sub define_set {
+  my( $pkg, $k ) = @_;
+  return create_method( $pkg, q(set_).$k, sub {
+    my($self,$value) = @_;
+    $self->{'obj'}{$k} = $value;
+    return $self;
+  }, qq((val) Set value of property "$k") );
+}
+
+sub define_get {
+  my( $pkg, $k, $default ) = @_;
+  return create_method( $pkg, q(get_).$k, sub {
+    my $self = shift;
+    return defined $self->{'obj'}{$k} ? $self->{'obj'}{$k} : $default;
+  }, qq(() Get value of property "$k") );
+}
+
+sub define_related_get_set {
+  my( $pkg, $type, $k, $derived ) = @_;
+  my $fetch_method = 'fetch_'.lc $type;
+  my $get_method   = 'get_'.$k;
+  (my $obj_key = $k) =~ s{_id\Z}{}mxsg;
+  ## Object/get setters!
+  ## no critic (InterpolationOfMetachars)
+  my $set_perl = sprintf q(sub {
+      my ( $self, $%1$s ) = @_;
+      $%1$s = $self->get_other_adaptor( '%2$s' )->%3$s( $%1$s ) unless ref $%1$s;
+      if( $%1$s ) {
+        $self->{'obj'}{'%4$s'} = $%1$s->uid;%5$s
+      }
+      return $self;
+    }),
+      $obj_key, $type, $fetch_method, $k,
+      join q(),
+      map { sprintf "\n".q(    $self->{'obj'}{'%s'} = $%s->get_%s;), $derived->{$_}, $obj_key, $_ }
+      keys %{$derived};
+
+  return (
+    create_method( $pkg, 'get_'.$obj_key, sub {
+      my $self = shift;
+      return $self->get_other_adaptor( $type )->$fetch_method( $self->$get_method );
+    }, qq(() fetch related objects of type "$type" given "$k") ),
+    create_method( $pkg, 'set_'.$obj_key, $set_perl, qq((Obj) Set related object of type "$type" associated with object via "$k") ),
+  );
+  ## use critic
+}
+
+sub define_related_get_all {
+  my( $pkg, $type, $k, $my_type ) = @_;
+  my $method = sprintf 'fetch_%s_by_%s', $k, lc $my_type;
+  return create_method( $pkg, q(fetch_all_).$k, sub {
+    my $self = shift;
+    return $self->get_other_adaptor( $type )->$method( $self );
+  }, qq(() Fetch objects of type "$type" related to self via index "$k") );
+}
+
+sub define_related_get_rel {
+  my( $pkg, $k, $my_type ) = @_;
+  my $method = sprintf 'get_%s_by_%s', lc $k, lc $my_type;
+  return create_method( $pkg, 'get_'.lc $k, sub {
+    my $self = shift;
+    return $self->get_other_adaptor( $k )->$method( $self );
+  }, qq(() Get related values of type "$k") );
+}
+
+## Functions that munge the object configuration structure
+## Merge in relationships!
+
+########################################################################
+##+------------------------------------------------------------------+##
+##| Function to munge definition into more usable form...            |##
+##+------------------------------------------------------------------+##
+########################################################################
+
+sub parse_defn {
+  my ( $defn, $type ) = @_;
+  if( exists $defn->{'relationships'}{$type} ) {
+    return {
+      'type'       => 'relationship',
+      'objects'    => $defn->{'relationships'}{$type}{'objects'   }||[],
+      'audit'      => $defn->{'relationships'}{$type}{'audit'     }||{},
+      'additional' => $defn->{'relationships'}{$type}{'additional'}||[],
+    };
+  }
+  my $d = $defn->{'objects'}{$type};
+  #use Data::Dumper; print Dumper( $d );
+  my $definition = {
+    'type'           => $type,
+    'properties'     => $d->{'properties'},
+    'related'        => [],
+  };
+
+  foreach (qw(properties plural audit remove admin fetch_by)) {
+    $definition->{$_} = $d->{$_} if exists $d->{$_};
+  }
+
+  if( exists $d->{'related'} ) {
+    push @{$definition->{'related'}}, @{$d->{'related'}};
+  }
+
+  if( exists $defn->{'relationships'} ) {
+    foreach my $r ( keys $defn->{'relationships'} ) {
+      my $flag = 0;
+      foreach ( pairs @{$defn->{'relationships'}{$r}{'objects'}} ) {
+        $flag = 1 if $_->[1] eq $type;
+      }
+      push @{$definition->{'related'}},$r,$defn->{'relationships'}{$r} if $flag;
+    }
+  }
+  return $definition;
+}
+
+########################################################################
+##+------------------------------------------------------------------+##
+##| Bake methods which bake objects, adaptors etc......              |##
+##+------------------------------------------------------------------+##
+########################################################################
 
 sub bake {
   my( @pars ) = @_;
@@ -96,26 +425,6 @@ sub bake {
   return bake_support( $pkg ) if $type eq 'Support';
   warn qq(Unknown object type "$type"\n);
   return;
-}
-
-sub create_method {
-  my ( $pkg, $fn, $sub, $defn, $flag ) = @_;
-  my $method = $pkg.q(::).$fn;
-  no strict 'refs'; ## no critic (NoStrict)
-  if( defined &{$method} ) {
-    return if defined $flag && $flag eq 'no_std';
-    warn qq(Method "$fn" already exists on $pkg - defining "std_$fn"\n);
-    $fn = "std_$fn";
-    $method = $pkg.q(::).$fn;
-  }
-  if( 'CODE' eq ref $sub ) {
-    *{$method} = $sub;
-  } else {
-    *{$method} = eval $sub; ## no critic (StringyEval)
-  }
-  use strict;
-  $defn = "(?) $defn" if $defn && index $defn, '(';
-  return ($fn,$defn||q(-));
 }
 
 sub bake_relationship {
@@ -212,13 +521,14 @@ sub bake_adaptor {
 
   my ($uid_column,$uid_defn) =                pairfirst { 'uid'  eq (ref $b ? $b->{'type'} : $b )           } @props;
   my @columns                = pairmap { $a } pairgrep  { 'uid'  ne (ref $b ? $b->{'type'} : $b )           } @props;
-  my @unique_columns         =                pairgrep  { ref $b && exists $b->{'unique'} && $b->{'unique'} } @props;
+  my @unique_columns         =                pairgrep  { ref $b && exists $b->{'unique'} && $b->{'unique'} ||
+                                                          'uuid' eq (ref $b ? $b->{'type'} : $b )           } @props;
   my @enum_columns           =                pairgrep  { 'enum' eq (ref $b ? $b->{'type'} : $b )           } @props;
+  my @uuid_columns           = pairmap { $a } pairgrep  { 'uuid' eq (ref $b ? $b->{'type'} : $b )           } @props;
 
   foreach ( pairs @enum_columns) {
     my($k,$v) = @{$_};
     my $pl = exists $v->{'plural'} ? $v->{'plural'} : $k.'s';
-#    warn ">> $_ -> $pl <<";
     push @methods, define_enum_adaptor( $pkg, $k, $pl, $v->{'values'} );
   }
 
@@ -227,6 +537,9 @@ sub bake_adaptor {
   my @update_audit_columns;
   my $create_audit_functions = q();
   my $update_audit_functions = q();
+  foreach (@uuid_columns) {
+    $create_audit_functions .= sprintf '$o->set_%s( $self->safe_uuid ) unless $o->get_%s;', $_, $_;
+  }
   if( exists $config->{'audit'} ) { ## We need to add audit columns!!
     if( exists $config->{'audit'}{'user_id'} ) {
       if( $config->{'audit'}{'user_id'} ne 'update' ) {
@@ -236,20 +549,16 @@ sub bake_adaptor {
       if( $config->{'audit'}{'user_id'} ne 'create' ) {
         push @update_audit_columns, 'updated_by_id';
         $update_audit_functions .= '$o->set_updated_by_id( $self->user_id );';
-        push @create_audit_columns, 'updated_by_id';
-        $create_audit_functions .= '$o->set_updated_by_id( $self->user_id );';
       }
     }
     if( exists $config->{'audit'}{'user'} ) {
       if( $config->{'audit'}{'user'} ne 'update' ) {
         push @create_audit_columns, 'created_by';
-        $create_audit_functions .= '$o->set_created_by( $self->user_name );';
+        $create_audit_functions .= '$o->set_created_by( $self->user_username );';
       }
       if( $config->{'audit'}{'user'} ne 'create' ) {
-        push @create_audit_columns, 'updated_by';
-        $create_audit_functions .= '$o->set_updated_by( $self->user_name );';
         push @update_audit_columns, 'updated_by';
-        $update_audit_functions .= '$o->set_updated_by( $self->user_name );';
+        $update_audit_functions .= '$o->set_updated_by( $self->user_username );';
       }
     }
     if( exists $config->{'audit'}{'datetime'} ) {
@@ -258,20 +567,17 @@ sub bake_adaptor {
         $create_audit_functions .= '$o->set_created_at( $self->now );';
       }
       if( $config->{'audit'}{'datetime'} ne 'create' ) {
-        push @create_audit_columns, 'updated_at';
-        $create_audit_functions .= '$o->set_updated_at( $self->now );';
         push @update_audit_columns, 'updated_at';
         $update_audit_functions .= '$o->set_updated_at( $self->now );';
       }
     }
+
     if( exists $config->{'audit'}{'ip'} ) {
       if( $config->{'audit'}{'ip'} ne 'update' ) {
         push @create_audit_columns, 'created_ip';
         $create_audit_functions .= '$o->set_created_ip( $self->user_ip );';
       }
       if( $config->{'audit'}{'ip'} ne 'create' ) {
-        push @create_audit_columns, 'updated_ip';
-        $create_audit_functions .= '$o->set_updated_ip( $self->user_ip );';
         push @update_audit_columns, 'updated_ip';
         $update_audit_functions .= '$o->set_updated_ip( $self->user_ip );';
       }
@@ -282,20 +588,23 @@ sub bake_adaptor {
         $create_audit_functions .= '$o->set_created_useragent( $self->user_useragent );';
       }
       if( $config->{'audit'}{'useragent'} ne 'create' ) {
-        push @create_audit_columns, 'updated_useragent';
-        $create_audit_functions .= '$o->set_updated_useragent( $self->user_useragent );';
         push @update_audit_columns, 'updated_useragent';
         $update_audit_functions .= '$o->set_updated_useragent( $self->user_useragent );';
       }
     }
+    push @create_audit_columns, @update_audit_columns;
+    $create_audit_functions .=  $update_audit_functions;
   }
   ## use critic
   my %c_related;
   foreach ( pairs @{$config->{'related'}} ) {
     my ($k,$conf) = @{$_};
     $c_related{$k}=$conf;
-    if( exists $conf->{'to'} && exists $conf->{'derived'} ) {
-      $derived_tables->{$k}{$_} = $conf->{'derived'}{$_} foreach keys %{$conf->{'derived'}};
+    if( exists $conf->{'to'} ) {
+      $derived_tables->{$k}={};
+      if( exists $conf->{'derived'} ) {
+        $derived_tables->{$k}{$_} = $conf->{'derived'}{$_} foreach keys %{$conf->{'derived'}};
+      }
     }
     if( exists $conf->{'to'} ) {
       ( my $sel_type = $k )=~s{_id\Z}{}mxs;
@@ -310,7 +619,40 @@ sub bake_adaptor {
       }, qq((Obj|idx) Fetch all objects given related value/object linked by "$k") );
     }
   }
+  ## no critic (InterpolationOfMetachars)
+  if( exists $config->{'fetch_by'} ) {
+    foreach my $conf ( @{$config->{'fetch_by'}} ) {
+      my $name;
+      my $description;
+      my $pars = join q(, ), map { q($).lc $_ } @{$conf->{'keys'}};
+      my $fetch_perl = sprintf q(
+sub {
+  my( $self, %s ) = @_;),  $pars;
+      ## We need to add something here to get objects into values if required!
+      my $fetch_sql = q(select '.$self->full_column_names.$self->audit_column_names.'
+                         from '.$self->select_tables.').'
+                        where '. join q( and ), map { 'o.'.lc $_.' = ?' } @{$conf->{'keys'}};
+      if( exists $conf->{'unique'} && $conf->{'unique'} ) {
+        $name = join q(_), 'fetch', $singular, 'by', map { lc $_ } @{$conf->{'keys'}};
+        $description = q((...) Fetch object given related values);
+        $fetch_perl .= sprintf q(
+  my $t = $self->row_hash( '%s', %s );
+  return $self->%s( $t ) if $t;
+  return;
+}), $fetch_sql, $pars, $make_method;
 
+      } else {
+        $name = join q(_), 'fetch', $plural,   'by', map { lc $_ } @{$conf->{'keys'}};
+        $description = q((...) Fetch all objects given related values);
+        $fetch_sql .= ' order by o.'.$uid_column;
+        $fetch_perl .= sprintf q(
+  return [ map { $self->%s( $_ ) } @{$self->all_hash( '%s', %s )} ];
+}), $make_method, $fetch_sql, $pars;
+      }
+      push @methods,  create_method( $pkg, $name, $fetch_perl, $description );
+    }
+  }
+  ## use critic
   my $full_column_names = join q(, ), map { "o.$_" } $uid_column, @columns;
   my $table_map = {};
   my $tid = 0;
@@ -351,12 +693,14 @@ sub bake_adaptor {
 sub {
   my( $self, $o ) = @_;
   %5$s
-  return $o->set_%1$s_id( $self->insert( '
+  my $new_id = $self->insert( '
     insert into `%1$s`
            ( %2$s )
     values ( %3$s )',
     '%1$s', '%1$s_id',
-    %4$s ) );
+    %4$s );
+  return unless $new_id;
+  return $o->set_%1$s_id( $new_id );
 }), $singular,
     ( join qq(,\n           ), @columns, @create_audit_columns ),
     ( join q(,), map { q(?) }  @columns, @create_audit_columns ),
@@ -381,7 +725,9 @@ sub {
 
   push @methods,
 
-    create_method( $pkg, 'mail_domain', sub { return $mail_domain; }, '() Return mail domain - only used in scripts to conver userid to email address' ),
+    create_method( $pkg, 'mail_domain', sub {
+      return $mail_domain;
+    }, '() Return mail domain - only used in scripts to conver userid to email address' ),
     ## Lightweight creator methods!
     create_method( $pkg, $make_method, sub {
       my($self,$hashref,$partial)=@_;
@@ -429,7 +775,7 @@ sub {
     ;
     foreach ( pairs @enum_columns) {
       my($enum_type,$v) = @{$_};
-      push @methods, create_method( $pkg, 'fetch_'.$singular.'_by_'.$enum_type, sub {
+      push @methods, create_method( $pkg, 'fetch_'.$plural.'_by_'.$enum_type, sub {
         my ($self,$val) = @_;
         my $t = $self->row_hash(
           'select '.$self->full_column_names.$self->audit_column_names.'
@@ -474,236 +820,6 @@ sub {
   return;
 }
 
-sub create_auto {
-  my( $pkg, @methods ) = @_;
-  create_method( $pkg, 'auto_methods', sub {
-    my @m = sort { $a->[0] cmp $b->[0] } pairs 'auto_methods', q(), 'dump_methods', q(), @methods;
-    return @m;
-  } );
-  create_method( $pkg, 'dump_methods', sub {
-    my @m = sort { $a->[0] cmp $b->[0] } pairs 'auto_methods', '() List methods and their definition', 'dump_methods', '() Dump methods and their definition', @methods;
-    my $wr = Pagesmith::Utils::Wrap->new
-                ->set_columns($LINE_WIDTH)
-                ->set_headers(q(                                                     ),q(                                                     ));
-    return sprintf "Package: $pkg\n\n%s\n", join q(),
-      map { sprintf "%30s%-20s : %s\n", $_->[0], $_->[1], substr $wr->wrap( $_->[2] ), $LHS_WIDTH }
-      map { $_->[1]=~m{[(]\s*(.*?)\s*[)]\s*(.*)}mxs
-          ? [ $_->[0], $1 ? "( $1 )": q(( )), $2 ]
-          : [ $_->[0], q(), $_->[1] ] }
-        @m;
-  } );
-  return;
-}
-
-sub define_boolean {
-  my( $pkg, $k, $default ) = @_;
-  return (
-    create_method( $pkg, q(is_).$k, sub {
-      my $self = shift;
-      return 'yes' eq ($self->{'obj'}{$k}||$default);
-    }, qq(() returns true if the boolean value for "$k" is true ("yes")) ),
-    create_method( $pkg, q(off_).$k, sub {
-      my $self = shift;
-      $self->{'obj'}{$k} = 'no';
-      return $self;
-    }, qq(() Sets the boolean value for "$k" to false ("yes")) ),
-    create_method( $pkg, q(on_).$k, sub {
-      my $self = shift;
-      $self->{'obj'}{$k} = 'yes';
-      return $self;
-    }, qq(() Sets the boolean value for "$k" is true ("yes")) ),
-    create_method(  $pkg, q(set_).$k, sub {
-      my( $self, $value ) = @_;
-      $value = lc $value;
-      if( 'yes' eq $value || 'no' eq $value ) {
-        $self->{'obj'}{$k} = $value;
-      } else {
-        warn "Value for $k is incorrect ($value)\n";
-      }
-      return $self;
-    }, qq((val) Sets the boolean value for "$k" to true (val="yes") or false (val="no") or warns) ),
-  );
-}
-
-sub define_enum {
-  my( $pkg, $k, $pl, $default, $values ) = @_;
-  my $values_hash = 'HASH' eq ref $values
-                  ? $values
-                  : { 'HASH'  eq ref $values->[0] ? map { $_->{'value'} => $_->{'name'} } @{$values}
-                    : 'ARRAY' eq ref $values->[0] ? map { $_->[0]       => $_->[1]      } @{$values}
-                    :                               map { $_            => $_           } @{$values}
-                    };
-  my $values_ordered =  'ARRAY' eq ref $values
-    ? (
-        'HASH'  eq ref $values->[0] ? [ map {$_->{'value'}} @{$values} ]
-      : 'ARRAY' eq ref $values->[0] ? [ map {$_->[0]}       @{$values} ]
-      :                               $values,
-    )
-    : [sort { $values->{$a} cmp $values->{$b} } %{$values} ];
-  my $ordered_hash = [ map { [ $_ => $values_hash->{$_} ] } @{$values_ordered} ];
-  my $ordered_hr   = [ map { $values_hash->{$_} } @{$values_ordered} ];
-
-  return (
-    create_method( $pkg, q(is_).$k, sub {
-      my ( $self, $val ) = @_;
-      return $val eq ($self->{'obj'}{$k}||$default)||q();
-    }, qq((val) Check to see if field "$k" has given value)),
-    create_method( $pkg, q(set_).$k, sub {
-      my( $self, $value ) = @_;
-      if( exists $values_hash->{$value} ) {
-        $self->{'obj'}{$k} = $value;
-      } else {
-        warn "Value for $k is incorrect ($value)\n";
-      }
-      return $self;
-    }, qq(() Get value of enumerated field "$k")),
-    create_method( $pkg, q(get_).$k.q(_hr), sub {
-      my $self = shift;
-      return $values_hash->{$self->{'obj'}{$k}||$default};
-    }, qq(() Get human readable version of enumerated field "$k")),
-    create_method( $pkg, q(all_).$pl.q(_hr), sub {
-      return $ordered_hr;
-    }, qq(() Return an arrayref of hr version of enumerated field "$k") ),
-    create_method( $pkg, q(all_).$pl.q(_sorted), sub {
-      return $ordered_hash;
-    }, qq(() Return an arrayref of arrayrefs of enumerated field "$k"values [[value, hr value]]) ),
-    create_method( $pkg, $k.q(_hr), sub {
-      return map { exists $values_hash->{$_} ? $values_hash->{$_} : () } @_;
-    }, qq((val+) Return the human readable form of the enumerated field "$k") ),
-  );
-}
-
-sub define_enum_adaptor {
-  my( $pkg, $k, $pl, $values ) = @_;
-  my $values_hash = 'HASH' eq ref $values
-                  ? $values
-                  : { 'HASH'  eq ref $values->[0] ? map { $_->{'value'} => $_->{'name'} } @{$values}
-                    : 'ARRAY' eq ref $values->[0] ? map { $_->[0]       => $_->[1]      } @{$values}
-                    :                               map { $_            => $_           } @{$values}
-                    };
-  my $values_ordered =  'ARRAY' eq ref $values
-    ? (
-        'HASH'  eq ref $values->[0] ? [ map {$_->{'value'}} @{$values} ]
-      : 'ARRAY' eq ref $values->[0] ? [ map {$_->[0]}       @{$values} ]
-      :                               $values,
-    )
-    : [sort { $values->{$a} cmp $values->{$b} } %{$values} ];
-  my $ordered_hash = [ map { [ $_ => $values_hash->{$_} ] } @{$values_ordered} ];
-  my $ordered_hr   = [ map { $values_hash->{$_} } @{$values_ordered} ];
-
-  return (
-    create_method( $pkg, q(all_).$pl.q(_hr), sub {
-      return $ordered_hr;
-    }, qq(() Return an arrayref of hr version of enumerated field "$k") ),
-    create_method( $pkg, q(all_).$pl.q(_sorted), sub {
-      return $ordered_hash;
-    }, qq(() Return an arrayref of arrayrefs of enumerated field "$k"values [[value, hr value]]) ),
-    create_method( $pkg, $k.q(_hr), sub {
-      return map { exists $values_hash->{$_} ? $values_hash->{$_} : () } @_;
-    }, qq((val) Return the human readable form of the enumerated field "$k") ),
-  );
-}
-
-sub define_index {
-  my( $pkg, $k ) = @_;
-  return (
-    create_method( $pkg, q(set_).$k, sub {
-      my ( $self, $value ) = @_;
-      if( $value <= 0 ) {
-        warn "Trying to set non positive value for '$k'\n";
-      } else {
-        $self->{'obj'}{$k} = $value;
-      }
-      return $self;
-    }, qq((val) Set value of id key "$k", warn if value being set <=0) ),
-    create_method( $pkg, q(clear_).$k, sub {
-      my $self = shift;
-      $self->{'obj'}{$k} = 0;
-      return $self;
-    }, qq(() Clear id key "$k") ),
-  );
-}
-
-sub define_set {
-  my( $pkg, $k ) = @_;
-  return create_method( $pkg, q(set_).$k, sub {
-    my($self,$value) = @_;
-    $self->{'obj'}{$k} = $value;
-    return $self;
-  }, qq((val) Set value of property "$k") );
-}
-
-sub define_get {
-  my( $pkg, $k, $default ) = @_;
-  return create_method( $pkg, q(get_).$k, sub {
-    my $self = shift;
-    return defined $self->{'obj'}{$k} ? $self->{'obj'}{$k} : $default;
-  }, qq(() Get value of property "$k") );
-}
-
-sub define_uid {
-  my( $pkg, $k ) = @_;
-  return (
-    create_method( $pkg, q(uid), sub {
-      my $self = shift;
-      return $self->{'obj'}{$k};
-    }, qq(() Get value of unique id field "$k") ),
-    create_method( $pkg, 'clear_uid', sub {
-      my $self = shift;
-      $self->{'obj'}{$k} = 0;
-      return $self;
-    }, qq(() Clear value of unique id field "$k") ),
-  );
-}
-
-sub define_related_get_set {
-  my( $pkg, $type, $k, $derived ) = @_;
-  my $fetch_method = 'fetch_'.lc $type;
-  my $get_method   = 'get_'.$k;
-  (my $obj_key = $k) =~ s{_id\Z}{}mxsg;
-  ## Object/get setters!
-  ## no critic (InterpolationOfMetachars)
-  my $set_perl = sprintf q(sub {
-      my ( $self, $%1$s ) = @_;
-      $%1$s = $self->get_other_adaptor( '%2$s' )->%3$s( $%1$s ) unless ref $%1$s;
-      if( $%1$s ) {
-        $self->{'obj'}{'%4$s'} = $%1$s->uid;%5$s
-      }
-      return $self;
-    }),
-      $obj_key, $type, $fetch_method, $k,
-      join q(),
-      map { sprintf "\n".q(    $self->{'obj'}{'%s'} = $%s->get_%s;), $derived->{$_}, $obj_key, $_ }
-      keys %{$derived};
-
-  return (
-    create_method( $pkg, 'get_'.$obj_key, sub {
-      my $self = shift;
-      return $self->get_other_adaptor( $type )->$fetch_method( $self->$get_method );
-    }, qq(() fetch related objects of type "$type" given "$k") ),
-    create_method( $pkg, 'set_'.$obj_key, $set_perl, qq((Obj) Set related object of type "$type" associated with object via "$k") ),
-  );
-  ## use critic
-}
-
-sub define_related_get_all {
-  my( $pkg, $type, $k, $my_type ) = @_;
-  my $method = sprintf 'fetch_%s_by_%s', $k, lc $my_type;
-  return create_method( $pkg, q(fetch_all_).$k, sub {
-    my $self = shift;
-    return $self->get_other_adaptor( $type )->$method( $self );
-  }, qq(() Fetch objects of type "$type" related to self via index "$k") );
-}
-
-sub define_related_get_rel {
-  my( $pkg, $k, $my_type ) = @_;
-  my $method = sprintf 'get_%s_by_%s', lc $k, lc $my_type;
-  return create_method( $pkg, 'get_'.lc $k, sub {
-    my $self = shift;
-    return $self->get_other_adaptor( $k )->$method( $self );
-  }, qq(() Get related values of type "$k") );
-}
-
 sub bake_object {
   my( $pkg, $config, $ot ) = @_;
 
@@ -724,15 +840,14 @@ sub bake_object {
     push @methods, define_get( $pkg, $k, $default );          ## General Get method...
     push @methods, define_uid( $pkg, $k )  if $type eq 'uid'; ## unique ID property!;
 
-    for( $type ) {                             ## Methods for different object types...
-      when( $_ eq 'boolean' )           { push @methods, define_boolean(  $pkg, $k, $default ); }
-      when( $_ eq 'enum'    )           {
-        my $pl = exists $defn->{'plural'} ? $defn->{'plural'} : $k.'s';
-#        warn ">> $k -> $pl <<";
-        push @methods, define_enum(     $pkg, $k, $pl, $default, $defn->{'values'} );
-      }
-      when( $_ eq 'id' || $_ eq 'uid' ) { push @methods, define_index(    $pkg, $k ); }
-      default                           { push @methods, define_set(      $pkg, $k ); }
+    if( $type eq 'enum') {
+      my $pl = exists $defn->{'plural'} ? $defn->{'plural'} : $k.'s';
+      push @methods, define_enum(     $pkg, $k, $pl, $default, $defn->{'values'} );
+    } else {
+      push @methods, $type eq 'boolean'              ? define_boolean(  $pkg, $k, $default )
+                   : $type eq 'id' || $type eq 'uid' ? define_index(    $pkg, $k )
+                   :                                   define_set(      $pkg, $k )
+                   ;
     }
   }
 
@@ -760,58 +875,24 @@ sub bake_object {
   return;
 }
 
-## Functions that munge the object configuration structure
-## Merge in relationships!
-
-sub parse_defn {
-  my ( $defn, $type ) = @_;
-  if( exists $defn->{'relationships'}{$type} ) {
-    return { 'type' => 'relationship', 'objects' => $defn->{'relationships'}{$type}{'objects'}, 'additional' => $defn->{'relationships'}{$type}{'additional'} };
-  }
-  my $d = $defn->{'objects'}{$type};
-  #use Data::Dumper; print Dumper( $d );
-  my $definition = {
-    'type'           => $type,
-    'properties'     => $d->{'properties'},
-    'related'        => [],
-  };
-
-  foreach (qw(properties plural audit remove)) {
-    $definition->{$_} = $d->{$_} if exists $d->{$_};
-  }
-
-  if( exists $d->{'related'} ) {
-    push @{$definition->{'related'}}, @{$d->{'related'}};
-  }
-
-  if( exists $defn->{'relationships'} ) {
-    push @{$definition->{'related'}}, $_, $defn->{'relationships'}{$_}
-      foreach grep { exists $defn->{'relationships'}{$_}{'objects'}{$type} }
-              keys %{$defn->{'relationships'}};
-  }
-
-  return $definition;
-}
-
-## This is the really nasty function which squirts methods into the
-## Support namespace to define the methods in the Object/Adaptor
-## classes...
-
 sub bake_model {
 ##@param (string) package name
 ##@param (hashref) defn of objects of relationships
 ##
-## Pushes four methods:
+## Pushes five methods:
 ##
-## * type_defn       - returns defn for object used in Object/Adaptor code
+## * mail_domain   - returns mail_domain used to convert uid to email addr
+## * type_defn     - returns defn for object used in Object/Adaptor code
 ## * my_rels       - returns defn for relationship used in Adaptor code?
 ## * my_obj_types  - returns list of Object types
 ## * my_rel_types  - returns list of Relationship types
 
   my( $pkg, $DEFN ) = @_;
   my $mail_domain = exists $DEFN->{'mail_domain'} ? $DEFN->{'mail_domain'} : q(-);
-  my @methods = (
-    create_method( $pkg, 'mail_domain', sub { return $mail_domain; }, '() Return mail domain - only used in scripts to conver userid to email address' ),
+  create_auto( $pkg,
+    create_method( $pkg, 'mail_domain', sub {
+        return $mail_domain;
+    }, '() Return mail domain - only used in scripts to conver userid to email address' ),
     create_method( $pkg, 'my_obj_types', sub {
       return unless exists $DEFN->{'objects'};
       my @m = sort keys %{$DEFN->{'objects'}};
@@ -830,12 +911,17 @@ sub bake_model {
       return parse_defn( $DEFN, $type );
     }, '(type) Return definition of Object/relationship of given type)' ),
   );
-  create_auto( $pkg, @methods );
   return 1;
 }
 
 sub bake_support {
 ##@param (string) package name
+##
+## Pushes two methods:
+##
+## * mail_domain   - returns mail_domain used to convert uid to email addr
+## * base_calss    - returns the namespace of the object!
+
   my $pkg = shift;
   (my $ns = $pkg) =~ s{Pagesmith::Support::}{}mxs;
   $root->dynamic_use( 'Pagesmith::Model::'.$ns );
@@ -843,15 +929,19 @@ sub bake_support {
   no strict 'refs'; ## no critic (NoStrict)
   my $mail_domain = &{$mail_method}( );
   use strict;
-  my @methods = (
+  create_auto( $pkg,
+    create_method( $pkg, 'base_class',  sub { return $ns;          }, '() Return the base class of objects defined in model' ),
     create_method( $pkg, 'mail_domain', sub { return $mail_domain; }, '() Return mail domain - only used in scripts to conver userid to email address' ),
-    create_method( $pkg, 'base_class', sub { return $ns; }, '() Return the base class of objects defined in model' ),
   );
-  create_auto( $pkg, @methods );
   return 1;
 }
 
 sub bake_base_adaptor {
+## Pushes three methods:
+##
+## * mail_domain     - returns mail_domain used to convert uid to email addr
+## * base_calss      - returns the namespace of the object!
+## * connection_pars - returns the connection key for the database in the db oject!
   my $pkg = caller 0;
   my $mail_domain = q();
   ( my $ns  = $pkg ) =~ s{Pagesmith::Adaptor::}{}mxs;
@@ -861,13 +951,12 @@ sub bake_base_adaptor {
   $mail_domain    = &{$meth}();
   use strict;
   (my $db_key = lc $ns) =~ s{::}{_}mxsg;
-  my @methods = (
+  create_auto( $pkg,
     create_method( $pkg, 'base_class',      sub { return $ns;          }, '() Return the base class of objects defined in model' ),
     create_method( $pkg, 'mail_domain',     sub { return $mail_domain; }, '() Return mail domain - only used in scripts to conver userid to email address' ),
     create_method( $pkg, 'connection_pars', sub { return $db_key;      }, '() Return the connection keys - by default it is the base_class with :: -> _ & all lower case' ),
   );
-  create_auto( $pkg, @methods );
-  return;
+  return 1;
 }
 
 1;
