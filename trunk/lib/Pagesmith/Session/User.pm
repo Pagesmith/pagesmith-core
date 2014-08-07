@@ -116,3 +116,17 @@ sub name {
 }
 
 1;
+
+__END__
+
+Notes
+-----
+
+Object should have at a minimum:
+
+ * username    - user email/internal id
+ * name        - users' name
+ * email       - email address
+ * uid         - unique id
+ * id          - id
+
