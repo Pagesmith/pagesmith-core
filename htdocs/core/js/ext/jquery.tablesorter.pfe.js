@@ -1,4 +1,19 @@
 (function ($) {
+/*
+ * TableSorter 2.0.js5 - pfe (pager, filter export)
+ * Extended from TableSorter Pager 2.0 - Client-side table sorting with ease!
+ *
+ * Original copyright (c) 2007 Christian Bach
+ * Modified by James Smith
+ * Modifications copyright (c) 2012-2014 Genome Research Limited
+ *
+ * Examples and docs at: http://tablesorter.com
+ * Dual licensed under the MIT and GPL licenses:
+ * http://www.opensource.org/licenses/mit-license.php
+ * http://www.gnu.org/licenses/gpl.html
+ *
+ */
+
   'use strict';
   $.extend({
     tablesorterPager: {

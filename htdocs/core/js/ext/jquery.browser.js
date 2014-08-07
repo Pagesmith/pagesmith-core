@@ -1,4 +1,14 @@
 (function( jQuery, window, undefined ) {
+/*
+ * jQuery.browser functionality
+ *
+ * taken from an older version of jquery so that we have access
+ * to the browser function if required
+ *
+ * Copyright 2005, 2014 jQuery Foundation, Inc. and other contributors
+ * Released under the MIT license
+ * http://jquery.org/license
+*/
   'use strict';
   var  ua = window.navigator.userAgent.toLowerCase(),
     match = ( /(chrome)[ \/]([\w.]+)/.exec( ua )              ) ||
