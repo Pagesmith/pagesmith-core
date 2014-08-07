@@ -7,6 +7,9 @@
 
 /*@
  * Copyright (c) 2007 cody lindley
+ *
+ * Modified by james smith ; modifications copyright (c) 2009-2014 Genome Research Limited
+ *
  * Licensed under the MIT License: http://www.opensource.org/licenses/mit-license.php
  * @author: Cody Lindley (http://www.codylindley.com)
  * @version: $Id$

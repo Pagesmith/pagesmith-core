@@ -1,13 +1,9 @@
 (function($){
   'use strict';
   /*
-   * jQuery
-   * version: 1.0 (2008/11/13)
-   * @requires: jQuery v1.2.6
-   * @uses: jQuery v1.9.1
-   * @todo: Test it with previous jQuery versions
-   * @author: sebastien rannou - http://www.aimxhaisse.com
-   * @modified: james smith - http://www.sanger.ac.uk/
+   * version:           1.js5.1 (based on v1.0 - 2008/11/13)
+   * @original author: sebastien rannou - http://www.aimxhaisse.com
+   * @modified:        james smith - http://www.sanger.ac.uk/
    *
    * Heavily modified version of James to add extra functionality
    *
@@ -17,7 +13,7 @@
    *
    * licensed under the MIT: http://www.opensource.org/licenses/mit-license.php
    *
-   * Revision: 1.js5.0
+   * Revision: 1.js5.1
    *
   */
 
