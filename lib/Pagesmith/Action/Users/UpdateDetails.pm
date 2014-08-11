@@ -76,7 +76,7 @@ sub run {
   }
   $form->set_url('/users/UpdateDetails/'.$form->code);
   $form->bake;
-  if( $self->is_post ) {
+  if( $self->is_post && $form_code ) {
     my $new_email = $form->element( 'email_address' )->scalar_value;
     my $new_name  = $form->element( 'name'          )->scalar_value;
     my $new_pass  = $form->element( 'new_password'  )->scalar_value;
