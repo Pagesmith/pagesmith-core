@@ -83,7 +83,9 @@ sub define_options {
 
   return (
     $self->SUPER::define_options,
+    { 'code' => 'raw_caption',    'defn' => q(),  'description' => 'Raw caption' },
     { 'code' => 'quality',        'defn' => '=i', 'default' => $DEFAULT_QUALITY ,  'description' => 'Quality of thumbnail (jpg)' },
+    { 'code' => 'left',           'defn' => q(),  'description' => 'Float left' },
     { 'code' => 'left',           'defn' => q(),  'description' => 'Float left' },
     { 'code' => 'right',          'defn' => q(),  'description' => 'Float right' },
     { 'code' => 'center',         'defn' => q(),  'description' => 'Centre align' },
@@ -215,6 +217,11 @@ sub execute {
   my $credit = $self->option('credit') || q();
   $credit = q() if $self->option('nocredit');
 
+  unless( $self->option( 'raw_caption' ) ) {
+    $caption = $self->encode( $caption );
+    $short   = $self->encode( $short );
+  }
+
   my $credit_marked_up = q();
   if ($credit) {
     $credit = $credits{$credit} if exists $credits{$credit};
@@ -258,8 +265,8 @@ sub execute {
     ## Actual image is smaller than the size of the thumbnail box
     ## so we don't have to thumbnail it!
     my $html = sprintf q(<div class="%s"%s><img src="%s" style="width:%dpx;height:%dpx;" alt="%s" />),
-      $class, $style, $thumb_url, $img_x, $img_y, encode_entities($short);
-    $html .= sprintf q(<p style="width:%dpx">%s%s</p>), $inner_width, encode_entities($caption), $credit if $caption || $credit;
+      $class, $style, $thumb_url, $img_x, $img_y, $short;
+    $html .= sprintf q(<p style="width:%dpx">%s%s</p>), $inner_width, $caption, $credit if $caption || $credit;
     return qq($html</div>);
   }
   ## We need to thumbnail the image....
@@ -292,17 +299,17 @@ sub execute {
   }
   if ( $self->option('nozoom') ) {
     my $html = sprintf q(<div class="%s"%s><img src="%s" style="width:%dpx;height:%dpx;" alt="%s" />),
-      $class, $style, $thumb_url, $width, $height, encode_entities($short);
-    $html .= sprintf q(<p style="width:%dpx">%s%s</p>), $inner_width, encode_entities($caption), $credit if $caption || $credit;
+      $class, $style, $thumb_url, $width, $height, $short;
+    $html .= sprintf q(<p style="width:%dpx">%s%s</p>), $inner_width, $caption, $credit if $caption || $credit;
     return qq($html</div>);
   }
-  my $zoom    = sprintf q(<a href="%s" class="thickbox" title="%s%s">), $url, encode_entities($caption), $credit;
-  my $zoombtn = sprintf q(<a href="%s" class="thickbox btt no-img" title="%s%s">zoom</a>), $url, encode_entities($caption), $credit;
+  my $zoom    = sprintf q(<a href="%s" class="thickbox" title="%s%s">), $url, $caption, $credit;
+  my $zoombtn = sprintf q(<a href="%s" class="thickbox btt no-img" title="%s%s">zoom</a>), $url, $caption, $credit;
   my $html = sprintf q(<div class="%s"%s>%s<img src="%s" style="width:%dpx;height:%dpx;" alt="%s" /></a>),
-    $class, $style, $zoom, $thumb_url, $width, $height, encode_entities($short);
+    $class, $style, $zoom, $thumb_url, $width, $height, $short;
   if ( $short || $credit ) {
     $html .= sprintf q(<p style="width:%dpx">%s%s</p><p class="right zoom" style="border-top:0;margin-top:0;margin-right: 10px">%s</p>),
-      $inner_width, encode_entities($short), $credit_marked_up, $zoombtn;
+      $inner_width, $short, $credit_marked_up, $zoombtn;
   } else {
     $html .= sprintf q(<p class="right zoom" style="border-top:0;margin-top:margin-right: 10px">%s</p>),
       $zoombtn;
